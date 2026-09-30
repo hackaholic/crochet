@@ -28,12 +28,7 @@ Cloudflare’s current Git-connected interface uses **Workers Builds** for stati
    | Preview command | `npx wrangler preview` |
 
 3. Enable Preview builds.
-4. Add the production build variable for the first launch:
-
-   | Variable | Value |
-   | --- | --- |
-   | `VITE_LAUNCH_MODE` | `coming-soon` |
-
+4. The committed `.env.production` file provides `VITE_LAUNCH_MODE=coming-soon` automatically. No dashboard variable is needed for the first launch.
 5. Deploy. Cloudflare builds the Vite application and uploads `dist` through the project’s `wrangler.jsonc` configuration.
 
 The Coming Soon mode makes no API calls, so it is safe to publish before the VPS exists.
@@ -57,7 +52,7 @@ Complete these backend tasks before switching away from Coming Soon:
 4. Add `api.sulocraft.com` to Cloudflare and proxy it to the VPS.
 5. Configure FastAPI CORS to allow `https://sulocraft.com` and `https://www.sulocraft.com` with credentials.
 6. Configure R2 public delivery at `images.sulocraft.com`. The backend must return complete image URLs; the frontend must not construct R2 paths.
-7. In the Cloudflare Worker build variables, replace the Coming Soon setting with:
+7. Replace the contents of the tracked `.env.production` file with:
 
    | Variable | Value |
    | --- | --- |
