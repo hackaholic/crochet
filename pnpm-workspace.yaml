@@ -1,2 +1,10 @@
+packages:
+  - .
+
+# pnpm 10 (Cloudflare's current build image) uses this setting.
+onlyBuiltDependencies:
+  - esbuild
+
+# pnpm 11+ uses this setting.
 allowBuilds:
   esbuild: true
