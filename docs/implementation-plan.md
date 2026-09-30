@@ -65,7 +65,7 @@ This plan turns the multi-agent specification into small, ordered tasks. Only on
 | ID | Owner | Task | Status | Handoff / completion condition |
 | --- | --- | --- | --- | --- |
 | BE-08 | Gemini | Customer profile, account overview & persistent wishlist | Done | Profile edit, overview metrics, and wishlist endpoints; published `docs/api-account.md` |
-| FE-09 | ChatGPT / Codex | Customer account & wishlist UI | Ready | Wire up My Account overview, profile edit, and persistent wishlist |
+| FE-09 | Codex | Customer account & wishlist UI | Done | My Account overview, profile editing, address book, orders, and persistent wishlist are wired to the published API contract |
 
 ## Milestone 9 — Admin catalog & dashboard
 

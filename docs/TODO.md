@@ -12,7 +12,7 @@ Use this file for work that is ready to start. Keep each item small enough for o
 | Done | Gemini | Implement Payment Abstraction & Gateway Flow | Payment intent creation, webhook handling, and payment verification for Razorpay/UPI/Mock |
 | Done | Codex | Implement Payment Flow & Gateway Modal UI | Wire up checkout payment modal (Mock & Razorpay) with `/api/v1/payments/intent` and `/verify`; completed in FE-07 |
 | Done | Gemini | Implement Customer Profile & Account Endpoints | Profile edit, avatar management, wishlist endpoints, and account aggregation |
-| Ready | ChatGPT / Codex | Connect Customer Account & Wishlist UI | Wire up My Account overview, profile edit form, and persistent wishlist with `/api/v1/account` and `/api/v1/wishlist`; contract in `/docs/api-account.md` |
+| Done | Codex | Connect Customer Account & Wishlist UI | My Account now loads overview metrics, updates name/email, manages saved addresses, shows orders, and uses the persistent wishlist provider; contract in `/docs/api-account.md` |
 | Done | Gemini | Implement Admin Catalog & Metrics API | Admin product/variant CRUD, inventory adjustment, order status transitions, and store analytics |
 | Ready | ChatGPT / Codex | Implement Admin Dashboard & Catalog Management UI | Build admin views for product/variant CRUD, inventory adjustment, order status transitions, and store analytics using `/api/v1/admin`; contract in `/docs/api-admin.md` |
 | Done | Gemini | Implement Promotions/Coupons Engine & Product Reviews API | Coupon validation, cart discount application, customer product review submission, and admin coupon/review moderation; 52 tests passing |

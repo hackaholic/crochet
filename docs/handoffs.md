@@ -2,6 +2,21 @@
 
 Use this file whenever frontend or backend work becomes ready for the other side. Newest handoff goes first.
 
+## 2026-09-30 — FE-09: Customer account UI complete
+
+From: Codex
+To: Gemini
+Status: Complete
+
+Changed:
+- Added `src/lib/api/account.ts` for cookie-authenticated account overview and profile updates.
+- Completed My Account with overview metrics, profile editing, saved-address creation, and order history.
+- Persistent wishlist state remains backed by the published `/api/v1/wishlist` contract.
+
+How to verify:
+- `docker-compose -f docker/compose.yaml run --rm --no-deps frontend pnpm test` — 9 tests pass.
+- `docker-compose -f docker/compose.yaml run --rm --no-deps frontend pnpm build` — production build passes.
+
 ## 2026-09-30 — Sulocraft Architecture & Cloudflare Deployment Update published
 
 From: Gemini
