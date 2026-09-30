@@ -2,6 +2,8 @@
 
 Sulocraft is a handmade-crochet storefront built with React, TypeScript, Vite, and Tailwind CSS.
 
+Deployment instructions are in [docs/cloudflare-deployment.md](docs/cloudflare-deployment.md).
+
 ## Start here
 
 - Read [the project plan](docs/plan.md) for the current direction.
