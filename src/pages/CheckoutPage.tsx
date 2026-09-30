@@ -8,6 +8,7 @@ interface CheckoutPageProps {
   items: CartItem[];
   onComplete: () => void;
   onNavigate: (page: 'home' | 'shop' | 'product' | 'cart' | 'wishlist' | 'checkout' | 'about') => void;
+  couponCode: string | null;
 }
 
 type Step = 'contact' | 'delivery' | 'payment' | 'review';
@@ -26,7 +27,7 @@ const paymentMethods = [
   { id: 'cod', label: 'Cash on Delivery', icon: '💵', desc: 'Pay when delivered' },
 ];
 
-export default function CheckoutPage({ items, onComplete, onNavigate }: CheckoutPageProps) {
+export default function CheckoutPage({ items, onComplete, onNavigate, couponCode }: CheckoutPageProps) {
   const [step, setStep] = useState<Step>('contact');
   const [selectedPayment, setSelectedPayment] = useState('upi');
   const [orderPlaced, setOrderPlaced] = useState(false);
@@ -51,7 +52,7 @@ export default function CheckoutPage({ items, onComplete, onNavigate }: Checkout
       setSubmitting(true); setError('');
       try {
         const paymentMethod = selectedPayment === 'cod' ? 'COD' : selectedPayment === 'card' ? 'CARD' : selectedPayment === 'netbanking' ? 'NETBANKING' : 'UPI';
-        const order = await createOrder({ paymentMethod, customerEmail: form.email || undefined, shippingAddress: { name: `${form.firstName} ${form.lastName}`.trim(), phone: form.phone, line1: form.line1, line2: form.line2 || undefined, landmark: form.landmark || undefined, city: form.city, state: form.state, postalCode: form.postalCode } });
+        const order = await createOrder({ paymentMethod, customerEmail: form.email || undefined, couponCode: couponCode ?? undefined, shippingAddress: { name: `${form.firstName} ${form.lastName}`.trim(), phone: form.phone, line1: form.line1, line2: form.line2 || undefined, landmark: form.landmark || undefined, city: form.city, state: form.state, postalCode: form.postalCode } });
         if (paymentMethod !== 'COD') {
           const intent = await createPaymentIntent(order.orderNumber);
           await verifyMockPayment(intent, paymentMethod === 'UPI' ? 'UPI / Mock gateway' : `${paymentMethod} / Mock gateway`);

@@ -36,6 +36,7 @@ export default function App() {
   const [cartOpen, setCartOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [couponCode, setCouponCode] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
 
   const navigate = useCallback((p: AppPage) => {
@@ -183,6 +184,7 @@ export default function App() {
             onRemove={removeFromCart}
             onWishlist={toggleWishlist}
             onCheckout={handleCheckout}
+            onCouponChange={setCouponCode}
             onNavigate={navigate}
           />
         )}
@@ -199,6 +201,7 @@ export default function App() {
           <CheckoutPage
             items={cart}
             onComplete={() => { void refreshCart(); }}
+            couponCode={couponCode}
             onNavigate={navigate}
           />
         )}

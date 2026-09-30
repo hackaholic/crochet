@@ -79,4 +79,4 @@ This plan turns the multi-agent specification into small, ordered tasks. Only on
 | ID | Owner | Task | Status | Handoff / completion condition |
 | --- | --- | --- | --- | --- |
 | BE-10 | Gemini | Promotions engine & customer product reviews | In progress | Coupon validation, cart discount application, customer review submission, and admin moderation |
-| FE-11 | ChatGPT / Codex | Coupon entry & review submission UI | Planned | Apply promo codes in cart/checkout, write product reviews |
+| FE-11 | Codex | Coupon entry & review submission UI | Done | Cart coupon application and authenticated product review submission use the published API contract |

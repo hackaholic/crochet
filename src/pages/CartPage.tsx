@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { PlusIcon, MinusIcon, TrashIcon, HeartIcon, ArrowRightIcon } from '../components/Icons';
+import { applyCoupon, removeCoupon, type CouponApplication } from '../lib/api/promotions';
 import type { CartItem } from '../components/CartDrawer';
 import type { Product } from '../data/products';
 import { EmptyState } from '../components/StorefrontState';
@@ -10,12 +12,19 @@ interface CartPageProps {
   onWishlist: (product: Product) => void;
   onCheckout: () => void;
   onNavigate: (page: 'home' | 'shop' | 'product' | 'cart' | 'wishlist' | 'checkout' | 'about') => void;
+  onCouponChange: (code: string | null) => void;
 }
 
-export default function CartPage({ items, onUpdateQty, onRemove, onWishlist, onCheckout, onNavigate }: CartPageProps) {
+export default function CartPage({ items, onUpdateQty, onRemove, onWishlist, onCheckout, onNavigate, onCouponChange }: CartPageProps) {
+  const [couponInput, setCouponInput] = useState('');
+  const [coupon, setCoupon] = useState<CouponApplication | null>(null);
+  const [couponMessage, setCouponMessage] = useState('');
+  const [couponBusy, setCouponBusy] = useState(false);
   const subtotal = items.reduce((s, i) => s + i.product.price * i.quantity, 0);
   const shipping = subtotal >= 999 ? 0 : 79;
   const total = subtotal + shipping;
+  const apply = async () => { if (!couponInput.trim()) return; setCouponBusy(true); setCouponMessage(''); try { const result = await applyCoupon(couponInput.trim().toUpperCase()); setCoupon(result); setCouponInput(result.code); onCouponChange(result.code); setCouponMessage(result.message); } catch { setCoupon(null); onCouponChange(null); setCouponMessage('That code could not be applied to this basket.'); } finally { setCouponBusy(false); } };
+  const clearCoupon = async () => { setCouponBusy(true); try { await removeCoupon(); } finally { setCoupon(null); setCouponInput(''); onCouponChange(null); setCouponMessage('Coupon removed.'); setCouponBusy(false); } };
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] pt-28">
@@ -101,16 +110,14 @@ export default function CartPage({ items, onUpdateQty, onRemove, onWishlist, onC
                 )}
 
                 {/* Discount code */}
-                <div className="flex gap-2 mb-5">
-                  <input type="text" placeholder="Discount code" className="flex-1 px-3 py-2.5 border border-[#EDE4D0] rounded-xl text-sm focus:outline-none focus:border-[#C4622D] bg-[#FAF7F2]" />
-                  <button className="px-4 py-2.5 border border-[#EDE4D0] rounded-xl text-sm text-[#C4622D] font-semibold hover:bg-[#C4622D] hover:text-white hover:border-[#C4622D] transition-colors">Apply</button>
-                </div>
+                <div className="mb-5"><div className="flex gap-2"><input value={couponInput} onChange={event => setCouponInput(event.target.value)} placeholder="Discount code" className="flex-1 px-3 py-2.5 border border-[#EDE4D0] rounded-xl text-sm focus:outline-none focus:border-[#C4622D] bg-[#FAF7F2]" /><button onClick={coupon ? clearCoupon : apply} disabled={couponBusy} className="px-4 py-2.5 border border-[#EDE4D0] rounded-xl text-sm text-[#C4622D] font-semibold hover:bg-[#C4622D] hover:text-white hover:border-[#C4622D] transition-colors disabled:opacity-50">{coupon ? 'Remove' : couponBusy ? 'Applying…' : 'Apply'}</button></div>{couponMessage && <p className="mt-2 text-xs text-[#8B6B4A]" role="status">{couponMessage}</p>}</div>
 
                 <div className="space-y-3 mb-5 text-sm">
                   <div className="flex justify-between text-[#8B6B4A]">
                     <span>Subtotal ({items.length} items)</span>
                     <span className="text-[#2C1810] font-medium">₹{subtotal}</span>
                   </div>
+                  {coupon && <div className="flex justify-between text-[#8FAF8C]"><span>Coupon ({coupon.code})</span><span>−₹{coupon.discountAmount}</span></div>}
                   <div className="flex justify-between text-[#8B6B4A]">
                     <span>Shipping</span>
                     <span className={`font-medium ${shipping === 0 ? 'text-[#8FAF8C]' : 'text-[#2C1810]'}`}>
@@ -119,7 +126,7 @@ export default function CartPage({ items, onUpdateQty, onRemove, onWishlist, onC
                   </div>
                   <div className="flex justify-between font-bold text-[#2C1810] text-base pt-3 border-t border-[#EDE4D0]">
                     <span>Estimated Total</span>
-                    <span>₹{total}</span>
+                    <span>₹{(coupon?.subtotalAfterDiscount ?? subtotal) + shipping}</span>
                   </div>
                 </div>
 

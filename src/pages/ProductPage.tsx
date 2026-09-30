@@ -4,6 +4,7 @@ import ProductCard from '../components/ProductCard';
 import { HeartIcon, StarIcon, ChevronLeftIcon, ChevronRightIcon, CheckIcon, PackageIcon, ArrowRightIcon } from '../components/Icons';
 import type { Product } from '../data/products';
 import { useCatalogue } from '../components/CatalogueProvider';
+import { submitReview } from '../lib/api/promotions';
 
 interface ProductPageProps {
   product: Product | null;
@@ -53,6 +54,11 @@ export default function ProductPage({ product: initialProduct, onAddToCart, onTo
   const [selectedColor, setSelectedColor] = useState(colors[0]);
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState('');
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewText, setReviewText] = useState('');
+  const [reviewMessage, setReviewMessage] = useState('');
+  const [reviewBusy, setReviewBusy] = useState(false);
+  const sendReview = async () => { if (!reviewText.trim()) { setReviewMessage('Please write a short review first.'); return; } setReviewBusy(true); try { await submitReview(product.slug ?? product.id, { rating: reviewRating, text: reviewText.trim() }); setReviewText(''); setReviewMessage('Thank you — your review has been submitted.'); } catch { setReviewMessage('Please sign in before submitting a review.'); } finally { setReviewBusy(false); } };
   const [openSection, setOpenSection] = useState<string | null>('Handmade Details');
   const [added, setAdded] = useState(false);
 
@@ -307,6 +313,7 @@ export default function ProductPage({ product: initialProduct, onAddToCart, onTo
         {/* Reviews */}
         <div className="mt-20">
           <h2 className="text-3xl font-medium text-[#2C1810] mb-8" style={{ fontFamily: 'var(--font-serif)' }}>Customer Reviews</h2>
+          <div className="mb-6 rounded-2xl border border-[#EDE4D0] bg-white p-5"><p className="font-semibold text-[#2C1810]">Share your experience</p><div className="mt-3 flex gap-1">{[1,2,3,4,5].map(star => <button key={star} onClick={() => setReviewRating(star)} aria-label={`${star} stars`}><StarIcon size={18} filled={star <= reviewRating} className="text-[#C4622D]" /></button>)}</div><textarea value={reviewText} onChange={event => setReviewText(event.target.value)} placeholder="What did you love about it?" rows={3} className="mt-3 w-full rounded-xl border border-[#EDE4D0] p-3 text-sm" /><button onClick={sendReview} disabled={reviewBusy} className="mt-3 rounded-full bg-[#C4622D] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{reviewBusy ? 'Submitting…' : 'Submit review'}</button>{reviewMessage && <p className="mt-2 text-sm text-[#8B6B4A]" role="status">{reviewMessage}</p>}</div>
           <div className="grid md:grid-cols-2 gap-6">
             {reviews.map(review => (
               <div key={review.id} className="bg-white rounded-2xl p-6 border border-[#EDE4D0]">

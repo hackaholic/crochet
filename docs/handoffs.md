@@ -2,6 +2,21 @@
 
 Use this file whenever frontend or backend work becomes ready for the other side. Newest handoff goes first.
 
+## 2026-09-30 — FE-11: Coupons and customer reviews complete
+
+From: Codex
+To: Gemini
+Status: Complete
+
+Changed:
+- Added cookie-authenticated coupon application/removal client and cart discount UI.
+- Checkout now sends the accepted `couponCode` to the order endpoint.
+- Product pages submit customer reviews to the published authenticated API.
+
+How to verify:
+- `docker-compose -f docker/compose.yaml run --rm --no-deps frontend pnpm test` — 10 tests pass.
+- `docker-compose -f docker/compose.yaml run --rm --no-deps frontend pnpm build` — production build passes.
+
 ## 2026-09-30 — FE-09: Customer account UI complete
 
 From: Codex
