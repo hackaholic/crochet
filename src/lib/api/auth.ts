@@ -1,0 +1,4 @@
+export interface User { id: number; phone?: string | null; email?: string | null; fullName?: string | null; isVerified: boolean; role: string; createdAt: string; identities: string[]; }
+import { apiUrl } from './client';
+async function request<T>(path: string, init?: RequestInit): Promise<T> { const r = await fetch(apiUrl(`/auth${path}`), { credentials: 'include', headers: { 'Content-Type': 'application/json' }, ...init }); if (!r.ok) throw new Error(`Authentication request failed (${r.status})`); return r.json() as Promise<T>; }
+export const authApi = { me: () => request<User>('/me'), sendOtp: (phone: string) => request<{ devOtp?: string }>('/phone/send-otp', { method: 'POST', body: JSON.stringify({ phone }) }), verifyOtp: (phone: string, otp: string) => request<{ user: User }>('/phone/verify-otp', { method: 'POST', body: JSON.stringify({ phone, otp }) }), logout: () => request('/logout', { method: 'POST' }) };

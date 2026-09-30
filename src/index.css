@@ -1,0 +1,104 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Nunito:wght@300;400;500;600;700;800&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Nunito', system-ui, sans-serif;
+
+  --color-cream: #FAF7F2;
+  --color-cream-dark: #F5EDE0;
+  --color-blush: #F2C4CE;
+  --color-blush-mid: #E8A5B5;
+  --color-blush-dark: #D4849A;
+  --color-terracotta: #C4622D;
+  --color-terracotta-light: #D4795A;
+  --color-terracotta-pale: #F5E0D3;
+  --color-sage: #8FAF8C;
+  --color-sage-light: #C2D9BF;
+  --color-sage-pale: #EBF3EA;
+  --color-lavender: #C5B9D6;
+  --color-lavender-pale: #EDE9F5;
+  --color-beige: #EDE4D0;
+  --color-brown: #8B6B4A;
+  --color-brown-dark: #5C3D2E;
+  --color-ink: #2C1810;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+:focus-visible {
+  outline: 3px solid #C4622D;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #FAF7F2;
+  color: #2C1810;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Hide scrollbar but keep scroll */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #FAF7F2;
+}
+::-webkit-scrollbar-thumb {
+  background: #E8D5C4;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #C4622D;
+}
+
+/* Thin scrollbar for Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #E8D5C4 #FAF7F2;
+}
+
+/* Horizontal scroll container */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Yarn decorative SVG line animation */
+@keyframes drawPath {
+  to { stroke-dashoffset: 0; }
+}
+
+/* Product card hover */
+.product-card:hover .quick-add-btn {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Transition defaults */
+.transition-smooth {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}

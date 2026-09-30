@@ -1,0 +1,5 @@
+export interface WishlistItem { id: number; productId: number; productName: string; productSlug: string; productImage: string; price: number; pricePaise: number; compareAtPrice?: number | null; originalPrice?: number | null; badge?: string | null; category: string; inStock: boolean; rating: number; reviews: number; createdAt: string; }
+export interface Wishlist { items: WishlistItem[]; totalItems: number; }
+import { apiUrl } from './client';
+async function request(path: string, init?: RequestInit): Promise<Wishlist> { const response = await fetch(apiUrl(`/wishlist${path}`), { credentials: 'include', headers: { 'Content-Type': 'application/json' }, ...init }); if (!response.ok) throw new Error(`Wishlist request failed (${response.status})`); return response.json() as Promise<Wishlist>; }
+export const wishlistApi = { get: () => request(''), add: (productId: number) => request('/items', { method: 'POST', body: JSON.stringify({ productId }) }), remove: (productId: number) => request(`/items/${productId}`, { method: 'DELETE' }) };
