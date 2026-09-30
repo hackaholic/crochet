@@ -1,0 +1,6668 @@
+openapi: 3.1.0
+info:
+  title: Sulocraft API
+  description: Backend service for the Sulocraft direct-to-consumer crochet storefront.
+  version: 0.2.0
+paths:
+  /api/v1/categories:
+    get:
+      tags:
+      - catalogue
+      summary: Get Categories
+      description: Retrieve all categories. By default returns root categories with
+        nested children.
+      operationId: get_categories_api_v1_categories_get
+      parameters:
+      - name: flat
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: Return flat list instead of hierarchical tree
+          default: false
+          title: Flat
+        description: Return flat list instead of hierarchical tree
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategoryOut'
+                title: Response Get Categories Api V1 Categories Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/categories/{slug}:
+    get:
+      tags:
+      - catalogue
+      summary: Get Category By Slug
+      description: Retrieve a single category by its slug.
+      operationId: get_category_by_slug_api_v1_categories__slug__get
+      parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Slug
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/categories/{slug}/products:
+    get:
+      tags:
+      - catalogue
+      summary: Get Category Products
+      description: Retrieve all products under a category (including subcategories).
+      operationId: get_category_products_api_v1_categories__slug__products_get
+      parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Slug
+      - name: sort
+        in: query
+        required: false
+        schema:
+          type: string
+          default: featured
+          title: Sort
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 50
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductListItem'
+                title: Response Get Category Products Api V1 Categories  Slug  Products
+                  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/products:
+    get:
+      tags:
+      - catalogue
+      summary: List Products
+      description: Search and filter the product catalogue with pagination and sorting.
+      operationId: list_products_api_v1_products_get
+      parameters:
+      - name: category
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filter by category slug or name
+          title: Category
+        description: Filter by category slug or name
+      - name: tag
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filter by tag name (e.g. romantic, birthday)
+          title: Tag
+        description: Filter by tag name (e.g. romantic, birthday)
+      - name: occasion
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Alias for occasion/tag filtering
+          title: Occasion
+        description: Alias for occasion/tag filtering
+      - name: color
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filter by color attribute in variants
+          title: Color
+        description: Filter by color attribute in variants
+      - name: customizable
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Filter customizable products
+          title: Customizable
+        description: Filter customizable products
+      - name: min_price
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+            minimum: 0
+          - type: 'null'
+          description: Minimum price in INR
+          title: Min Price
+        description: Minimum price in INR
+      - name: max_price
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+            minimum: 0
+          - type: 'null'
+          description: Maximum price in INR
+          title: Max Price
+        description: Maximum price in INR
+      - name: search
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Search keyword in name or description
+          title: Search
+        description: Search keyword in name or description
+      - name: badge
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filter by badge (e.g. Bestseller, New, Limited)
+          title: Badge
+        description: Filter by badge (e.g. Bestseller, New, Limited)
+      - name: sort
+        in: query
+        required: false
+        schema:
+          type: string
+          description: 'Sorting: featured, price_asc, price_desc, rating, newest,
+            best_selling'
+          default: featured
+          title: Sort
+        description: 'Sorting: featured, price_asc, price_desc, rating, newest, best_selling'
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          description: Page number (1-indexed)
+          default: 1
+          title: Page
+        description: Page number (1-indexed)
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          description: Items per page
+          default: 50
+          title: Limit
+        description: Items per page
+      - name: offset
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+            minimum: 0
+          - type: 'null'
+          description: Manual offset; overrides page if provided
+          title: Offset
+        description: Manual offset; overrides page if provided
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductListItem'
+                title: Response List Products Api V1 Products Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/products/search:
+    get:
+      tags:
+      - catalogue
+      summary: Search Products
+      description: Search products across name, description, tags, and category names.
+      operationId: search_products_api_v1_products_search_get
+      parameters:
+      - name: q
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          description: Search keyword
+          title: Q
+        description: Search keyword
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 50
+          minimum: 1
+          default: 20
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductListItem'
+                title: Response Search Products Api V1 Products Search Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/products/{slug_or_id}:
+    get:
+      tags:
+      - catalogue
+      summary: Get Product Detail
+      description: Retrieve full product details conforming to Section 2 of Specification.
+      operationId: get_product_detail_api_v1_products__slug_or_id__get
+      parameters:
+      - name: slug_or_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Slug Or Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetail'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/occasions:
+    get:
+      tags:
+      - catalogue
+      summary: Get Occasions
+      description: Retrieve curated gift occasions.
+      operationId: get_occasions_api_v1_occasions_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/OccasionOut'
+                type: array
+                title: Response Get Occasions Api V1 Occasions Get
+  /api/v1/reviews:
+    get:
+      tags:
+      - catalogue
+      summary: Get Reviews
+      description: Retrieve customer testimonials and reviews for homepage and storefront.
+      operationId: get_reviews_api_v1_reviews_get
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 50
+          minimum: 1
+          default: 10
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReviewOut'
+                title: Response Get Reviews Api V1 Reviews Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/products/{slug_or_id}/reviews:
+    post:
+      tags:
+      - catalogue
+      summary: Submit Product Review
+      description: Submit a verified customer review for a product and recalculate
+        product ratings.
+      operationId: submit_product_review_api_v1_products__slug_or_id__reviews_post
+      parameters:
+      - name: slug_or_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Slug Or Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewCreateRequest'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/cart:
+    get:
+      tags:
+      - cart
+      summary: Get Cart
+      description: Retrieve current shopping cart. Returns empty cart representation
+        if no cart exists.
+      operationId: get_cart_api_v1_cart_get
+      parameters:
+      - name: x-cart-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Cart-Token
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: guest_cart_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Guest Cart Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - cart
+      summary: Clear Cart
+      description: Clear all items from the current cart.
+      operationId: clear_cart_api_v1_cart_delete
+      parameters:
+      - name: x-cart-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Cart-Token
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: guest_cart_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Guest Cart Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/cart/items:
+    post:
+      tags:
+      - cart
+      summary: Add Cart Item
+      description: Add a product or variant to the cart with quantity and optional
+        personalization.
+      operationId: add_cart_item_api_v1_cart_items_post
+      parameters:
+      - name: x-cart-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Cart-Token
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: guest_cart_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Guest Cart Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartItemAdd'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/cart/items/{item_id}:
+    patch:
+      tags:
+      - cart
+      summary: Update Cart Item
+      description: Update quantity or personalization for a specific line item in
+        the cart.
+      operationId: update_cart_item_api_v1_cart_items__item_id__patch
+      parameters:
+      - name: item_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Item Id
+      - name: x-cart-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Cart-Token
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: guest_cart_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Guest Cart Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartItemUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - cart
+      summary: Delete Cart Item
+      description: Remove a specific line item from the cart.
+      operationId: delete_cart_item_api_v1_cart_items__item_id__delete
+      parameters:
+      - name: item_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Item Id
+      - name: x-cart-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Cart-Token
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: guest_cart_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Guest Cart Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/cart/merge:
+    post:
+      tags:
+      - cart
+      summary: Merge Guest Cart
+      description: Merge an anonymous guest cart into the active session cart conforming
+        to Section 6 of Spec.
+      operationId: merge_guest_cart_api_v1_cart_merge_post
+      parameters:
+      - name: x-cart-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Cart-Token
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: guest_cart_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Guest Cart Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartMergeRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/cart/apply-coupon:
+    post:
+      tags:
+      - cart
+      summary: Apply Coupon
+      description: Validate and apply promo coupon to active cart.
+      operationId: apply_coupon_api_v1_cart_apply_coupon_post
+      parameters:
+      - name: x-cart-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Cart-Token
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: guest_cart_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Guest Cart Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CouponApplyRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CouponApplyResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/cart/coupon:
+    delete:
+      tags:
+      - cart
+      summary: Remove Coupon
+      description: Remove coupon from cart session.
+      operationId: remove_coupon_api_v1_cart_coupon_delete
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+                title: Response Remove Coupon Api V1 Cart Coupon Delete
+  /api/v1/auth/phone/send-otp:
+    post:
+      tags:
+      - auth
+      summary: Send Phone Otp
+      description: Request a 6-digit OTP code to mobile phone with cooldown throttling.
+      operationId: send_phone_otp_api_v1_auth_phone_send_otp_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendOtpRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendOtpResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/auth/phone/verify-otp:
+    post:
+      tags:
+      - auth
+      summary: Verify Phone Otp
+      description: Verify OTP and authenticate user, setting HttpOnly session cookie.
+      operationId: verify_phone_otp_api_v1_auth_phone_verify_otp_post
+      parameters:
+      - name: x-cart-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Cart-Token
+      - name: guest_cart_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Guest Cart Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyOtpRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/auth/google:
+    post:
+      tags:
+      - auth
+      summary: Google Auth
+      description: One-Click Google Authentication with Unified User Model.
+      operationId: google_auth_api_v1_auth_google_post
+      parameters:
+      - name: x-cart-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Cart-Token
+      - name: guest_cart_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Guest Cart Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoogleAuthRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/auth/me:
+    get:
+      tags:
+      - auth
+      summary: Get Current Customer
+      description: Retrieve authenticated customer profile from session cookie.
+      operationId: get_current_customer_api_v1_auth_me_get
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/auth/logout:
+    post:
+      tags:
+      - auth
+      summary: Logout
+      description: Revoke session and clear HttpOnly cookie.
+      operationId: logout_api_v1_auth_logout_post
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+                title: Response Logout Api V1 Auth Logout Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/addresses:
+    get:
+      tags:
+      - orders
+      summary: List Addresses
+      description: Retrieve saved delivery addresses for the authenticated customer.
+      operationId: list_addresses_api_v1_addresses_get
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AddressOut'
+                title: Response List Addresses Api V1 Addresses Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - orders
+      summary: Create Address
+      description: Save a new delivery address for the authenticated customer.
+      operationId: create_address_api_v1_addresses_post
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddressCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddressOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/addresses/{address_id}:
+    patch:
+      tags:
+      - orders
+      summary: Update Address
+      description: Update an existing delivery address belonging to the authenticated
+        customer.
+      operationId: update_address_api_v1_addresses__address_id__patch
+      parameters:
+      - name: address_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Address Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddressUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddressOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - orders
+      summary: Delete Address
+      description: Delete a saved delivery address.
+      operationId: delete_address_api_v1_addresses__address_id__delete
+      parameters:
+      - name: address_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Address Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/addresses/{address_id}/default:
+    post:
+      tags:
+      - orders
+      summary: Set Default Address
+      description: Set an address as the default delivery address.
+      operationId: set_default_address_api_v1_addresses__address_id__default_post
+      parameters:
+      - name: address_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Address Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddressOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/orders:
+    post:
+      tags:
+      - orders
+      summary: Checkout
+      description: 'Convert the current shopping cart into a placed order.
+
+
+        Snapshots products, variant details, prices, and shipping address.
+
+        Decrements inventory, clears active cart items, and logs initial status history.'
+      operationId: checkout_api_v1_orders_post
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: x-cart-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Cart-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      - name: guest_cart_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Guest Cart Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      tags:
+      - orders
+      summary: List Orders
+      description: Retrieve order history for the authenticated customer.
+      operationId: list_orders_api_v1_orders_get
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 20
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrderOut'
+                title: Response List Orders Api V1 Orders Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/orders/{order_id_or_number}:
+    get:
+      tags:
+      - orders
+      summary: Get Order Detail
+      description: 'Retrieve full details of an order.
+
+
+        Conforms to Section 22 security: verifies customer authorization.'
+      operationId: get_order_detail_api_v1_orders__order_id_or_number__get
+      parameters:
+      - name: order_id_or_number
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Order Id Or Number
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/orders/{order_id_or_number}/tracking:
+    get:
+      tags:
+      - orders
+      summary: Get Order Tracking
+      description: Retrieve order tracking status and chronological timeline history.
+      operationId: get_order_tracking_api_v1_orders__order_id_or_number__tracking_get
+      parameters:
+      - name: order_id_or_number
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Order Id Or Number
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderTrackingOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/orders/{order_id_or_number}/cancel:
+    post:
+      tags:
+      - orders
+      summary: Cancel Order
+      description: Cancel an order before shipping, restoring inventory and recording
+        cancellation in history.
+      operationId: cancel_order_api_v1_orders__order_id_or_number__cancel_post
+      parameters:
+      - name: order_id_or_number
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Order Id Or Number
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/payments/intent:
+    post:
+      tags:
+      - payments
+      summary: Create Payment Intent
+      description: Create a gateway payment intent/order for an order.
+      operationId: create_payment_intent_api_v1_payments_intent_post
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentIntentCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentIntentOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/payments/verify:
+    post:
+      tags:
+      - payments
+      summary: Verify Payment
+      description: 'Verify payment completion callback from client gateway popup.
+
+
+        On success, transitions Payment status to SUCCESS, Order payment_status to
+        PAID,
+
+        Order status to CONFIRMED, and records audit history.'
+      operationId: verify_payment_api_v1_payments_verify_post
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentVerifyRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/payments/webhook/{provider}:
+    post:
+      tags:
+      - payments
+      summary: Payment Webhook
+      description: Gateway webhook handler for asynchronous payment updates.
+      operationId: payment_webhook_api_v1_payments_webhook__provider__post
+      parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+      - name: x-razorpay-signature
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Razorpay-Signature
+      - name: x-signature
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Signature
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentWebhookResult'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/payments/{payment_id}:
+    get:
+      tags:
+      - payments
+      summary: Get Payment
+      description: Retrieve payment details.
+      operationId: get_payment_api_v1_payments__payment_id__get
+      parameters:
+      - name: payment_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Payment Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/account/profile:
+    get:
+      tags:
+      - account
+      summary: Get Customer Profile
+      description: Retrieve logged-in customer's profile.
+      operationId: get_customer_profile_api_v1_account_profile_get
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    patch:
+      tags:
+      - account
+      summary: Update Customer Profile
+      description: Update customer profile information.
+      operationId: update_customer_profile_api_v1_account_profile_patch
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/account/overview:
+    get:
+      tags:
+      - account
+      summary: Get Account Overview
+      description: Retrieve aggregate statistics for customer dashboard.
+      operationId: get_account_overview_api_v1_account_overview_get
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountOverviewOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/wishlist:
+    get:
+      tags:
+      - account
+      summary: Get Wishlist
+      description: Retrieve all products saved in customer's wishlist.
+      operationId: get_wishlist_api_v1_wishlist_get
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WishlistOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - account
+      summary: Clear Wishlist
+      description: Clear all products from the customer's wishlist.
+      operationId: clear_wishlist_api_v1_wishlist_delete
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WishlistOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/wishlist/items:
+    post:
+      tags:
+      - account
+      summary: Add To Wishlist
+      description: Add a product to the customer's wishlist.
+      operationId: add_to_wishlist_api_v1_wishlist_items_post
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WishlistItemAdd'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WishlistOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/wishlist/items/{product_id_or_slug}:
+    delete:
+      tags:
+      - account
+      summary: Remove From Wishlist
+      description: Remove a product from the customer's wishlist.
+      operationId: remove_from_wishlist_api_v1_wishlist_items__product_id_or_slug__delete
+      parameters:
+      - name: product_id_or_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Product Id Or Slug
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WishlistOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/products:
+    get:
+      tags:
+      - admin
+      summary: List Admin Products
+      description: List products for store administration with search and filtering.
+      operationId: list_admin_products_api_v1_admin_products_get
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Search term in name, description, or SKU
+          title: Q
+        description: Search term in name, description, or SKU
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: 'Filter by status: ACTIVE, DRAFT, ARCHIVED'
+          title: Status
+        description: 'Filter by status: ACTIVE, DRAFT, ARCHIVED'
+      - name: categoryId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Categoryid
+      - name: lowStock
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Filter products with low stock (<=5)
+          title: Lowstock
+        description: Filter products with low stock (<=5)
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Page
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 20
+          title: Pagesize
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminProductListOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - admin
+      summary: Create Product
+      description: Create a new product with optional initial variants and gallery
+        images.
+      operationId: create_product_api_v1_admin_products_post
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminProductCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminProductOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/products/{product_id}:
+    get:
+      tags:
+      - admin
+      summary: Get Admin Product
+      description: Retrieve full product details for administration.
+      operationId: get_admin_product_api_v1_admin_products__product_id__get
+      parameters:
+      - name: product_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Product Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminProductOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    patch:
+      tags:
+      - admin
+      summary: Update Product
+      description: Update product fields, taxonomy associations, and images.
+      operationId: update_product_api_v1_admin_products__product_id__patch
+      parameters:
+      - name: product_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Product Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminProductUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminProductOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - admin
+      summary: Delete Product
+      description: Soft delete product by transitioning its status to ARCHIVED.
+      operationId: delete_product_api_v1_admin_products__product_id__delete
+      parameters:
+      - name: product_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Product Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+                title: Response Delete Product Api V1 Admin Products  Product Id  Delete
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/products/{product_id}/variants:
+    post:
+      tags:
+      - admin
+      summary: Create Variant
+      description: Add a new sellable variant to a product.
+      operationId: create_variant_api_v1_admin_products__product_id__variants_post
+      parameters:
+      - name: product_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Product Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminVariantCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVariantOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/variants/{variant_id}:
+    patch:
+      tags:
+      - admin
+      summary: Update Variant
+      description: Update variant details (price, compare_at_price, cost, name, sku,
+        attributes).
+      operationId: update_variant_api_v1_admin_variants__variant_id__patch
+      parameters:
+      - name: variant_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Variant Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminVariantUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVariantOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - admin
+      summary: Delete Variant
+      description: Delete a variant if multiple variants exist on the product.
+      operationId: delete_variant_api_v1_admin_variants__variant_id__delete
+      parameters:
+      - name: variant_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Variant Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+                title: Response Delete Variant Api V1 Admin Variants  Variant Id  Delete
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/variants/{variant_id}/inventory:
+    patch:
+      tags:
+      - admin
+      summary: Adjust Variant Inventory
+      description: Adjust variant inventory level by absolute amount or delta.
+      operationId: adjust_variant_inventory_api_v1_admin_variants__variant_id__inventory_patch
+      parameters:
+      - name: variant_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Variant Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminInventoryAdjustRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVariantOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/categories:
+    post:
+      tags:
+      - admin
+      summary: Create Category
+      description: Create a new taxonomy category.
+      operationId: create_category_api_v1_admin_categories_post
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCategoryCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCategoryOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/categories/{category_id}:
+    patch:
+      tags:
+      - admin
+      summary: Update Category
+      description: Update taxonomy category details.
+      operationId: update_category_api_v1_admin_categories__category_id__patch
+      parameters:
+      - name: category_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Category Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCategoryUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCategoryOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - admin
+      summary: Delete Category
+      description: Delete a taxonomy category.
+      operationId: delete_category_api_v1_admin_categories__category_id__delete
+      parameters:
+      - name: category_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Category Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+                title: Response Delete Category Api V1 Admin Categories  Category
+                  Id  Delete
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/orders:
+    get:
+      tags:
+      - admin
+      summary: List Admin Orders
+      description: List all orders across customers with status filters and search.
+      operationId: list_admin_orders_api_v1_admin_orders_get
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filter by OrderStatus
+          title: Status
+        description: Filter by OrderStatus
+      - name: paymentStatus
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filter by PaymentStatus
+          title: Paymentstatus
+        description: Filter by PaymentStatus
+      - name: q
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Search by orderNumber, customer name, email, or phone
+          title: Q
+        description: Search by orderNumber, customer name, email, or phone
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Page
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 20
+          title: Pagesize
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOrderListOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/orders/{order_number_or_id}:
+    get:
+      tags:
+      - admin
+      summary: Get Admin Order
+      description: Retrieve full order details for administrative inspection.
+      operationId: get_admin_order_api_v1_admin_orders__order_number_or_id__get
+      parameters:
+      - name: order_number_or_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Order Number Or Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOrderDetailOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/orders/{order_number_or_id}/status:
+    patch:
+      tags:
+      - admin
+      summary: Update Order Status
+      description: Transition order status, update courier tracking info, and restore
+        inventory if cancelled.
+      operationId: update_order_status_api_v1_admin_orders__order_number_or_id__status_patch
+      parameters:
+      - name: order_number_or_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Order Number Or Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminOrderStatusUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOrderDetailOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/analytics:
+    get:
+      tags:
+      - admin
+      summary: Get Admin Analytics
+      description: Aggregate business KPIs, sales revenue, low stock alerts, and top
+        products.
+      operationId: get_admin_analytics_api_v1_admin_analytics_get
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminAnalyticsOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/coupons:
+    get:
+      tags:
+      - admin
+      summary: List Admin Coupons
+      description: List promotional coupons with optional active status and search
+        filters.
+      operationId: list_admin_coupons_api_v1_admin_coupons_get
+      parameters:
+      - name: active_only
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: Filter only active coupons
+          default: false
+          title: Active Only
+        description: Filter only active coupons
+      - name: search
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Search by code or description
+          title: Search
+        description: Search by code or description
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminCouponOut'
+                title: Response List Admin Coupons Api V1 Admin Coupons Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - admin
+      summary: Create Admin Coupon
+      description: Create a new promotional coupon code.
+      operationId: create_admin_coupon_api_v1_admin_coupons_post
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCouponCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCouponOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/coupons/{id}:
+    get:
+      tags:
+      - admin
+      summary: Get Admin Coupon
+      description: Retrieve coupon details by ID.
+      operationId: get_admin_coupon_api_v1_admin_coupons__id__get
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCouponOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    patch:
+      tags:
+      - admin
+      summary: Update Admin Coupon
+      description: Update coupon fields (e.g. toggle active, adjust discount, extend
+        validity).
+      operationId: update_admin_coupon_api_v1_admin_coupons__id__patch
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCouponUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCouponOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - admin
+      summary: Delete Admin Coupon
+      description: Delete a promo coupon permanently.
+      operationId: delete_admin_coupon_api_v1_admin_coupons__id__delete
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+                title: Response Delete Admin Coupon Api V1 Admin Coupons  Id  Delete
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/reviews:
+    get:
+      tags:
+      - admin
+      summary: List Admin Reviews
+      description: List customer reviews for moderation with optional product and
+        rating filters.
+      operationId: list_admin_reviews_api_v1_admin_reviews_get
+      parameters:
+      - name: product_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Filter by product ID
+          title: Product Id
+        description: Filter by product ID
+      - name: min_rating
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+            maximum: 5
+            minimum: 1
+          - type: 'null'
+          description: Filter by minimum star rating
+          title: Min Rating
+        description: Filter by minimum star rating
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminReviewOut'
+                title: Response List Admin Reviews Api V1 Admin Reviews Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/reviews/{id}:
+    delete:
+      tags:
+      - admin
+      summary: Delete Admin Review
+      description: Delete or moderate customer review, automatically recalculating
+        product average rating.
+      operationId: delete_admin_review_api_v1_admin_reviews__id__delete
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+                title: Response Delete Admin Review Api V1 Admin Reviews  Id  Delete
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/images/upload:
+    post:
+      tags:
+      - admin
+      summary: Upload Product Image
+      description: Upload product image to Cloudflare R2 object storage and return
+        CDN URL.
+      operationId: upload_product_image_api_v1_admin_images_upload_post
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_upload_product_image_api_v1_admin_images_upload_post'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  anyOf:
+                  - type: string
+                  - type: integer
+                title: Response Upload Product Image Api V1 Admin Images Upload Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /health:
+    get:
+      tags:
+      - system
+      summary: Health Check
+      description: Report whether the API process is available.
+      operationId: health_check_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+                title: Response Health Check Health Get
+components:
+  schemas:
+    AccountOverviewOut:
+      properties:
+        profile:
+          $ref: '#/components/schemas/ProfileOut'
+        totalOrders:
+          type: integer
+          title: Totalorders
+          default: 0
+        activeOrders:
+          type: integer
+          title: Activeorders
+          default: 0
+        savedAddresses:
+          type: integer
+          title: Savedaddresses
+          default: 0
+        wishlistItemsCount:
+          type: integer
+          title: Wishlistitemscount
+          default: 0
+      type: object
+      required:
+      - profile
+      title: AccountOverviewOut
+      description: Aggregated metrics for customer account dashboard.
+    AddressCreate:
+      properties:
+        name:
+          type: string
+          maxLength: 100
+          minLength: 2
+          title: Name
+          description: Recipient full name
+        phone:
+          type: string
+          maxLength: 20
+          minLength: 10
+          title: Phone
+          description: 10-digit contact mobile number
+        line1:
+          type: string
+          maxLength: 255
+          minLength: 3
+          title: Line1
+          description: House/Flat number, building name, street
+        line2:
+          anyOf:
+          - type: string
+            maxLength: 255
+          - type: 'null'
+          title: Line2
+          description: Apartment, suite, unit, etc.
+        landmark:
+          anyOf:
+          - type: string
+            maxLength: 255
+          - type: 'null'
+          title: Landmark
+          description: Nearby landmark
+        city:
+          type: string
+          maxLength: 100
+          minLength: 2
+          title: City
+          description: City/District
+        state:
+          type: string
+          maxLength: 100
+          minLength: 2
+          title: State
+          description: State/Province
+        postalCode:
+          type: string
+          maxLength: 10
+          minLength: 6
+          title: Postalcode
+          description: 6-digit Indian PIN code
+        country:
+          type: string
+          title: Country
+          description: ISO 3166-1 alpha-2 country code
+          default: IN
+        isDefault:
+          type: boolean
+          title: Isdefault
+          description: Set as default delivery address
+          default: false
+      type: object
+      required:
+      - name
+      - phone
+      - line1
+      - city
+      - state
+      - postalCode
+      title: AddressCreate
+      description: Schema to create a new address.
+    AddressOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        userId:
+          type: integer
+          title: Userid
+        name:
+          type: string
+          title: Name
+        phone:
+          type: string
+          title: Phone
+        line1:
+          type: string
+          title: Line1
+        line2:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Line2
+        landmark:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Landmark
+        city:
+          type: string
+          title: City
+        state:
+          type: string
+          title: State
+        postalCode:
+          type: string
+          title: Postalcode
+        country:
+          type: string
+          title: Country
+          default: IN
+        isDefault:
+          type: boolean
+          title: Isdefault
+          default: false
+        createdAt:
+          type: string
+          title: Createdat
+      type: object
+      required:
+      - id
+      - userId
+      - name
+      - phone
+      - line1
+      - city
+      - state
+      - postalCode
+      - createdAt
+      title: AddressOut
+      description: Address output representation.
+    AddressUpdate:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 100
+            minLength: 2
+          - type: 'null'
+          title: Name
+        phone:
+          anyOf:
+          - type: string
+            maxLength: 20
+            minLength: 10
+          - type: 'null'
+          title: Phone
+        line1:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 3
+          - type: 'null'
+          title: Line1
+        line2:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Line2
+        landmark:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Landmark
+        city:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: City
+        state:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: State
+        postalCode:
+          anyOf:
+          - type: string
+            maxLength: 10
+            minLength: 6
+          - type: 'null'
+          title: Postalcode
+        country:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Country
+        isDefault:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Isdefault
+      type: object
+      title: AddressUpdate
+      description: Schema to update an existing address.
+    AdminAnalyticsOut:
+      properties:
+        totalRevenue:
+          type: integer
+          title: Totalrevenue
+        totalRevenuePaise:
+          type: integer
+          title: Totalrevenuepaise
+        totalOrders:
+          type: integer
+          title: Totalorders
+        pendingOrders:
+          type: integer
+          title: Pendingorders
+        deliveredOrders:
+          type: integer
+          title: Deliveredorders
+        cancelledOrders:
+          type: integer
+          title: Cancelledorders
+        totalCustomers:
+          type: integer
+          title: Totalcustomers
+        totalProducts:
+          type: integer
+          title: Totalproducts
+        lowStockCount:
+          type: integer
+          title: Lowstockcount
+        lowStockItems:
+          items:
+            $ref: '#/components/schemas/AdminLowStockItem'
+          type: array
+          title: Lowstockitems
+        recentOrders:
+          items:
+            $ref: '#/components/schemas/AdminOrderDetailOut'
+          type: array
+          title: Recentorders
+        topSellingProducts:
+          items:
+            $ref: '#/components/schemas/AdminTopSellingProduct'
+          type: array
+          title: Topsellingproducts
+      type: object
+      required:
+      - totalRevenue
+      - totalRevenuePaise
+      - totalOrders
+      - pendingOrders
+      - deliveredOrders
+      - cancelledOrders
+      - totalCustomers
+      - totalProducts
+      - lowStockCount
+      title: AdminAnalyticsOut
+      description: Dashboard KPIs and store analytics.
+    AdminCategoryCreate:
+      properties:
+        name:
+          type: string
+          maxLength: 100
+          minLength: 2
+          title: Name
+        slug:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Slug
+        parentId:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Parentid
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        image:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Image
+        icon:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Icon
+        displayOrder:
+          type: integer
+          title: Displayorder
+          default: 0
+        isActive:
+          type: boolean
+          title: Isactive
+          default: true
+      type: object
+      required:
+      - name
+      title: AdminCategoryCreate
+      description: Payload to create a new category.
+    AdminCategoryOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        slug:
+          type: string
+          title: Slug
+        parentId:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Parentid
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        image:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Image
+        icon:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Icon
+        displayOrder:
+          type: integer
+          title: Displayorder
+          default: 0
+        isActive:
+          type: boolean
+          title: Isactive
+          default: true
+        productsCount:
+          type: integer
+          title: Productscount
+          default: 0
+      type: object
+      required:
+      - id
+      - name
+      - slug
+      title: AdminCategoryOut
+      description: Category representation for administration.
+    AdminCategoryUpdate:
+      properties:
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+        slug:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Slug
+        parentId:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Parentid
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        image:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Image
+        icon:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Icon
+        displayOrder:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Displayorder
+        isActive:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Isactive
+      type: object
+      title: AdminCategoryUpdate
+      description: Payload to update an existing category.
+    AdminCouponCreate:
+      properties:
+        code:
+          type: string
+          maxLength: 50
+          minLength: 2
+          title: Code
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        discountType:
+          type: string
+          title: Discounttype
+          description: PERCENTAGE or FLAT
+        discountValue:
+          type: integer
+          minimum: 1.0
+          title: Discountvalue
+        minOrderAmount:
+          type: integer
+          minimum: 0.0
+          title: Minorderamount
+          default: 0
+        maxDiscountAmount:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Maxdiscountamount
+        usageLimit:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          title: Usagelimit
+        validUntil:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Validuntil
+        isActive:
+          type: boolean
+          title: Isactive
+          default: true
+      type: object
+      required:
+      - code
+      - discountType
+      - discountValue
+      title: AdminCouponCreate
+      description: Payload to create a new promo coupon.
+    AdminCouponOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        code:
+          type: string
+          title: Code
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        discountType:
+          type: string
+          title: Discounttype
+        discountValue:
+          type: integer
+          title: Discountvalue
+        minOrderAmount:
+          type: integer
+          title: Minorderamount
+        maxDiscountAmount:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Maxdiscountamount
+        usageLimit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Usagelimit
+        usageCount:
+          type: integer
+          title: Usagecount
+        validFrom:
+          type: string
+          format: date-time
+          title: Validfrom
+        validUntil:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Validuntil
+        isActive:
+          type: boolean
+          title: Isactive
+        createdAt:
+          type: string
+          format: date-time
+          title: Createdat
+      type: object
+      required:
+      - id
+      - code
+      - discountType
+      - discountValue
+      - minOrderAmount
+      - usageCount
+      - validFrom
+      - isActive
+      - createdAt
+      title: AdminCouponOut
+      description: Full coupon representation for administration.
+    AdminCouponUpdate:
+      properties:
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        discountType:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Discounttype
+        discountValue:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          title: Discountvalue
+        minOrderAmount:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Minorderamount
+        maxDiscountAmount:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Maxdiscountamount
+        usageLimit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Usagelimit
+        validUntil:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Validuntil
+        isActive:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Isactive
+      type: object
+      title: AdminCouponUpdate
+      description: Payload to update an existing coupon.
+    AdminInventoryAdjustRequest:
+      properties:
+        stockQuantity:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Stockquantity
+          description: Set absolute stock quantity
+        adjustment:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Adjustment
+          description: Relative adjustment (+5, -3)
+        reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reason
+          description: Optional audit reason
+      type: object
+      title: AdminInventoryAdjustRequest
+      description: Payload to adjust or set inventory stock.
+    AdminLowStockItem:
+      properties:
+        variantId:
+          type: integer
+          title: Variantid
+        productId:
+          type: integer
+          title: Productid
+        productName:
+          type: string
+          title: Productname
+        sku:
+          type: string
+          title: Sku
+        variantName:
+          type: string
+          title: Variantname
+        stockQuantity:
+          type: integer
+          title: Stockquantity
+      type: object
+      required:
+      - variantId
+      - productId
+      - productName
+      - sku
+      - variantName
+      - stockQuantity
+      title: AdminLowStockItem
+      description: Low stock inventory alert item.
+    AdminOrderDetailOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        orderNumber:
+          type: string
+          title: Ordernumber
+        customerName:
+          type: string
+          title: Customername
+        customerPhone:
+          type: string
+          title: Customerphone
+        customerEmail:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Customeremail
+        status:
+          type: string
+          title: Status
+        paymentStatus:
+          type: string
+          title: Paymentstatus
+        paymentMethod:
+          type: string
+          title: Paymentmethod
+        currency:
+          type: string
+          title: Currency
+          default: INR
+        subtotal:
+          type: integer
+          title: Subtotal
+        subtotalPaise:
+          type: integer
+          title: Subtotalpaise
+        shippingFee:
+          type: integer
+          title: Shippingfee
+        shippingFeePaise:
+          type: integer
+          title: Shippingfeepaise
+        discountAmount:
+          type: integer
+          title: Discountamount
+        discountAmountPaise:
+          type: integer
+          title: Discountamountpaise
+        taxAmount:
+          type: integer
+          title: Taxamount
+          default: 0
+        taxAmountPaise:
+          type: integer
+          title: Taxamountpaise
+          default: 0
+        totalAmount:
+          type: integer
+          title: Totalamount
+        totalAmountPaise:
+          type: integer
+          title: Totalamountpaise
+        shippingAddress:
+          additionalProperties: true
+          type: object
+          title: Shippingaddress
+        billingAddress:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Billingaddress
+        trackingNumber:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Trackingnumber
+        courierName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Couriername
+        notes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Notes
+        items:
+          items:
+            $ref: '#/components/schemas/AdminOrderItemOut'
+          type: array
+          title: Items
+        statusHistory:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Statushistory
+        createdAt:
+          type: string
+          format: date-time
+          title: Createdat
+        updatedAt:
+          type: string
+          format: date-time
+          title: Updatedat
+      type: object
+      required:
+      - id
+      - orderNumber
+      - customerName
+      - customerPhone
+      - status
+      - paymentStatus
+      - paymentMethod
+      - subtotal
+      - subtotalPaise
+      - shippingFee
+      - shippingFeePaise
+      - discountAmount
+      - discountAmountPaise
+      - totalAmount
+      - totalAmountPaise
+      - shippingAddress
+      - createdAt
+      - updatedAt
+      title: AdminOrderDetailOut
+      description: Full order view for admin operations.
+    AdminOrderItemOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        productId:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Productid
+        variantId:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Variantid
+        productName:
+          type: string
+          title: Productname
+        productSlug:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Productslug
+        sku:
+          type: string
+          title: Sku
+        variantName:
+          type: string
+          title: Variantname
+        productImage:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Productimage
+        unitPrice:
+          type: integer
+          title: Unitprice
+        unitPricePaise:
+          type: integer
+          title: Unitpricepaise
+        quantity:
+          type: integer
+          title: Quantity
+        lineTotal:
+          type: integer
+          title: Linetotal
+        lineTotalPaise:
+          type: integer
+          title: Linetotalpaise
+        personalization:
+          additionalProperties: true
+          type: object
+          title: Personalization
+      type: object
+      required:
+      - id
+      - productName
+      - sku
+      - variantName
+      - unitPrice
+      - unitPricePaise
+      - quantity
+      - lineTotal
+      - lineTotalPaise
+      title: AdminOrderItemOut
+      description: Snapshotted order item for admin view.
+    AdminOrderListOut:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/AdminOrderDetailOut'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+        page:
+          type: integer
+          title: Page
+        pageSize:
+          type: integer
+          title: Pagesize
+      type: object
+      required:
+      - items
+      - total
+      - page
+      - pageSize
+      title: AdminOrderListOut
+      description: Paginated list of orders for administration.
+    AdminOrderStatusUpdate:
+      properties:
+        status:
+          type: string
+          title: Status
+          description: 'Target status: PROCESSING, READY_TO_SHIP, SHIPPED, OUT_FOR_DELIVERY,
+            DELIVERED, CANCELLED, REFUNDED'
+        trackingNumber:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Trackingnumber
+        courierName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Couriername
+        note:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Note
+          description: Audit note recorded in status history
+      type: object
+      required:
+      - status
+      title: AdminOrderStatusUpdate
+      description: Payload to transition order lifecycle status.
+    AdminProductCreate:
+      properties:
+        name:
+          type: string
+          maxLength: 200
+          minLength: 2
+          title: Name
+        slug:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Slug
+          description: Auto-slugified from name if omitted
+        shortDescription:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Shortdescription
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        brand:
+          type: string
+          title: Brand
+          default: Sulocraft
+        primaryImage:
+          type: string
+          title: Primaryimage
+        badge:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Badge
+        customizable:
+          type: boolean
+          title: Customizable
+          default: false
+        categoryIds:
+          items:
+            type: integer
+          type: array
+          title: Categoryids
+        tagIds:
+          items:
+            type: integer
+          type: array
+          title: Tagids
+        galleryImages:
+          items:
+            type: string
+          type: array
+          title: Galleryimages
+        variants:
+          items:
+            $ref: '#/components/schemas/AdminVariantCreate'
+          type: array
+          title: Variants
+        metadata:
+          additionalProperties: true
+          type: object
+          title: Metadata
+      type: object
+      required:
+      - name
+      - primaryImage
+      title: AdminProductCreate
+      description: Payload to create a new product.
+    AdminProductListOut:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/AdminProductOut'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+        page:
+          type: integer
+          title: Page
+        pageSize:
+          type: integer
+          title: Pagesize
+      type: object
+      required:
+      - items
+      - total
+      - page
+      - pageSize
+      title: AdminProductListOut
+      description: Paginated list of products.
+    AdminProductOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        slug:
+          type: string
+          title: Slug
+        shortDescription:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Shortdescription
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        status:
+          type: string
+          title: Status
+        brand:
+          type: string
+          title: Brand
+        primaryImage:
+          type: string
+          title: Primaryimage
+        badge:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Badge
+        customizable:
+          type: boolean
+          title: Customizable
+        rating:
+          type: number
+          title: Rating
+        reviewsCount:
+          type: integer
+          title: Reviewscount
+        categoryIds:
+          items:
+            type: integer
+          type: array
+          title: Categoryids
+        categoryNames:
+          items:
+            type: string
+          type: array
+          title: Categorynames
+        tagIds:
+          items:
+            type: integer
+          type: array
+          title: Tagids
+        tagNames:
+          items:
+            type: string
+          type: array
+          title: Tagnames
+        galleryImages:
+          items:
+            type: string
+          type: array
+          title: Galleryimages
+        variants:
+          items:
+            $ref: '#/components/schemas/AdminVariantOut'
+          type: array
+          title: Variants
+        totalStock:
+          type: integer
+          title: Totalstock
+          default: 0
+        minPrice:
+          type: integer
+          title: Minprice
+          default: 0
+        minPricePaise:
+          type: integer
+          title: Minpricepaise
+          default: 0
+        createdAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Createdat
+        updatedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Updatedat
+      type: object
+      required:
+      - id
+      - name
+      - slug
+      - status
+      - brand
+      - primaryImage
+      - customizable
+      - rating
+      - reviewsCount
+      title: AdminProductOut
+      description: Comprehensive product representation for administration.
+    AdminProductUpdate:
+      properties:
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+        slug:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Slug
+        shortDescription:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Shortdescription
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        status:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Status
+        brand:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Brand
+        primaryImage:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Primaryimage
+        badge:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Badge
+        customizable:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Customizable
+        categoryIds:
+          anyOf:
+          - items:
+              type: integer
+            type: array
+          - type: 'null'
+          title: Categoryids
+        tagIds:
+          anyOf:
+          - items:
+              type: integer
+            type: array
+          - type: 'null'
+          title: Tagids
+        galleryImages:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Galleryimages
+        metadata:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Metadata
+      type: object
+      title: AdminProductUpdate
+      description: Payload to update an existing product.
+    AdminReviewOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        productId:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Productid
+        productName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Productname
+        productSlug:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Productslug
+        authorName:
+          type: string
+          title: Authorname
+        location:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Location
+        rating:
+          type: integer
+          title: Rating
+        text:
+          type: string
+          title: Text
+        avatarUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Avatarurl
+        date:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Date
+      type: object
+      required:
+      - id
+      - authorName
+      - rating
+      - text
+      title: AdminReviewOut
+      description: Review representation for admin moderation.
+    AdminTopSellingProduct:
+      properties:
+        productId:
+          type: integer
+          title: Productid
+        productName:
+          type: string
+          title: Productname
+        totalSold:
+          type: integer
+          title: Totalsold
+        totalRevenue:
+          type: integer
+          title: Totalrevenue
+        totalRevenuePaise:
+          type: integer
+          title: Totalrevenuepaise
+      type: object
+      required:
+      - productId
+      - productName
+      - totalSold
+      - totalRevenue
+      - totalRevenuePaise
+      title: AdminTopSellingProduct
+      description: Product sales analytics item.
+    AdminVariantCreate:
+      properties:
+        sku:
+          type: string
+          title: Sku
+          description: Unique Stock Keeping Unit identifier
+        name:
+          type: string
+          title: Name
+          description: Variant name, e.g. 'Red / Medium'
+          default: Default
+        price:
+          type: integer
+          minimum: 0.0
+          title: Price
+          description: Retail price in INR rupees
+        compareAtPrice:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Compareatprice
+        cost:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Cost
+          description: Cost of goods in INR rupees
+        stockQuantity:
+          type: integer
+          minimum: 0.0
+          title: Stockquantity
+          default: 10
+        weight:
+          anyOf:
+          - type: number
+            minimum: 0.0
+          - type: 'null'
+          title: Weight
+          description: Weight in grams
+        attributes:
+          additionalProperties: true
+          type: object
+          title: Attributes
+      type: object
+      required:
+      - sku
+      - price
+      title: AdminVariantCreate
+      description: Payload to create a new product variant.
+    AdminVariantOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        productId:
+          type: integer
+          title: Productid
+        sku:
+          type: string
+          title: Sku
+        name:
+          type: string
+          title: Name
+        price:
+          type: integer
+          title: Price
+        pricePaise:
+          type: integer
+          title: Pricepaise
+        compareAtPrice:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Compareatprice
+        compareAtPricePaise:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Compareatpricepaise
+        cost:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Cost
+        stockQuantity:
+          type: integer
+          title: Stockquantity
+        weight:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Weight
+        status:
+          type: string
+          title: Status
+        attributes:
+          additionalProperties: true
+          type: object
+          title: Attributes
+        createdAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Createdat
+        updatedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Updatedat
+      type: object
+      required:
+      - id
+      - productId
+      - sku
+      - name
+      - price
+      - pricePaise
+      - stockQuantity
+      - status
+      title: AdminVariantOut
+      description: Detailed variant representation.
+    AdminVariantUpdate:
+      properties:
+        sku:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Sku
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+        price:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Price
+        compareAtPrice:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Compareatprice
+        cost:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Cost
+        stockQuantity:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Stockquantity
+        weight:
+          anyOf:
+          - type: number
+            minimum: 0.0
+          - type: 'null'
+          title: Weight
+        status:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Status
+        attributes:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Attributes
+      type: object
+      title: AdminVariantUpdate
+      description: Payload to partially update a variant.
+    AuthResponse:
+      properties:
+        user:
+          $ref: '#/components/schemas/UserOut'
+        message:
+          type: string
+          title: Message
+          default: Authentication successful
+        cartMerged:
+          type: boolean
+          title: Cartmerged
+          default: false
+      type: object
+      required:
+      - user
+      title: AuthResponse
+      description: Authentication success response.
+    Body_upload_product_image_api_v1_admin_images_upload_post:
+      properties:
+        file:
+          type: string
+          contentMediaType: application/octet-stream
+          title: File
+      type: object
+      required:
+      - file
+      title: Body_upload_product_image_api_v1_admin_images_upload_post
+    CartItemAdd:
+      properties:
+        productVariantId:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Productvariantid
+          description: ID of specific variant to add. If omitted, product_id or sku
+            must be provided.
+        productId:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Productid
+          description: ID of product (will auto-resolve to primary variant if product_variant_id
+            is omitted).
+        sku:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Sku
+          description: SKU of variant (alternative to product_variant_id).
+        quantity:
+          type: integer
+          maximum: 99.0
+          minimum: 1.0
+          title: Quantity
+          description: Quantity to add.
+          default: 1
+        personalization:
+          additionalProperties: true
+          type: object
+          title: Personalization
+          description: Custom personalization options (e.g. gift_message, color_choice).
+      type: object
+      title: CartItemAdd
+      description: Payload to add an item to the shopping cart.
+    CartItemOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        productId:
+          type: integer
+          title: Productid
+        productName:
+          type: string
+          title: Productname
+        productSlug:
+          type: string
+          title: Productslug
+        productImage:
+          type: string
+          title: Productimage
+        variantId:
+          type: integer
+          title: Variantid
+        variantSku:
+          type: string
+          title: Variantsku
+        variantName:
+          type: string
+          title: Variantname
+        unitPrice:
+          type: integer
+          title: Unitprice
+        unitPricePaise:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Unitpricepaise
+        currency:
+          type: string
+          title: Currency
+          default: INR
+        compareAtPrice:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Compareatprice
+        quantity:
+          type: integer
+          title: Quantity
+        lineTotal:
+          type: integer
+          title: Linetotal
+        lineTotalPaise:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Linetotalpaise
+        personalization:
+          additionalProperties: true
+          type: object
+          title: Personalization
+        stockAvailable:
+          type: integer
+          title: Stockavailable
+      type: object
+      required:
+      - id
+      - productId
+      - productName
+      - productSlug
+      - productImage
+      - variantId
+      - variantSku
+      - variantName
+      - unitPrice
+      - quantity
+      - lineTotal
+      - stockAvailable
+      title: CartItemOut
+      description: Representation of an individual cart line item.
+    CartItemUpdate:
+      properties:
+        quantity:
+          type: integer
+          maximum: 99.0
+          minimum: 1.0
+          title: Quantity
+          description: New quantity for this item.
+        personalization:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Personalization
+          description: Updated personalization attributes.
+      type: object
+      required:
+      - quantity
+      title: CartItemUpdate
+      description: Payload to update quantity or personalization of a cart line item.
+    CartMergeRequest:
+      properties:
+        guest_token:
+          type: string
+          title: Guest Token
+          description: Guest cart token to merge from.
+      type: object
+      required:
+      - guest_token
+      title: CartMergeRequest
+      description: Request to merge an anonymous guest cart into the active cart.
+    CartOut:
+      properties:
+        id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Id
+        guestToken:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Guesttoken
+        items:
+          items:
+            $ref: '#/components/schemas/CartItemOut'
+          type: array
+          title: Items
+          default: []
+        itemCount:
+          type: integer
+          title: Itemcount
+          default: 0
+        subtotal:
+          type: integer
+          title: Subtotal
+          default: 0
+        subtotalPaise:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Subtotalpaise
+        currency:
+          type: string
+          title: Currency
+          default: INR
+        status:
+          type: string
+          title: Status
+          default: ACTIVE
+      type: object
+      title: CartOut
+      description: Complete shopping cart representation.
+    CategoryOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        slug:
+          type: string
+          title: Slug
+        parent_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Parent Id
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        image:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Image
+        icon:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Icon
+        display_order:
+          type: integer
+          title: Display Order
+          default: 0
+        is_active:
+          type: boolean
+          title: Is Active
+          default: true
+        children:
+          items:
+            $ref: '#/components/schemas/CategoryOut'
+          type: array
+          title: Children
+          default: []
+      type: object
+      required:
+      - id
+      - name
+      - slug
+      title: CategoryOut
+      description: Category output schema with nested children hierarchy.
+    CouponApplyRequest:
+      properties:
+        code:
+          type: string
+          maxLength: 50
+          minLength: 2
+          title: Code
+          description: Coupon promo code, e.g. 'WELCOME10'
+      type: object
+      required:
+      - code
+      title: CouponApplyRequest
+      description: Payload to apply a promotional coupon code.
+    CouponApplyResponse:
+      properties:
+        code:
+          type: string
+          title: Code
+        discountType:
+          type: string
+          title: Discounttype
+        discountValue:
+          type: integer
+          title: Discountvalue
+        discountAmount:
+          type: integer
+          title: Discountamount
+        discountAmountPaise:
+          type: integer
+          title: Discountamountpaise
+        subtotalBeforeDiscount:
+          type: integer
+          title: Subtotalbeforediscount
+        subtotalAfterDiscount:
+          type: integer
+          title: Subtotalafterdiscount
+        subtotalAfterDiscountPaise:
+          type: integer
+          title: Subtotalafterdiscountpaise
+        message:
+          type: string
+          title: Message
+          default: Coupon applied successfully
+      type: object
+      required:
+      - code
+      - discountType
+      - discountValue
+      - discountAmount
+      - discountAmountPaise
+      - subtotalBeforeDiscount
+      - subtotalAfterDiscount
+      - subtotalAfterDiscountPaise
+      title: CouponApplyResponse
+      description: Result of applying a promotional coupon to cart.
+    GoogleAuthRequest:
+      properties:
+        credential:
+          type: string
+          title: Credential
+          description: Google ID token credential from Google Sign-In button.
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+          description: User full name.
+        email:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Email
+          description: User email address.
+        sub:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Sub
+          description: Google Subject / user ID.
+      type: object
+      required:
+      - credential
+      title: GoogleAuthRequest
+      description: Payload for One-Click Google Authentication.
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    OccasionOut:
+      properties:
+        id:
+          type: string
+          title: Id
+        name:
+          type: string
+          title: Name
+        icon:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Icon
+        image_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Image Url
+      type: object
+      required:
+      - id
+      - name
+      title: OccasionOut
+      description: Curated occasions for gift navigation.
+    OrderCreate:
+      properties:
+        addressId:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Addressid
+          description: ID of saved address to use
+        shippingAddress:
+          anyOf:
+          - $ref: '#/components/schemas/AddressCreate'
+          - type: 'null'
+          description: Inline address if not using saved address
+        paymentMethod:
+          type: string
+          title: Paymentmethod
+          description: 'Payment method: COD, UPI, CARD, NETBANKING'
+          default: COD
+        customerName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Customername
+          description: Customer full name
+        customerPhone:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Customerphone
+          description: Customer mobile number
+        customerEmail:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Customeremail
+          description: Customer email address
+        couponCode:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Couponcode
+          description: Optional promo coupon code
+        notes:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Notes
+          description: Optional delivery or gift notes
+      type: object
+      title: OrderCreate
+      description: Order checkout request.
+    OrderItemOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        orderId:
+          type: integer
+          title: Orderid
+        productId:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Productid
+        productVariantId:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Productvariantid
+        productName:
+          type: string
+          title: Productname
+        productSlug:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Productslug
+        sku:
+          type: string
+          title: Sku
+        variantName:
+          type: string
+          title: Variantname
+        productImage:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Productimage
+        unitPrice:
+          type: integer
+          title: Unitprice
+        unitPricePaise:
+          type: integer
+          title: Unitpricepaise
+        quantity:
+          type: integer
+          title: Quantity
+        lineTotal:
+          type: integer
+          title: Linetotal
+        lineTotalPaise:
+          type: integer
+          title: Linetotalpaise
+        personalization:
+          additionalProperties: true
+          type: object
+          title: Personalization
+      type: object
+      required:
+      - id
+      - orderId
+      - productName
+      - sku
+      - variantName
+      - unitPrice
+      - unitPricePaise
+      - quantity
+      - lineTotal
+      - lineTotalPaise
+      title: OrderItemOut
+      description: Snapshotted line item of an order.
+    OrderOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        orderNumber:
+          type: string
+          title: Ordernumber
+        userId:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Userid
+        customerName:
+          type: string
+          title: Customername
+        customerPhone:
+          type: string
+          title: Customerphone
+        customerEmail:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Customeremail
+        shippingAddress:
+          additionalProperties: true
+          type: object
+          title: Shippingaddress
+        billingAddress:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Billingaddress
+        status:
+          type: string
+          title: Status
+        paymentStatus:
+          type: string
+          title: Paymentstatus
+        paymentMethod:
+          type: string
+          title: Paymentmethod
+        currency:
+          type: string
+          title: Currency
+          default: INR
+        subtotal:
+          type: integer
+          title: Subtotal
+        subtotalPaise:
+          type: integer
+          title: Subtotalpaise
+        shippingFee:
+          type: integer
+          title: Shippingfee
+        shippingFeePaise:
+          type: integer
+          title: Shippingfeepaise
+        discountAmount:
+          type: integer
+          title: Discountamount
+          default: 0
+        discountAmountPaise:
+          type: integer
+          title: Discountamountpaise
+          default: 0
+        taxAmount:
+          type: integer
+          title: Taxamount
+          default: 0
+        taxAmountPaise:
+          type: integer
+          title: Taxamountpaise
+          default: 0
+        totalAmount:
+          type: integer
+          title: Totalamount
+        totalAmountPaise:
+          type: integer
+          title: Totalamountpaise
+        notes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Notes
+        items:
+          items:
+            $ref: '#/components/schemas/OrderItemOut'
+          type: array
+          title: Items
+          default: []
+        statusHistory:
+          items:
+            $ref: '#/components/schemas/OrderStatusHistoryOut'
+          type: array
+          title: Statushistory
+        trackingNumber:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Trackingnumber
+        courierName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Couriername
+        estimatedDelivery:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Estimateddelivery
+        createdAt:
+          type: string
+          title: Createdat
+        updatedAt:
+          type: string
+          title: Updatedat
+      type: object
+      required:
+      - id
+      - orderNumber
+      - customerName
+      - customerPhone
+      - shippingAddress
+      - status
+      - paymentStatus
+      - paymentMethod
+      - subtotal
+      - subtotalPaise
+      - shippingFee
+      - shippingFeePaise
+      - totalAmount
+      - totalAmountPaise
+      - createdAt
+      - updatedAt
+      title: OrderOut
+      description: Detailed order response representation.
+    OrderStatusHistoryOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        status:
+          type: string
+          title: Status
+        note:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Note
+        timestamp:
+          type: string
+          title: Timestamp
+      type: object
+      required:
+      - id
+      - status
+      - timestamp
+      title: OrderStatusHistoryOut
+      description: Audit log entry for order status transition.
+    OrderTrackingOut:
+      properties:
+        orderNumber:
+          type: string
+          title: Ordernumber
+        status:
+          type: string
+          title: Status
+        paymentStatus:
+          type: string
+          title: Paymentstatus
+        trackingNumber:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Trackingnumber
+        courierName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Couriername
+        estimatedDelivery:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Estimateddelivery
+        timeline:
+          items:
+            $ref: '#/components/schemas/OrderStatusHistoryOut'
+          type: array
+          title: Timeline
+          default: []
+      type: object
+      required:
+      - orderNumber
+      - status
+      - paymentStatus
+      title: OrderTrackingOut
+      description: Order tracking details and timeline.
+    PaymentIntentCreate:
+      properties:
+        orderId:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Orderid
+          description: Database ID of the order
+        orderNumber:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ordernumber
+          description: Readable order number (e.g. CB-20260930-XXXX)
+        provider:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Provider
+          description: 'Payment provider: ''razorpay'' or ''mock'''
+      type: object
+      title: PaymentIntentCreate
+      description: Request to initiate payment for an existing order.
+    PaymentIntentOut:
+      properties:
+        paymentId:
+          type: integer
+          title: Paymentid
+        orderId:
+          type: integer
+          title: Orderid
+        orderNumber:
+          type: string
+          title: Ordernumber
+        provider:
+          type: string
+          title: Provider
+        providerOrderId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Providerorderid
+        amount:
+          type: integer
+          title: Amount
+        amountPaise:
+          type: integer
+          title: Amountpaise
+        currency:
+          type: string
+          title: Currency
+          default: INR
+        keyId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Keyid
+        notes:
+          additionalProperties: true
+          type: object
+          title: Notes
+      type: object
+      required:
+      - paymentId
+      - orderId
+      - orderNumber
+      - provider
+      - amount
+      - amountPaise
+      title: PaymentIntentOut
+      description: Payment intent output returned to frontend checkout.
+    PaymentOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        orderId:
+          type: integer
+          title: Orderid
+        provider:
+          type: string
+          title: Provider
+        providerPaymentId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Providerpaymentid
+        providerOrderId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Providerorderid
+        amount:
+          type: integer
+          title: Amount
+        amountPaise:
+          type: integer
+          title: Amountpaise
+        currency:
+          type: string
+          title: Currency
+          default: INR
+        status:
+          type: string
+          title: Status
+        paymentMethodDetail:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Paymentmethoddetail
+        createdAt:
+          type: string
+          title: Createdat
+        updatedAt:
+          type: string
+          title: Updatedat
+      type: object
+      required:
+      - id
+      - orderId
+      - provider
+      - amount
+      - amountPaise
+      - status
+      - createdAt
+      - updatedAt
+      title: PaymentOut
+      description: Detailed payment record representation.
+    PaymentVerifyRequest:
+      properties:
+        paymentId:
+          type: integer
+          title: Paymentid
+        providerPaymentId:
+          type: string
+          title: Providerpaymentid
+          description: Gateway payment ID (e.g. pay_XXXX)
+        providerOrderId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Providerorderid
+          description: Gateway order ID
+        providerSignature:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Providersignature
+          description: HMAC verification signature
+        paymentMethodDetail:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Paymentmethoddetail
+          description: e.g. UPI / Google Pay
+      type: object
+      required:
+      - paymentId
+      - providerPaymentId
+      title: PaymentVerifyRequest
+      description: Client verification callback payload after gateway popup completion.
+    PaymentWebhookResult:
+      properties:
+        status:
+          type: string
+          title: Status
+          default: ok
+        message:
+          type: string
+          title: Message
+      type: object
+      required:
+      - message
+      title: PaymentWebhookResult
+      description: Webhook acknowledgment response.
+    ProductDetail:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        slug:
+          type: string
+          title: Slug
+        short_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Short Description
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        category:
+          type: string
+          title: Category
+        categories:
+          items:
+            type: string
+          type: array
+          title: Categories
+          default: []
+        tags:
+          items:
+            type: string
+          type: array
+          title: Tags
+          default: []
+        images:
+          items:
+            type: string
+          type: array
+          title: Images
+          default: []
+        imageUrls:
+          items:
+            type: string
+          type: array
+          title: Imageurls
+        gallery:
+          items:
+            $ref: '#/components/schemas/ProductImageOut'
+          type: array
+          title: Gallery
+          default: []
+        variants:
+          items:
+            $ref: '#/components/schemas/VariantOut'
+          type: array
+          title: Variants
+          default: []
+        price:
+          type: integer
+          title: Price
+        pricePaise:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Pricepaise
+        currency:
+          type: string
+          title: Currency
+          default: INR
+        compareAtPrice:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Compareatprice
+        originalPrice:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Originalprice
+        rating:
+          type: number
+          title: Rating
+          default: 5.0
+        reviews:
+          type: integer
+          title: Reviews
+          default: 0
+        reviewCount:
+          type: integer
+          title: Reviewcount
+          default: 0
+        inStock:
+          type: boolean
+          title: Instock
+          default: true
+        inventoryStatus:
+          type: string
+          title: Inventorystatus
+          default: IN_STOCK
+        badge:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Badge
+        brand:
+          type: string
+          title: Brand
+          default: Sulocraft
+        customizable:
+          type: boolean
+          title: Customizable
+          default: false
+        metadata_json:
+          additionalProperties: true
+          type: object
+          title: Metadata Json
+        customerReviews:
+          items:
+            $ref: '#/components/schemas/ReviewOut'
+          type: array
+          title: Customerreviews
+      type: object
+      required:
+      - id
+      - name
+      - slug
+      - category
+      - price
+      title: ProductDetail
+      description: Full product detail conforming to Section 2 of Specification.
+    ProductImageOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        url:
+          type: string
+          title: Url
+        alt_text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Alt Text
+        sort_order:
+          type: integer
+          title: Sort Order
+          default: 0
+        is_primary:
+          type: boolean
+          title: Is Primary
+          default: false
+        variant_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Variant Id
+      type: object
+      required:
+      - id
+      - url
+      title: ProductImageOut
+      description: Product gallery image.
+    ProductListItem:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        slug:
+          type: string
+          title: Slug
+        price:
+          type: integer
+          title: Price
+        pricePaise:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Pricepaise
+        currency:
+          type: string
+          title: Currency
+          default: INR
+        compareAtPrice:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Compareatprice
+        originalPrice:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Originalprice
+        rating:
+          type: number
+          title: Rating
+          default: 5.0
+        reviews:
+          type: integer
+          title: Reviews
+          default: 0
+        reviewCount:
+          type: integer
+          title: Reviewcount
+          default: 0
+        image:
+          type: string
+          title: Image
+        imageUrls:
+          items:
+            type: string
+          type: array
+          title: Imageurls
+        category:
+          type: string
+          title: Category
+        categories:
+          items:
+            type: string
+          type: array
+          title: Categories
+          default: []
+        badge:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Badge
+        tags:
+          items:
+            type: string
+          type: array
+          title: Tags
+          default: []
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        customizable:
+          type: boolean
+          title: Customizable
+          default: false
+        inStock:
+          type: boolean
+          title: Instock
+          default: true
+        inventoryStatus:
+          type: string
+          title: Inventorystatus
+          default: IN_STOCK
+      type: object
+      required:
+      - id
+      - name
+      - slug
+      - price
+      - image
+      - category
+      title: ProductListItem
+      description: Product card summary conforming to Section 2 of Specification &
+        frontend UI.
+    ProfileOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+        email:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Email
+        phone:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Phone
+        status:
+          type: string
+          title: Status
+        identities:
+          items:
+            type: string
+          type: array
+          title: Identities
+          default: []
+        createdAt:
+          type: string
+          title: Createdat
+        lastLoginAt:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Lastloginat
+      type: object
+      required:
+      - id
+      - status
+      - createdAt
+      title: ProfileOut
+      description: Customer profile details.
+    ProfileUpdate:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 100
+            minLength: 2
+          - type: 'null'
+          title: Name
+        email:
+          anyOf:
+          - type: string
+            maxLength: 255
+          - type: 'null'
+          title: Email
+      type: object
+      title: ProfileUpdate
+      description: Payload to update customer profile fields.
+    ReviewCreateRequest:
+      properties:
+        rating:
+          type: integer
+          maximum: 5.0
+          minimum: 1.0
+          title: Rating
+          description: Star rating from 1 to 5
+        text:
+          type: string
+          maxLength: 2000
+          minLength: 3
+          title: Text
+          description: Review text or customer feedback
+        authorName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorname
+          description: Customer display name
+        location:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Location
+          description: City / Region, e.g. 'Bengaluru'
+      type: object
+      required:
+      - rating
+      - text
+      title: ReviewCreateRequest
+      description: Payload for customer review submission.
+    ReviewOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        productId:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Productid
+        productName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Productname
+        authorName:
+          type: string
+          title: Authorname
+          default: Verified Customer
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+        location:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Location
+        rating:
+          type: integer
+          title: Rating
+          default: 5
+        text:
+          type: string
+          title: Text
+        image:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Image
+        avatarUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Avatarurl
+        date:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Date
+      type: object
+      required:
+      - id
+      - text
+      title: ReviewOut
+      description: Customer product reviews.
+    SendOtpRequest:
+      properties:
+        phone:
+          type: string
+          title: Phone
+          description: Customer 10-digit mobile phone number.
+      type: object
+      required:
+      - phone
+      title: SendOtpRequest
+      description: Payload to request an SMS OTP.
+    SendOtpResponse:
+      properties:
+        status:
+          type: string
+          title: Status
+          default: ok
+        phone:
+          type: string
+          title: Phone
+        cooldownSeconds:
+          type: integer
+          title: Cooldownseconds
+          default: 60
+        message:
+          type: string
+          title: Message
+          default: OTP sent successfully
+        devOtp:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Devotp
+          description: Provided in local/test mode only.
+      type: object
+      required:
+      - phone
+      title: SendOtpResponse
+      description: Response after sending OTP.
+    UserOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+        email:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Email
+        phone:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Phone
+        role:
+          type: string
+          title: Role
+          default: CUSTOMER
+        status:
+          type: string
+          title: Status
+          default: ACTIVE
+        identities:
+          items:
+            type: string
+          type: array
+          title: Identities
+          default: []
+        createdAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Createdat
+        lastLoginAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Lastloginat
+      type: object
+      required:
+      - id
+      title: UserOut
+      description: Unified user profile representation.
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    VariantOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        product_id:
+          type: integer
+          title: Product Id
+        sku:
+          type: string
+          title: Sku
+        name:
+          type: string
+          title: Name
+          default: Default
+        price:
+          type: integer
+          title: Price
+        pricePaise:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Pricepaise
+        currency:
+          type: string
+          title: Currency
+          default: INR
+        compareAtPrice:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Compareatprice
+        stockQuantity:
+          type: integer
+          title: Stockquantity
+          default: 10
+        weight:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Weight
+        status:
+          type: string
+          title: Status
+          default: ACTIVE
+        attributes_json:
+          additionalProperties: true
+          type: object
+          title: Attributes Json
+      type: object
+      required:
+      - id
+      - product_id
+      - sku
+      - price
+      title: VariantOut
+      description: Sellable product variant carrying unique SKU, price, stock, and
+        attributes.
+    VerifyOtpRequest:
+      properties:
+        phone:
+          type: string
+          title: Phone
+          description: Customer mobile phone number.
+        otp:
+          type: string
+          maxLength: 6
+          minLength: 4
+          title: Otp
+          description: 4 to 6 digit verification code.
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+          description: Optional customer name for new accounts.
+      type: object
+      required:
+      - phone
+      - otp
+      title: VerifyOtpRequest
+      description: Payload to verify OTP and log in.
+    WishlistItemAdd:
+      properties:
+        productId:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Productid
+        productSlug:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Productslug
+      type: object
+      title: WishlistItemAdd
+      description: Request to add an item to the wishlist.
+    WishlistItemOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        productId:
+          type: integer
+          title: Productid
+        productName:
+          type: string
+          title: Productname
+        productSlug:
+          type: string
+          title: Productslug
+        productImage:
+          type: string
+          title: Productimage
+        price:
+          type: integer
+          title: Price
+        pricePaise:
+          type: integer
+          title: Pricepaise
+        compareAtPrice:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Compareatprice
+        originalPrice:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Originalprice
+        badge:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Badge
+        category:
+          type: string
+          title: Category
+        inStock:
+          type: boolean
+          title: Instock
+          default: true
+        rating:
+          type: number
+          title: Rating
+          default: 5.0
+        reviews:
+          type: integer
+          title: Reviews
+          default: 0
+        createdAt:
+          type: string
+          title: Createdat
+      type: object
+      required:
+      - id
+      - productId
+      - productName
+      - productSlug
+      - productImage
+      - price
+      - pricePaise
+      - category
+      - createdAt
+      title: WishlistItemOut
+      description: Snapshotted product item inside a customer's wishlist.
+    WishlistOut:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/WishlistItemOut'
+          type: array
+          title: Items
+          default: []
+        totalItems:
+          type: integer
+          title: Totalitems
+          default: 0
+      type: object
+      title: WishlistOut
+      description: Customer wishlist response.

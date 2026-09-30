@@ -1,0 +1,8 @@
+.git
+node_modules
+dist
+backend/.venv
+__pycache__
+*.py[cod]
+docs
+E-commerce Website Design.zip
