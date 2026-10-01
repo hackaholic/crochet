@@ -43,7 +43,7 @@ Use a separate Worker for the shared development site. It must never deploy over
    | Field | Value |
    | --- | --- |
    | Production branch | `dev` |
-   | Build command | `pnpm build:dev` |
+   | Build command | `pnpm build` |
    | Deploy command | `npx wrangler deploy --env dev` |
    | Preview command | `npx wrangler preview --env dev` |
    | Root directory | `/` |
@@ -54,7 +54,9 @@ Use a separate Worker for the shared development site. It must never deploy over
 
 The committed `.env.preprod` makes this a full-storefront build and points it to `https://api-dev.sulocraft.com/api/v1`. These are public Vite build settings, so no Cloudflare dashboard variable is required and no variable needs to be edited between deployments. Never add credentials or secrets to this file.
 
-The `wrangler.jsonc` `dev` environment publishes a separately named Worker, so `npx wrangler deploy --env dev` cannot overwrite the production `sulocraft` Worker. The build command must remain `pnpm build:dev`; the generic `pnpm build` intentionally loads `.env.production` and produces the production Coming Soon site.
+Cloudflare Workers Builds supplies `WORKERS_CI_BRANCH` automatically. The repository build script maps `dev` to Vite's `preprod` mode and every other branch to `production`, so the same `pnpm build` command safely selects the correct committed environment file. `pnpm build:dev` and `pnpm build:production` remain available for explicit local verification.
+
+The `wrangler.jsonc` `dev` environment publishes a separately named Worker, so `npx wrangler deploy --env dev` cannot overwrite the production `sulocraft` Worker.
 
 The development frontend requires the VPS staging API at `api-dev.sulocraft.com`. Until that API is deployed and reachable, catalogue and account features that need FastAPI will show their normal unavailable/error states.
 

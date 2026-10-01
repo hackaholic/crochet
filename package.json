@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "build:dev": "vite build --mode preprod",
-    "test": "vitest run",
+    "build": "node scripts/build-frontend.mjs",
+    "build:dev": "node scripts/build-frontend.mjs preprod",
+    "build:production": "node scripts/build-frontend.mjs production",
+    "test": "node --test scripts/frontend-build-mode.node-test.mjs && vitest run",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "format": "oxfmt"
