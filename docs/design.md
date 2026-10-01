@@ -50,7 +50,7 @@ Rules: use `ink` or `brown-dark` for readable text; reserve terracotta for the m
 | Primary button | Terracotta fill, white semibold Nunito label, fully rounded |
 | Secondary button | Cream or white surface, brown text, beige border, fully rounded |
 | Inputs | White surface, beige border, brown text, visible terracotta focus state |
-| Product imagery | Consistent square frame (`aspect-square`) with `object-cover`, rounded corners, and meaningful alt text |
+| Product imagery | Consistent portrait frame (`aspect-[3/4]`) matching category highlights, with `object-cover`, rounded corners, and meaningful alt text |
 | Motion | 200–300ms ease-out transitions; no looping decorative motion unless it communicates state |
 
 ## Responsive rules

@@ -6,7 +6,7 @@ import type { Product } from '../data/products';
 afterEach(cleanup);
 
 describe('ProductCard', () => {
-  it('keeps every product image inside the same square frame', () => {
+  it('keeps every product image inside the same portrait frame used by category highlights', () => {
     const product: Product = {
       id: 1,
       name: 'Crochet Rose Bouquet',
@@ -20,7 +20,7 @@ describe('ProductCard', () => {
     render(<ProductCard product={product} isWishlisted={false} onAddToCart={vi.fn()} onToggleWishlist={vi.fn()} onProductClick={vi.fn()} />);
 
     expect(screen.getByTestId('product-card')).toHaveClass('flex', 'h-full', 'flex-col');
-    expect(screen.getByTestId('product-image-frame')).toHaveClass('aspect-square', 'w-full', 'shrink-0');
+    expect(screen.getByTestId('product-image-frame')).toHaveClass('aspect-[3/4]', 'w-full', 'shrink-0');
     expect(screen.getByRole('img', { name: product.name })).toHaveClass('h-full', 'w-full', 'object-cover');
   });
 });

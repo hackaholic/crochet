@@ -19,6 +19,7 @@ describe('HomepageSections', () => {
     expect(screen.getByRole('button', { name: /show all categories/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Shop by Category' }).closest('section')).toHaveClass('storefront-shell');
     expect(screen.getByRole('heading', { name: 'Most Loved Creations' }).parentElement).toHaveClass('text-center');
+    expect(screen.getByTestId('product-grid')).toHaveClass('grid-cols-2', 'md:grid-cols-4');
     expect(screen.getByRole('heading', { name: 'Festival offer' }).closest('section')).toHaveClass('w-full');
     expect(screen.queryByText('Hidden')).not.toBeInTheDocument();
   });

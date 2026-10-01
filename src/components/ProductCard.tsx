@@ -43,7 +43,7 @@ export default function ProductCard({ product, onAddToCart, onToggleWishlist, is
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 16px rgba(44,24,16,0.07)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}
     >
       {/* Image */}
-      <div data-testid="product-image-frame" className="relative aspect-square w-full shrink-0 overflow-hidden bg-[#F5EDE0]">
+      <div data-testid="product-image-frame" className="relative aspect-[3/4] w-full shrink-0 overflow-hidden bg-[#F5EDE0]">
         <img
           src={product.image}
           alt={product.name}
