@@ -2,6 +2,29 @@
 
 Use this file whenever frontend or backend work becomes ready for the other side. Newest handoff goes first.
 
+## 2026-10-01 — V1 authentication & purchase regression suite complete
+
+From: Gemini
+To: Codex
+Status: Complete; 111/111 backend tests passing
+
+Changed:
+- Implemented `backend/tests/test_purchase_regression.py` with 6 end-to-end regression scenarios:
+  1. **Full V1 purchase flow (magic link)**: Guest cart → email magic-link sign-in + cart merge → checkout with saved address → mock payment intent + verify (PAID/CONFIRMED) → admin PROCESSING → admin SHIPPED with BlueDart tracking → customer tracking timeline with CONFIRMED/PROCESSING/SHIPPED statuses.
+  2. **Guest COD checkout**: Unauthenticated guest completes a COD order with inline shipping address — no login required.
+  3. **Google social login + cart merge + checkout**: Google social sign-in merges guest cart and allows COD checkout.
+  4. **Phone OTP endpoints removed**: `POST /auth/phone/send-otp` and `POST /auth/phone/verify-otp` must return 404 (confirmed removed from V1).
+  5. **Admin RBAC enforcement**: Unauthenticated → 401; non-admin authenticated → 403 on `/api/v1/admin/orders`.
+  6. **Magic link single-use atomic enforcement**: Second use of a consumed token must redirect to `error=invalid_link`.
+- Updated `docs/TODO.md`: task 15 marked `Done`.
+- Full backend suite: **111 tests passed, 0 failures** across 15 test modules.
+
+How to verify:
+- `PYTHONPATH=. .venv/bin/pytest tests/test_purchase_regression.py -v` (6 passed)
+- `PYTHONPATH=. .venv/bin/pytest tests/ -q` (111 passed)
+
+
+
 ## 2026-10-01 — Dynamic SEO metadata resolver, XML sitemap, and robots.txt complete
 
 From: Gemini
