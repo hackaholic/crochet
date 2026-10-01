@@ -9,6 +9,7 @@ This plan turns the multi-agent specification into small, ordered tasks. Only on
 - The frontend never calculates final prices, stock, discounts, or order eligibility.
 - Visitors browse and use a guest cart before authentication.
 - Complete and verify each task before starting the next task in that stream.
+- **Required pre-push gate for `dev`:** before every push, rebuild/restart the affected local Docker services and verify the exact changed behavior in the running site at `http://localhost:8080` (and its local API at `http://localhost:8000` when relevant). Confirm updated images and database-driven sections render in the browser. Do not push to `dev` until this local verification passes.
 
 ## Milestone 1 — Foundation
 
