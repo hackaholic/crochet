@@ -99,6 +99,9 @@ export default function ProductPage({ product: initialProduct, onAddToCart, onTo
               <img
                 src={images[activeImg]}
                 alt={product.name}
+                fetchPriority="high"
+                decoding="async"
+                sizes="(min-width: 1024px) 50vw, 100vw"
                 className="w-full h-full object-cover transition-opacity duration-300"
               />
               {/* Nav arrows */}
@@ -131,7 +134,7 @@ export default function ProductPage({ product: initialProduct, onAddToCart, onTo
                   onClick={() => setActiveImg(i)}
                   className={`w-20 h-20 rounded-xl overflow-hidden border-2 transition-all shrink-0 ${i === activeImg ? 'border-[#C4622D]' : 'border-transparent opacity-60 hover:opacity-80'}`}
                 >
-                  <img src={img} alt="" className="w-full h-full object-cover" />
+                  <img src={img} alt="" loading="lazy" decoding="async" sizes="80px" className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>

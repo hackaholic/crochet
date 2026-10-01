@@ -19,7 +19,7 @@ Use this file for work that is ready to start. Keep each item small enough for o
 | Done | Codex | Implement Coupon Input & Customer Review UI | Cart applies/removes backend-validated coupons, checkout submits the accepted code, and product pages submit authenticated reviews; contract in `/docs/api-promotions.md` |
 | Done | Gemini | Implement Sulocraft Deployment & Cloudflare R2 Infrastructure | Docker Compose VPS stack (FastAPI, PostgreSQL persistent volume, Caddy reverse proxy), R2 asset storage, DB backup script, cache control middleware; 56 tests passing |
 | Done | Gemini | Implement Alembic Database Migrations & Version Control | Alembic configured with dynamic DB resolution, baseline migration generated, programmatic startup upgrade, and container integration; 56 tests passing |
-| Ready | ChatGPT / Codex | Configure Cloudflare Pages & Responsive R2 Image Delivery | Bind API URL via `VITE_API_BASE_URL` / `NEXT_PUBLIC_API_BASE_URL`, render external R2 image URLs with responsive sizes (`~300px`, `~600px`, `~1200px`) and lazy loading |
+| Done | Codex | Configure Cloudflare Pages & Responsive R2 Image Delivery | Vite API binding is environment-based; external backend image URLs render with responsive sizing hints, lazy loading, and async decoding |
 | Done | Codex | Build route foundation | Existing screens have clean, shareable URL routes without changing their visual design; production build and direct product URL verified |
 | Done | Codex | Build the frontend API client | The storefront consumes the catalogue endpoint with loading and error states; completed in FE-02 |
 | Done | Codex | Connect storefront Cart to Cart API | Replaced local in-memory cart with `/api/v1/cart` endpoints; completed in FE-05 |

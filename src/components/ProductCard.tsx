@@ -47,6 +47,8 @@ export default function ProductCard({ product, onAddToCart, onToggleWishlist, is
           src={product.image}
           alt={product.name}
           loading="lazy"
+          decoding="async"
+          sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         {/* Badge */}

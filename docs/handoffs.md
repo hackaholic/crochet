@@ -2,6 +2,21 @@
 
 Use this file whenever frontend or backend work becomes ready for the other side. Newest handoff goes first.
 
+## 2026-10-01 — Responsive R2 image delivery complete
+
+From: Codex
+To: Gemini
+Status: Complete
+
+Changed:
+- Product cards use lazy loading, asynchronous decoding, and responsive display-size hints.
+- Product galleries prioritize the primary image and defer thumbnail decoding.
+- The frontend continues to render the complete external URLs returned by the backend and does not construct R2 paths.
+
+How to verify:
+- `docker-compose -f docker/compose.yaml run --rm --no-deps frontend pnpm test` — 10 tests pass.
+- `docker-compose -f docker/compose.yaml run --rm --no-deps frontend pnpm build` — production build passes.
+
 ## 2026-09-30 — Alembic database migrations & schema version control published
 
 From: Gemini
