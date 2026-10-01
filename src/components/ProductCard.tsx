@@ -35,21 +35,22 @@ export default function ProductCard({ product, onAddToCart, onToggleWishlist, is
 
   return (
     <div
-      className="product-card group bg-white rounded-2xl overflow-hidden cursor-pointer"
+      data-testid="product-card"
+      className="product-card group flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl bg-white"
       style={{ boxShadow: '0 2px 16px rgba(44,24,16,0.07)', transition: 'all 0.3s ease' }}
       onClick={() => onProductClick(product)}
       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 32px rgba(44,24,16,0.13)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px)'; }}
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 16px rgba(44,24,16,0.07)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}
     >
       {/* Image */}
-      <div className="relative overflow-hidden bg-[#F5EDE0]" style={{ aspectRatio: '1/1' }}>
+      <div data-testid="product-image-frame" className="relative aspect-square w-full shrink-0 overflow-hidden bg-[#F5EDE0]">
         <img
           src={product.image}
           alt={product.name}
           loading="lazy"
           decoding="async"
           sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         {/* Badge */}
         {product.badge && (
@@ -76,9 +77,9 @@ export default function ProductCard({ product, onAddToCart, onToggleWishlist, is
         </div>
       </div>
       {/* Info */}
-      <div className="p-4">
+      <div className="flex flex-1 flex-col p-4">
         <p className="text-xs text-[#8B6B4A] font-medium mb-1">{product.category}</p>
-        <h3 className="font-semibold text-[#2C1810] text-sm leading-snug mb-2 line-clamp-2" style={{ fontFamily: 'var(--font-serif)' }}>
+        <h3 className="mb-2 min-h-10 line-clamp-2 text-sm font-semibold leading-snug text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>
           {product.name}
         </h3>
         <div className="flex items-center gap-1.5 mb-3">
@@ -89,7 +90,7 @@ export default function ProductCard({ product, onAddToCart, onToggleWishlist, is
           </div>
           <span className="text-xs text-[#8B6B4A]">({product.reviews})</span>
         </div>
-        <div className="flex items-center justify-between">
+        <div className="mt-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="font-bold text-[#2C1810]">₹{product.price}</span>
             {product.originalPrice && (
