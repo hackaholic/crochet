@@ -2,6 +2,24 @@
 
 This file records the current cross-team integration gate. Update it when a handoff becomes usable or becomes blocked.
 
+## 2026-10-01 — Global V1 authentication gate
+
+Status: Ready for integration
+
+Frontend owner: Codex / ChatGPT  
+Backend owner: Gemini
+
+### What is ready
+
+- **Email Magic Link Start**: `POST /api/v1/auth/email/start` accepting `{ "email": "..." }`, normalizing addresses, enforcing rate limiting, and returning a generic non-enumerating HTTP 202 response.
+- **Email Magic Link Verification**: `GET /api/v1/auth/email/verify?token=...&returnTo=...` consuming single-use SHA-256 hashed tokens atomically within 15 minutes, unifying/creating user accounts, merging guest carts, issuing 30-day HttpOnly session cookies, and safely redirecting to allow-listed Sulocraft paths.
+- **Transactional Email Dispatch**: `NotificationService.send_magic_link` integrated with background task runner, branded HTML/plain-text email templates, and audit logging with redacted tokens.
+- **Phone OTP Removal**: `/auth/phone/send-otp` and `/auth/phone/verify-otp` removed from active routing and OpenAPI; `phone` is retained strictly as checkout delivery contact data.
+- **Admin Bootstrap Update**: First administrator bootstrapped with verified email identity `admin@sulocraft.com` (`role="ADMIN"`).
+- **Database Model & Migration**: `MagicLinkToken` model backed by Alembic migration `e9a1f7c3d280_add_magic_link_tokens.py`.
+- **OpenAPI Contract**: Updated in `docs/openapi.yaml` (63 routes).
+- **Automated Tests**: 79 of 79 tests passing across all test modules (12 dedicated auth tests).
+
 ## 2026-10-01 — Controlled Homepage Composition & Storefront Sections gate
 
 Status: Ready for integration

@@ -1,10 +1,11 @@
-"""Authentication API endpoints conforming to Sections 3, 4, 5, and 18 of Specification."""
+"""Authentication API endpoints conforming to docs/api-auth.md (V1 contract)."""
 
+import hashlib
 import os
-import random
 import secrets
 from datetime import datetime, timedelta, timezone
-from fastapi import APIRouter, BackgroundTasks, Cookie, Depends, Header, HTTPException, Response, status
+from fastapi import APIRouter, BackgroundTasks, Cookie, Depends, Header, HTTPException, Request, Response, status
+from fastapi.responses import RedirectResponse
 import httpx
 from sqlalchemy.orm import Session, joinedload
 
@@ -12,24 +13,24 @@ from app.core.config import settings
 from app.db.session import get_db
 from app.models.cart import Cart, CartItem
 from app.models.catalogue import ProductVariant
-from app.models.user import OtpVerification, User, UserIdentity, UserSession
+from app.models.user import MagicLinkToken, User, UserIdentity, UserSession
 from app.schemas.auth import (
     AuthResponse,
+    EmailStartRequest,
+    EmailStartResponse,
     FacebookAuthRequest,
     GoogleAuthRequest,
-    SendOtpRequest,
-    SendOtpResponse,
     UserOut,
-    VerifyOtpRequest,
 )
-from app.services.notification import dispatch_otp_background
+from app.services.notification.service import dispatch_magic_link_background
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 SESSION_COOKIE_NAME = "session_token"
 SESSION_MAX_AGE = 30 * 24 * 3600  # 30 days
-OTP_EXPIRY_MINUTES = 5
-OTP_COOLDOWN_SECONDS = 60
+MAGIC_LINK_EXPIRY_MINUTES = 15
+MAGIC_LINK_COOLDOWN_SECONDS = 60  # rate-limit: one request per email per minute
+MAGIC_LINK_ALLOWED_RETURN_PATHS = {"/", "/shop", "/account", "/orders", "/wishlist", "/checkout"}
 
 
 def ensure_utc(dt: datetime | None) -> datetime:
@@ -188,122 +189,117 @@ def _merge_guest_cart_to_user(db: Session, user_id: int, guest_token: str | None
 
 
 # -----------------------------------------------------------------------------
-# Authentication Endpoints
+# Authentication Endpoints (V1 Contract: Email Magic Link, Google, Facebook)
 # -----------------------------------------------------------------------------
 
-@router.post("/phone/send-otp", response_model=SendOtpResponse)
-def send_phone_otp(
-    payload: SendOtpRequest,
+@router.post("/email/start", response_model=EmailStartResponse, status_code=status.HTTP_202_ACCEPTED)
+def start_email_login(
+    payload: EmailStartRequest,
     background_tasks: BackgroundTasks,
+    request: Request,
     db: Session = Depends(get_db),
-) -> SendOtpResponse:
-    """Request a 6-digit OTP code to mobile phone with cooldown throttling."""
+) -> EmailStartResponse:
+    """Send a single-use magic sign-in link via email. Always returns generic non-enumerating 202."""
     now = datetime.now(timezone.utc)
+    email = payload.email.strip().lower()
 
-    # Check cooldown by finding latest OTP for this phone
-    recent_otp = (
-        db.query(OtpVerification)
+    # Rate limiting: check recent magic link token for this email within cooldown window
+    cutoff = now - timedelta(seconds=MAGIC_LINK_COOLDOWN_SECONDS)
+    recent_token = (
+        db.query(MagicLinkToken)
         .filter(
-            OtpVerification.phone == payload.phone,
-            OtpVerification.is_used.is_(False),
+            MagicLinkToken.email == email,
+            MagicLinkToken.created_at >= cutoff,
         )
-        .order_by(OtpVerification.id.desc())
         .first()
     )
 
-    if recent_otp:
-        elapsed = int((now - ensure_utc(recent_otp.created_at)).total_seconds())
-        if elapsed < OTP_COOLDOWN_SECONDS:
-            remaining = OTP_COOLDOWN_SECONDS - elapsed
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail=f"Please wait {remaining} seconds before requesting a new OTP.",
-            )
-
-    # Generate 6-digit OTP (predictable 123456 in test mode, or random)
-    is_test = os.getenv("TESTING", "false").lower() == "true" or payload.phone.startswith("99999")
-    otp_code = "123456" if is_test else f"{random.randint(100000, 999999)}"
-
-    otp_record = OtpVerification(
-        phone=payload.phone,
-        otp_code=otp_code,
-        expires_at=now + timedelta(minutes=OTP_EXPIRY_MINUTES),
-        attempts=0,
-        is_used=False,
-    )
-    db.add(otp_record)
-    db.commit()
-
-    # Dispatch SMS in background task
-    background_tasks.add_task(dispatch_otp_background, payload.phone, otp_code)
-
-    return SendOtpResponse(
-        status="ok",
-        phone=payload.phone,
-        cooldown_seconds=OTP_COOLDOWN_SECONDS,
-        message=f"OTP sent to +91 {payload.phone}",
-        dev_otp=otp_code,
+    is_dev = (
+        settings.app_env == "development"
+        or os.getenv("TESTING", "false").lower() == "true"
     )
 
+    dev_magic_link: str | None = None
 
-@router.post("/phone/verify-otp", response_model=AuthResponse)
-def verify_phone_otp(
-    payload: VerifyOtpRequest,
-    response: Response,
+    if not recent_token:
+        # Generate cryptographically secure 32-byte URL-safe token
+        raw_token = secrets.token_urlsafe(32)
+        token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+
+        token_record = MagicLinkToken(
+            email=email,
+            token_hash=token_hash,
+            created_at=now,
+            expires_at=now + timedelta(minutes=MAGIC_LINK_EXPIRY_MINUTES),
+            is_used=False,
+        )
+        db.add(token_record)
+        db.commit()
+
+        api_base = settings.public_api_url.rstrip("/")
+        magic_link = f"{api_base}/api/v1/auth/email/verify?token={raw_token}"
+        if is_dev:
+            dev_magic_link = magic_link
+
+        # Dispatch email asynchronously without logging raw token
+        background_tasks.add_task(
+            dispatch_magic_link_background,
+            email,
+            magic_link,
+            MAGIC_LINK_EXPIRY_MINUTES,
+        )
+
+    return EmailStartResponse(
+        message="If the email address is valid, a sign-in link has been sent.",
+        dev_magic_link=dev_magic_link,
+    )
+
+
+@router.get("/email/verify")
+def verify_email_magic_link(
+    token: str | None = None,
+    returnTo: str | None = None,
     guest_cart_token: str | None = Cookie(default=None),
     x_cart_token: str | None = Header(default=None),
     db: Session = Depends(get_db),
-) -> AuthResponse:
-    """Verify OTP and authenticate user, setting HttpOnly session cookie."""
+) -> Response:
+    """Consume a magic-link token, authenticate/link user, merge guest cart, and redirect."""
     now = datetime.now(timezone.utc)
+    fallback_redirect = f"{settings.frontend_url.rstrip('/')}/?error=invalid_link"
 
-    # Look up latest unused OTP for this phone
-    otp_record = (
-        db.query(OtpVerification)
-        .filter(
-            OtpVerification.phone == payload.phone,
-            OtpVerification.is_used.is_(False),
-        )
-        .order_by(OtpVerification.id.desc())
+    if not token or len(token) < 16:
+        return RedirectResponse(url=fallback_redirect, status_code=status.HTTP_303_SEE_OTHER)
+
+    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+    token_record = (
+        db.query(MagicLinkToken)
+        .filter(MagicLinkToken.token_hash == token_hash)
         .first()
     )
 
-    if not otp_record or ensure_utc(otp_record.expires_at) <= now:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="OTP has expired or was not requested. Please request a new OTP.",
-        )
+    if not token_record or token_record.is_used or ensure_utc(token_record.expires_at) <= now:
+        return RedirectResponse(url=fallback_redirect, status_code=status.HTTP_303_SEE_OTHER)
 
-    if otp_record.attempts >= 3:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Maximum verification attempts exceeded. Please request a new OTP.",
-        )
+    # Invalidate token atomically
+    token_record.is_used = True
+    token_record.used_at = now
+    db.commit()
 
-    if otp_record.otp_code != payload.otp:
-        otp_record.attempts += 1
-        db.commit()
-        remaining = 3 - otp_record.attempts
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Incorrect OTP. {remaining} attempt(s) remaining.",
-        )
-
-    # Mark OTP used
-    otp_record.is_used = True
-
-    # Unified User lookup or creation
+    # Unified user lookup / creation
+    email = token_record.email
     user = (
         db.query(User)
         .options(joinedload(User.identities))
-        .filter(User.phone == payload.phone)
+        .filter(User.email == email)
         .first()
     )
 
     if not user:
+        name_prefix = email.split("@")[0].replace(".", " ").replace("_", " ").title()
         user = User(
-            phone=payload.phone,
-            name=payload.name or f"Customer_{payload.phone[-4:]}",
+            email=email,
+            name=name_prefix,
             status="ACTIVE",
             last_login_at=now,
         )
@@ -312,14 +308,20 @@ def verify_phone_otp(
 
         identity = UserIdentity(
             user_id=user.id,
-            provider="phone",
-            provider_subject=payload.phone,
+            provider="email",
+            provider_subject=email,
         )
         db.add(identity)
     else:
         user.last_login_at = now
-        if payload.name and not user.name:
-            user.name = payload.name
+        has_email_identity = any(i.provider == "email" for i in (user.identities or []))
+        if not has_email_identity:
+            identity = UserIdentity(
+                user_id=user.id,
+                provider="email",
+                provider_subject=email,
+            )
+            db.add(identity)
 
     # Create server session
     session_token = secrets.token_urlsafe(32)
@@ -333,6 +335,18 @@ def verify_phone_otp(
     db.commit()
     db.refresh(user)
 
+    # Auto-merge guest cart if token present
+    active_cart_token = guest_cart_token or x_cart_token
+    _merge_guest_cart_to_user(db, user.id, active_cart_token)
+
+    # Validate safe returnTo path
+    target_path = "/"
+    if returnTo and returnTo.startswith("/") and not returnTo.startswith("//") and ":" not in returnTo:
+        target_path = returnTo
+
+    target_url = f"{settings.frontend_url.rstrip('/')}{target_path}"
+    response = RedirectResponse(url=target_url, status_code=status.HTTP_303_SEE_OTHER)
+
     # Set HttpOnly, SameSite=Lax session cookie
     response.set_cookie(
         key=SESSION_COOKIE_NAME,
@@ -344,15 +358,9 @@ def verify_phone_otp(
         domain=settings.cookie_domain,
     )
 
-    # Auto-merge guest cart if token present
-    active_cart_token = guest_cart_token or x_cart_token
-    cart_merged = _merge_guest_cart_to_user(db, user.id, active_cart_token)
+    return response
 
-    return AuthResponse(
-        user=_to_user_out(user),
-        message="Login successful",
-        cart_merged=cart_merged,
-    )
+
 
 
 def _verify_google_credential(
@@ -390,9 +398,16 @@ def _verify_google_credential(
         except Exception:
             pass
 
-    sub = fallback_sub or (f"google_{secrets.token_hex(8)}" if not credential.startswith("mock_") else credential)
-    email = fallback_email
-    name = fallback_name or "Google User"
+    if settings.app_env == "production":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Google authentication token could not be verified in production.",
+        )
+
+    is_mock = credential.startswith("mock_") or settings.app_env == "development"
+    sub = fallback_sub or (credential if credential.startswith("mock_") else f"google_{secrets.token_hex(8)}")
+    email = fallback_email or ("anupama.demo@gmail.com" if is_mock else None)
+    name = fallback_name or ("Anupama Sharma (Google)" if is_mock else "Google User")
     return sub, email, name
 
 
@@ -427,9 +442,16 @@ def _verify_facebook_token(
         except Exception:
             pass
 
-    fb_id = fallback_id or (f"fb_{secrets.token_hex(8)}" if not access_token.startswith("mock_") else access_token)
-    email = fallback_email
-    name = fallback_name or "Facebook User"
+    if settings.app_env == "production":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Facebook authentication token could not be verified in production.",
+        )
+
+    is_mock = access_token.startswith("mock_") or settings.app_env == "development"
+    fb_id = fallback_id or (access_token if access_token.startswith("mock_") else f"fb_{secrets.token_hex(8)}")
+    email = fallback_email or ("anupama.demo@facebook.com" if is_mock else None)
+    name = fallback_name or ("Anupama Sharma (Facebook)" if is_mock else "Facebook User")
     return fb_id, email, name
 
 

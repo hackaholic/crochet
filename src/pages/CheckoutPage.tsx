@@ -45,14 +45,14 @@ export default function CheckoutPage({ items, onComplete, onNavigate, couponCode
     const idx = stepIndex;
     if (idx < steps.length - 1) setStep(steps[idx + 1].id);
     else {
-      if (!form.firstName || !form.phone || !form.line1 || !form.city || !form.state || !form.postalCode) {
+      if (!form.firstName || !form.email || !form.phone || !form.line1 || !form.city || !form.state || !form.postalCode) {
         setError('Please complete your contact and delivery details before placing the order.');
         return;
       }
       setSubmitting(true); setError('');
       try {
         const paymentMethod = selectedPayment === 'cod' ? 'COD' : selectedPayment === 'card' ? 'CARD' : selectedPayment === 'netbanking' ? 'NETBANKING' : 'UPI';
-        const order = await createOrder({ paymentMethod, customerEmail: form.email || undefined, couponCode: couponCode ?? undefined, shippingAddress: { name: `${form.firstName} ${form.lastName}`.trim(), phone: form.phone, line1: form.line1, line2: form.line2 || undefined, landmark: form.landmark || undefined, city: form.city, state: form.state, postalCode: form.postalCode } });
+        const order = await createOrder({ paymentMethod, customerEmail: form.email, couponCode: couponCode ?? undefined, shippingAddress: { name: `${form.firstName} ${form.lastName}`.trim(), phone: form.phone, line1: form.line1, line2: form.line2 || undefined, landmark: form.landmark || undefined, city: form.city, state: form.state, postalCode: form.postalCode } });
         if (paymentMethod !== 'COD') {
           const intent = await createPaymentIntent(order.orderNumber);
           await verifyMockPayment(intent, paymentMethod === 'UPI' ? 'UPI / Mock gateway' : `${paymentMethod} / Mock gateway`);
@@ -131,9 +131,10 @@ export default function CheckoutPage({ items, onComplete, onNavigate, couponCode
                       { label: 'Phone Number', placeholder: '+91 98765 43210', col: 1, type: 'tel', name: 'phone' },
                     ].map(({ label, placeholder, col, type = 'text', name }) => (
                       <div key={label} className={col === 2 ? 'md:col-span-2' : ''}>
-                        <label className="block text-sm font-medium text-[#2C1810] mb-1.5">{label}</label>
+                        <label className="block text-sm font-medium text-[#2C1810] mb-1.5">{label}{['First Name', 'Email', 'Phone Number'].includes(label) ? ' *' : ''}</label>
                         <input
                           type={type}
+                          required={['First Name', 'Email', 'Phone Number'].includes(label)}
                           placeholder={placeholder}
                           {...input(name as keyof typeof form)}
                           className="w-full px-4 py-3 border border-[#EDE4D0] rounded-xl text-sm focus:outline-none focus:border-[#C4622D] transition-colors bg-[#FAF7F2]"

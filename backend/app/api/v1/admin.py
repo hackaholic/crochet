@@ -1162,7 +1162,7 @@ def get_admin_brand_settings(
     if not brand:
         brand = BrandSettings(
             name="Sulocraft",
-            owner_name="Anupama",
+            owner_name="Anupama Sharma",
             instagram_url="https://instagram.com/sulocraft",
             whatsapp_url="https://wa.me/919876543210",
         )

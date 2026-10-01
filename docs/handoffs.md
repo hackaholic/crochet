@@ -2,6 +2,213 @@
 
 Use this file whenever frontend or backend work becomes ready for the other side. Newest handoff goes first.
 
+## 2026-10-01 — V1 authentication implementation complete (Email Magic Link, Google, Facebook)
+
+From: Gemini
+To: Codex / ChatGPT
+Status: Implemented and ready for integration
+
+The canonical contract [api-auth.md](api-auth.md) is fully implemented on the backend:
+- `POST /api/v1/auth/email/start`: Accepts `{ "email": "..." }`, normalizes email, applies per-email cooldown rate limiting, generates secure tokens, and dispatches magic link email in background. Always returns generic non-enumerating HTTP 202 response (`{ "message": "If the email address is valid, a sign-in link has been sent." }`). In local/test development, `devMagicLink` is attached for convenience.
+- `GET /api/v1/auth/email/verify?token=...&returnTo=...`: Validates single-use SHA-256 hashed token, creates/unifies customer account under `email` identity, merges guest cart items, sets 30-day HttpOnly `session_token` cookie, and safely redirects to allow-listed frontend path (defaulting to `/`).
+- Legacy `/api/v1/auth/phone/send-otp` and `/api/v1/auth/phone/verify-otp` removed from active routing and OpenAPI. Phone number is retained strictly as checkout delivery contact data.
+- Social Authentication: Google (`POST /auth/google`) and Facebook (`POST /auth/facebook`) verify real tokens and fail-closed against mock tokens in production (`APP_ENV=production`). Accounts unify automatically by verified email address.
+- Admin Bootstrap: Default administrator bootstrapped via verified email identity `admin@sulocraft.com` (`role="ADMIN"`).
+- Database: `MagicLinkToken` table created via Alembic migration `e9a1f7c3d280_add_magic_link_tokens.py`.
+- OpenAPI: `docs/openapi.yaml` re-exported with 63 paths.
+- Testing: 79 of 79 backend tests passing cleanly.
+
+
+From: Codex
+To: Gemini
+Status: Backend implementation required; frontend contract adopted
+
+The canonical contract is now [api-auth.md](api-auth.md).
+
+Required backend work:
+- Remove `/auth/phone/send-otp` and `/auth/phone/verify-otp` from V1 routing and OpenAPI. Remove OTP authentication configuration, records, and notification behavior through a safe migration; phone fields used for delivery remain.
+- Add `POST /auth/email/start` with a generic non-enumerating response and rate limiting.
+- Add `GET /auth/email/verify` using a hashed, cryptographically random, 10–15 minute, single-use token. Consume atomically, create/link the `email` identity, merge the guest cart, issue the normal session cookie, and allow only safe Sulocraft redirects.
+- Keep Google and Facebook real-token validation. Production must reject mock provider tokens.
+- Link providers only through verified normalized email. Preserve separate `UserIdentity` records and avoid duplicate users.
+- Preserve first-class guest checkout with nullable `order.user_id`, mandatory customer email and delivery phone snapshots.
+- Replace the phone-based admin bootstrap with a backend-managed verified admin email/identity. Frontend input must never assign roles.
+- Seed or promote Anupama's verified login email to `ADMIN` through a backend migration/management operation, then report the exact non-secret email identity expected for local and production access. The `/admin` screen now exposes a sign-in button using the shared V1 login modal.
+- Extend the email-provider abstraction with `send_magic_link`; do not log raw tokens.
+- Update migrations, generated OpenAPI, tests, `coordination-status.md`, and any stale phone-auth documentation.
+
+Frontend already targets `POST /auth/email/start`, retains real Google/Facebook SDK flows, removes phone OTP controls, and keeps guest checkout open. Email verification cannot complete end-to-end until these backend routes exist.
+
+## 2026-10-01 — Local purchase flow verified; provider configuration gaps remain
+
+From: Codex
+To: Gemini
+Status: Frontend complete; backend hardening required
+
+Verified against the rebuilt Docker stack:
+- guest cart merged after phone authentication;
+- checkout and mock payment verification succeeded;
+- an authenticated admin advanced the order through the complete shipment lifecycle;
+- customer tracking ended at `DELIVERED` with all seven timeline events.
+
+Frontend change:
+- Google and Facebook buttons now use only the real provider SDK flows.
+- Missing app IDs or failed SDK loads show a configuration/connection error; no fake social user is created.
+- All 20 frontend tests and the TypeScript check pass.
+
+Backend findings:
+- `DEV_OTP_CODE` is not read by backend settings yet. Local OTP `123456` currently works only because reserved `99999…` numbers use the existing test path.
+- `PAYMENT_PROVIDER` is not read by the payment factory yet. The factory silently falls back to mock for unknown providers; replace this with explicit configuration and production fail-closed behavior.
+- Preserve real Google/Facebook token validation for manual local browser sign-in; keep mock tokens limited to automated backend tests.
+
+## 2026-10-01 — Production-shaped local commerce simulation
+
+From: Codex
+To: Gemini
+Status: Backend hardening required; integration audit started
+
+Implement and verify [local-production-simulation.md](local-production-simulation.md).
+
+Backend requirements:
+- Add `DEV_OTP_CODE=123456`; use it for every local-development OTP while retaining expiry, cooldown, attempt limits, notification logging, session cookies, and cart merge. Ignore/reject this setting in production.
+- Validate real Google ID tokens and Facebook access tokens during local browser testing. Configure localhost origins/callbacks and enforce the same audience/app-ID, expiry, issuer, and verified-email checks used in production.
+- Keep existing mock social tokens limited to automated backend tests only; manual storefront login buttons must use the real provider SDKs.
+- Add an explicit `PAYMENT_PROVIDER=mock` configuration and fail closed if mock is selected in production.
+- Provide a deterministic local shipment fixture and test the complete controlled order transition sequence with courier/tracking assignment.
+- Add one backend integration scenario covering guest cart merge, login, checkout, payment verification, shipment transitions, tracking timeline, inventory, and authorization.
+
+Frontend will keep using the normal APIs and will simulate only the external consent/gateway dialogs when public provider keys are absent.
+
+## 2026-10-01 — Sixteen unique product primary images ready
+
+From: Codex
+To: Gemini
+Status: Ready for backend/R2 integration
+
+Changed:
+- Generated a distinct primary product image for every seeded product.
+- Saved each asset under `public/images/products/<product-slug>/primary.png`.
+- Updated seed primary paths from `primary.jpg` to `primary.png`.
+- Published the complete mapping in [product-media.md](product-media.md).
+
+Required:
+- Store the relative object key shown in the manifest for each matching product.
+- Upload each file to the identical R2 key; do not rename, substitute stock photography, or reuse one product's image for another product.
+- Resolve the object key through `IMAGE_BASE_URL` in API responses.
+- Verify all 16 public URLs return `200` and have unique content checksums.
+
+Gallery images will use `gallery-01.png`, `gallery-02.png`, etc. Only publish a gallery record when that exact file exists; never use the primary image of a different product as filler.
+
+## 2026-10-01 — Resolve stored image keys through one configured origin
+
+From: Codex
+To: Gemini
+Status: Backend refactor required
+
+Required behavior:
+- Store Sulocraft-managed media as stable relative object keys such as `products/heart-bear/primary.webp`.
+- Resolve those keys through `IMAGE_BASE_URL` when building every public/admin response: products, galleries, categories, campaigns, homepage sections, occasions, reviews, cart snapshots, and order snapshots where applicable.
+- Local value: `http://localhost:8000/static/images`.
+- Production value: `https://images.sulocraft.com`.
+- Preserve explicitly supplied absolute external URLs, but do not seed environment-specific absolute URLs into managed records.
+
+Acceptance check:
+- Start the API with a different `IMAGE_BASE_URL`; all managed image URLs returned by the API change origin without database updates or frontend changes.
+- Existing migrations/data are normalized safely from known local/R2 prefixes to relative keys.
+
+Product media hierarchy:
+- Primary: `products/<product-slug>/primary.png`
+- Gallery: `products/<product-slug>/gallery-01.png`, `gallery-02.png`, etc.
+- Never point two different product slugs at the same primary image object.
+
+## 2026-10-01 — Mandatory hero artwork mapping; do not substitute stock images
+
+From: Codex
+To: Gemini
+Status: Required correction
+
+Use the generated Sulocraft artwork below exactly. Do not replace these files with Unsplash, random stock photography, a generic fallback, or another campaign's image.
+
+| Priority | Database campaign (`eyebrow`) | Required source file | Local API path | Production R2 object |
+| --- | --- | --- | --- | --- |
+| 1 | `Our Heritage` | `public/images/hero/heritage.png` | `/static/images/hero/heritage.png` | `hero/heritage.png` |
+| 2 | `Festive Collection` | `public/images/hero/festive-gifting.png` | `/static/images/hero/festive-gifting.png` | `hero/festive-gifting.png` |
+| 3 | `New Releases` | `public/images/hero/flower-bouquet.png` | `/static/images/hero/flower-bouquet.png` | `hero/flower-bouquet.png` |
+| 4 | `Home & Living` | `public/images/hero/home-decor.png` | `/static/images/hero/home-decor.png` | `hero/home-decor.png` |
+| 5 | `Custom Orders` | `public/images/hero/custom-bouquet.png` | `/static/images/hero/custom-bouquet.png` | `hero/custom-bouquet.png` |
+
+The optional sixth asset, `public/images/hero/amigurumi.png`, belongs only to an `Amigurumi` campaign. The public endpoint currently limits the carousel to five records, so it must not replace any of the five mappings above.
+
+Root cause fixed locally:
+- `docker/api.Dockerfile` previously omitted `public/images`, causing `/static/images/hero/*` to miss the approved files and redirect to `MOCK_IMAGE_MAP` stock photos.
+- The API image now packages `public/images`, allowing the database URLs to resolve to the exact generated files.
+
+Backend acceptance checks:
+- Each of the five local API image URLs returns `200`, not a `307` stock-image redirect.
+- Returned bytes match the corresponding source asset checksum.
+- Each campaign has a distinct `image_url` and matching `image_alt`.
+- Production R2 objects use the exact mapping above and return `200` before the database record is published.
+
+## 2026-10-01 — Broken storefront media URLs require R2 objects
+
+From: Codex
+To: Gemini
+Status: Backend/storage action required
+
+Finding:
+- The category cards were blank because PostgreSQL contained `images.sulocraft.com` URL strings, but the referenced R2 objects were not reachable. A database URL does not upload or create the image.
+- Local category records now point to existing frontend assets and the three cards render correctly.
+- Product cards, the promotional banner, the story section, and review avatars still reference unavailable `images.sulocraft.com` objects and visibly fall back to broken/empty media states.
+
+Required:
+- Upload the category assets using the object paths documented in `docs/api-storefront.md`, then update production category records and seed defaults to those exact public URLs.
+- Audit every seeded product, campaign, section, and avatar URL. Upload the matching object or replace the record with a verified reachable URL.
+- Treat a storefront media record as ready only after its public URL returns HTTP `200`; add this check to backend seed/integration verification where practical.
+
+Verified locally:
+- `flowers`, `pooja-items`, and `amigurumi` are returned by `/api/v1/storefront/home` with reachable local URLs and render in the category grid.
+
+## 2026-10-01 — Full-width hero artwork ready for R2 and campaign records
+
+From: Codex
+To: Gemini
+Status: Ready for backend asset integration
+
+Changed:
+- Replaced the split hero UI with a stable full-width background carousel while retaining **Shop Collection** and **Create Something Custom**.
+- Added six original wide campaign assets under `public/images/hero/`: heritage, festive gifting, flower bouquet, home décor, custom bouquet, and amigurumi.
+- Recorded the R2 object names and campaign mapping in `docs/api-storefront.md`.
+
+Contract:
+- Upload the six source assets to the documented `https://images.sulocraft.com/hero/*` locations.
+- Update the matching `HomepageCampaign.image_url` records and seed defaults; use the amigurumi asset for a future/featured amigurumi campaign.
+- Keep copy and actions as typed database fields. Do not bake marketing text into the images.
+
+How to verify:
+- Every active hero campaign returns a distinct reachable external `imageUrl`.
+- Changing the database campaign image changes the full-width artwork without a frontend code change.
+
+## 2026-10-01 — Controlled homepage frontend integration verified
+
+From: Codex
+To: Gemini
+Status: Complete
+
+Changed:
+- Verified `/api/v1/storefront/home` against the shared controlled-section contract.
+- Confirmed the React homepage renders all five approved templates from database records.
+- Fixed missing `HomePage` icon imports found during live browser verification.
+- Added `pnpm typecheck` so unresolved imports are checked separately from Vite's transpile-only build.
+
+How to verify:
+- Rebuild the local API and frontend containers from the current worktree.
+- The endpoint returns five campaigns and `category_grid`, `product_collection`, `promo_banner`, `review_section`, and `image_text`.
+- `http://localhost:8080` renders the database-driven homepage without browser console errors.
+
+Notes:
+- The temporary blank page was caused by a stale API image followed by missing icon imports in the legacy fallback path. No commit or database work was rolled back.
+- Dynamic SEO resolver and sitemap remain the next backend contract item.
+
 ## 2026-10-01 — Data-driven SEO contract requested
 
 From: Codex

@@ -10,5 +10,8 @@ RUN pip install --no-cache-dir fastapi "uvicorn[standard]" "sqlalchemy>=2.0" "ps
 COPY backend/alembic.ini ./
 COPY backend/alembic ./alembic
 COPY backend/app ./app
+# Development image URLs are database-driven and served by the API. Package the
+# approved project artwork so the image route never substitutes Unsplash photos.
+COPY public/images ./public/images
 EXPOSE 8000
 CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]

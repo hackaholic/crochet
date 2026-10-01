@@ -4,6 +4,9 @@ Use this file for work that is ready to start. Keep each item small enough for o
 
 | Status | Owner | Task | Done when |
 | --- | --- | --- | --- |
+| In progress | Gemini | Replace phone OTP with V1 global authentication | Remove phone-auth routes/models/config from the public contract; implement secure email magic-link start/verify, real Google/Facebook validation, safe verified-email linking, unified sessions, guest-cart merge, and admin access via verified email per `/docs/api-auth.md` |
+| Done | Codex | Replace customer OTP UI with global login | Login modal offers only real Google, real Facebook, and email magic link; checkout remains available to guests and requires delivery email plus phone |
+| Ready | Codex + Gemini | Add V1 authentication and purchase browser regression | Guest checkout and guest cart → Google/Facebook/email login merge → checkout → payment → admin shipment → tracking pass in Docker without any phone-auth dependency |
 | Done | Gemini | Implement the catalogue API | `GET /api/v1/products` matches the shared contract, has seeded taxonomy/products, and passed test suite |
 | Done | Gemini | Implement Cart Persistence & Guest Cart | `Cart` and `CartItem` models, guest cookie management, add/update/delete endpoints, and merge logic are implemented and tested |
 | Done | Gemini | Implement Authentication & Unified User Model | Phone OTP, Google auth, unified `User` model, session cookies, and auto cart merge are implemented |
@@ -30,7 +33,7 @@ Use this file for work that is ready to start. Keep each item small enough for o
 | Done | Codex | Build route foundation | Existing screens have clean, shareable URL routes without changing their visual design; production build and direct product URL verified |
 | Done | Codex | Build the frontend API client | The storefront consumes the catalogue endpoint with loading and error states; completed in FE-02 |
 | Done | Codex | Connect storefront Cart to Cart API | Replaced local in-memory cart with `/api/v1/cart` endpoints; completed in FE-05 |
-| Done | Codex | Implement Auth UI & Session Handling | Connected Phone OTP modals with `/api/v1/auth` endpoints and session cookies; completed in FE-06 |
+| Superseded | Codex | Implement Auth UI & Session Handling | Phone OTP was removed from the V1 architecture; replacement global login is tracked above |
 | Done | Gemini | Design the first API domain | Product catalogue routes, schemas, and database model are agreed |
 | Ready | Unassigned | Review responsive behaviour | Desktop and mobile issues are listed with affected screens |
 | Ready | Unassigned | Audit prototype content | Every placeholder product, image, review, promise, and link is identified |

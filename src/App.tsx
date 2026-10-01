@@ -155,7 +155,7 @@ export default function App() {
           />
         )}
         {page === 'account' && <AccountPage key={user?.id ?? 'guest'} onSignIn={openAuth} />}
-        {page === 'admin' && <AdminPage />}
+        {page === 'admin' && <AdminPage onSignIn={openAuth} />}
         {page === 'about' && (
           <AboutPage onNavigate={navigate} />
         )}

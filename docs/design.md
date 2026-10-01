@@ -4,7 +4,7 @@ This is the source of truth for visual work. Do not introduce a new font, colour
 
 ## Brand direction
 
-Crochet Bloom should feel warm, handmade, quietly premium, and approachable. Use soft paper-like backgrounds, earthy contrast, floral accents, generous whitespace, and gentle motion. Avoid neon colours, glass effects, gradients, or sharp-cornered controls.
+Sulocraft should feel warm, handmade, quietly premium, and approachable. Use soft paper-like backgrounds, earthy contrast, floral accents, generous whitespace, and gentle motion. Avoid neon colours, glass effects, or sharp-cornered controls.
 
 ## Typography
 
@@ -54,11 +54,11 @@ Rules: use `ink` or `brown-dark` for readable text; reserve terracotta for the m
 
 ## Responsive rules
 
-Start with a narrow layout, retain checkout and cart actions at every width, and make tap targets at least 44px high or wide. Grids should collapse before text or controls become cramped. Do not rely on hover for an action that mobile users need.
+Start with a narrow layout, retain checkout and cart actions at every width, and make tap targets at least 44px high or wide. Grids should collapse before text or controls become cramped. Do not rely on hover for an action that mobile users need. Verify the final render in Chrome/Chromium, Firefox, and the mobile viewport matrix in `docs/testing-plan.md`; account for Firefox font metrics and test the longest database-driven content.
 
 ## Assets and content
 
-Current product photography is placeholder content from Unsplash. Replace it with licensed Crochet Bloom photography before launch. Product names, prices, reviews, delivery promises, and social links are also prototype content until confirmed.
+Current product photography includes placeholder content from Unsplash and generated campaign artwork. Replace or approve every production asset before launch. Product names, prices, reviews, delivery promises, and social links remain prototype content until confirmed.
 
 ## Change control
 

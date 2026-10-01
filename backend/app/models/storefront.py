@@ -14,7 +14,7 @@ class BrandSettings(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False, default="Sulocraft")
-    owner_name = Column(String(100), nullable=False, default="Anupama")
+    owner_name = Column(String(100), nullable=False, default="Anupama Sharma")
     instagram_url = Column(String(255), nullable=True, default="https://instagram.com/sulocraft")
     whatsapp_url = Column(String(255), nullable=True, default="https://wa.me/919876543210")
     updated_at = Column(

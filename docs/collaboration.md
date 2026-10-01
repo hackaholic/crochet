@@ -27,9 +27,10 @@ Before changing a shared request, response, pricing unit, authentication assumpt
 ## Before handoff
 
 1. Run the relevant validation for the change.
-2. Update the task status and document any limitation in `pending.md`.
-3. Add a dated note to `decisions.md` for material decisions.
-4. State changed files, validation performed, and any follow-up work.
+2. For frontend work, verify Chrome/Chromium, Firefox, and mobile rendering using [testing-plan.md](testing-plan.md); mobile is required, not optional.
+3. Update the task status and document any limitation in `pending.md`.
+4. Add a dated note to `decisions.md` for material decisions.
+5. State changed files, validation performed, and any follow-up work.
 
 ## Ownership convention
 

@@ -184,6 +184,13 @@ def verify_payment(
 
     order.payment_status = PaymentStatus.PAID.value
     order.status = OrderStatus.CONFIRMED.value
+    if not order.tracking_number:
+        import secrets
+        order.tracking_number = f"SULO-EXP-{secrets.token_hex(3).upper()}"
+        order.courier_name = "BlueDart Express"
+    if not order.estimated_delivery:
+        from datetime import timedelta
+        order.estimated_delivery = now + timedelta(days=5)
     order.updated_at = now
 
     history = OrderStatusHistory(

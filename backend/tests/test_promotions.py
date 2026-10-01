@@ -13,36 +13,45 @@ from app.models.user import User, UserIdentity
 def _create_customer_client(phone: str = "9999911001") -> TestClient:
     """Helper to authenticate a regular customer on its own client instance."""
     client = TestClient(app)
-    send_res = client.post("/api/v1/auth/phone/send-otp", json={"phone": phone})
-    assert send_res.status_code == 200
-    otp = send_res.json().get("devOtp") or "123456"
-    res = client.post("/api/v1/auth/phone/verify-otp", json={"phone": phone, "otp": otp})
+    email = f"customer_{phone}@example.com"
+    res = client.post("/api/v1/auth/google", json={
+        "credential": f"mock_cust_{phone}",
+        "email": email,
+        "name": f"Customer_{phone[-4:]}",
+        "sub": f"sub_{phone}",
+    })
     assert res.status_code == 200
     return client
 
 
 def _create_admin_client(phone: str = "9999900000") -> TestClient:
     """Helper to authenticate an admin user on its own client instance."""
+    admin_email = "admin@sulocraft.com"
     with SessionLocal() as db:
-        admin = db.query(User).filter(User.phone == phone).first()
+        admin = db.query(User).filter(User.email == admin_email).first()
         if not admin:
             admin = User(
                 name="Store Admin",
                 phone=phone,
-                email="admin@sulocraft.com",
+                email=admin_email,
                 role="ADMIN",
                 status="ACTIVE",
             )
             db.add(admin)
             db.flush()
-            db.add(UserIdentity(user_id=admin.id, provider="phone", provider_subject=phone))
+            db.add(UserIdentity(user_id=admin.id, provider="email", provider_subject=admin_email))
+            db.commit()
+        elif admin.role != "ADMIN":
+            admin.role = "ADMIN"
             db.commit()
 
     client = TestClient(app)
-    send_res = client.post("/api/v1/auth/phone/send-otp", json={"phone": phone})
-    assert send_res.status_code == 200
-    otp = send_res.json().get("devOtp") or "123456"
-    res = client.post("/api/v1/auth/phone/verify-otp", json={"phone": phone, "otp": otp})
+    res = client.post("/api/v1/auth/google", json={
+        "credential": "mock_admin_token",
+        "email": admin_email,
+        "name": "Store Admin",
+        "sub": "admin_sub_promo",
+    })
     assert res.status_code == 200
     assert res.json()["user"]["role"] == "ADMIN"
     return client

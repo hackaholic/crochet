@@ -63,7 +63,43 @@ app.add_middleware(
 app.include_router(api_v1_router)
 
 
+@app.get("/", tags=["system"])
+def root() -> dict[str, str]:
+    """Root entrypoint providing service status and quick links."""
+    return {
+        "status": "online",
+        "service": "Sulocraft API",
+        "version": app.version,
+        "docs": "/docs",
+        "health": "/health",
+        "storefront": "/api/v1/storefront/home",
+    }
+
+
 @app.get("/health", tags=["system"])
 def health_check() -> dict[str, str]:
     """Report whether the API process is available."""
     return {"status": "ok", "service": "sulocraft-api"}
+
+
+@app.api_route("/static/images/{image_path:path}", methods=["GET", "HEAD"], tags=["system"])
+def get_mock_static_image(image_path: str):
+    """Serve local static assets or redirect to high-res photography during development."""
+    from pathlib import Path
+    from fastapi.responses import FileResponse, RedirectResponse
+    from app.core.images import resolve_mock_image_source
+
+    clean_path = image_path.lstrip("/")
+    # Check if file exists locally on disk in public/images/
+    candidates = [
+        Path(f"public/images/{clean_path}"),
+        Path(f"../public/images/{clean_path}"),
+        Path(f"/app/public/images/{clean_path}"),
+    ]
+    for candidate in candidates:
+        if candidate.is_file():
+            return FileResponse(candidate)
+
+    upstream_url = resolve_mock_image_source(image_path)
+    return RedirectResponse(url=upstream_url, status_code=307)
+

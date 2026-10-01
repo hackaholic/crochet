@@ -235,3 +235,82 @@ Track online: {tracking_url}
 """
 
     return html, text
+
+
+def render_magic_link_email(email: str, magic_link: str, expires_minutes: int = 15) -> tuple[str, str]:
+    """Generate HTML and plain text for email magic link sign-in.
+
+    Returns:
+        tuple[str, str]: (html_body, text_body)
+    """
+    html = f"""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign in to Sulocraft</title>
+</head>
+<body style="margin:0;padding:0;background:#FAF7F2;font-family:'Nunito',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#FAF7F2;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" style="max-width:520px;background:#FFFFFF;border-radius:24px;overflow:hidden;border:1px solid #EDE4D0;">
+          <!-- Header -->
+          <tr>
+            <td style="background:#FAF7F2;text-align:center;padding:36px 32px 24px;">
+              <div style="font-size:28px;margin-bottom:8px;">🪡</div>
+              <h1 style="margin:0;font-size:26px;font-weight:600;color:#2C1810;font-family:Georgia,serif;">Sulocraft</h1>
+              <p style="margin:8px 0 0;font-size:13px;color:#8B6B4A;">Handcrafted with love, thread by thread</p>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding:32px 36px;">
+              <h2 style="margin:0 0 12px;font-size:20px;font-weight:700;color:#2C1810;">Your sign-in link</h2>
+              <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#5C3D2E;">
+                Click the button below to sign in to your Sulocraft account. This link is valid for <strong>{expires_minutes} minutes</strong> and can only be used once.
+              </p>
+              <div style="text-align:center;margin:0 0 28px;">
+                <a href="{magic_link}"
+                   style="display:inline-block;background:#C4622D;color:#FFFFFF;font-size:15px;font-weight:700;padding:16px 40px;border-radius:50px;text-decoration:none;letter-spacing:0.3px;">
+                  Sign in to Sulocraft
+                </a>
+              </div>
+              <p style="margin:0 0 16px;font-size:13px;color:#8B6B4A;line-height:1.6;">
+                If the button doesn't work, copy and paste this link into your browser:
+              </p>
+              <p style="margin:0;font-size:12px;color:#8B6B4A;word-break:break-all;background:#FAF7F2;padding:12px;border-radius:8px;border:1px solid #EDE4D0;">
+                {magic_link}
+              </p>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="background:#FAF7F2;padding:20px 36px;text-align:center;border-top:1px solid #EDE4D0;">
+              <p style="margin:0;font-size:12px;color:#8B6B4A;line-height:1.6;">
+                If you didn't request this link, you can safely ignore this email — your account is secure.<br />
+                &copy; 2026 Sulocraft · <a href="https://sulocraft.com" style="color:#C4622D;text-decoration:none;">sulocraft.com</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+"""
+
+    text = f"""Sign in to Sulocraft
+
+Click the link below to sign in. This link is valid for {expires_minutes} minutes and can only be used once.
+
+{magic_link}
+
+If you didn't request this link, you can safely ignore this email — your account is secure.
+
+© 2026 Sulocraft · sulocraft.com
+"""
+
+    return html, text

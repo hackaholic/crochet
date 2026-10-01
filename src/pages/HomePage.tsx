@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { categories, occasions, reviews } from '../data/products';
 import ProductCard from '../components/ProductCard';
-import { ArrowRightIcon, StarIcon, ThreadCurve } from '../components/Icons';
+import { ArrowRightIcon, ChevronLeftIcon, ChevronRightIcon, FlowerDecor, StarIcon, ThreadCurve } from '../components/Icons';
 import type { Product } from '../data/products';
 import { useCatalogue } from '../components/CatalogueProvider';
 import HeroCarousel from '../components/HeroCarousel';

@@ -1,6 +1,7 @@
 """Catalogue seed script conforming to Section 10 & 13 of the Multi-Agent Specification."""
 
 import re
+import sys
 from sqlalchemy.orm import Session
 
 from app.db.base import Base
@@ -13,10 +14,11 @@ from app.models.catalogue import (
     ProductVariant,
     Review,
     Tag,
+    product_categories,
+    product_tags,
 )
 from app.models.storefront import BrandSettings, HomepageCampaign, HomepageSection
 from app.models.user import User, UserIdentity
-
 
 
 def slugify(text: str) -> str:
@@ -24,10 +26,6 @@ def slugify(text: str) -> str:
     text = text.lower().strip()
     text = re.sub(r"[^\w\s-]", "", text)
     return re.sub(r"[\s_-]+", "-", text)
-
-
-def img(photo_id: str, w: int = 600, h: int = 600) -> str:
-    return f"https://images.unsplash.com/{photo_id}?w={w}&h={h}&fit=crop&auto=format"
 
 
 # -----------------------------------------------------------------------------
@@ -38,7 +36,7 @@ TAXONOMY_TREE = [
         "name": "Flowers",
         "slug": "flowers",
         "description": "Handcrafted permanent blooms, bouquets, and stems",
-        "image": img("photo-1700171394718-2457b1190444", 500, 600),
+        "image": "categories/flowers.jpg",
         "children": [
             {"name": "Roses", "slug": "roses"},
             {"name": "Tulips", "slug": "tulips"},
@@ -51,7 +49,7 @@ TAXONOMY_TREE = [
         "name": "Baby",
         "slug": "baby",
         "description": "Soft cotton booties, rattles, blankets, and nursery décor",
-        "image": img("photo-1629019317873-3f603b269723", 500, 600),
+        "image": "categories/baby.jpg",
         "children": [
             {"name": "Booties", "slug": "booties"},
             {"name": "Rattles", "slug": "rattles"},
@@ -63,7 +61,7 @@ TAXONOMY_TREE = [
         "name": "Amigurumi",
         "slug": "amigurumi",
         "description": "Hand-stitched plush toys, animals, and miniature keepsakes",
-        "image": img("photo-1753370241607-5d48d8aaa70e", 500, 600),
+        "image": "categories/amigurumi.jpg",
         "children": [
             {"name": "Teddy Bear", "slug": "teddy-bear"},
             {"name": "Bunny", "slug": "bunny"},
@@ -75,7 +73,7 @@ TAXONOMY_TREE = [
         "name": "Keychains",
         "slug": "keychains",
         "description": "Charming small gifts, flower charms, and mini animals",
-        "image": img("photo-1700171458554-46cfd3f2a87a", 500, 600),
+        "image": "categories/keychains.jpg",
         "children": [
             {"name": "Flower Keychains", "slug": "flower-keychains"},
             {"name": "Animal Keychains", "slug": "animal-keychains"},
@@ -86,7 +84,7 @@ TAXONOMY_TREE = [
         "name": "Home Decor",
         "slug": "home-decor",
         "description": "Crochet wall hangings, planters, coasters, and festive garlands",
-        "image": img("photo-1618574760337-2750f6251d20", 500, 600),
+        "image": "categories/home-decor.jpg",
         "children": [
             {"name": "Coasters", "slug": "coasters"},
             {"name": "Wall Hangings", "slug": "wall-hangings"},
@@ -98,7 +96,7 @@ TAXONOMY_TREE = [
         "name": "Special Gifts",
         "slug": "special-gifts",
         "description": "Curated gifts based on occasions, intention, and celebrations",
-        "image": img("photo-1646182504823-a02b768e28b5", 500, 600),
+        "image": "categories/special-gifts.jpg",
         "children": [
             {"name": "Birthday Gifts", "slug": "birthday-gifts"},
             {"name": "Anniversary Gifts", "slug": "anniversary-gifts"},
@@ -111,7 +109,7 @@ TAXONOMY_TREE = [
         "name": "Pooja Items",
         "slug": "pooja-items",
         "description": "Devotional garlands, malas, torans, and temple décor",
-        "image": img("photo-1700170447159-9d2d0da133a5", 500, 600),
+        "image": "categories/pooja-items.jpg",
         "children": [
             {"name": "Devotional Garlands", "slug": "devotional-garlands"},
             {"name": "Toran", "slug": "toran"},
@@ -122,20 +120,20 @@ TAXONOMY_TREE = [
 ]
 
 OCCASIONS_DATA = [
-    {"id": "birthday", "name": "Birthday", "icon": "🎂", "image_url": img("photo-1602773984044-3ecbed81556d", 400, 300)},
-    {"id": "anniversary", "name": "Anniversary", "icon": "💍", "image_url": img("photo-1700171518313-5dd219beaaa6", 400, 300)},
-    {"id": "valentine", "name": "Valentine's Day", "icon": "❤️", "image_url": img("photo-1646182504823-a02b768e28b5", 400, 300)},
-    {"id": "wedding", "name": "Wedding", "icon": "💐", "image_url": img("photo-1700171394718-2457b1190444", 400, 300)},
-    {"id": "babyshower", "name": "Baby Shower", "icon": "🍼", "image_url": img("photo-1629019317873-3f603b269723", 400, 300)},
-    {"id": "housewarming", "name": "Housewarming", "icon": "🏠", "image_url": img("photo-1618574760337-2750f6251d20", 400, 300)},
-    {"id": "rakhi", "name": "Rakhi", "icon": "🪡", "image_url": img("photo-1700170447159-9d2d0da133a5", 400, 300)},
-    {"id": "diwali", "name": "Diwali", "icon": "🪔", "image_url": img("photo-1700171458554-46cfd3f2a87a", 400, 300)},
-    {"id": "mother", "name": "Mother's Day", "icon": "🌷", "image_url": img("photo-1608825154649-2e9bb4cd4211", 400, 300)},
-    {"id": "justbecause", "name": "Just Because", "icon": "🎁", "image_url": img("photo-1602773974733-b56200c8653f", 400, 300)},
+    {"id": "birthday", "name": "Birthday", "icon": "🎂", "image_url": "occasions/birthday.jpg"},
+    {"id": "anniversary", "name": "Anniversary", "icon": "💍", "image_url": "occasions/anniversary.jpg"},
+    {"id": "valentine", "name": "Valentine's Day", "icon": "❤️", "image_url": "occasions/valentine.jpg"},
+    {"id": "wedding", "name": "Wedding", "icon": "💐", "image_url": "occasions/wedding.jpg"},
+    {"id": "babyshower", "name": "Baby Shower", "icon": "🍼", "image_url": "occasions/babyshower.jpg"},
+    {"id": "housewarming", "name": "Housewarming", "icon": "🏠", "image_url": "occasions/housewarming.jpg"},
+    {"id": "rakhi", "name": "Rakhi", "icon": "🪡", "image_url": "occasions/rakhi.jpg"},
+    {"id": "diwali", "name": "Diwali", "icon": "🪔", "image_url": "occasions/diwali.jpg"},
+    {"id": "mother", "name": "Mother's Day", "icon": "🌷", "image_url": "occasions/mother.jpg"},
+    {"id": "justbecause", "name": "Just Because", "icon": "🎁", "image_url": "occasions/justbecause.jpg"},
 ]
 
 # -----------------------------------------------------------------------------
-# Products with Multiple Categories, Variants, and Unique SKUs
+# Products with Multiple Categories, Variants, and Clean Image Paths
 # -----------------------------------------------------------------------------
 PRODUCTS_DATA = [
     {
@@ -145,12 +143,13 @@ PRODUCTS_DATA = [
         "price": 2599,
         "rating": 4.9,
         "reviews": 128,
-        "image": img("photo-1700171518313-5dd219beaaa6"),
+        "image": "products/forever-crochet-rose-bouquet/primary.png",
         "images": [
-            img("photo-1700171518313-5dd219beaaa6"),
-            img("photo-1700171394718-2457b1190444"),
-            img("photo-1700170447159-9d2d0da133a5"),
-            img("photo-1700171458554-46cfd3f2a87a"),
+            "products/forever-crochet-rose-bouquet/primary.png",
+            "products/forever-crochet-rose-bouquet/gallery-1.jpg",
+            "products/forever-crochet-rose-bouquet/gallery-2.jpg",
+            "products/forever-crochet-rose-bouquet/gallery-3.jpg",
+            "products/forever-crochet-rose-bouquet/gallery-4.jpg",
         ],
         "category_slugs": ["flowers", "roses", "flower-bouquets", "anniversary-gifts", "valentines-gifts"],
         "badge": "Bestseller",
@@ -169,7 +168,11 @@ PRODUCTS_DATA = [
         "price": 1599,
         "rating": 4.8,
         "reviews": 96,
-        "image": img("photo-1700171394718-2457b1190444"),
+        "image": "products/crochet-tulip-bouquet/primary.png",
+        "images": [
+            "products/crochet-tulip-bouquet/primary.png",
+            "products/crochet-tulip-bouquet/gallery-1.jpg",
+        ],
         "category_slugs": ["flowers", "tulips", "flower-bouquets", "birthday-gifts"],
         "badge": "New",
         "tags": ["romantic", "birthday", "tulips", "handmade"],
@@ -185,7 +188,11 @@ PRODUCTS_DATA = [
         "price": 1799,
         "rating": 4.9,
         "reviews": 84,
-        "image": img("photo-1602773984044-3ecbed81556d"),
+        "image": "products/heart-bear/primary.png",
+        "images": [
+            "products/heart-bear/primary.png",
+            "products/heart-bear/gallery-1.jpg",
+        ],
         "category_slugs": ["amigurumi", "teddy-bear", "special-gifts", "valentines-gifts"],
         "badge": "Bestseller",
         "tags": ["romantic", "valentine", "birthday", "amigurumi"],
@@ -201,7 +208,11 @@ PRODUCTS_DATA = [
         "price": 3299,
         "rating": 5.0,
         "reviews": 52,
-        "image": img("photo-1629019317873-3f603b269723"),
+        "image": "products/couple-bunny-set/primary.png",
+        "images": [
+            "products/couple-bunny-set/primary.png",
+            "products/couple-bunny-set/gallery-1.jpg",
+        ],
         "category_slugs": ["amigurumi", "bunny", "wedding-gifts", "anniversary-gifts"],
         "badge": "Limited",
         "tags": ["romantic", "anniversary", "wedding", "amigurumi"],
@@ -217,7 +228,11 @@ PRODUCTS_DATA = [
         "price": 1299,
         "rating": 4.7,
         "reviews": 73,
-        "image": img("photo-1602773974733-b56200c8653f"),
+        "image": "products/mini-panda-amigurumi/primary.png",
+        "images": [
+            "products/mini-panda-amigurumi/primary.png",
+            "products/mini-panda-amigurumi/gallery-1.jpg",
+        ],
         "category_slugs": ["amigurumi", "panda", "miniatures", "baby-toys"],
         "badge": "Handmade",
         "tags": ["baby", "birthday", "amigurumi", "panda"],
@@ -233,7 +248,11 @@ PRODUCTS_DATA = [
         "price": 1199,
         "rating": 4.8,
         "reviews": 61,
-        "image": img("photo-1753370241607-5d48d8aaa70e"),
+        "image": "products/crochet-bunny/primary.png",
+        "images": [
+            "products/crochet-bunny/primary.png",
+            "products/crochet-bunny/gallery-1.jpg",
+        ],
         "category_slugs": ["amigurumi", "bunny", "baby-toys"],
         "tags": ["baby", "birthday", "amigurumi", "bunny"],
         "customizable": False,
@@ -248,7 +267,11 @@ PRODUCTS_DATA = [
         "price": 1999,
         "rating": 4.9,
         "reviews": 45,
-        "image": img("photo-1700170447159-9d2d0da133a5"),
+        "image": "products/crochet-marigold-garland/primary.png",
+        "images": [
+            "products/crochet-marigold-garland/primary.png",
+            "products/crochet-marigold-garland/gallery-1.jpg",
+        ],
         "category_slugs": ["pooja-items", "devotional-garlands", "festival-decor", "garlands-torans"],
         "badge": "Bestseller",
         "tags": ["pooja", "diwali", "festive", "marigold", "garland"],
@@ -264,7 +287,11 @@ PRODUCTS_DATA = [
         "price": 2199,
         "rating": 4.8,
         "reviews": 88,
-        "image": img("photo-1700171458554-46cfd3f2a87a"),
+        "image": "products/sunflower-bouquet/primary.png",
+        "images": [
+            "products/sunflower-bouquet/primary.png",
+            "products/sunflower-bouquet/gallery-1.jpg",
+        ],
         "category_slugs": ["flowers", "sunflowers", "flower-bouquets", "housewarming-gifts"],
         "badge": "Bestseller",
         "tags": ["birthday", "housewarming", "sunflowers"],
@@ -280,7 +307,11 @@ PRODUCTS_DATA = [
         "price": 1499,
         "rating": 4.6,
         "reviews": 39,
-        "image": img("photo-1550376026-7375b92bb318"),
+        "image": "products/crochet-hanging-planter/primary.png",
+        "images": [
+            "products/crochet-hanging-planter/primary.png",
+            "products/crochet-hanging-planter/gallery-1.jpg",
+        ],
         "category_slugs": ["home-decor", "plant-decor", "housewarming-gifts"],
         "tags": ["housewarming", "home", "planter", "decor"],
         "customizable": False,
@@ -295,7 +326,11 @@ PRODUCTS_DATA = [
         "price": 2999,
         "rating": 4.7,
         "reviews": 54,
-        "image": img("photo-1618574760337-2750f6251d20"),
+        "image": "products/boho-wall-hanging/primary.png",
+        "images": [
+            "products/boho-wall-hanging/primary.png",
+            "products/boho-wall-hanging/gallery-1.jpg",
+        ],
         "category_slugs": ["home-decor", "wall-hangings", "housewarming-gifts"],
         "tags": ["housewarming", "home", "boho", "wall-hanging"],
         "customizable": True,
@@ -310,7 +345,11 @@ PRODUCTS_DATA = [
         "price": 3499,
         "rating": 4.9,
         "reviews": 34,
-        "image": img("photo-1646182504823-a02b768e28b5"),
+        "image": "products/love-letter-crochet-set/primary.png",
+        "images": [
+            "products/love-letter-crochet-set/primary.png",
+            "products/love-letter-crochet-set/gallery-1.jpg",
+        ],
         "category_slugs": ["special-gifts", "valentines-gifts", "anniversary-gifts"],
         "badge": "New",
         "tags": ["romantic", "valentine", "anniversary", "personalized"],
@@ -326,7 +365,11 @@ PRODUCTS_DATA = [
         "price": 1899,
         "rating": 4.8,
         "reviews": 67,
-        "image": img("photo-1608825154649-2e9bb4cd4211"),
+        "image": "products/mini-rose-box/primary.png",
+        "images": [
+            "products/mini-rose-box/primary.png",
+            "products/mini-rose-box/gallery-1.jpg",
+        ],
         "category_slugs": ["flowers", "roses", "special-gifts"],
         "tags": ["romantic", "birthday", "mother", "roses"],
         "customizable": True,
@@ -341,7 +384,11 @@ PRODUCTS_DATA = [
         "price": 999,
         "rating": 4.7,
         "reviews": 28,
-        "image": img("photo-1700171518313-5dd219beaaa6"),
+        "image": "products/lotus-mala/primary.png",
+        "images": [
+            "products/lotus-mala/primary.png",
+            "products/lotus-mala/gallery-1.jpg",
+        ],
         "category_slugs": ["pooja-items", "devotional-garlands", "temple-decor"],
         "tags": ["pooja", "festive", "lotus"],
         "customizable": False,
@@ -356,7 +403,11 @@ PRODUCTS_DATA = [
         "price": 1799,
         "rating": 4.8,
         "reviews": 41,
-        "image": img("photo-1700171394718-2457b1190444"),
+        "image": "products/crochet-toran/primary.png",
+        "images": [
+            "products/crochet-toran/primary.png",
+            "products/crochet-toran/gallery-1.jpg",
+        ],
         "category_slugs": ["pooja-items", "toran", "festival-decor", "garlands-torans"],
         "badge": "Bestseller",
         "tags": ["pooja", "diwali", "housewarming", "toran"],
@@ -372,7 +423,11 @@ PRODUCTS_DATA = [
         "price": 899,
         "rating": 4.5,
         "reviews": 93,
-        "image": img("photo-1700170447159-9d2d0da133a5"),
+        "image": "products/daisy-coaster-set/primary.png",
+        "images": [
+            "products/daisy-coaster-set/primary.png",
+            "products/daisy-coaster-set/gallery-1.jpg",
+        ],
         "category_slugs": ["home-decor", "coasters", "housewarming-gifts"],
         "badge": "Bestseller",
         "tags": ["home", "housewarming", "coasters", "daisies"],
@@ -388,7 +443,11 @@ PRODUCTS_DATA = [
         "price": 1099,
         "rating": 4.6,
         "reviews": 112,
-        "image": img("photo-1602773974733-b56200c8653f"),
+        "image": "products/mini-teddy-bear/primary.png",
+        "images": [
+            "products/mini-teddy-bear/primary.png",
+            "products/mini-teddy-bear/gallery-1.jpg",
+        ],
         "category_slugs": ["amigurumi", "teddy-bear", "miniatures", "baby-toys"],
         "badge": "Bestseller",
         "tags": ["baby", "birthday", "teddy", "amigurumi"],
@@ -407,7 +466,7 @@ REVIEWS_DATA = [
         "rating": 5,
         "text": "Bought the Forever Rose bouquet for our anniversary and it looked even better than the pictures! My husband was completely surprised. The quality is exceptional.",
         "product_name": "Forever Crochet Rose Bouquet",
-        "avatar_url": "https://i.pravatar.cc/60?img=47",
+        "avatar_url": "avatars/priya-sharma.jpg",
         "date": "15 Aug 2026",
     },
     {
@@ -417,7 +476,7 @@ REVIEWS_DATA = [
         "rating": 5,
         "text": "Ordered the Marigold Garland for Ganesh Chaturthi. It was absolutely stunning on our mandir! Everyone who visited asked where I got it from.",
         "product_name": "Crochet Marigold Garland",
-        "avatar_url": "https://i.pravatar.cc/60?img=44",
+        "avatar_url": "avatars/ananya-krishnan.jpg",
         "date": "2 Sep 2026",
     },
     {
@@ -427,7 +486,7 @@ REVIEWS_DATA = [
         "rating": 5,
         "text": "The Couple Bunny Set was the perfect wedding gift. The packaging was so beautiful — I almost didn't want to give it away! Sulocraft is truly special.",
         "product_name": "Couple Bunny Set",
-        "avatar_url": "https://i.pravatar.cc/60?img=41",
+        "avatar_url": "avatars/ritu-agarwal.jpg",
         "date": "20 Sep 2026",
     },
     {
@@ -437,7 +496,7 @@ REVIEWS_DATA = [
         "rating": 5,
         "text": "My daughter absolutely loves her mini panda! The craftsmanship is incredible. You can see the love that goes into every stitch. Will definitely order again.",
         "product_name": "Mini Panda Amigurumi",
-        "avatar_url": "https://i.pravatar.cc/60?img=49",
+        "avatar_url": "avatars/meera-pillai.jpg",
         "date": "8 Sep 2026",
     },
 ]
@@ -450,6 +509,10 @@ def _seed_taxonomy_and_products(db: Session) -> None:
         existing = db.query(Occasion).filter_by(id=occ["id"]).first()
         if not existing:
             db.add(Occasion(**occ))
+        else:
+            existing.name = occ["name"]
+            existing.icon = occ["icon"]
+            existing.image_url = occ["image_url"]
 
     # 2. Seed Hierarchical Categories
     category_slug_map: dict[str, Category] = {}
@@ -466,6 +529,9 @@ def _seed_taxonomy_and_products(db: Session) -> None:
             )
             db.add(parent_cat)
             db.flush()
+        else:
+            parent_cat.image = parent_data.get("image")
+            parent_cat.description = parent_data.get("description")
         category_slug_map[parent_data["slug"]] = parent_cat
 
         for child_idx, child_data in enumerate(parent_data.get("children", [])):
@@ -498,33 +564,49 @@ def _seed_taxonomy_and_products(db: Session) -> None:
 
     # 4. Seed Products and Variants
     for p_data in PRODUCTS_DATA:
-        product = Product(
-            id=p_data["id"],
-            name=p_data["name"],
-            slug=p_data["slug"],
-            description=p_data.get("description"),
-            short_description=p_data.get("description", "")[:120],
-            primary_image=p_data["image"],
-            badge=p_data.get("badge"),
-            customizable=p_data.get("customizable", False),
-            rating=p_data.get("rating", 5.0),
-            reviews_count=p_data.get("reviews", 0),
-            status="ACTIVE",
-            brand="Sulocraft",
-            metadata_json={"customizable": p_data.get("customizable", False)},
-        )
+        product = db.query(Product).filter_by(id=p_data["id"]).first()
+        if not product:
+            product = Product(
+                id=p_data["id"],
+                name=p_data["name"],
+                slug=p_data["slug"],
+                description=p_data.get("description"),
+                short_description=p_data.get("description", "")[:120],
+                primary_image=p_data["image"],
+                badge=p_data.get("badge"),
+                customizable=p_data.get("customizable", False),
+                rating=p_data.get("rating", 5.0),
+                reviews_count=p_data.get("reviews", 0),
+                status="ACTIVE",
+                brand="Sulocraft",
+                metadata_json={"customizable": p_data.get("customizable", False)},
+            )
+            db.add(product)
+            db.flush()
+        else:
+            product.name = p_data["name"]
+            product.slug = p_data["slug"]
+            product.primary_image = p_data["image"]
+            product.description = p_data.get("description")
+            product.badge = p_data.get("badge")
+            product.customizable = p_data.get("customizable", False)
+            product.rating = p_data.get("rating", 5.0)
+            product.reviews_count = p_data.get("reviews", 0)
 
         # Attach categories
+        product.categories.clear()
         for c_slug in p_data.get("category_slugs", []):
             if c_slug in category_slug_map:
                 product.categories.append(category_slug_map[c_slug])
 
         # Attach tags
+        product.tags.clear()
         for t_name in p_data.get("tags", []):
             if t_name in tag_map:
                 product.tags.append(tag_map[t_name])
 
         # Attach gallery images
+        db.query(ProductImage).filter(ProductImage.product_id == product.id).delete()
         for idx, img_url in enumerate(p_data.get("images", [p_data["image"]])):
             product.images.append(
                 ProductImage(
@@ -535,56 +617,59 @@ def _seed_taxonomy_and_products(db: Session) -> None:
             )
 
         # Attach variants
-        for v_data in p_data.get("variants", []):
-            product.variants.append(
-                ProductVariant(
-                    sku=v_data["sku"],
-                    name=v_data["name"],
-                    price=v_data["price"],
-                    stock_quantity=v_data.get("stock", 10),
-                    status="ACTIVE",
-                    attributes_json=v_data.get("attributes", {}),
+        if not product.variants:
+            for v_data in p_data.get("variants", []):
+                product.variants.append(
+                    ProductVariant(
+                        sku=v_data["sku"],
+                        name=v_data["name"],
+                        price=v_data["price"],
+                        stock_quantity=v_data.get("stock", 10),
+                        status="ACTIVE",
+                        attributes_json=v_data.get("attributes", {}),
+                    )
                 )
-            )
-
-        db.add(product)
 
     db.flush()
 
     # 5. Seed Reviews
     for r in REVIEWS_DATA:
+        rev = db.query(Review).filter_by(id=r["id"]).first()
         matching_product = db.query(Product).filter(Product.name.ilike(f"%{r['product_name']}%")).first()
-        db.add(
-            Review(
-                id=r["id"],
-                product_id=matching_product.id if matching_product else None,
-                product_name=r["product_name"],
-                author_name=r["name"],
-                location=r["location"],
-                rating=r["rating"],
-                text=r["text"],
-                avatar_url=r["avatar_url"],
-                date=r["date"],
+        if not rev:
+            db.add(
+                Review(
+                    id=r["id"],
+                    product_id=matching_product.id if matching_product else None,
+                    product_name=r["product_name"],
+                    author_name=r["name"],
+                    location=r["location"],
+                    rating=r["rating"],
+                    text=r["text"],
+                    avatar_url=r["avatar_url"],
+                    date=r["date"],
+                )
             )
-        )
+        else:
+            rev.avatar_url = r["avatar_url"]
+            rev.author_name = r["name"]
+            rev.text = r["text"]
+
 
 def seed_storefront_content(db: Session) -> None:
-    """Seed default brand settings and initial 5 homepage campaigns."""
-    brand = db.query(BrandSettings).order_by(BrandSettings.id.asc()).first()
+    """Seed BrandSettings, rich hero campaigns, and controlled homepage sections."""
+    brand = db.query(BrandSettings).first()
     if not brand:
         brand = BrandSettings(
-            id=1,
             name="Sulocraft",
-            owner_name="Anupama",
+            owner_name="Anupama Sharma",
             instagram_url="https://instagram.com/sulocraft",
             whatsapp_url="https://wa.me/919876543210",
         )
         db.add(brand)
     else:
-        if not brand.name:
-            brand.name = "Sulocraft"
-        if not brand.owner_name:
-            brand.owner_name = "Anupama"
+        brand.name = "Sulocraft"
+        brand.owner_name = "Anupama Sharma"
 
     if db.query(HomepageCampaign).count() == 0:
         campaigns_data = [
@@ -592,8 +677,8 @@ def seed_storefront_content(db: Session) -> None:
                 "title": "Rooted in Warmth, Woven by Hand",
                 "emphasis": "Every loop tells a story",
                 "eyebrow": "Our Heritage",
-                "description": "Founded by Anupama, Sulocraft preserves traditional crochet artistry through modern heirloom designs crafted in small artisanal batches.",
-                "image_url": "https://images.sulocraft.com/products/hero-brand-story.jpg",
+                "description": "Founded by Anupama Sharma, Sulocraft preserves traditional crochet artistry through modern heirloom designs crafted in small artisanal batches.",
+                "image_url": "hero/heritage.png",
                 "image_alt": "Artisanal crochet yarn and handmade floral creation",
                 "destination": "/about",
                 "priority": 1,
@@ -604,7 +689,7 @@ def seed_storefront_content(db: Session) -> None:
                 "emphasis": "Cherished moments",
                 "eyebrow": "Festive Collection",
                 "description": "Discover handcrafted festive hampers, delicate crochet pooja blooms, and heartwarming gifts crafted to bring joy.",
-                "image_url": "https://images.sulocraft.com/products/hero-festive-gifting.jpg",
+                "image_url": "hero/festive-gifting.png",
                 "image_alt": "Festive handcrafted crochet gift box with ribbon",
                 "destination": "/shop?category=Gifts",
                 "priority": 2,
@@ -615,7 +700,7 @@ def seed_storefront_content(db: Session) -> None:
                 "emphasis": "Just arrived in store",
                 "eyebrow": "New Releases",
                 "description": "Explore our latest collection of eternal potted flowers, handcrafted car charms, and pastel botanical bouquets.",
-                "image_url": "https://images.sulocraft.com/products/hero-new-arrivals.jpg",
+                "image_url": "hero/flower-bouquet.png",
                 "image_alt": "Handmade crochet flowers and miniature potted plants",
                 "destination": "/shop",
                 "priority": 3,
@@ -626,7 +711,7 @@ def seed_storefront_content(db: Session) -> None:
                 "emphasis": "Bespoke elegance",
                 "eyebrow": "Home & Living",
                 "description": "Elevate your sanctuary with intricate coasters, bohemian wall hangings, and tactile home accents that radiate warmth.",
-                "image_url": "https://images.sulocraft.com/products/hero-home-decor.jpg",
+                "image_url": "hero/home-decor.png",
                 "image_alt": "Crochet table coaster and boho wall hanging decor",
                 "destination": "/shop?category=Home+Decor",
                 "priority": 4,
@@ -637,10 +722,21 @@ def seed_storefront_content(db: Session) -> None:
                 "emphasis": "Personalized for you",
                 "eyebrow": "Custom Orders",
                 "description": "From personalized initials to custom colorways and bridal bouquets, collaborate directly with our artisans.",
-                "image_url": "https://images.sulocraft.com/products/hero-custom-creations.jpg",
+                "image_url": "hero/custom-bouquet.png",
                 "image_alt": "Custom colored yarn and bespoke crochet monogram project",
                 "destination": "/contact?subject=custom-order",
                 "priority": 5,
+                "is_active": True,
+            },
+            {
+                "title": "Whimsical Amigurumi & Playful Companions",
+                "emphasis": "Stitched with love",
+                "eyebrow": "Amigurumi",
+                "description": "Delight in hand-stitched amigurumi companions, charming animal keychains, and nursery treasures made with soft baby-safe yarn.",
+                "image_url": "hero/amigurumi.png",
+                "image_alt": "Handmade crochet amigurumi animals and plush companions",
+                "destination": "/shop?category=Amigurumi",
+                "priority": 6,
                 "is_active": True,
             },
         ]
@@ -671,7 +767,7 @@ def seed_storefront_content(db: Session) -> None:
                 "section_type": "promo_banner",
                 "title": "Gift Handcrafted Warmth This Season",
                 "description": "Every stitch carries intention. Order early for personalized bouquets and festive keepsakes.",
-                "image_url": "https://images.unsplash.com/photo-1700171518313-5dd219beaaa6?w=1600&auto=format&fit=crop&q=80",
+                "image_url": "campaigns/promo-gift-warmth.jpg",
                 "image_alt": "Handcrafted crochet gifts and bouquets",
                 "cta_text": "Explore Gift Guide",
                 "cta_url": "/shop?category=Gifts",
@@ -689,7 +785,7 @@ def seed_storefront_content(db: Session) -> None:
                 "section_type": "image_text",
                 "title": "Handmade with Love, Thread by Thread",
                 "description": "Sulocraft was born from a passion for preserving traditional crochet artistry while designing contemporary pieces for modern homes. Each creation takes between 4 to 20 hours of focused craftsmanship.",
-                "image_url": "https://images.unsplash.com/photo-1602773974733-b56200c8653f?w=1200&auto=format&fit=crop&q=80",
+                "image_url": "campaigns/story-craft.jpg",
                 "image_alt": "Artisan handcrafting crochet pieces",
                 "image_position": "left",
                 "cta_text": "Read Our Story",
@@ -704,13 +800,33 @@ def seed_storefront_content(db: Session) -> None:
     db.commit()
 
 
-def seed_catalogue(db: Session) -> None:
-    """Populate database with hierarchical taxonomy, products, variants, tags, reviews, admin, and storefront."""
-    if not db.query(Product).first():
-        _seed_taxonomy_and_products(db)
+def reseed_catalogue(db: Session) -> None:
+    """Clear and freshly re-seed all catalogue, occasion, review, and storefront records."""
+    db.query(ProductImage).delete()
+    db.query(ProductVariant).delete()
+    db.execute(product_categories.delete())
+    db.execute(product_tags.delete())
+    db.query(Review).delete()
+    db.query(Product).delete()
+    db.query(Occasion).delete()
+    db.query(Category).delete()
+    db.query(Tag).delete()
+    db.query(HomepageCampaign).delete()
+    db.query(HomepageSection).delete()
+    db.commit()
+    seed_catalogue(db)
 
-    # Seed Default Admin User
-    admin_user = db.query(User).filter(User.phone == "9999900000").first()
+
+def seed_catalogue(db: Session, force: bool = False) -> None:
+    """Populate database with hierarchical taxonomy, products, variants, tags, reviews, admin, and storefront."""
+    if force:
+        reseed_catalogue(db)
+        return
+
+    _seed_taxonomy_and_products(db)
+
+    # Seed Default Admin User with verified email identity (V1 auth contract)
+    admin_user = db.query(User).filter(User.email == "admin@sulocraft.com").first()
     if not admin_user:
         admin_user = User(
             name="Store Admin",
@@ -721,16 +837,20 @@ def seed_catalogue(db: Session) -> None:
         )
         db.add(admin_user)
         db.flush()
-        db.add(UserIdentity(user_id=admin_user.id, provider="phone", provider_subject="9999900000"))
+        db.add(UserIdentity(user_id=admin_user.id, provider="email", provider_subject="admin@sulocraft.com"))
+    else:
+        admin_user.role = "ADMIN"
+        has_email_id = any(i.provider == "email" for i in (admin_user.identities or []))
+        if not has_email_id:
+            db.add(UserIdentity(user_id=admin_user.id, provider="email", provider_subject="admin@sulocraft.com"))
 
     seed_storefront_content(db)
     db.commit()
 
 
-
-
 if __name__ == "__main__":
     Base.metadata.create_all(bind=engine)
+    force_reseed = "--force" in sys.argv or "--reseed" in sys.argv
     with SessionLocal() as session:
-        seed_catalogue(session)
+        seed_catalogue(session, force=force_reseed)
         print("Catalogue database seeded successfully!")

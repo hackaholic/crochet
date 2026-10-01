@@ -1,21 +1,21 @@
-"""User, UserIdentity, UserSession, and OTP models conforming to Sections 4 & 5 of the Specification."""
+"""User, UserIdentity, UserSession, and Magic Link token models conforming to docs/api-auth.md."""
 
 from datetime import datetime, timezone
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, Integer, String
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
 
 
 class User(Base):
-    """Unified user model across all identity providers (Google, Phone OTP)."""
+    """Unified user model across all identity providers (Google, Facebook, Email)."""
 
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=True)
     email = Column(String(255), unique=True, index=True, nullable=True)
-    phone = Column(String(20), unique=True, index=True, nullable=True)
+    phone = Column(String(20), unique=True, index=True, nullable=True)  # delivery contact only
     role = Column(String(20), default="CUSTOMER", nullable=False, index=True)  # CUSTOMER, ADMIN
     status = Column(String(20), default="ACTIVE", index=True)  # ACTIVE, SUSPENDED
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
@@ -30,13 +30,17 @@ class User(Base):
 
 
 class UserIdentity(Base):
-    """Authentication identity link (provider + provider_subject)."""
+    """Authentication identity link (provider + provider_subject).
+
+    Supported providers: google, facebook, email.
+    Phone OTP is removed from V1 — phone column on User is delivery data only.
+    """
 
     __tablename__ = "user_identities"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    provider = Column(String(50), nullable=False)  # google, phone
+    provider = Column(String(50), nullable=False)  # google, facebook, email
     provider_subject = Column(String(255), nullable=False, index=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
@@ -59,7 +63,10 @@ class UserSession(Base):
 
 
 class OtpVerification(Base):
-    """Phone OTP challenge records with attempt limits and expiration."""
+    """Phone OTP challenge records — LEGACY, no longer used for auth (V1 uses email magic links).
+
+    Table is preserved for historical records; new rows are no longer inserted.
+    """
 
     __tablename__ = "otp_verifications"
 
@@ -70,3 +77,25 @@ class OtpVerification(Base):
     expires_at = Column(DateTime, nullable=False)
     attempts = Column(Integer, default=0)
     is_used = Column(Boolean, default=False)
+
+
+class MagicLinkToken(Base):
+    """Email magic link tokens for passwordless sign-in (V1 auth contract).
+
+    Token is stored as SHA-256 hash; the raw token is NEVER persisted.
+    Single-use, expires in 15 minutes.
+    """
+
+    __tablename__ = "magic_link_tokens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(255), nullable=False, index=True)  # normalized lowercase
+    token_hash = Column(String(64), nullable=False, unique=True, index=True)  # SHA-256 hex
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    expires_at = Column(DateTime, nullable=False)
+    is_used = Column(Boolean, default=False, nullable=False)
+    used_at = Column(DateTime, nullable=True)
+
+    __table_args__ = (
+        Index("ix_magic_link_tokens_email_unused", "email", "is_used"),
+    )

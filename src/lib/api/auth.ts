@@ -42,15 +42,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const authApi = {
   me: () => request<User>('/me'),
-  sendOtp: (phone: string) =>
-    request<{ devOtp?: string; phone: string; cooldownSeconds: number }>('/phone/send-otp', {
+  startEmail: (email: string) =>
+    request<{ message: string }>('/email/start', {
       method: 'POST',
-      body: JSON.stringify({ phone }),
-    }),
-  verifyOtp: (phone: string, otp: string, name?: string) =>
-    request<{ user: User; cartMerged: boolean }>('/phone/verify-otp', {
-      method: 'POST',
-      body: JSON.stringify({ phone, otp, name }),
+      body: JSON.stringify({ email }),
     }),
   google: (payload: GoogleAuthPayload | string) => {
     const body = typeof payload === 'string' ? { credential: payload } : payload;
@@ -66,4 +61,3 @@ export const authApi = {
     }),
   logout: () => request<{ status: string; message: string }>('/logout', { method: 'POST' }),
 };
-

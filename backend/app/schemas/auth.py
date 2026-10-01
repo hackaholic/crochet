@@ -17,6 +17,28 @@ def normalize_phone(phone: str) -> str:
     raise ValueError("Invalid phone number format. Please provide a valid 10-digit mobile number.")
 
 
+class EmailStartRequest(BaseModel):
+    """Payload to request an email magic link."""
+
+    email: str = Field(..., description="Customer email address.")
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        clean = v.strip().lower()
+        if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", clean):
+            raise ValueError("Invalid email format.")
+        return clean
+
+
+class EmailStartResponse(BaseModel):
+    """Generic non-enumerating response for magic link initiation."""
+
+    message: str = "If the email address is valid, a sign-in link has been sent."
+    dev_magic_link: str | None = Field(default=None, serialization_alias="devMagicLink", description="Provided in local/test mode only.")
+
+
+
 class SendOtpRequest(BaseModel):
     """Payload to request an SMS OTP."""
 

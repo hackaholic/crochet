@@ -220,21 +220,19 @@ def test_notification_service_send_order_notifications():
         assert len(update_logs) >= 2
 
 
-def test_auth_send_otp_background_execution():
-    """Verify POST /api/v1/auth/phone/send-otp triggers background SMS notification and logging."""
-    test_phone = "9112233445"
-    resp = client.post("/api/v1/auth/phone/send-otp", json={"phone": test_phone})
-    assert resp.status_code == 200
-    data = resp.json()
-    assert data["status"] == "ok"
+def test_auth_send_magic_link_background_execution():
+    """Verify POST /api/v1/auth/email/start triggers background Email notification and logging."""
+    test_email = "notify.test@example.com"
+    resp = client.post("/api/v1/auth/email/start", json={"email": test_email})
+    assert resp.status_code == 202
 
     # Verify notification log entry was created
     with SessionLocal() as db_session:
         log = (
             db_session.query(NotificationLog)
-            .filter(NotificationLog.recipient == test_phone, NotificationLog.event_type == "OTP")
+            .filter(NotificationLog.recipient == test_email, NotificationLog.event_type == "MAGIC_LINK")
             .first()
         )
         assert log is not None
-        assert log.channel == "SMS"
-        assert data["devOtp"] in log.body
+        assert log.channel == "EMAIL"
+        assert "[magic link dispatched" in log.body

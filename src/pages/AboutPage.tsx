@@ -5,7 +5,7 @@ interface AboutPageProps {
 }
 
 const team = [
-  { name: 'Anupama', role: 'Founder & Lead Artisan', image: 'https://i.pravatar.cc/200?img=47', bio: 'Started crocheting at 14, turned passion into purpose at 27.' },
+  { name: 'Anupama Sharma', role: 'Founder & Lead Artisan', image: 'https://i.pravatar.cc/200?img=47', bio: 'Started crocheting at 14, turned passion into purpose at 27.' },
   { name: 'Sunita Nair', role: 'Master Crochet Artist', image: 'https://i.pravatar.cc/200?img=44', bio: '18 years of experience in traditional Indian textile arts.' },
   { name: 'Riya Joshi', role: 'Design & Patterns Lead', image: 'https://i.pravatar.cc/200?img=41', bio: 'Blends contemporary aesthetics with Indian craft traditions.' },
 ];

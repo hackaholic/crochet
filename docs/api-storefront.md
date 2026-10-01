@@ -38,6 +38,15 @@ interface ImageTextSection extends BaseSection { type: 'image_text'; title: stri
 
 The backend must never return HTML, CSS, JSX, Tailwind classes, arbitrary component trees, or executable presentation data. Product configuration stores references such as `collection_slug`; FastAPI resolves current product/category/review records before returning the response.
 
+### Image-origin configuration
+
+Persist stable relative object keys in content records, for example `products/heart-bear/primary.webp`, rather than environment-specific absolute URLs. When serializing API responses, prepend `IMAGE_BASE_URL`:
+
+- local Docker: `IMAGE_BASE_URL=http://localhost:8000/static/images`
+- production: `IMAGE_BASE_URL=https://images.sulocraft.com`
+
+The frontend always renders the absolute URL returned by the API. Changing the image origin must require only an environment change and an API restart; it must not require React edits or bulk replacement of database rows. Admin APIs may accept an existing absolute external URL when explicitly needed, but Sulocraft-managed assets should use object keys.
+
 Gemini owns section persistence, scheduling, ordering, enable/disable behavior, admin CRUD, seed data, the `/storefront/home` endpoint, and OpenAPI updates. Codex owns the strict section registry and the five approved templates. Unknown section types are ignored safely.
 
 Returns public brand settings and currently active homepage campaigns. No authentication is required.
@@ -108,3 +117,32 @@ interface HomepageCampaign {
 - Render `heroCampaigns` with a reusable carousel, lazy-loaded responsive images, accessible controls, and no content fallback embedded in the component.
 - Keep the reusable **Shop Collection** and **Create Something Custom** actions in the template.
 - Render `brand.ownerName` wherever founder/owner attribution is displayed.
+
+## Hero artwork handoff
+
+The approved source assets live in `public/images/hero/`. Gemini should upload them to R2 and store the returned public URLs in `HomepageCampaign.image_url`; the frontend must continue rendering the URL verbatim.
+
+These mappings are mandatory. Development and production must use the generated project files themselves; do not substitute Unsplash or other stock-image fallbacks when the approved asset is available.
+
+| Campaign | Source asset | Production R2 URL |
+| --- | --- | --- |
+| Our Heritage | `heritage.png` | `https://images.sulocraft.com/hero/heritage.png` |
+| Festive Collection | `festive-gifting.png` | `https://images.sulocraft.com/hero/festive-gifting.png` |
+| New Releases / Flowers | `flower-bouquet.png` | `https://images.sulocraft.com/hero/flower-bouquet.png` |
+| Home & Living | `home-decor.png` | `https://images.sulocraft.com/hero/home-decor.png` |
+| Custom Orders | `custom-bouquet.png` | `https://images.sulocraft.com/hero/custom-bouquet.png` |
+| Amigurumi feature | `amigurumi.png` | `https://images.sulocraft.com/hero/amigurumi.png` |
+
+Artwork contains no baked-in marketing copy. This is intentional: titles, descriptions, ordering, visibility, and destinations stay editable in the database while React provides accessible full-width overlay text and reusable action buttons.
+
+## Category artwork handoff
+
+Category cards also render backend-provided URLs verbatim. A URL stored in PostgreSQL is only a reference; the matching R2 object must exist and be publicly reachable before the image can render.
+
+| Category slug | Local development asset | Production R2 URL |
+| --- | --- | --- |
+| `flowers` | `/images/hero/flower-bouquet.png` | `https://images.sulocraft.com/categories/flowers.png` |
+| `pooja-items` | `/images/hero/festive-gifting.png` | `https://images.sulocraft.com/categories/pooja-items.png` |
+| `amigurumi` | `/images/hero/amigurumi.png` | `https://images.sulocraft.com/categories/amigurumi.png` |
+
+Local seed/development records may use the frontend origin for these assets. Production records must use the corresponding public R2 URLs after the objects are uploaded and verified with an HTTP `200` response.

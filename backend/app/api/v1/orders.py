@@ -9,6 +9,7 @@ from typing import Any
 from fastapi import APIRouter, BackgroundTasks, Cookie, Depends, Header, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session, joinedload
 
+from app.core.images import build_image_url
 from app.api.v1.auth import get_current_user, get_optional_current_user
 from app.db.session import get_db
 from app.models.cart import Cart, CartItem
@@ -97,7 +98,7 @@ def _to_order_out(order: Order) -> OrderOut:
             product_slug=item.product_slug,
             sku=item.sku,
             variant_name=item.variant_name,
-            product_image=item.product_image,
+            product_image=build_image_url(item.product_image),
             unit_price=item.unit_price,
             unit_price_paise=item.unit_price * 100,
             quantity=item.quantity,
@@ -502,6 +503,8 @@ def checkout(
         tax_amount=0,
         total_amount=total_amount,
         notes=order_in.notes,
+        courier_name="BlueDart Express",
+        tracking_number=f"SULO-EXP-{secrets.token_hex(3).upper()}",
         estimated_delivery=now + timedelta(days=5),
         created_at=now,
         updated_at=now,

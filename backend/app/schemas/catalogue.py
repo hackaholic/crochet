@@ -1,7 +1,7 @@
-"""Pydantic schemas conforming to the E-commerce Multi-Agent Specification."""
-
 from typing import Any
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+from app.core.images import build_image_url
 
 
 class CategoryBase(BaseModel):
@@ -16,6 +16,11 @@ class CategoryBase(BaseModel):
     icon: str | None = None
     display_order: int = 0
     is_active: bool = True
+
+    @field_validator("image", mode="after")
+    @classmethod
+    def resolve_image(cls, v: str | None) -> str | None:
+        return build_image_url(v) if v else None
 
 
 class CategoryOut(CategoryBase):
@@ -34,6 +39,11 @@ class OccasionOut(BaseModel):
     name: str
     icon: str | None = None
     image_url: str | None = None
+
+    @field_validator("image_url", mode="after")
+    @classmethod
+    def resolve_image_url(cls, v: str | None) -> str | None:
+        return build_image_url(v) if v else None
 
 
 class ReviewOut(BaseModel):
@@ -114,6 +124,11 @@ class ProductImageOut(BaseModel):
     is_primary: bool = False
     variant_id: int | None = None
 
+    @field_validator("url", mode="after")
+    @classmethod
+    def resolve_url(cls, v: str) -> str:
+        return build_image_url(v)
+
 
 class ProductListItem(BaseModel):
     """Product card summary conforming to Section 2 of Specification & frontend UI."""
@@ -141,6 +156,16 @@ class ProductListItem(BaseModel):
     customizable: bool = False
     in_stock: bool = Field(default=True, serialization_alias="inStock")
     inventory_status: str = Field(default="IN_STOCK", serialization_alias="inventoryStatus")
+
+    @field_validator("image", mode="after")
+    @classmethod
+    def resolve_image(cls, v: str) -> str:
+        return build_image_url(v)
+
+    @field_validator("image_urls", mode="after")
+    @classmethod
+    def resolve_image_urls(cls, v: list[str]) -> list[str]:
+        return [build_image_url(x) for x in v]
 
 
 class ProductDetail(BaseModel):
@@ -175,6 +200,16 @@ class ProductDetail(BaseModel):
     customizable: bool = False
     attributes: dict[str, Any] = Field(default_factory=dict, alias="metadata_json")
     customer_reviews: list[ReviewOut] = Field(default_factory=list, serialization_alias="customerReviews")
+
+    @field_validator("images", mode="after")
+    @classmethod
+    def resolve_images(cls, v: list[str]) -> list[str]:
+        return [build_image_url(x) for x in v]
+
+    @field_validator("image_urls", mode="after")
+    @classmethod
+    def resolve_image_urls(cls, v: list[str]) -> list[str]:
+        return [build_image_url(x) for x in v]
 
 
 class ProductListResponse(BaseModel):

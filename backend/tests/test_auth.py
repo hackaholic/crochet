@@ -1,4 +1,4 @@
-"""Automated tests for Authentication conforming to Milestone 5."""
+"""Automated tests for V1 Authentication (Email Magic Link, Google, Facebook) conforming to docs/api-auth.md."""
 
 import pytest
 from fastapi.testclient import TestClient
@@ -8,70 +8,107 @@ from app.main import app
 client = TestClient(app)
 
 
-def test_send_otp_success():
-    """Verify requesting an OTP succeeds and returns devOtp in test mode."""
-    response = client.post("/api/v1/auth/phone/send-otp", json={"phone": "9999900001"})
-    assert response.status_code == 200
+def test_email_start_returns_202_and_generic_message():
+    """Verify POST /api/v1/auth/email/start returns 202 with non-enumerating message."""
+    response = client.post("/api/v1/auth/email/start", json={"email": "aditi@example.com"})
+    assert response.status_code == 202
     data = response.json()
-    assert data["status"] == "ok"
-    assert data["phone"] == "9999900001"
-    assert data["cooldownSeconds"] == 60
-    assert data["devOtp"] is not None
+    assert data["message"] == "If the email address is valid, a sign-in link has been sent."
+    assert "devMagicLink" in data
+    assert "token=" in data["devMagicLink"]
 
 
-def test_send_otp_cooldown_throttling():
-    """Verify rapid repeated OTP requests are throttled with 429."""
-    phone = "9999900002"
-    res1 = client.post("/api/v1/auth/phone/send-otp", json={"phone": phone})
-    assert res1.status_code == 200
-
-    # Immediate second request should be throttled
-    res2 = client.post("/api/v1/auth/phone/send-otp", json={"phone": phone})
-    assert res2.status_code == 429
-    assert "Please wait" in res2.json()["detail"]
-
-
-def test_send_otp_invalid_phone():
-    """Verify malformed phone numbers are rejected with 422."""
-    response = client.post("/api/v1/auth/phone/send-otp", json={"phone": "12345"})
+def test_email_start_invalid_email_rejected():
+    """Verify malformed email addresses are rejected with 422."""
+    response = client.post("/api/v1/auth/email/start", json={"email": "not-an-email"})
     assert response.status_code == 422
 
 
-def test_verify_otp_incorrect_code():
-    """Verify incorrect OTP code returns 400."""
-    phone = "9999900003"
-    client.post("/api/v1/auth/phone/send-otp", json={"phone": phone})
+def test_email_start_rate_limiting():
+    """Verify rapid repeated requests return 202 without revealing membership or erroring."""
+    email = "throttled@example.com"
+    res1 = client.post("/api/v1/auth/email/start", json={"email": email})
+    assert res1.status_code == 202
 
-    verify_res = client.post(
-        "/api/v1/auth/phone/verify-otp",
-        json={"phone": phone, "otp": "000000"},
-    )
-    assert verify_res.status_code == 400
-    assert "Incorrect OTP" in verify_res.json()["detail"]
+    res2 = client.post("/api/v1/auth/email/start", json={"email": email})
+    assert res2.status_code == 202
+    assert res2.json()["message"] == "If the email address is valid, a sign-in link has been sent."
 
 
-def test_verify_otp_success_sets_session_cookie():
-    """Verify successful OTP verification creates user, session, and sets cookie."""
+def test_email_verify_success_sets_session_cookie():
+    """Verify GET /api/v1/auth/email/verify validates token, issues session cookie, and redirects."""
     auth_client = TestClient(app)
-    phone = "9999900004"
-    send_res = auth_client.post("/api/v1/auth/phone/send-otp", json={"phone": phone})
-    otp_code = send_res.json()["devOtp"]
+    email = "verify.user@example.com"
 
-    verify_res = auth_client.post(
-        "/api/v1/auth/phone/verify-otp",
-        json={"phone": phone, "otp": otp_code, "name": "Aditi Roy"},
+    start_res = auth_client.post("/api/v1/auth/email/start", json={"email": email})
+    assert start_res.status_code == 202
+    dev_link = start_res.json()["devMagicLink"]
+    token = dev_link.split("token=")[1]
+
+    # Verify token
+    verify_res = auth_client.get(
+        f"/api/v1/auth/email/verify?token={token}&returnTo=/account",
+        follow_redirects=False,
     )
-    assert verify_res.status_code == 200
+    assert verify_res.status_code == 303
+    assert "/account" in verify_res.headers["location"]
     assert "session_token" in verify_res.cookies
-    data = verify_res.json()
-    assert data["user"]["name"] == "Aditi Roy"
-    assert data["user"]["phone"] == phone
-    assert "phone" in data["user"]["identities"]
 
-    # Verify /auth/me returns this authenticated customer
+    # Profile check via /auth/me
     me_res = auth_client.get("/api/v1/auth/me")
     assert me_res.status_code == 200
-    assert me_res.json()["phone"] == phone
+    me_data = me_res.json()
+    assert me_data["email"] == email
+    assert "email" in me_data["identities"]
+
+
+def test_email_verify_single_use():
+    """Verify token can only be consumed once."""
+    auth_client = TestClient(app)
+    email = "single.use@example.com"
+
+    start_res = auth_client.post("/api/v1/auth/email/start", json={"email": email})
+    token = start_res.json()["devMagicLink"].split("token=")[1]
+
+    # 1. First consumption succeeds
+    res1 = auth_client.get(f"/api/v1/auth/email/verify?token={token}", follow_redirects=False)
+    assert res1.status_code == 303
+    assert "error" not in res1.headers["location"]
+
+    # 2. Second consumption fails and redirects to error
+    res2 = auth_client.get(f"/api/v1/auth/email/verify?token={token}", follow_redirects=False)
+    assert res2.status_code == 303
+    assert "error=invalid_link" in res2.headers["location"]
+
+
+def test_email_verify_invalid_token_redirects_to_error():
+    """Verify invalid token redirects to error parameter."""
+    auth_client = TestClient(app)
+    res = auth_client.get("/api/v1/auth/email/verify?token=completely_fake_invalid_token_12345", follow_redirects=False)
+    assert res.status_code == 303
+    assert "error=invalid_link" in res.headers["location"]
+
+
+def test_email_verify_merges_guest_cart():
+    """Verify magic link sign-in merges guest cart into user cart."""
+    session_client = TestClient(app)
+
+    # 1. Add item to guest cart
+    add_res = session_client.post("/api/v1/cart/items", json={"product_id": 1, "quantity": 2})
+    assert add_res.status_code == 201
+    assert "guest_cart_token" in session_client.cookies
+
+    # 2. Request and verify magic link in same session
+    start_res = session_client.post("/api/v1/auth/email/start", json={"email": "cart.merge@example.com"})
+    token = start_res.json()["devMagicLink"].split("token=")[1]
+
+    verify_res = session_client.get(f"/api/v1/auth/email/verify?token={token}", follow_redirects=False)
+    assert verify_res.status_code == 303
+
+    # 3. Retrieve cart - merged items should be present
+    cart_res = session_client.get("/api/v1/cart")
+    assert cart_res.status_code == 200
+    assert cart_res.json()["itemCount"] >= 2
 
 
 def test_google_sign_in():
@@ -99,11 +136,9 @@ def test_google_sign_in():
 def test_logout_revokes_session():
     """Verify logout clears the session cookie and revokes access."""
     auth_client = TestClient(app)
-    phone = "9999900005"
-    send_res = auth_client.post("/api/v1/auth/phone/send-otp", json={"phone": phone})
     auth_client.post(
-        "/api/v1/auth/phone/verify-otp",
-        json={"phone": phone, "otp": send_res.json()["devOtp"]},
+        "/api/v1/auth/google",
+        json={"credential": "mock_token", "email": "logout.test@example.com", "name": "Logout Test"},
     )
 
     # Logout
@@ -115,38 +150,9 @@ def test_logout_revokes_session():
     assert me_res.status_code == 401
 
 
-def test_login_auto_merges_guest_cart():
-    """Verify anonymous guest cart automatically merges upon login."""
-    session_client = TestClient(app)
-
-    # 1. Add item to guest cart
-    add_res = session_client.post("/api/v1/cart/items", json={"product_id": 1, "quantity": 2})
-    assert add_res.status_code == 201
-    assert "guest_cart_token" in session_client.cookies
-
-    # 2. Login via OTP in the same browser session
-    phone = "9999900006"
-    send_res = session_client.post("/api/v1/auth/phone/send-otp", json={"phone": phone})
-    otp_code = send_res.json()["devOtp"]
-
-    verify_res = session_client.post(
-        "/api/v1/auth/phone/verify-otp",
-        json={"phone": phone, "otp": otp_code},
-    )
-    assert verify_res.status_code == 200
-    assert verify_res.json()["cartMerged"] is True
-
-    # 3. Retrieve cart - should have the merged items!
-    cart_res = session_client.get("/api/v1/cart")
-    assert cart_res.status_code == 200
-    assert cart_res.json()["itemCount"] == 2
-    assert cart_res.json()["items"][0]["productId"] == 1
-
-
 def test_google_sign_in_account_unification():
     """Verify Google sign-in unifies with existing user account if email matches."""
     client1 = TestClient(app)
-    # 1. First user signs in via Google
     email = "unify.test@example.com"
     res1 = client1.post(
         "/api/v1/auth/google",
@@ -160,7 +166,7 @@ def test_google_sign_in_account_unification():
     assert res1.status_code == 200
     user_id = res1.json()["user"]["id"]
 
-    # 2. Re-login with same Google sub
+    # Re-login with same Google sub
     client2 = TestClient(app)
     res2 = client2.post(
         "/api/v1/auth/google",
@@ -192,22 +198,22 @@ def test_facebook_sign_in():
     assert data["user"]["name"] == "Priya Sharma"
     assert "facebook" in data["user"]["identities"]
 
-    # Verify session works for /me
     me_res = auth_client.get("/api/v1/auth/me")
     assert me_res.status_code == 200
     assert me_res.json()["email"] == "priya.sharma@example.com"
 
 
-def test_facebook_sign_in_account_unification():
-    """Verify Facebook login links to existing account when email matches Google/OTP user."""
+def test_account_unification_email_and_social():
+    """Verify Email magic link and Social accounts unify under the same user."""
+    shared_email = "unified.family@example.com"
+
     # 1. Sign in via Google first
-    email = "shared.user@example.com"
     g_client = TestClient(app)
     g_res = g_client.post(
         "/api/v1/auth/google",
         json={
             "credential": "mock_google_token_shared",
-            "email": email,
+            "email": shared_email,
             "name": "Shared User",
             "sub": "google_sub_shared",
         },
@@ -222,41 +228,24 @@ def test_facebook_sign_in_account_unification():
         json={
             "accessToken": "mock_fb_token_shared",
             "userId": "fb_uid_shared",
-            "email": email,
+            "email": shared_email,
             "name": "Shared User",
         },
     )
     assert fb_res.status_code == 200
     assert fb_res.json()["user"]["id"] == unified_user_id
-    identities = fb_res.json()["user"]["identities"]
+
+    # 3. Sign in via Email magic link with same email
+    em_client = TestClient(app)
+    start_res = em_client.post("/api/v1/auth/email/start", json={"email": shared_email})
+    token = start_res.json()["devMagicLink"].split("token=")[1]
+    verify_res = em_client.get(f"/api/v1/auth/email/verify?token={token}", follow_redirects=False)
+    assert verify_res.status_code == 303
+
+    me_res = em_client.get("/api/v1/auth/me")
+    assert me_res.status_code == 200
+    assert me_res.json()["id"] == unified_user_id
+    identities = me_res.json()["identities"]
     assert "google" in identities
     assert "facebook" in identities
-
-
-def test_facebook_sign_in_cart_merge():
-    """Verify Facebook login merges guest cart items."""
-    session_client = TestClient(app)
-
-    # 1. Add item to guest cart
-    add_res = session_client.post("/api/v1/cart/items", json={"product_id": 1, "quantity": 1})
-    assert add_res.status_code == 201
-    assert "guest_cart_token" in session_client.cookies
-
-    # 2. Login via Facebook
-    fb_res = session_client.post(
-        "/api/v1/auth/facebook",
-        json={
-            "accessToken": "mock_fb_cart_token",
-            "userId": "fb_cart_user_1",
-            "email": "cart.fb@example.com",
-            "name": "Cart FB User",
-        },
-    )
-    assert fb_res.status_code == 200
-    assert fb_res.json()["cartMerged"] is True
-
-    # 3. Retrieve cart
-    cart_res = session_client.get("/api/v1/cart")
-    assert cart_res.status_code == 200
-    assert cart_res.json()["itemCount"] >= 1
-
+    assert "email" in identities

@@ -2,8 +2,9 @@
 
 from datetime import datetime
 from typing import Annotated, Any, Literal, Union
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from app.core.images import build_image_url
 from app.schemas.catalogue import ProductListItem
 
 
@@ -13,7 +14,7 @@ class BrandSettingsOut(BaseModel):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     name: str = "Sulocraft"
-    owner_name: str = Field(default="Anupama", serialization_alias="ownerName", alias="ownerName")
+    owner_name: str = Field(default="Anupama Sharma", serialization_alias="ownerName", alias="ownerName")
     instagram_url: str | None = Field(default=None, serialization_alias="instagramUrl", alias="instagramUrl")
     whatsapp_url: str | None = Field(default=None, serialization_alias="whatsappUrl", alias="whatsappUrl")
 
@@ -46,6 +47,11 @@ class HomepageCampaignOut(BaseModel):
     starts_at: datetime | None = Field(default=None, serialization_alias="startsAt", alias="startsAt")
     ends_at: datetime | None = Field(default=None, serialization_alias="endsAt", alias="endsAt")
 
+    @field_validator("image_url", mode="after")
+    @classmethod
+    def resolve_image_url(cls, v: str) -> str:
+        return build_image_url(v) if v else v
+
 
 class StorefrontResponse(BaseModel):
     """Public storefront aggregate response for the homepage (legacy compatibility)."""
@@ -69,7 +75,12 @@ class CategorySummary(BaseModel):
     name: str
     slug: str
     description: str | None = None
-    image_url: str = Field(..., serialization_alias="imageUrl", alias="imageUrl")
+    image_url: str = Field(default="", serialization_alias="imageUrl", alias="imageUrl")
+
+    @field_validator("image_url", mode="after")
+    @classmethod
+    def resolve_image_url(cls, v: str) -> str:
+        return build_image_url(v) if v else v
 
 
 class ReviewSummary(BaseModel):
@@ -83,6 +94,11 @@ class ReviewSummary(BaseModel):
     rating: int = 5
     text: str
     avatar_url: str | None = Field(default=None, serialization_alias="avatarUrl", alias="avatarUrl")
+
+    @field_validator("avatar_url", mode="after")
+    @classmethod
+    def resolve_avatar_url(cls, v: str | None) -> str | None:
+        return build_image_url(v) if v else None
 
 
 class BaseHomepageSectionOut(BaseModel):
@@ -125,6 +141,11 @@ class PromoBannerSectionOut(BaseHomepageSectionOut):
     cta_text: str | None = Field(default=None, serialization_alias="ctaText", alias="ctaText")
     cta_url: str | None = Field(default=None, serialization_alias="ctaUrl", alias="ctaUrl")
 
+    @field_validator("image_url", mode="after")
+    @classmethod
+    def resolve_image_url(cls, v: str | None) -> str | None:
+        return build_image_url(v) if v else None
+
 
 class ReviewSectionOut(BaseHomepageSectionOut):
     """Controlled customer reviews section template."""
@@ -140,8 +161,8 @@ class ImageTextSectionOut(BaseHomepageSectionOut):
     type: Literal["image_text"] = "image_text"
     title: str
     description: str
-    image_url: str = Field(..., serialization_alias="imageUrl", alias="imageUrl")
-    image_alt: str = Field(..., serialization_alias="imageAlt", alias="imageAlt")
+    image_url: str = Field(default="", serialization_alias="imageUrl", alias="imageUrl")
+    image_alt: str = Field(default="", serialization_alias="imageAlt", alias="imageAlt")
     image_position: Literal["left", "right"] = Field(
         default="left",
         serialization_alias="imagePosition",
@@ -149,6 +170,11 @@ class ImageTextSectionOut(BaseHomepageSectionOut):
     )
     cta_text: str | None = Field(default=None, serialization_alias="ctaText", alias="ctaText")
     cta_url: str | None = Field(default=None, serialization_alias="ctaUrl", alias="ctaUrl")
+
+    @field_validator("image_url", mode="after")
+    @classmethod
+    def resolve_image_url(cls, v: str) -> str:
+        return build_image_url(v) if v else v
 
 
 HomepageSectionOut = Annotated[

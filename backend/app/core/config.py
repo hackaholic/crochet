@@ -14,12 +14,18 @@ class Settings:
     database_url: str = os.getenv("DATABASE_URL", "sqlite:///./crochet.db")
 
     # Frontend & CORS
-    frontend_url: str = os.getenv("FRONTEND_URL", "https://sulocraft.com")
+    frontend_url: str = os.getenv(
+        "FRONTEND_URL",
+        "http://localhost:8080" if os.getenv("APP_ENV", "development") == "development" else "https://sulocraft.com",
+    )
     additional_cors_origins: str = os.getenv(
         "ADDITIONAL_CORS_ORIGINS",
         "https://www.sulocraft.com,http://localhost:3000,http://localhost:5173,http://localhost:8080,http://127.0.0.1:3000,http://127.0.0.1:5173,http://127.0.0.1:8080",
     )
-    public_api_url: str = os.getenv("PUBLIC_API_URL", "https://api.sulocraft.com")
+    public_api_url: str = os.getenv(
+        "PUBLIC_API_URL",
+        "http://localhost:8000" if os.getenv("APP_ENV", "development") == "development" else "https://api.sulocraft.com",
+    )
 
     # Cookies
     # In production, set COOKIE_DOMAIN to ".sulocraft.com" for cross-subdomain auth
@@ -37,6 +43,14 @@ class Settings:
     r2_public_bucket: str = os.getenv("R2_PUBLIC_BUCKET", "sulocraft-products")
     r2_private_backup_bucket: str = os.getenv("R2_PRIVATE_BACKUP_BUCKET", "sulocraft-backups")
     r2_public_base_url: str = os.getenv("R2_PUBLIC_BASE_URL", "https://images.sulocraft.com")
+    image_base_url: str = os.getenv(
+        "IMAGE_BASE_URL",
+        (
+            "http://localhost:8000/static/images"
+            if os.getenv("APP_ENV", "development") == "development"
+            else os.getenv("R2_PUBLIC_BASE_URL", "https://images.sulocraft.com")
+        ),
+    )
 
     # Auth Providers
     google_client_id: str | None = os.getenv("GOOGLE_CLIENT_ID")
@@ -63,6 +77,12 @@ class Settings:
     smtp_password: str | None = os.getenv("SMTP_PASSWORD")
     smtp_tls: bool = os.getenv("SMTP_TLS", "true").lower() in ("true", "1", "yes")
     resend_api_key: str | None = os.getenv("RESEND_API_KEY")
+
+    # Payment Provider
+    payment_provider: str = os.getenv("PAYMENT_PROVIDER", "mock")
+
+    # Dev OTP (only used when APP_ENV=development or SMS_PROVIDER=mock)
+    dev_otp_code: str = os.getenv("DEV_OTP_CODE", "123456")
 
     @property
     def cors_origins(self) -> list[str]:

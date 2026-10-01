@@ -937,40 +937,58 @@ paths:
                   type: string
                 type: object
                 title: Response Remove Coupon Api V1 Cart Coupon Delete
-  /api/v1/auth/phone/send-otp:
+  /api/v1/auth/email/start:
     post:
       tags:
       - auth
-      summary: Send Phone Otp
-      description: Request a 6-digit OTP code to mobile phone with cooldown throttling.
-      operationId: send_phone_otp_api_v1_auth_phone_send_otp_post
+      summary: Start Email Login
+      description: Send a single-use magic sign-in link via email. Always returns
+        generic non-enumerating 202.
+      operationId: start_email_login_api_v1_auth_email_start_post
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SendOtpRequest'
+              $ref: '#/components/schemas/EmailStartRequest'
         required: true
       responses:
-        '200':
+        '202':
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SendOtpResponse'
+                $ref: '#/components/schemas/EmailStartResponse'
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /api/v1/auth/phone/verify-otp:
-    post:
+  /api/v1/auth/email/verify:
+    get:
       tags:
       - auth
-      summary: Verify Phone Otp
-      description: Verify OTP and authenticate user, setting HttpOnly session cookie.
-      operationId: verify_phone_otp_api_v1_auth_phone_verify_otp_post
+      summary: Verify Email Magic Link
+      description: Consume a magic-link token, authenticate/link user, merge guest
+        cart, and redirect.
+      operationId: verify_email_magic_link_api_v1_auth_email_verify_get
       parameters:
+      - name: token
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Token
+      - name: returnTo
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Returnto
       - name: x-cart-token
         in: header
         required: false
@@ -987,19 +1005,12 @@ paths:
           - type: string
           - type: 'null'
           title: Guest Cart Token
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/VerifyOtpRequest'
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/AuthResponse'
+              schema: {}
         '422':
           description: Validation Error
           content:
@@ -4271,6 +4282,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StorefrontResponse'
+  /:
+    get:
+      tags:
+      - system
+      summary: Root
+      description: Root entrypoint providing service status and quick links.
+      operationId: root__get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+                title: Response Root  Get
   /health:
     get:
       tags:
@@ -4288,6 +4316,59 @@ paths:
                   type: string
                 type: object
                 title: Response Health Check Health Get
+  /static/images/{image_path}:
+    head:
+      tags:
+      - system
+      summary: Get Mock Static Image
+      description: Serve local static assets or redirect to high-res photography during
+        development.
+      operationId: get_mock_static_image_static_images__image_path__head
+      parameters:
+      - name: image_path
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Image Path
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      tags:
+      - system
+      summary: Get Mock Static Image
+      description: Serve local static assets or redirect to high-res photography during
+        development.
+      operationId: get_mock_static_image_static_images__image_path__head
+      parameters:
+      - name: image_path
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Image Path
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
     AccountOverviewOut:
@@ -6219,7 +6300,7 @@ components:
         ownerName:
           type: string
           title: Ownername
-          default: Anupama
+          default: Anupama Sharma
         instagramUrl:
           anyOf:
           - type: string
@@ -6553,12 +6634,12 @@ components:
         imageUrl:
           type: string
           title: Imageurl
+          default: ''
       type: object
       required:
       - id
       - name
       - slug
-      - imageUrl
       title: CategorySummary
       description: Summarized category for homepage category grids.
     CouponApplyRequest:
@@ -6616,6 +6697,32 @@ components:
       - subtotalAfterDiscountPaise
       title: CouponApplyResponse
       description: Result of applying a promotional coupon to cart.
+    EmailStartRequest:
+      properties:
+        email:
+          type: string
+          title: Email
+          description: Customer email address.
+      type: object
+      required:
+      - email
+      title: EmailStartRequest
+      description: Payload to request an email magic link.
+    EmailStartResponse:
+      properties:
+        message:
+          type: string
+          title: Message
+          default: If the email address is valid, a sign-in link has been sent.
+        devMagicLink:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Devmagiclink
+          description: Provided in local/test mode only.
+      type: object
+      title: EmailStartResponse
+      description: Generic non-enumerating response for magic link initiation.
     FacebookAuthRequest:
       properties:
         accessToken:
@@ -6766,9 +6873,11 @@ components:
         imageUrl:
           type: string
           title: Imageurl
+          default: ''
         imageAlt:
           type: string
           title: Imagealt
+          default: ''
         imagePosition:
           type: string
           enum:
@@ -6792,8 +6901,6 @@ components:
       - order
       - title
       - description
-      - imageUrl
-      - imageAlt
       title: ImageTextSectionOut
       description: Controlled artisanal story/craft editorial section template.
     OccasionOut:
@@ -7890,45 +7997,6 @@ components:
       - text
       title: ReviewSummary
       description: Summarized customer testimonial for homepage review section.
-    SendOtpRequest:
-      properties:
-        phone:
-          type: string
-          title: Phone
-          description: Customer 10-digit mobile phone number.
-      type: object
-      required:
-      - phone
-      title: SendOtpRequest
-      description: Payload to request an SMS OTP.
-    SendOtpResponse:
-      properties:
-        status:
-          type: string
-          title: Status
-          default: ok
-        phone:
-          type: string
-          title: Phone
-        cooldownSeconds:
-          type: integer
-          title: Cooldownseconds
-          default: 60
-        message:
-          type: string
-          title: Message
-          default: OTP sent successfully
-        devOtp:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Devotp
-          description: Provided in local/test mode only.
-      type: object
-      required:
-      - phone
-      title: SendOtpResponse
-      description: Response after sending OTP.
     StorefrontHomeResponse:
       properties:
         brand:
@@ -8115,30 +8183,6 @@ components:
       title: VariantOut
       description: Sellable product variant carrying unique SKU, price, stock, and
         attributes.
-    VerifyOtpRequest:
-      properties:
-        phone:
-          type: string
-          title: Phone
-          description: Customer mobile phone number.
-        otp:
-          type: string
-          maxLength: 6
-          minLength: 4
-          title: Otp
-          description: 4 to 6 digit verification code.
-        name:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Name
-          description: Optional customer name for new accounts.
-      type: object
-      required:
-      - phone
-      - otp
-      title: VerifyOtpRequest
-      description: Payload to verify OTP and log in.
     WishlistItemAdd:
       properties:
         productId:

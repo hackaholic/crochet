@@ -196,7 +196,7 @@ def get_storefront_home(db: Session = Depends(get_db)) -> StorefrontHomeResponse
     if not brand:
         brand_out = BrandSettingsOut(
             name="Sulocraft",
-            owner_name="Anupama",
+            owner_name="Anupama Sharma",
             instagram_url="https://instagram.com/sulocraft",
             whatsapp_url="https://wa.me/919876543210",
         )
@@ -252,7 +252,7 @@ def get_storefront_content(db: Session = Depends(get_db)) -> StorefrontResponse:
     if not brand:
         brand_out = BrandSettingsOut(
             name="Sulocraft",
-            owner_name="Anupama",
+            owner_name="Anupama Sharma",
             instagram_url="https://instagram.com/sulocraft",
             whatsapp_url="https://wa.me/919876543210",
         )

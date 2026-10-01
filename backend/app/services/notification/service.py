@@ -9,6 +9,7 @@ from app.models.notification import NotificationLog
 from app.models.order import Order
 from app.services.notification.factory import get_email_provider, get_sms_provider
 from app.services.notification.templates import (
+    render_magic_link_email,
     render_order_confirmation_email,
     render_order_confirmation_sms,
     render_order_status_email,
@@ -238,6 +239,47 @@ class NotificationService:
             logger.error("Failed to commit order status notification logs: %s", e)
             db.rollback()
 
+    @staticmethod
+    def send_magic_link(db: Session, to_email: str, magic_link: str, expires_minutes: int = 15) -> tuple[bool, str | None]:
+        """Send a magic sign-in link via email and log the transaction.
+
+        The raw token must NOT appear in the log body — only the destination email is recorded.
+        """
+        html_body, text_body = render_magic_link_email(to_email, magic_link, expires_minutes)
+        subject = "Sign in to Sulocraft"
+        email_provider = get_email_provider()
+        success, err = email_provider.send_email(
+            to_email=to_email,
+            subject=subject,
+            html_content=html_body,
+            text_content=text_body,
+        )
+
+        provider_name = settings.email_provider or "mock"
+        status = "SENT" if success else "FAILED"
+        if provider_name.lower() == "mock":
+            status = "MOCK"
+
+        # Log event — never log the raw token or magic link URL
+        log_entry = NotificationLog(
+            channel="EMAIL",
+            recipient=to_email,
+            event_type="MAGIC_LINK",
+            status=status,
+            provider=provider_name,
+            subject=subject,
+            body="[magic link dispatched — URL redacted]",
+            error_message=err,
+        )
+        try:
+            db.add(log_entry)
+            db.commit()
+        except Exception as e:
+            logger.error("Failed to persist magic link notification log: %s", e)
+            db.rollback()
+
+        return success, err
+
 
 # -----------------------------------------------------------------------------
 # Background Task Runners (Decoupled execution with independent DB sessions)
@@ -270,3 +312,9 @@ def dispatch_order_status_background(
             NotificationService.send_order_status_update(
                 db, order, new_status, carrier=carrier, tracking_number=tracking_number
             )
+
+
+def dispatch_magic_link_background(to_email: str, magic_link: str, expires_minutes: int = 15) -> None:
+    """Send magic link email in FastAPI background task (independent DB session for logging)."""
+    with SessionLocal() as db:
+        NotificationService.send_magic_link(db, to_email, magic_link, expires_minutes)

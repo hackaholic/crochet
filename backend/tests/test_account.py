@@ -3,16 +3,27 @@
 from fastapi.testclient import TestClient
 from app.main import app
 
+from app.db.session import SessionLocal
+from app.models.user import User
+
 client = TestClient(app)
 
 
 def _login_test_user(phone: str = "9999966001") -> dict[str, str]:
     """Helper to authenticate and return session cookies."""
-    send_res = client.post("/api/v1/auth/phone/send-otp", json={"phone": phone})
-    assert send_res.status_code == 200
-    otp = send_res.json().get("devOtp") or "123456"
-    res = client.post("/api/v1/auth/phone/verify-otp", json={"phone": phone, "otp": otp})
+    email = f"user_{phone}@example.com"
+    res = client.post("/api/v1/auth/google", json={
+        "credential": f"mock_token_{phone}",
+        "email": email,
+        "name": "Test Customer",
+        "sub": f"sub_{phone}",
+    })
     assert res.status_code == 200
+    with SessionLocal() as db:
+        user = db.query(User).filter(User.email == email).first()
+        if user and user.phone != phone:
+            user.phone = phone
+            db.commit()
     return dict(res.cookies)
 
 
