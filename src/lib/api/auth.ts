@@ -43,7 +43,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export const authApi = {
   me: () => request<User>('/me'),
   startEmail: (email: string) =>
-    request<{ message: string }>('/email/start', {
+    request<{ message: string; devMagicLink?: string | null }>('/email/start', {
       method: 'POST',
       body: JSON.stringify({ email }),
     }),

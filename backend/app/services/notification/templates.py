@@ -1,8 +1,5 @@
 """Branded email and SMS notification templates for Sulocraft."""
 
-def render_otp_sms(otp_code: str) -> str:
-    """Format plain-text OTP verification SMS."""
-    return f"Your Sulocraft verification code is: {otp_code}. Valid for 5 minutes. Do not share this code."
 
 
 def render_order_confirmation_sms(order_number: str, total_amount: float, tracking_url: str) -> str:

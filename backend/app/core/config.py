@@ -56,7 +56,10 @@ class Settings:
     google_client_id: str | None = os.getenv("GOOGLE_CLIENT_ID")
     google_client_secret: str | None = os.getenv("GOOGLE_CLIENT_SECRET")
     facebook_app_id: str | None = os.getenv("FACEBOOK_APP_ID")
-    facebook_app_secret: str | None = os.getenv("FACEBOOK_APP_SECRET")
+    # Administrator Bootstrap (Configurable for Anupama / Production)
+    admin_email: str = os.getenv("ADMIN_EMAIL", "anupama@sulocraft.com")
+    admin_name: str = os.getenv("ADMIN_NAME", "Anupama Sharma")
+
     # SMS Notifications (Fast2SMS / Twilio / Mock for Order Updates)
     sms_provider: str = os.getenv("SMS_PROVIDER", "mock")
     fast2sms_api_key: str | None = os.getenv("FAST2SMS_API_KEY")

@@ -63,9 +63,12 @@ class UserSession(Base):
 
 
 class OtpVerification(Base):
-    """Phone OTP challenge records — LEGACY, no longer used for auth (V1 uses email magic links).
+    """Historical phone OTP challenge records.
 
-    Table is preserved for historical records; new rows are no longer inserted.
+    DEPRECATED: Phone OTP authentication is removed from V1.
+    This table is preserved strictly for backwards migration compatibility and will be
+    dropped in a future database schema cleanup. Phone is retained on User and Order
+    strictly as delivery contact data.
     """
 
     __tablename__ = "otp_verifications"

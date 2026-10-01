@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -20,7 +20,7 @@ import { useCatalogue } from './components/CatalogueProvider';
 import { ErrorState, LoadingState } from './components/StorefrontState';
 import { useCart } from './components/CartProvider';
 import AuthModal from './components/AuthModal';
-import type { User } from './lib/api/auth';
+import { authApi, type User } from './lib/api/auth';
 import { useWishlist } from './components/WishlistProvider';
 import SeoManager from './components/SeoManager';
 
@@ -38,9 +38,27 @@ export default function App() {
   const [cartOpen, setCartOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [authError, setAuthError] = useState('');
   const [couponCode, setCouponCode] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const openAuth = useCallback(() => setAuthOpen(true), []);
+
+  useEffect(() => {
+    const errorCode = new URLSearchParams(location.search).get('error');
+    if (errorCode === 'invalid_link') {
+      setAuthError('That sign-in link is invalid, expired, or has already been used. Request a new link below.');
+      setAuthOpen(true);
+      navigateTo(location.pathname, { replace: true });
+    }
+  }, [location.pathname, location.search, navigateTo]);
+
+  useEffect(() => {
+    let active = true;
+    authApi.me()
+      .then(currentUser => { if (active) setUser(currentUser); })
+      .catch(() => { if (active) setUser(null); });
+    return () => { active = false; };
+  }, []);
 
   const navigate = useCallback((p: AppPage) => {
     navigateTo(p === 'product' || p === 'notFound' ? '/shop' : pagePath(p));
@@ -188,7 +206,7 @@ export default function App() {
         onClose={() => setSearchOpen(false)}
         onProductClick={handleProductClick}
       />
-      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} onSignedIn={signedInUser => { setUser(signedInUser); void refreshCart(); void refreshWishlist(); }} />
+      <AuthModal open={authOpen} initialError={authError} onClose={() => { setAuthOpen(false); setAuthError(''); }} onSignedIn={signedInUser => { setUser(signedInUser); setAuthError(''); void refreshCart(); void refreshWishlist(); }} />
     </div>
   );
 }

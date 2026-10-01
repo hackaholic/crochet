@@ -4,6 +4,7 @@ import re
 import sys
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.db.base import Base
 from app.db.session import SessionLocal, engine
 from app.models.catalogue import (
@@ -825,24 +826,26 @@ def seed_catalogue(db: Session, force: bool = False) -> None:
 
     _seed_taxonomy_and_products(db)
 
-    # Seed Default Admin User with verified email identity (V1 auth contract)
-    admin_user = db.query(User).filter(User.email == "admin@sulocraft.com").first()
-    if not admin_user:
-        admin_user = User(
-            name="Store Admin",
-            email="admin@sulocraft.com",
-            phone="9999900000",
-            role="ADMIN",
-            status="ACTIVE",
-        )
-        db.add(admin_user)
-        db.flush()
-        db.add(UserIdentity(user_id=admin_user.id, provider="email", provider_subject="admin@sulocraft.com"))
-    else:
-        admin_user.role = "ADMIN"
-        has_email_id = any(i.provider == "email" for i in (admin_user.identities or []))
-        if not has_email_id:
-            db.add(UserIdentity(user_id=admin_user.id, provider="email", provider_subject="admin@sulocraft.com"))
+    # Seed Configurable Admin User (Anupama / Production) with verified email identity
+    admin_emails = {settings.admin_email.strip().lower(), "admin@sulocraft.com"}
+    for a_email in admin_emails:
+        admin_user = db.query(User).filter(User.email == a_email).first()
+        if not admin_user:
+            admin_user = User(
+                name=settings.admin_name if a_email == settings.admin_email.strip().lower() else "Store Admin",
+                email=a_email,
+                phone="9999900000" if a_email == "admin@sulocraft.com" else None,
+                role="ADMIN",
+                status="ACTIVE",
+            )
+            db.add(admin_user)
+            db.flush()
+            db.add(UserIdentity(user_id=admin_user.id, provider="email", provider_subject=a_email))
+        else:
+            admin_user.role = "ADMIN"
+            has_email_id = any(i.provider == "email" for i in (admin_user.identities or []))
+            if not has_email_id:
+                db.add(UserIdentity(user_id=admin_user.id, provider="email", provider_subject=a_email))
 
     seed_storefront_content(db)
     db.commit()

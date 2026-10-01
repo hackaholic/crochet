@@ -120,26 +120,27 @@ def test_resend_email_provider_mocked():
         assert kwargs["headers"]["Authorization"] == "Bearer re_12345"
 
 
-def test_notification_service_send_otp_logging():
-    """Verify NotificationService.send_otp records an audit log entry in the database."""
-    phone = "9876500001"
-    otp_code = "776655"
+def test_notification_service_send_magic_link_logging():
+    """Verify NotificationService.send_magic_link records a sanitized audit log entry."""
+    email = "magic.audit@example.com"
+    magic_link = "http://localhost:8000/api/v1/auth/email/verify?token=secret_token_123"
 
     with SessionLocal() as db_session:
-        success, err = NotificationService.send_otp(db_session, phone, otp_code)
+        success, err = NotificationService.send_magic_link(db_session, email, magic_link)
         assert success is True
         assert err is None
 
         # Inspect NotificationLog record
         log = (
             db_session.query(NotificationLog)
-            .filter(NotificationLog.recipient == phone, NotificationLog.event_type == "OTP")
+            .filter(NotificationLog.recipient == email, NotificationLog.event_type == "MAGIC_LINK")
             .first()
         )
         assert log is not None
-        assert log.channel == "SMS"
+        assert log.channel == "EMAIL"
         assert log.status in ("SENT", "MOCK")
-        assert otp_code in log.body
+        assert "secret_token_123" not in log.body
+        assert "[magic link dispatched" in log.body
 
 
 def test_notification_service_send_order_notifications():

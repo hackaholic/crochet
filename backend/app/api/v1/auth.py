@@ -31,6 +31,9 @@ SESSION_MAX_AGE = 30 * 24 * 3600  # 30 days
 MAGIC_LINK_EXPIRY_MINUTES = 15
 MAGIC_LINK_COOLDOWN_SECONDS = 60  # rate-limit: one request per email per minute
 MAGIC_LINK_ALLOWED_RETURN_PATHS = {"/", "/shop", "/account", "/orders", "/wishlist", "/checkout"}
+_IP_RATE_LIMIT_STORE: dict[str, list[float]] = {}
+IP_RATE_LIMIT_WINDOW = 60.0
+IP_MAX_REQUESTS_PER_WINDOW = 5
 
 
 def ensure_utc(dt: datetime | None) -> datetime:
@@ -210,7 +213,22 @@ def start_email_login(
             # Silently return generic response without dispatching
             return EmailStartResponse(message="If the email address is valid, a sign-in link has been sent.")
 
-    # 2. Rate limiting by normalized email within cooldown window
+    # 2. Client-address throttling
+    import time
+    forwarded = request.headers.get("x-forwarded-for")
+    client_ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "unknown")
+    current_time = time.time()
+    is_test = os.getenv("TESTING", "false").lower() == "true"
+
+    if client_ip != "unknown" and not is_test:
+        ip_timestamps = _IP_RATE_LIMIT_STORE.get(client_ip, [])
+        ip_timestamps = [t for t in ip_timestamps if current_time - t < IP_RATE_LIMIT_WINDOW]
+        if len(ip_timestamps) >= IP_MAX_REQUESTS_PER_WINDOW:
+            return EmailStartResponse(message="If the email address is valid, a sign-in link has been sent.")
+        ip_timestamps.append(current_time)
+        _IP_RATE_LIMIT_STORE[client_ip] = ip_timestamps
+
+    # 3. Rate limiting by normalized email within cooldown window
     cutoff = now - timedelta(seconds=MAGIC_LINK_COOLDOWN_SECONDS)
     recent_token = (
         db.query(MagicLinkToken)
@@ -292,12 +310,11 @@ def verify_email_magic_link(
             MagicLinkToken.is_used.is_(False),
             MagicLinkToken.expires_at > now,
         )
-        .update({"is_used": True, "used_at": now}, synchronize_session="fetch")
+        .update({"is_used": True, "used_at": now}, synchronize_session=False)
     )
     if not updated:
         return RedirectResponse(url=fallback_redirect, status_code=status.HTTP_303_SEE_OTHER)
 
-    db.commit()
     email = token_record.email
     user = (
         db.query(User)
@@ -343,8 +360,14 @@ def verify_email_magic_link(
         is_revoked=False,
     )
     db.add(session)
-    db.commit()
-    db.refresh(user)
+
+    # Commit token consumption, identity, and session in a single atomic transaction
+    try:
+        db.commit()
+        db.refresh(user)
+    except Exception:
+        db.rollback()
+        return RedirectResponse(url=fallback_redirect, status_code=status.HTTP_303_SEE_OTHER)
 
     # Auto-merge guest cart if token present
     active_cart_token = guest_cart_token or x_cart_token
@@ -394,6 +417,12 @@ def _verify_google_credential(
                             status_code=status.HTTP_401_UNAUTHORIZED,
                             detail="Invalid Google token audience.",
                         )
+                    email_verified = info.get("email_verified")
+                    if email_verified is not None and not (email_verified is True or str(email_verified).lower() in ("true", "1")):
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Google account email is not verified.",
+                        )
                     return (
                         info.get("sub", fallback_sub or secrets.token_hex(8)),
                         info.get("email", fallback_email),
@@ -441,6 +470,11 @@ def _verify_facebook_token(
                     info = r.json()
                     fb_id = info.get("id") or fallback_id or secrets.token_hex(8)
                     email = info.get("email") or fallback_email
+                    if not email:
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Facebook profile must contain a verified email address.",
+                        )
                     name = info.get("name") or fallback_name or "Facebook User"
                     return fb_id, email, name
                 else:

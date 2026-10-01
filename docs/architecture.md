@@ -10,6 +10,10 @@ Browser → React/Vite frontend → FastAPI → PostgreSQL
 
 The frontend owns presentation and transient interface state. The API owns validated business data and the database owns persistent data. Payment providers, email, and shipping services will be called by the API when those integrations are chosen. The container exposes the storefront on host port 8080, while Vite continues to listen on port 5173 inside its container.
 
+## Email boundary
+
+Incoming business email uses Cloudflare Email Routing to forward `hello@`, `support@`, and `orders@sulocraft.com` to the owner's private Gmail destination. Outgoing automated email uses the backend `EmailService` with Resend. Cloudflare forwarding is not a sending mailbox, and personal Gmail is never an application sender. See [email-architecture.md](email-architecture.md).
+
 ## Current application
 
 The frontend is a client-side React 19 storefront built with TypeScript, Vite 8, and Tailwind CSS 4. The Python API currently exposes only a health endpoint; it does not yet power the interface.

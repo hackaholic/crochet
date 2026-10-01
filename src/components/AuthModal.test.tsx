@@ -35,7 +35,7 @@ describe('AuthModal', () => {
   it('starts email magic-link login and shows the generic confirmation state', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ message: 'If the email address is valid, a sign-in link has been sent.' }),
+      json: async () => ({ message: 'If the email address is valid, a sign-in link has been sent.', devMagicLink: 'http://localhost:8000/api/v1/auth/email/verify?token=local-token' }),
     });
     vi.stubGlobal('fetch', fetchMock);
     render(<AuthModal open onClose={vi.fn()} onSignedIn={vi.fn()} />);
@@ -45,9 +45,15 @@ describe('AuthModal', () => {
 
     await waitFor(() => expect(screen.getByRole('heading', { name: /check your email/i })).toBeInTheDocument());
     expect(screen.getByText('customer@example.com')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /open local sign-in link/i })).toHaveAttribute('href', expect.stringContaining('returnTo='));
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringMatching(/\/auth\/email\/start$/),
       expect.objectContaining({ method: 'POST', body: JSON.stringify({ email: 'customer@example.com' }) }),
     );
+  });
+
+  it('shows a generic invalid-link message without exposing token details', () => {
+    render(<AuthModal open initialError="That sign-in link is invalid, expired, or has already been used. Request a new link below." onClose={vi.fn()} onSignedIn={vi.fn()} />);
+    expect(screen.getByRole('alert')).toHaveTextContent(/invalid, expired, or has already been used/i);
   });
 });

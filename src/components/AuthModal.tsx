@@ -11,9 +11,10 @@ type FacebookSdkApi = {
   login: (callback: (response: { authResponse?: { accessToken: string; userID: string } }) => void, options?: { scope: string }) => void;
 };
 
-export default function AuthModal({ open, onClose, onSignedIn }: { open: boolean; onClose: () => void; onSignedIn: (user: User) => void }) {
+export default function AuthModal({ open, onClose, onSignedIn, initialError = '' }: { open: boolean; onClose: () => void; onSignedIn: (user: User) => void; initialError?: string }) {
   const [email, setEmail] = useState('');
   const [sentEmail, setSentEmail] = useState('');
+  const [devMagicLink, setDevMagicLink] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -23,9 +24,10 @@ export default function AuthModal({ open, onClose, onSignedIn }: { open: boolean
     if (open) {
       setEmail('');
       setSentEmail('');
-      setError('');
+      setDevMagicLink('');
+      setError(initialError);
     }
-  }, [open]);
+  }, [initialError, open]);
 
   if (!open) return null;
 
@@ -109,8 +111,13 @@ export default function AuthModal({ open, onClose, onSignedIn }: { open: boolean
     setBusy(true);
     setError('');
     try {
-      await authApi.startEmail(email.trim());
+      const response = await authApi.startEmail(email.trim());
       setSentEmail(email.trim());
+      if (response.devMagicLink) {
+        const returnTo = window.location.pathname.startsWith('/') ? window.location.pathname : '/';
+        const separator = response.devMagicLink.includes('?') ? '&' : '?';
+        setDevMagicLink(`${response.devMagicLink}${separator}returnTo=${encodeURIComponent(returnTo)}`);
+      }
     } catch {
       setError('We could not send the sign-in link. Check the email address and try again.');
     } finally {
@@ -144,6 +151,7 @@ export default function AuthModal({ open, onClose, onSignedIn }: { open: boolean
           ) : (
             <>
               <div className="rounded-2xl bg-[#F5F8F1] px-5 py-4 text-center"><p className="text-sm text-[#5C3D2E]">We sent a secure sign-in link to:</p><p className="mt-1 break-all font-semibold text-[#2C1810]">{sentEmail}</p></div>
+              {devMagicLink && <a href={devMagicLink} className="mt-4 block w-full rounded-full bg-[#5C7A5A] py-3.5 text-center text-sm font-semibold text-white transition-colors hover:bg-[#496747]">Open local sign-in link</a>}
               <button onClick={() => { setSentEmail(''); setError(''); }} className="mt-4 w-full text-sm font-semibold text-[#8B6B4A] hover:text-[#C4622D]">Use another email</button>
             </>
           )}

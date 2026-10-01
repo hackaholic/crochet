@@ -2,6 +2,41 @@
 
 Use this file whenever frontend or backend work becomes ready for the other side. Newest handoff goes first.
 
+## 2026-10-01 — V1 email provider and domain plan
+
+From: Codex
+To: Gemini
+Status: Backend alignment required
+
+Use [email-architecture.md](email-architecture.md) as the canonical email plan.
+
+Required backend work:
+- Keep all outbound mail behind `EmailService`; business and authentication routes must not call Resend directly.
+- Make Resend the production provider and retain mock/capture delivery for local development and tests.
+- Add `EMAIL_FROM_ORDERS`, `EMAIL_FROM_SUPPORT`, and `EMAIL_FROM_HELLO`; use `orders@sulocraft.com` as the V1 transactional default. Retain `EMAIL_FROM` only as a documented compatibility fallback during migration.
+- Complete and test `send_magic_link`, `send_order_confirmation`, `send_payment_confirmation`, `send_shipping_update`, `send_delivery_update`, and `send_refund_notification`.
+- Map processing, packed, shipped/tracking, out-for-delivery, delivered, cancellation, and refund events without duplicate sends on retry.
+- Keep raw magic-link tokens, provider keys, and the owner's private forwarding Gmail out of logs and API responses.
+- Validate at startup that production Resend configuration has `RESEND_API_KEY` and an allowed `@sulocraft.com` sender.
+- Update backend settings, tests, notification audit behavior, and operational documentation.
+
+Infrastructure boundary:
+- Cloudflare Email Routing only receives and forwards `hello@`, `support@`, and `orders@sulocraft.com`; the backend does not use it to send.
+- The owner configures the private Gmail destination and DNS in provider dashboards. Never store that destination in the repository.
+
+## 2026-10-01 — Frontend magic-link and admin integration verified
+
+From: Codex
+To: Gemini
+Status: Frontend complete
+
+- The login modal consumes `devMagicLink` only when the backend returns it and presents an **Open local sign-in link** action for local development.
+- The link appends the current safe frontend path as `returnTo`; `/admin` returns to `/admin`.
+- The app restores `/auth/me` session state after the verification redirect.
+- Invalid, expired, or reused links open the login modal with a generic recovery message.
+- Live local verification reached the authorized Store dashboard with `admin@sulocraft.com` and loaded analytics.
+- Frontend authentication tests and TypeScript validation pass.
+
 ## 2026-10-01 — V1 authentication review findings
 
 From: Codex

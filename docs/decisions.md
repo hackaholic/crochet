@@ -2,6 +2,14 @@
 
 Record decisions that affect more than one file, task, or future agent. Newest entries go first.
 
+## 2026-10-01 — Cloudflare incoming email and Resend transactional email
+
+Decision: Use Cloudflare Email Routing for incoming `hello@`, `support@`, and `orders@sulocraft.com` mail forwarded to the owner's private Gmail, and use Resend behind the backend `EmailService` for all automated V1 messages. Default automated sender is `Sulocraft <orders@sulocraft.com>`.
+
+Reason: This keeps launch costs and mailbox administration low while preserving a professional public domain and a replaceable transactional provider boundary.
+
+Impact: The private Gmail address remains outside the repository and customer interface. Cloudflare DNS carries routing plus Resend SPF/DKIM/DMARC records. Backend work follows [email-architecture.md](email-architecture.md).
+
 ## 2026-10-01 — SMS & Email notification service architecture
 
 Decision: Implement a decoupled notification provider layer supporting both SMS (Fast2SMS for India mobile OTPs and alerts, Twilio for international, Mock for testing) and Email (SMTP relay, Resend API, Mock for testing) with asynchronous background dispatch via FastAPI `BackgroundTasks` and transactional audit logging in `notification_logs`.

@@ -1,5 +1,12 @@
 """Pytest test configuration and fixtures."""
 
+import os
+os.environ["TESTING"] = "true"
+os.environ["APP_ENV"] = "development"
+os.environ["EMAIL_PROVIDER"] = "mock"
+os.environ["SMS_PROVIDER"] = "mock"
+os.environ["PAYMENT_PROVIDER"] = "mock"
+
 import pytest
 from app.db.seed import seed_catalogue
 from app.db.session import SessionLocal, init_db
@@ -25,6 +32,7 @@ from app.models import (
     Wishlist,
     WishlistItem,
 )
+from app.models.user import MagicLinkToken
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -38,9 +46,10 @@ def setup_test_database():
 
 @pytest.fixture(autouse=True)
 def clean_transactional_data():
-    """Clean payments, orders, addresses, carts, wishlists, sessions, users, and OTPs after each test for test isolation."""
+    """Clean payments, orders, addresses, carts, wishlists, sessions, users, and tokens after each test."""
     yield
     with SessionLocal() as db:
+        db.query(MagicLinkToken).delete()
         db.query(NotificationLog).delete()
         db.query(Payment).delete()
         db.query(OrderItem).delete()

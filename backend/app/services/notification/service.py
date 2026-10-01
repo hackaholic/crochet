@@ -14,7 +14,6 @@ from app.services.notification.templates import (
     render_order_confirmation_sms,
     render_order_status_email,
     render_order_status_sms,
-    render_otp_sms,
 )
 
 logger = logging.getLogger("sulocraft.notifications")
@@ -22,37 +21,6 @@ logger = logging.getLogger("sulocraft.notifications")
 
 class NotificationService:
     """Central orchestrator for transactional customer notifications."""
-
-    @staticmethod
-    def send_otp(db: Session, phone: str, otp_code: str) -> tuple[bool, str | None]:
-        """Dispatch OTP via configured SMS provider and log transaction."""
-        sms_provider = get_sms_provider()
-        success, err = sms_provider.send_otp(phone, otp_code)
-
-        provider_name = settings.sms_provider or "mock"
-        status = "SENT" if success else "FAILED"
-        if provider_name.lower() == "mock":
-            status = "MOCK"
-
-        body = render_otp_sms(otp_code)
-        log_entry = NotificationLog(
-            channel="SMS",
-            recipient=phone,
-            event_type="OTP",
-            status=status,
-            provider=provider_name,
-            subject=None,
-            body=body,
-            error_message=err,
-        )
-        try:
-            db.add(log_entry)
-            db.commit()
-        except Exception as e:
-            logger.error("Failed to persist OTP notification log: %s", e)
-            db.rollback()
-
-        return success, err
 
     @staticmethod
     def send_order_placed(db: Session, order: Order) -> None:

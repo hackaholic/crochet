@@ -5,7 +5,10 @@ Use this file for work that is ready to start. Keep each item small enough for o
 | Status | Owner | Task | Done when |
 | --- | --- | --- | --- |
 | Done | Gemini | Finish V1 global authentication hardening | Core magic-link and admin flow works; atomic token consumption, verified social email enforcement, CSRF/origin controls, client-address throttling, removal of legacy OTP schemas/config/services, and 79 passing tests |
+| Ready | Gemini | Align V1 transactional email with Resend | Implement purpose-specific sender configuration and every required event through `EmailService`; preserve mock local tests and never expose the private forwarding Gmail per `/docs/email-architecture.md` |
+| Ready | Owner | Configure Cloudflare and Resend email DNS | Privately verify the Gmail destination, create `hello@`, `support@`, and `orders@` routes, verify the Resend domain, and add SPF/DKIM/DMARC records per `/docs/email-architecture.md` |
 | Done | Codex | Replace customer OTP UI with global login | Login modal offers only real Google, real Facebook, and email magic link; checkout remains available to guests and requires delivery email plus phone |
+| Done | Codex | Integrate local email and admin sign-in | Development magic-link response exposes a local-only continuation, preserves the requested return path, restores the cookie session after redirect, and displays generic invalid/expired-link guidance |
 | Ready | Codex + Gemini | Add V1 authentication and purchase browser regression | Guest checkout and guest cart → Google/Facebook/email login merge → checkout → payment → admin shipment → tracking pass in Docker without any phone-auth dependency |
 | Done | Gemini | Implement the catalogue API | `GET /api/v1/products` matches the shared contract, has seeded taxonomy/products, and passed test suite |
 | Done | Gemini | Implement Cart Persistence & Guest Cart | `Cart` and `CartItem` models, guest cookie management, add/update/delete endpoints, and merge logic are implemented and tested |

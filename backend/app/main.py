@@ -32,6 +32,49 @@ class CloudflareCacheControlMiddleware(BaseHTTPMiddleware):
         return response
 
 
+class CSRFOriginProtectionMiddleware(BaseHTTPMiddleware):
+    """Enforce CSRF protection on state-changing requests using cookie authentication."""
+
+    MUTATING_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
+
+    async def dispatch(self, request: Request, call_next):
+        if request.method in self.MUTATING_METHODS:
+            session_cookie = request.cookies.get("session_token")
+            if session_cookie:
+                origin = request.headers.get("origin")
+                referer = request.headers.get("referer")
+                source = origin
+                if not source and referer:
+                    from urllib.parse import urlparse
+                    parsed = urlparse(referer)
+                    source = f"{parsed.scheme}://{parsed.netloc}"
+
+                is_test_or_dev = (
+                    settings.app_env == "development"
+                    or os.getenv("TESTING", "false").lower() == "true"
+                )
+
+                if source:
+                    is_valid = (
+                        source in settings.cors_origins
+                        or (is_test_or_dev and any(h in source for h in ("localhost", "127.0.0.1", "testserver")))
+                    )
+                    if not is_valid:
+                        return Response(
+                            content='{"detail":"CSRF origin validation failed"}',
+                            status_code=403,
+                            media_type="application/json",
+                        )
+                elif not is_test_or_dev:
+                    return Response(
+                        content='{"detail":"Origin or Referer header required for state-changing request"}',
+                        status_code=403,
+                        media_type="application/json",
+                    )
+
+        return await call_next(request)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifecycle manager to initialize database schema and seed initial data."""
@@ -50,6 +93,7 @@ app = FastAPI(
 
 # Enforce strict non-caching for customer-sensitive endpoints behind Cloudflare
 app.add_middleware(CloudflareCacheControlMiddleware)
+app.add_middleware(CSRFOriginProtectionMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
