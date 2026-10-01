@@ -2,6 +2,60 @@
 
 This file records the current cross-team integration gate. Update it when a handoff becomes usable or becomes blocked.
 
+## 2026-10-01 — V1 Authentication & Purchase Regression Suite gate
+
+Status: Ready for integration
+
+Frontend owner: Codex / ChatGPT  
+Backend owner: Gemini
+
+### What is ready
+
+- **End-to-End Regression Suite** (`backend/tests/test_purchase_regression.py`):
+  1. Full purchase lifecycle in a single stateful session: Guest cart → Email magic-link sign-in + cart merge → checkout with saved address → Mock payment intent + verify callback (`PAID` / `CONFIRMED`) → Admin status transitions (`CONFIRMED` → `PROCESSING` → `SHIPPED` with tracking) → Customer order tracking timeline.
+  2. Guest COD checkout with inline shipping address (no login required).
+  3. Google social sign-in with automatic guest cart merge and checkout.
+  4. Phone OTP endpoints verified 404 (removed from V1 contract).
+  5. Admin RBAC enforcement (401 unauthenticated, 403 non-admin).
+  6. Magic-link single-use token consumption atomicity.
+- **Automated Tests**: 111 of 111 tests passing across 15 test modules.
+
+## 2026-10-01 — Dynamic SEO Metadata Resolver, XML Sitemap, and Robots.txt gate
+
+Status: Ready for integration
+
+Frontend owner: Codex / ChatGPT  
+Backend owner: Gemini
+
+### What is ready
+
+- **Dynamic SEO Resolver**: `GET /api/v1/seo/resolve?path=...` returning typed `SeoMetadataOut` (camelCase aliases for frontend compatibility: `title`, `description`, `canonicalPath`, `robots`, `imageUrl`, `imageAlt`, `pageType`, `breadcrumbs`).
+- **Path Resolution & Fallbacks**: Home `/`, `/about`, `/contact`, `/shop`, category paths (`/categories/{slug}`), collection paths (`/collections/{slug}`), and active product pages (`/products/{slug}`) with hierarchical breadcrumb generation.
+- **Query-String Canonicalization**: Paths with filter query params (e.g. `/shop?category=flowers`) canonicalize cleanly to `/categories/flowers`.
+- **Private & 404 Route Protection**: Private routes (`/account*`, `/cart`, `/checkout*`, `/admin*`, `/wishlist`, `/auth*`, `/login`, etc.) and missing routes return HTTP 200 with `robots: "noindex,nofollow"` so React `SeoManager` applies noindex without throwing client fetch errors.
+- **Dynamic XML Sitemap**: `GET /sitemap.xml` and `GET /api/v1/seo/sitemap.xml` returning valid XML sitemap indexing all public static pages, active categories, collections, and products with `<loc>`, `<lastmod>`, `<changefreq>`, `<priority>`, excluding private paths and query strings.
+- **Robots Directives**: `GET /robots.txt` and `GET /api/v1/seo/robots.txt` disallowing private and admin paths and pointing to canonical sitemap `https://sulocraft.com/sitemap.xml`.
+- **OpenAPI**: Re-exported with all 74 registered endpoints.
+- **Automated Tests**: 9 dedicated tests in `backend/tests/test_seo.py`; 105 of 105 tests passing.
+
+## 2026-10-01 — Hierarchical Taxonomy, Collections & Controlled Seed Catalogue gate
+
+Status: Ready for integration
+
+Frontend owner: Codex / ChatGPT  
+Backend owner: Gemini
+
+### What is ready
+
+- **Database Models & Alembic Migration**: `Category`, `ProductCategory` (with `is_primary: bool` and `display_order: int`), `Collection`, and `ProductCollection` entities backed by migration `d71c89f5a432_rebuild_taxonomy_and_collections.py`.
+- **Canonical 5 Root Categories**: `Flowers`, `Amigurumi`, `Baby`, `Home & Decor`, and `Pooja & Devotional` seeded in exact storefront order with all child categories and media card keys.
+- **15 Controlled Collections**: 13 evergreen gift collections + 2 merchandising collections (`bestsellers`, `new-arrivals`).
+- **16 Controlled Products Seed**: Seeded with unique SKUs, valid local images (`primary.png` and galleries), exact primary leaf categories, secondary categories, and collection tags.
+- **Publication Gate Validator**: Enforces non-empty unique SKUs, local image existence, primary category validity, and image uniqueness.
+- **Public Endpoints**: `GET /api/v1/categories`, `GET /api/v1/categories/{slug}`, `GET /api/v1/categories/{slug}/products`, `GET /api/v1/collections`, `GET /api/v1/collections/{slug}`, `GET /api/v1/collections/{slug}/products`, and `/api/v1/products` collection filter.
+- **Admin Management**: `/api/v1/admin/categories` with circular hierarchy cycle prevention and safe deletion blocking, and full CRUD for `/api/v1/admin/collections`.
+- **Automated Tests**: 9 dedicated tests in `backend/tests/test_taxonomy.py`; 96 of 96 tests passing.
+
 ## 2026-10-01 — V1 Transactional Email & Resend Service gate
 
 Status: Ready for integration
