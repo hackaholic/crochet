@@ -1,16 +1,26 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DEPLOY_HOST="${DEPLOY_HOST:-root@201.18.212.183}"
+DEPLOY_HOST="${DEPLOY_HOST:-sulocraft-deploy@201.18.212.183}"
 DEPLOY_ROOT="${DEPLOY_ROOT:-/opt/sulocraft}"
+SSH_IDENTITY_FILE="${SSH_IDENTITY_FILE:-}"
+SSH_KNOWN_HOSTS_FILE="${SSH_KNOWN_HOSTS_FILE:-}"
 TARGET_RELEASE="${1:-}"
+
+SSH_OPTIONS=(-o BatchMode=yes)
+if [[ -n "${SSH_IDENTITY_FILE}" ]]; then
+  SSH_OPTIONS+=(-i "${SSH_IDENTITY_FILE}" -o IdentitiesOnly=yes)
+fi
+if [[ -n "${SSH_KNOWN_HOSTS_FILE}" ]]; then
+  SSH_OPTIONS+=(-o "UserKnownHostsFile=${SSH_KNOWN_HOSTS_FILE}" -o StrictHostKeyChecking=yes)
+fi
 
 if [[ -z "${TARGET_RELEASE}" ]]; then
   echo "Usage: $0 <release-id>"
   exit 1
 fi
 
-ssh "${DEPLOY_HOST}" "bash -s" -- "${DEPLOY_ROOT}" "${TARGET_RELEASE}" <<'REMOTE'
+ssh "${SSH_OPTIONS[@]}" "${DEPLOY_HOST}" "bash -s" -- "${DEPLOY_ROOT}" "${TARGET_RELEASE}" <<'REMOTE'
 set -euo pipefail
 deploy_root="$1"
 target_release="$2"

@@ -2,14 +2,17 @@
 
 import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request, Response
+from fastapi import Depends, FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
+
+from sqlalchemy.orm import Session
 
 from app.api.v1 import api_v1_router
 from app.core.config import settings
 from app.db.seed import seed_catalogue
-from app.db.session import SessionLocal, init_db
+from app.db.session import SessionLocal, get_db, init_db
+from app.services.seo import SeoService
 
 
 class CloudflareCacheControlMiddleware(BaseHTTPMiddleware):
@@ -154,4 +157,18 @@ def get_mock_static_image(image_path: str):
 
     upstream_url = resolve_mock_image_source(image_path)
     return RedirectResponse(url=upstream_url, status_code=307)
+
+
+@app.get("/sitemap.xml", tags=["seo"])
+def root_sitemap(db: Session = Depends(get_db)) -> Response:
+    """Root sitemap.xml endpoint for reverse proxies and web crawlers."""
+    content = SeoService.generate_sitemap_xml(db)
+    return Response(content=content, media_type="application/xml")
+
+
+@app.get("/robots.txt", tags=["seo"])
+def root_robots() -> Response:
+    """Root robots.txt endpoint for reverse proxies and web crawlers."""
+    content = SeoService.generate_robots_txt()
+    return Response(content=content, media_type="text/plain")
 

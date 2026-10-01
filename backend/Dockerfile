@@ -6,7 +6,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 RUN apt-get update && apt-get install -y --no-install-recommends curl postgresql-client && rm -rf /var/lib/apt/lists/*
 
-COPY pyproject.toml ./
+COPY backend/pyproject.toml ./
 RUN pip install --no-cache-dir \
     "fastapi>=0.115,<1.0" \
     "uvicorn[standard]>=0.34,<1.0" \
@@ -15,12 +15,17 @@ RUN pip install --no-cache-dir \
     "pydantic>=2.0,<3.0" \
     "python-multipart>=0.0.12" \
     "pyyaml>=6.0" \
+    "httpx>=0.28,<1.0" \
     "boto3>=1.34" \
     "alembic>=1.13,<2.0"
 
-COPY alembic.ini ./
-COPY alembic ./alembic
-COPY app ./app
+COPY backend/alembic.ini ./
+COPY backend/alembic ./alembic
+COPY backend/app ./app
+# The publication gate validates every controlled media key during startup.
+# Production returns R2 URLs, but the approved manifest still travels with the
+# image so validation never silently accepts missing catalogue media.
+COPY public/images ./public/images
 
 EXPOSE 8000
 

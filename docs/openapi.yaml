@@ -4771,6 +4771,65 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StorefrontResponse'
+  /api/v1/seo/resolve:
+    get:
+      tags:
+      - seo
+      summary: Resolve Seo Metadata
+      description: Resolve dynamic SEO metadata (title, description, canonical, robots,
+        og:image, breadcrumbs) for any storefront path.
+      operationId: resolve_seo_metadata_api_v1_seo_resolve_get
+      parameters:
+      - name: path
+        in: query
+        required: false
+        schema:
+          type: string
+          description: Relative pathname or full URL to resolve metadata for
+          default: /
+          title: Path
+        description: Relative pathname or full URL to resolve metadata for
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeoMetadataOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/seo/sitemap.xml:
+    get:
+      tags:
+      - seo
+      summary: Get Sitemap Xml
+      description: Generate dynamic XML sitemap containing all active products, categories,
+        collections, and static pages.
+      operationId: get_sitemap_xml_api_v1_seo_sitemap_xml_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/v1/seo/robots.txt:
+    get:
+      tags:
+      - seo
+      summary: Get Robots Txt
+      description: Generate robots.txt specifying crawl directives and canonical sitemap
+        URL.
+      operationId: get_robots_txt_api_v1_seo_robots_txt_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
   /:
     get:
       tags:
@@ -4858,6 +4917,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /sitemap.xml:
+    get:
+      tags:
+      - seo
+      summary: Root Sitemap
+      description: Root sitemap.xml endpoint for reverse proxies and web crawlers.
+      operationId: root_sitemap_sitemap_xml_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /robots.txt:
+    get:
+      tags:
+      - seo
+      summary: Root Robots
+      description: Root robots.txt endpoint for reverse proxies and web crawlers.
+      operationId: root_robots_robots_txt_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
 components:
   schemas:
     AccountOverviewOut:
@@ -8898,6 +8983,69 @@ components:
       - text
       title: ReviewSummary
       description: Summarized customer testimonial for homepage review section.
+    SeoBreadcrumb:
+      properties:
+        name:
+          type: string
+          title: Name
+        path:
+          type: string
+          title: Path
+      type: object
+      required:
+      - name
+      - path
+      title: SeoBreadcrumb
+      description: Breadcrumb trail item for search engines and structured data.
+    SeoMetadataOut:
+      properties:
+        title:
+          type: string
+          title: Title
+        description:
+          type: string
+          title: Description
+        canonicalPath:
+          type: string
+          title: Canonicalpath
+        robots:
+          type: string
+          enum:
+          - index,follow
+          - noindex,nofollow
+          title: Robots
+        imageUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imageurl
+        imageAlt:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imagealt
+        pageType:
+          type: string
+          enum:
+          - website
+          - product
+          - collection
+          - article
+          title: Pagetype
+        breadcrumbs:
+          items:
+            $ref: '#/components/schemas/SeoBreadcrumb'
+          type: array
+          title: Breadcrumbs
+      type: object
+      required:
+      - title
+      - description
+      - canonicalPath
+      - robots
+      - pageType
+      title: SeoMetadataOut
+      description: Structured SEO metadata response for page head rendering.
     StorefrontHomeResponse:
       properties:
         brand:

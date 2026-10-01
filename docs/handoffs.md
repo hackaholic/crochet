@@ -2,6 +2,79 @@
 
 Use this file whenever frontend or backend work becomes ready for the other side. Newest handoff goes first.
 
+## 2026-10-01 — Dynamic SEO metadata resolver, XML sitemap, and robots.txt complete
+
+From: Gemini
+To: Codex
+Status: Complete; ready for frontend pre-rendering or route SEO verification
+
+Changed:
+- Implemented `GET /api/v1/seo/resolve?path=...` returning `SeoMetadataOut` (camelCase aliases for frontend compatibility, title, description, canonicalPath, robots, imageUrl, imageAlt, pageType, breadcrumbs).
+- Handled public static paths (`/`, `/about`, `/contact`, `/shop`), categories (`/categories/{slug}`), collections (`/collections/{slug}`), and active products (`/products/{slug}`) with fallback heuristics and hierarchical breadcrumb generation.
+- Handled query string canonicalization (e.g. `/shop?category=flowers` -> canonicalPath `/categories/flowers`).
+- Handled private routes (`/account*`, `/cart`, `/checkout*`, `/admin*`, `/wishlist`, `/auth*`, `/login`, etc.) and 404 missing routes by returning HTTP 200 with `robots: "noindex,nofollow"` so React `SeoManager` can apply noindex safely without throwing fetch errors.
+- Implemented dynamic XML sitemap at `/sitemap.xml` and `/api/v1/seo/sitemap.xml` indexing all static public routes, active categories, collections, and products with `<loc>`, `<lastmod>`, `<changefreq>`, and `<priority>`.
+- Implemented `/robots.txt` and `/api/v1/seo/robots.txt` disallowing private paths and referencing the production sitemap URL.
+- Added test suite `backend/tests/test_seo.py` with 9 comprehensive tests; all 105 backend tests pass.
+- Regenerated `docs/openapi.yaml` (74 paths).
+- Rebuilt Docker `docker-api-1` container and validated live curl responses.
+
+How to verify:
+- `curl -s "http://localhost:8000/api/v1/seo/resolve?path=/products/heart-bear"`
+- `curl -s "http://localhost:8000/api/v1/seo/resolve?path=/shop?category=flowers"`
+- `curl -s "http://localhost:8000/api/v1/seo/resolve?path=/cart"`
+- `curl -s "http://localhost:8000/sitemap.xml"`
+- `curl -s "http://localhost:8000/robots.txt"`
+- `PYTHONPATH=. .venv/bin/pytest tests/test_seo.py` (9 passed)
+- `PYTHONPATH=. .venv/bin/pytest tests/` (105 passed)
+
+
+
+## 2026-10-01 — Development VPS stack deployed and verified
+
+From: Codex
+To: Gemini
+Status: Complete; continue with SEO contract
+
+Changed:
+- Created the non-root `sulocraft-deploy` VPS account with deployment-only SSH access and Docker permissions.
+- Added dev-branch GitHub Actions automation for backend tests, pre-migration PostgreSQL backup, timestamped release upload, Compose build, Alembic migration, and health-gated activation.
+- Fixed the production API image to install `httpx` and package the approved `public/images` manifest required by the catalogue publication gate.
+- Deployed release `initial-dev-20261001` to `/opt/sulocraft/releases` with the persistent `sulocraft_postgres_data` volume.
+
+How to verify:
+- `http://201.18.212.183/health` returns `{"status":"ok","service":"sulocraft-api"}` before the Cloudflare API hostname is attached.
+- Public API returns five canonical root categories and 16 seeded products with `X-Total-Count: 16`.
+- FastAPI and PostgreSQL report healthy; Caddy is running.
+
+Notes:
+- Cloudflare `api-dev.sulocraft.com` DNS/TLS routing and protected GitHub environment secrets remain owner/Codex configuration work.
+- Gemini's next backend task remains the typed SEO resolver, sitemap, and robots implementation documented immediately below.
+
+## 2026-10-01 — Controlled media uploaded to Cloudflare R2
+
+From: Codex
+To: Gemini
+Status: Complete
+
+Changed:
+- Uploaded all 31 files under `public/images` to `sulocraft-products` using the same relative object keys.
+- Confirmed a second R2 comparison reports 31 unchanged and zero missing/changed objects.
+- Confirmed `https://images.sulocraft.com/products/heart-bear/primary.png` returns HTTP 200 with `Cache-Control: public, max-age=31536000, immutable`.
+- Added reusable dry-run/apply/public-verification automation in `backend/scripts/upload_r2_media.py`.
+
+Contract:
+- Production database media keys remain relative, for example `products/heart-bear/primary.png`.
+- `IMAGE_BASE_URL=https://images.sulocraft.com` resolves those keys for storefront responses.
+- Do not replace these controlled keys with temporary or unrelated images.
+
+How to verify:
+- Run the uploader without `--apply`; expected result is `Scanned 31 files: 0 changed, 31 unchanged`.
+- Request any seeded media key beneath `https://images.sulocraft.com/`; it must return HTTP 200.
+
+Notes:
+- The scoped R2 credential remains only in the ignored local pre-production environment file and must be rotated before production launch.
+
 ## 2026-10-01 — Gemini next task: dynamic SEO resolver and sitemap
 
 From: Codex

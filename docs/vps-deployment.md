@@ -23,6 +23,8 @@ Inspection date: 2026-10-01
 
 The host is suitable for initial low-traffic pre-production. One CPU is the first expected constraint, so build infrequently and monitor load. Add approximately 2 GiB swap before sustained use.
 
+Current development release: `initial-dev-20261001`. FastAPI, PostgreSQL, and Caddy are running as the stable Compose project `sulocraft`; PostgreSQL data is stored in `sulocraft_postgres_data`.
+
 ## Security work before public traffic
 
 1. Apply pending Ubuntu security and kernel updates.
@@ -54,7 +56,10 @@ The deployment script uploads a timestamped release to `/opt/sulocraft/releases`
 5. Run:
 
    ```bash
-   DEPLOY_ENV_FILE=backend/.env.preprod backend/scripts/deploy_vps.sh
+   SSH_IDENTITY_FILE="$HOME/.ssh/sulocraft_github_actions" \
+   SSH_KNOWN_HOSTS_FILE="$HOME/.ssh/sulocraft_vps_known_hosts" \
+   DEPLOY_ENV_FILE=backend/.env.preprod \
+   backend/scripts/deploy_vps.sh
    ```
 
 6. Verify `/health`, API documentation policy, CORS, secure cookies, database migrations, authentication, basket, checkout, and admin access.
@@ -66,6 +71,32 @@ backend/scripts/rollback_vps.sh 20261001T120000Z
 ```
 
 Schema rollback is deliberately not automatic. Application rollback must remain compatible with the migrated database or use a reviewed database restore.
+
+Every deployment after the first creates a compressed PostgreSQL snapshot in `/opt/sulocraft/backups` before replacing the environment or running migrations. The database itself remains in the stable Compose volume `sulocraft_postgres_data`; releases do not copy or recreate live data.
+
+## Automatic deployment from the dev branch
+
+The workflow `.github/workflows/deploy-dev-backend.yml` runs on backend-related pushes to `dev` and can also be started manually. It:
+
+1. installs the locked Python dependencies;
+2. runs the complete backend test suite;
+3. writes the pre-production environment from a protected GitHub secret;
+4. uploads a timestamped/commit-addressed release over SSH;
+5. backs up the currently running PostgreSQL database;
+6. builds FastAPI, starts PostgreSQL/Caddy, applies Alembic migrations, and waits for `/health`;
+7. marks the release current only after health validation succeeds.
+
+Create a GitHub environment named `development` and add these environment secrets:
+
+| Secret | Purpose |
+| --- | --- |
+| `VPS_HOST` | `201.18.212.183` |
+| `VPS_USER` | Dedicated deployment account; use `root` only temporarily during initial pre-production setup |
+| `VPS_SSH_PRIVATE_KEY` | Private half of a deployment-only SSH key |
+| `VPS_KNOWN_HOSTS` | Pinned SSH host-key line for the VPS; do not replace this with disabled host checking |
+| `PREPROD_ENV_FILE` | Complete contents of the ignored `backend/.env.preprod` file |
+
+Protect the `development` GitHub environment so only the `dev` branch can use its secrets. The workflow does not contain credentials and must never print the environment file.
 
 ## Upload local media to R2
 

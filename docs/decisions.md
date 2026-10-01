@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-10-01 — Persistent development storefront
+
+Decision: Keep `main` deployed to the production `sulocraft` Worker and `sulocraft.com`. Deploy the `dev` branch to the separate `sulocraft-dev` Worker and `dev.sulocraft.com` using Wrangler environment `dev` and Vite mode `preprod`.
+
+Impact: Development pushes can update the shared full storefront without changing the public Coming Soon site. The development frontend uses `https://api-dev.sulocraft.com/api/v1` and remains protected with Cloudflare Access during pre-production.
+
 Record decisions that affect more than one file, task, or future agent. Newest entries go first.
 
 ## 2026-10-01 — Keep the founder story as static editorial content

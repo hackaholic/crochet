@@ -7,10 +7,12 @@ Dry-run is the default. Pass --apply to upload changed or missing objects.
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 import mimetypes
 import os
 from pathlib import Path
 import sys
+import time
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
@@ -27,6 +29,25 @@ def required(name: str) -> str:
 
 def public_url(base: str, key: str) -> str:
     return f"{base.rstrip('/')}/{key}"
+
+
+def verify_public_url(url: str) -> str | None:
+    """Return an error string after retries, or None when browser delivery works."""
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140.0 Safari/537.36"
+    }
+    last_error: str | None = None
+    for attempt in range(1, 6):
+        try:
+            with urlopen(Request(url, method="HEAD", headers=headers), timeout=15) as response:
+                if response.status == 200:
+                    return None
+                last_error = f"{response.status} {url}"
+        except (HTTPError, URLError) as error:
+            last_error = f"{error} {url}"
+        if attempt < 5:
+            time.sleep(2)
+    return last_error
 
 
 def main() -> int:
@@ -55,12 +76,14 @@ def main() -> int:
     )
 
     files = sorted(path for path in source.rglob("*") if path.is_file())
+    objects: list[tuple[Path, str, str]] = []
     changed: list[tuple[Path, str, str]] = []
     unchanged = 0
     for path in files:
         relative = path.relative_to(source).as_posix()
         key = "/".join(part for part in (args.prefix.strip("/"), relative) if part)
         content_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
+        objects.append((path, key, content_type))
         try:
             remote = s3.head_object(Bucket=bucket, Key=key)
             if remote.get("ContentLength") == path.stat().st_size:
@@ -84,15 +107,9 @@ def main() -> int:
             )
 
     if args.apply and args.verify_public:
-        failures: list[str] = []
-        for _, key, _ in changed:
-            url = public_url(base_url, key)
-            try:
-                with urlopen(Request(url, method="HEAD"), timeout=15) as response:
-                    if response.status != 200:
-                        failures.append(f"{response.status} {url}")
-            except (HTTPError, URLError) as error:
-                failures.append(f"{error} {url}")
+        urls = [public_url(base_url, key) for _, key, _ in objects]
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            failures = [error for error in pool.map(verify_public_url, urls) if error]
         if failures:
             print("Public verification failed:", file=sys.stderr)
             print("\n".join(failures), file=sys.stderr)

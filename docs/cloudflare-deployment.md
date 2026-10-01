@@ -33,7 +33,30 @@ Cloudflare’s current Git-connected interface uses **Workers Builds** for stati
 
 The Coming Soon mode makes no API calls, so it is safe to publish before the VPS exists.
 
-## 3. Connect the domain
+## 3. Create the persistent development storefront
+
+Use a separate Worker for the shared development site. It must never deploy over the production Worker.
+
+1. Create or select the `sulocraft-dev` Worker and connect the same `hackaholic/crochet` repository.
+2. Configure its Workers Build:
+
+   | Field | Value |
+   | --- | --- |
+   | Production branch | `dev` |
+   | Build command | `pnpm build:dev` |
+   | Deploy command | `npx wrangler deploy --env dev` |
+   | Preview command | `npx wrangler preview --env dev` |
+   | Root directory | `/` |
+
+3. In **Settings → Build → Branch control**, confirm the production branch is `dev`.
+4. In **Settings → Domains & Routes**, add the custom domain `dev.sulocraft.com` to `sulocraft-dev`.
+5. Protect `dev.sulocraft.com` with Cloudflare Access until launch testing is complete.
+
+The committed `.env.preprod` makes this a full-storefront build and points it to `https://api-dev.sulocraft.com/api/v1`. The `wrangler.jsonc` `dev` environment publishes a separately named Worker, so `npx wrangler deploy --env dev` cannot overwrite the production `sulocraft` Worker.
+
+The development frontend requires the VPS staging API at `api-dev.sulocraft.com`. Until that API is deployed and reachable, catalogue and account features that need FastAPI will show their normal unavailable/error states.
+
+## 4. Connect the production domain
 
 After the Worker deployment succeeds:
 
@@ -42,7 +65,7 @@ After the Worker deployment succeeds:
 3. Add `www.sulocraft.com` and redirect it to `https://sulocraft.com`.
 4. Keep the domain DNS zone on Cloudflare so SSL certificates and routing are managed there.
 
-## 4. Launch the full storefront
+## 5. Launch the full storefront
 
 Complete these backend tasks before switching away from Coming Soon:
 
@@ -61,15 +84,16 @@ Complete these backend tasks before switching away from Coming Soon:
 
 8. Redeploy `main` and verify browsing, cart, authentication, checkout, and payment against the production API.
 
-## 5. Roll back safely
+## 6. Roll back safely
 
 If the full storefront has a production issue, set `VITE_LAUNCH_MODE=coming-soon` and trigger a new deployment. This restores the backend-free landing page while the issue is fixed.
 
-## 6. Local verification
+## 7. Local verification
 
 Before any frontend deployment, run:
 
 ```bash
 docker-compose -f docker/compose.yaml run --rm --no-deps frontend pnpm test
 docker-compose -f docker/compose.yaml run --rm --no-deps -e VITE_LAUNCH_MODE=coming-soon frontend pnpm build
+pnpm build:dev
 ```
