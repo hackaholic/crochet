@@ -57,13 +57,10 @@ class Settings:
     google_client_secret: str | None = os.getenv("GOOGLE_CLIENT_SECRET")
     facebook_app_id: str | None = os.getenv("FACEBOOK_APP_ID")
     facebook_app_secret: str | None = os.getenv("FACEBOOK_APP_SECRET")
-    otp_provider: str = os.getenv("OTP_PROVIDER", "mock")
-    otp_api_key: str | None = os.getenv("OTP_API_KEY")
-
-    # SMS Notifications (Fast2SMS / Twilio / Mock)
-    sms_provider: str = os.getenv("SMS_PROVIDER", os.getenv("OTP_PROVIDER", "mock"))
-    fast2sms_api_key: str | None = os.getenv("FAST2SMS_API_KEY", os.getenv("OTP_API_KEY"))
-    fast2sms_route: str = os.getenv("FAST2SMS_ROUTE", "otp")  # 'otp' for DLT-free quick OTP, or 'dlt'
+    # SMS Notifications (Fast2SMS / Twilio / Mock for Order Updates)
+    sms_provider: str = os.getenv("SMS_PROVIDER", "mock")
+    fast2sms_api_key: str | None = os.getenv("FAST2SMS_API_KEY")
+    fast2sms_route: str = os.getenv("FAST2SMS_ROUTE", "dlt")
     twilio_account_sid: str | None = os.getenv("TWILIO_ACCOUNT_SID")
     twilio_auth_token: str | None = os.getenv("TWILIO_AUTH_TOKEN")
     twilio_from_phone: str | None = os.getenv("TWILIO_FROM_PHONE")
@@ -80,9 +77,6 @@ class Settings:
 
     # Payment Provider
     payment_provider: str = os.getenv("PAYMENT_PROVIDER", "mock")
-
-    # Dev OTP (only used when APP_ENV=development or SMS_PROVIDER=mock)
-    dev_otp_code: str = os.getenv("DEV_OTP_CODE", "123456")
 
     @property
     def cors_origins(self) -> list[str]:

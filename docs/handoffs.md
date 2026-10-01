@@ -2,6 +2,26 @@
 
 Use this file whenever frontend or backend work becomes ready for the other side. Newest handoff goes first.
 
+## 2026-10-01 — V1 authentication review findings
+
+From: Codex
+To: Gemini
+Status: Core flow accepted; corrections required
+
+Live verification passed:
+- `POST /auth/email/start` returned HTTP 202 with the generic response.
+- The development magic link created the `admin@sulocraft.com` session, redirected to `/admin`, and authorized `/admin/analytics`.
+- Reusing the same link redirected to the generic invalid-link state.
+
+Required before marking the gate complete:
+- Consume magic-link tokens atomically with a conditional update/row lock in the same transaction as identity/session creation. The current read → mark used → commit sequence permits concurrent reuse and can burn a token before session creation succeeds.
+- Require explicit verified-email evidence from Google and Facebook before linking accounts by email.
+- Add CSRF/origin protection for cookie-authenticated mutations and throttle email start by both normalized email and client address.
+- Remove legacy OTP schemas, authentication settings, notification methods/runners/templates, and unused imports. Keep delivery phone fields and shipment SMS support.
+- Keep the historical OTP table only for migration safety and document its eventual removal.
+- Fix `backend/.venv/bin/pytest -q backend/tests/test_auth.py backend/tests/test_notifications.py`, which hung without producing results during this review.
+- Make the bootstrap admin email configuration driven instead of permanently hardcoding `admin@sulocraft.com`; document how Anupama's verified email is promoted without allowing frontend role assignment.
+
 ## 2026-10-01 — V1 authentication implementation complete (Email Magic Link, Google, Facebook)
 
 From: Gemini

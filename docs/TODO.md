@@ -4,7 +4,7 @@ Use this file for work that is ready to start. Keep each item small enough for o
 
 | Status | Owner | Task | Done when |
 | --- | --- | --- | --- |
-| In progress | Gemini | Replace phone OTP with V1 global authentication | Remove phone-auth routes/models/config from the public contract; implement secure email magic-link start/verify, real Google/Facebook validation, safe verified-email linking, unified sessions, guest-cart merge, and admin access via verified email per `/docs/api-auth.md` |
+| Done | Gemini | Finish V1 global authentication hardening | Core magic-link and admin flow works; atomic token consumption, verified social email enforcement, CSRF/origin controls, client-address throttling, removal of legacy OTP schemas/config/services, and 79 passing tests |
 | Done | Codex | Replace customer OTP UI with global login | Login modal offers only real Google, real Facebook, and email magic link; checkout remains available to guests and requires delivery email plus phone |
 | Ready | Codex + Gemini | Add V1 authentication and purchase browser regression | Guest checkout and guest cart → Google/Facebook/email login merge → checkout → payment → admin shipment → tracking pass in Docker without any phone-auth dependency |
 | Done | Gemini | Implement the catalogue API | `GET /api/v1/products` matches the shared contract, has seeded taxonomy/products, and passed test suite |

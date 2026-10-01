@@ -186,8 +186,8 @@ def verify_payment(
     order.status = OrderStatus.CONFIRMED.value
     if not order.tracking_number:
         import secrets
-        order.tracking_number = f"SULO-EXP-{secrets.token_hex(3).upper()}"
-        order.courier_name = "BlueDart Express"
+        order.tracking_number = f"SLC-LOCAL-{secrets.token_hex(3).upper()}"
+        order.courier_name = "Sulocraft Local Express"
     if not order.estimated_delivery:
         from datetime import timedelta
         order.estimated_delivery = now + timedelta(days=5)

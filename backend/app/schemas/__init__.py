@@ -2,11 +2,11 @@
 
 from app.schemas.auth import (
     AuthResponse,
+    EmailStartRequest,
+    EmailStartResponse,
+    FacebookAuthRequest,
     GoogleAuthRequest,
-    SendOtpRequest,
-    SendOtpResponse,
     UserOut,
-    VerifyOtpRequest,
 )
 from app.schemas.cart import (
     CartItemAdd,
@@ -34,6 +34,9 @@ __all__ = [
     "CartMergeRequest",
     "CartOut",
     "CategoryOut",
+    "EmailStartRequest",
+    "EmailStartResponse",
+    "FacebookAuthRequest",
     "GoogleAuthRequest",
     "OccasionOut",
     "ProductDetail",
@@ -41,9 +44,6 @@ __all__ = [
     "ProductListItem",
     "ProductListResponse",
     "ReviewOut",
-    "SendOtpRequest",
-    "SendOtpResponse",
     "UserOut",
     "VariantOut",
-    "VerifyOtpRequest",
 ]

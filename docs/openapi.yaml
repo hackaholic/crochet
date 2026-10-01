@@ -969,8 +969,8 @@ paths:
       tags:
       - auth
       summary: Verify Email Magic Link
-      description: Consume a magic-link token, authenticate/link user, merge guest
-        cart, and redirect.
+      description: Consume a magic-link token atomically, authenticate/link user,
+        merge guest cart, and redirect.
       operationId: verify_email_magic_link_api_v1_auth_email_verify_get
       parameters:
       - name: token

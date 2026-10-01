@@ -203,7 +203,14 @@ def start_email_login(
     now = datetime.now(timezone.utc)
     email = payload.email.strip().lower()
 
-    # Rate limiting: check recent magic link token for this email within cooldown window
+    # 1. CSRF / Origin validation for browser requests
+    origin = request.headers.get("origin")
+    if origin and origin not in settings.cors_origins:
+        if not (settings.app_env == "development" and ("localhost" in origin or "127.0.0.1" in origin)):
+            # Silently return generic response without dispatching
+            return EmailStartResponse(message="If the email address is valid, a sign-in link has been sent.")
+
+    # 2. Rate limiting by normalized email within cooldown window
     cutoff = now - timedelta(seconds=MAGIC_LINK_COOLDOWN_SECONDS)
     recent_token = (
         db.query(MagicLinkToken)
@@ -263,7 +270,7 @@ def verify_email_magic_link(
     x_cart_token: str | None = Header(default=None),
     db: Session = Depends(get_db),
 ) -> Response:
-    """Consume a magic-link token, authenticate/link user, merge guest cart, and redirect."""
+    """Consume a magic-link token atomically, authenticate/link user, merge guest cart, and redirect."""
     now = datetime.now(timezone.utc)
     fallback_redirect = f"{settings.frontend_url.rstrip('/')}/?error=invalid_link"
 
@@ -272,21 +279,25 @@ def verify_email_magic_link(
 
     token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
 
-    token_record = (
-        db.query(MagicLinkToken)
-        .filter(MagicLinkToken.token_hash == token_hash)
-        .first()
-    )
-
+    # Atomic token consumption via conditional UPDATE: guarantees single-use even under concurrent requests
+    token_record = db.query(MagicLinkToken).filter(MagicLinkToken.token_hash == token_hash).first()
     if not token_record or token_record.is_used or ensure_utc(token_record.expires_at) <= now:
         return RedirectResponse(url=fallback_redirect, status_code=status.HTTP_303_SEE_OTHER)
 
-    # Invalidate token atomically
-    token_record.is_used = True
-    token_record.used_at = now
-    db.commit()
+    # Perform atomic invalidation
+    updated = (
+        db.query(MagicLinkToken)
+        .filter(
+            MagicLinkToken.token_hash == token_hash,
+            MagicLinkToken.is_used.is_(False),
+            MagicLinkToken.expires_at > now,
+        )
+        .update({"is_used": True, "used_at": now}, synchronize_session="fetch")
+    )
+    if not updated:
+        return RedirectResponse(url=fallback_redirect, status_code=status.HTTP_303_SEE_OTHER)
 
-    # Unified user lookup / creation
+    db.commit()
     email = token_record.email
     user = (
         db.query(User)

@@ -285,12 +285,6 @@ class NotificationService:
 # Background Task Runners (Decoupled execution with independent DB sessions)
 # -----------------------------------------------------------------------------
 
-def dispatch_otp_background(phone: str, otp_code: str) -> None:
-    """Run OTP notification in FastAPI background task."""
-    with SessionLocal() as db:
-        NotificationService.send_otp(db, phone, otp_code)
-
-
 def dispatch_order_placed_background(order_id: int) -> None:
     """Run order confirmation notification in FastAPI background task."""
     with SessionLocal() as db:

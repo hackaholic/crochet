@@ -38,41 +38,6 @@ class EmailStartResponse(BaseModel):
     dev_magic_link: str | None = Field(default=None, serialization_alias="devMagicLink", description="Provided in local/test mode only.")
 
 
-
-class SendOtpRequest(BaseModel):
-    """Payload to request an SMS OTP."""
-
-    phone: str = Field(..., description="Customer 10-digit mobile phone number.")
-
-    @field_validator("phone")
-    @classmethod
-    def validate_phone(cls, v: str) -> str:
-        return normalize_phone(v)
-
-
-class SendOtpResponse(BaseModel):
-    """Response after sending OTP."""
-
-    status: str = "ok"
-    phone: str
-    cooldown_seconds: int = Field(default=60, serialization_alias="cooldownSeconds")
-    message: str = "OTP sent successfully"
-    dev_otp: str | None = Field(default=None, serialization_alias="devOtp", description="Provided in local/test mode only.")
-
-
-class VerifyOtpRequest(BaseModel):
-    """Payload to verify OTP and log in."""
-
-    phone: str = Field(..., description="Customer mobile phone number.")
-    otp: str = Field(..., min_length=4, max_length=6, description="4 to 6 digit verification code.")
-    name: str | None = Field(default=None, description="Optional customer name for new accounts.")
-
-    @field_validator("phone")
-    @classmethod
-    def validate_phone(cls, v: str) -> str:
-        return normalize_phone(v)
-
-
 class GoogleAuthRequest(BaseModel):
     """Payload for One-Click Google Authentication."""
 
