@@ -41,6 +41,8 @@ class Settings:
     # Auth Providers
     google_client_id: str | None = os.getenv("GOOGLE_CLIENT_ID")
     google_client_secret: str | None = os.getenv("GOOGLE_CLIENT_SECRET")
+    facebook_app_id: str | None = os.getenv("FACEBOOK_APP_ID")
+    facebook_app_secret: str | None = os.getenv("FACEBOOK_APP_SECRET")
     otp_provider: str = os.getenv("OTP_PROVIDER", "mock")
     otp_api_key: str | None = os.getenv("OTP_API_KEY")
 

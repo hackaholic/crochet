@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { SearchIcon, HeartIcon, ShoppingBagIcon, UserIcon, MenuIcon, XIcon, YarnLogo } from './Icons';
+import type { AppPage } from '../lib/routes';
 
-type Page = 'home' | 'shop' | 'product' | 'cart' | 'wishlist' | 'checkout' | 'account' | 'about' | 'contact' | 'shipping' | 'returns' | 'privacy' | 'terms' | 'notFound';
+type Page = AppPage;
 
 interface HeaderProps {
   currentPage: Page;
@@ -16,10 +17,10 @@ interface HeaderProps {
 const navLinks = [
   { label: 'Home', page: 'home' as Page },
   { label: 'Shop', page: 'shop' as Page },
-  { label: 'Categories', page: 'shop' as Page },
-  { label: 'Gifts', page: 'shop' as Page },
-  { label: 'Pooja Collection', page: 'shop' as Page },
-  { label: 'Custom Orders', page: 'home' as Page },
+  { label: 'Categories', href: '/shop' },
+  { label: 'Gifts', href: '/shop?category=Gifts' },
+  { label: 'Pooja Collection', href: '/shop?category=Pooja' },
+  { label: 'Custom Orders', href: '/contact?subject=custom-order' },
   { label: 'About Us', page: 'about' as Page },
 ];
 
@@ -66,10 +67,10 @@ export default function Header({ currentPage, onNavigate, cartCount, wishlistCou
 
           {/* Desktop nav */}
           <nav className="hidden lg:flex items-center gap-6">
-            {navLinks.map(({ label, page }) => (
+            {navLinks.map(({ label, page, href }) => (
               <button
                 key={label}
-                onClick={() => onNavigate(page)}
+                onClick={() => href ? window.location.assign(href) : onNavigate(page!)}
                 aria-current={currentPage === page ? 'page' : undefined}
                 className={`text-sm font-medium transition-colors hover:text-[#C4622D] ${currentPage === page && label === 'Home' ? 'text-[#C4622D]' : 'text-[#5C3D2E]'}`}
               >
@@ -124,10 +125,10 @@ export default function Header({ currentPage, onNavigate, cartCount, wishlistCou
         {/* Mobile menu */}
         {mobileOpen && (
           <div className="lg:hidden border-t border-[#EDE4D0] bg-white px-4 pb-4 pt-2">
-            {navLinks.map(({ label, page }) => (
+            {navLinks.map(({ label, page, href }) => (
               <button
                 key={label}
-                onClick={() => { onNavigate(page); setMobileOpen(false); }}
+                onClick={() => { if (href) window.location.assign(href); else onNavigate(page!); setMobileOpen(false); }}
                 className="block w-full text-left py-3 text-sm font-medium text-[#5C3D2E] border-b border-[#F5EDE0] hover:text-[#C4622D] transition-colors"
               >
                 {label}

@@ -54,10 +54,23 @@ class VerifyOtpRequest(BaseModel):
 class GoogleAuthRequest(BaseModel):
     """Payload for One-Click Google Authentication."""
 
+    model_config = ConfigDict(populate_by_name=True)
+
     credential: str = Field(..., description="Google ID token credential from Google Sign-In button.")
     name: str | None = Field(default=None, description="User full name.")
     email: str | None = Field(default=None, description="User email address.")
     sub: str | None = Field(default=None, description="Google Subject / user ID.")
+
+
+class FacebookAuthRequest(BaseModel):
+    """Payload for Facebook (Meta) Authentication."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    access_token: str = Field(..., description="Facebook user access token.", alias="accessToken")
+    user_id: str | None = Field(default=None, description="Facebook user ID.", alias="userId")
+    email: str | None = Field(default=None, description="Facebook user email address.")
+    name: str | None = Field(default=None, description="Facebook user name.")
 
 
 class UserOut(BaseModel):

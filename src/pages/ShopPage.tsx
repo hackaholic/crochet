@@ -39,7 +39,10 @@ function FilterSection({ title, children, defaultOpen = true }: { title: string;
 
 export default function ShopPage({ onAddToCart, onToggleWishlist, wishlist, onProductClick }: ShopPageProps) {
   const { products } = useCatalogue();
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(() => {
+    const category = new URLSearchParams(window.location.search).get('category');
+    return category ? [category] : [];
+  });
   const [selectedPriceRange, setSelectedPriceRange] = useState<number | null>(null);
   const [selectedOccasions, setSelectedOccasions] = useState<string[]>([]);
   const [customizableOnly, setCustomizableOnly] = useState(false);

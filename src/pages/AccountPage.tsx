@@ -30,6 +30,10 @@ export default function AccountPage({ onSignIn }: { onSignIn: () => void }) {
       .catch(error => setState(error instanceof Error && error.message === '401' ? 'signedOut' : 'error'));
   }, []);
 
+  useEffect(() => {
+    if (state === 'signedOut') onSignIn();
+  }, [onSignIn, state]);
+
   const saveProfile = async () => {
     setSavingProfile(true);
     setProfileMessage('');
@@ -56,7 +60,7 @@ export default function AccountPage({ onSignIn }: { onSignIn: () => void }) {
   };
 
   if (state === 'loading') return <div className="min-h-screen bg-[#FAF7F2] pt-28"><LoadingState label="Loading your account…" /></div>;
-  if (state === 'signedOut') return <SignInPrompt onSignIn={onSignIn} />;
+  if (state === 'signedOut') return null;
   if (state === 'error') return <div className="min-h-screen bg-[#FAF7F2] px-4 pt-36 text-center text-[#8B6B4A]">We could not load your account right now.</div>;
 
   return <main className="min-h-screen bg-[#FAF7F2] pt-28"><div className="mx-auto max-w-5xl px-4 py-10">
@@ -82,4 +86,3 @@ export default function AccountPage({ onSignIn }: { onSignIn: () => void }) {
 }
 
 function Metric({ label, value }: { label: string; value: number }) { return <div className="rounded-2xl border border-[#EDE4D0] bg-white p-5"><p className="text-2xl font-semibold text-[#2C1810]">{value}</p><p className="mt-1 text-sm text-[#8B6B4A]">{label}</p></div>; }
-function SignInPrompt({ onSignIn }: { onSignIn: () => void }) { return <main className="min-h-screen bg-[#FAF7F2] px-4 pt-36 text-center"><h1 className="text-3xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>Your account</h1><p className="mt-3 text-[#8B6B4A]">Sign in to see your account, saved addresses, and order history.</p><button onClick={onSignIn} className="mt-7 rounded-full bg-[#C4622D] px-7 py-3 font-semibold text-white">Sign in with phone</button></main>; }

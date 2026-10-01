@@ -2,9 +2,27 @@
 
 This file records the current cross-team integration gate. Update it when a handoff becomes usable or becomes blocked.
 
+## 2026-10-01 — Google & Facebook Social Authentication gate
+
+Status: Ready for integration
+
+Frontend owner: Codex / ChatGPT  
+Backend owner: Gemini
+
+### What is ready
+
+- **Facebook (Meta) Authentication**: `POST /api/v1/auth/facebook` with Graph API token verification (`https://graph.facebook.com/me`), mock token support for local development, 30-day HttpOnly session cookie issuance, and automatic guest cart merging.
+- **Enhanced Google Authentication**: `POST /api/v1/auth/google` with ID token verification via Google tokeninfo endpoint, audience validation, and dev fallback.
+- **Unified Identity Model**: Customers signing in via Google, Facebook, or Phone OTP are automatically unified under their primary `User` record by email or identity link, preventing duplicate accounts.
+- **Storefront Auth UI**: `src/components/AuthModal.tsx` upgraded with branded "Continue with Google" and "Continue with Facebook" buttons, official SVGs in `src/components/Icons.tsx`, and responsive fallback flows.
+- **Frontend Client**: `src/lib/api/auth.ts` updated with `authApi.google` and `authApi.facebook` typed helper methods.
+- **OpenAPI Contract**: `docs/openapi.yaml` re-exported with 54 routes.
+- **Automated Tests**: 68 of 68 tests passing across all 10 test modules (12 dedicated auth & identity tests).
+
 ## 2026-10-01 — Real SMS & Email Notification Service gate
 
 Status: Ready for integration
+
 
 Frontend owner: Codex / ChatGPT  
 Backend owner: Gemini

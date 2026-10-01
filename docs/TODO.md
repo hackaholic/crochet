@@ -20,6 +20,7 @@ Use this file for work that is ready to start. Keep each item small enough for o
 | Done | Gemini | Implement Sulocraft Deployment & Cloudflare R2 Infrastructure | Docker Compose VPS stack (FastAPI, PostgreSQL persistent volume, Caddy reverse proxy), R2 asset storage, DB backup script, cache control middleware; 56 tests passing |
 | Done | Gemini | Implement Alembic Database Migrations & Version Control | Alembic configured with dynamic DB resolution, baseline migration generated, programmatic startup upgrade, and container integration; 56 tests passing |
 | Done | Gemini | Implement Real SMS & Email Notification Service | Decoupled provider layer (Fast2SMS, Twilio, SMTP, Resend, Mock), background dispatch, branded templates, NotificationLog model & Alembic migration; 64 tests passing |
+| Done | Gemini | Implement Google & Facebook Social Authentication | Enhanced Google token validation, implemented Facebook Graph API auth, unified customer identity, auto-merged cart, branded UI buttons; 68 tests passing |
 | Done | Codex | Configure Cloudflare Pages & Responsive R2 Image Delivery | Vite API binding is environment-based; external backend image URLs render with responsive sizing hints, lazy loading, and async decoding |
 | Done | Codex | Build route foundation | Existing screens have clean, shareable URL routes without changing their visual design; production build and direct product URL verified |
 | Done | Codex | Build the frontend API client | The storefront consumes the catalogue endpoint with loading and error states; completed in FE-02 |

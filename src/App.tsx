@@ -13,6 +13,7 @@ import CheckoutPage from './pages/CheckoutPage';
 import AboutPage from './pages/AboutPage';
 import InfoPage from './pages/InfoPage';
 import AccountPage from './pages/AccountPage';
+import AdminPage from './pages/AdminPage';
 import type { Product } from './data/products';
 import { pageFromPath, pagePath, productPath, productSlug, type AppPage } from './lib/routes';
 import { useCatalogue } from './components/CatalogueProvider';
@@ -38,6 +39,7 @@ export default function App() {
   const [authOpen, setAuthOpen] = useState(false);
   const [couponCode, setCouponCode] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const openAuth = useCallback(() => setAuthOpen(true), []);
 
   const navigate = useCallback((p: AppPage) => {
     navigateTo(p === 'product' || p === 'notFound' ? '/shop' : pagePath(p));
@@ -78,6 +80,7 @@ export default function App() {
       cart: 'Your cart',
       wishlist: 'Your wishlist',
       checkout: 'Checkout',
+      admin: 'Store dashboard',
       about: 'Our story',
       contact: 'Contact us',
       shipping: 'Shipping policy',
@@ -138,7 +141,7 @@ export default function App() {
         wishlistCount={wishlist.length}
         onSearchOpen={() => setSearchOpen(true)}
         onCartOpen={() => setCartOpen(true)}
-        onAccountOpen={() => navigate('account')}
+        onAccountOpen={() => user ? navigate('account') : openAuth()}
       />
 
       <main id="main-content" tabIndex={-1}>
@@ -205,7 +208,8 @@ export default function App() {
             onNavigate={navigate}
           />
         )}
-        {page === 'account' && <AccountPage onSignIn={() => setAuthOpen(true)} />}
+        {page === 'account' && <AccountPage key={user?.id ?? 'guest'} onSignIn={openAuth} />}
+        {page === 'admin' && <AdminPage />}
         {page === 'about' && (
           <AboutPage onNavigate={navigate} />
         )}

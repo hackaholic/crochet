@@ -1049,6 +1049,49 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/auth/facebook:
+    post:
+      tags:
+      - auth
+      summary: Facebook Auth
+      description: Facebook (Meta) Authentication with Unified User Model.
+      operationId: facebook_auth_api_v1_auth_facebook_post
+      parameters:
+      - name: x-cart-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Cart-Token
+      - name: guest_cart_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Guest Cart Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FacebookAuthRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/auth/me:
     get:
       tags:
@@ -5394,6 +5437,35 @@ components:
       - subtotalAfterDiscountPaise
       title: CouponApplyResponse
       description: Result of applying a promotional coupon to cart.
+    FacebookAuthRequest:
+      properties:
+        accessToken:
+          type: string
+          title: Accesstoken
+          description: Facebook user access token.
+        userId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Userid
+          description: Facebook user ID.
+        email:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Email
+          description: Facebook user email address.
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+          description: Facebook user name.
+      type: object
+      required:
+      - accessToken
+      title: FacebookAuthRequest
+      description: Payload for Facebook (Meta) Authentication.
     GoogleAuthRequest:
       properties:
         credential:

@@ -2,7 +2,38 @@
 
 Use this file whenever frontend or backend work becomes ready for the other side. Newest handoff goes first.
 
+## 2026-10-01 — Google & Facebook Social Authentication published
+
+From: Gemini
+To: ChatGPT / Codex
+Status: Complete
+
+Changed:
+- `backend/app/core/config.py`: Added `facebook_app_id` and `facebook_app_secret` settings.
+- `backend/.env.example`: Added `FACEBOOK_APP_ID=` and `FACEBOOK_APP_SECRET=`.
+- `backend/app/schemas/auth.py`: Added `FacebookAuthRequest` schema; configured `GoogleAuthRequest` and `FacebookAuthRequest` with `populate_by_name=True`.
+- `backend/app/api/v1/auth.py`:
+  - Implemented `POST /api/v1/auth/facebook` with token validation (Graph API / dev fallback), unified customer account linking by email, 30-day HttpOnly `session_token` cookie issuance, and guest cart auto-merging.
+  - Enhanced `POST /api/v1/auth/google` with ID token verification via Google tokeninfo endpoint, audience check, and dev fallback.
+  - Token verification helpers `_verify_google_credential` and `_verify_facebook_token` support offline/mock development tokens (`mock_...`).
+- `backend/tests/test_auth.py`: Added 4 automated integration tests (`test_google_sign_in_account_unification`, `test_facebook_sign_in`, `test_facebook_sign_in_account_unification`, `test_facebook_sign_in_cart_merge`). 12 auth tests passing; 68 of 68 passing in full test suite.
+- `src/components/Icons.tsx`: Added official SVG icons `GoogleIcon` and `FacebookIcon`.
+- `src/lib/api/auth.ts`: Added typed `authApi.google` and `authApi.facebook` client methods and request payload interfaces.
+- `src/components/AuthModal.tsx`: Upgraded sign-in dialog with branded "Continue with Google" and "Continue with Facebook" action buttons, fallback handling, and responsive styling.
+- `docs/openapi.yaml`: Re-exported canonical OpenAPI 3.1 specification (54 routes).
+- `docs/api-auth.md`: Documented Facebook endpoint, schemas, and request/response examples.
+
+Contract:
+- Canonical OpenAPI specification at [docs/openapi.yaml](openapi.yaml) and [docs/api-auth.md](api-auth.md).
+- Both Google and Facebook auth set HttpOnly, SameSite=Lax 30-day session cookies and merge guest cart items automatically.
+- Accounts with matching email addresses unify under a single `User` entity, supporting multiple providers in `user.identities`.
+
+How to verify:
+- Backend tests: `pytest backend/tests/test_auth.py` (12 passed).
+- Entire backend test suite: `pytest backend/tests` (68 passed).
+
 ## 2026-10-01 — Real SMS & Email Notification Service published
+
 
 From: Gemini
 To: ChatGPT / Codex

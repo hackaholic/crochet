@@ -141,3 +141,122 @@ def test_login_auto_merges_guest_cart():
     assert cart_res.status_code == 200
     assert cart_res.json()["itemCount"] == 2
     assert cart_res.json()["items"][0]["productId"] == 1
+
+
+def test_google_sign_in_account_unification():
+    """Verify Google sign-in unifies with existing user account if email matches."""
+    client1 = TestClient(app)
+    # 1. First user signs in via Google
+    email = "unify.test@example.com"
+    res1 = client1.post(
+        "/api/v1/auth/google",
+        json={
+            "credential": "mock_google_token_1",
+            "email": email,
+            "name": "First Name",
+            "sub": "google_sub_unify_1",
+        },
+    )
+    assert res1.status_code == 200
+    user_id = res1.json()["user"]["id"]
+
+    # 2. Re-login with same Google sub
+    client2 = TestClient(app)
+    res2 = client2.post(
+        "/api/v1/auth/google",
+        json={
+            "credential": "mock_google_token_2",
+            "email": email,
+            "name": "Updated Name",
+            "sub": "google_sub_unify_1",
+        },
+    )
+    assert res2.status_code == 200
+    assert res2.json()["user"]["id"] == user_id
+
+
+def test_facebook_sign_in():
+    """Verify Facebook (Meta) authentication creates user, identity, and session cookie."""
+    auth_client = TestClient(app)
+    payload = {
+        "accessToken": "mock_fb_access_token_123",
+        "userId": "fb_uid_987654",
+        "email": "priya.sharma@example.com",
+        "name": "Priya Sharma",
+    }
+    response = auth_client.post("/api/v1/auth/facebook", json=payload)
+    assert response.status_code == 200
+    assert "session_token" in response.cookies
+    data = response.json()
+    assert data["user"]["email"] == "priya.sharma@example.com"
+    assert data["user"]["name"] == "Priya Sharma"
+    assert "facebook" in data["user"]["identities"]
+
+    # Verify session works for /me
+    me_res = auth_client.get("/api/v1/auth/me")
+    assert me_res.status_code == 200
+    assert me_res.json()["email"] == "priya.sharma@example.com"
+
+
+def test_facebook_sign_in_account_unification():
+    """Verify Facebook login links to existing account when email matches Google/OTP user."""
+    # 1. Sign in via Google first
+    email = "shared.user@example.com"
+    g_client = TestClient(app)
+    g_res = g_client.post(
+        "/api/v1/auth/google",
+        json={
+            "credential": "mock_google_token_shared",
+            "email": email,
+            "name": "Shared User",
+            "sub": "google_sub_shared",
+        },
+    )
+    assert g_res.status_code == 200
+    unified_user_id = g_res.json()["user"]["id"]
+
+    # 2. Sign in via Facebook with same email
+    fb_client = TestClient(app)
+    fb_res = fb_client.post(
+        "/api/v1/auth/facebook",
+        json={
+            "accessToken": "mock_fb_token_shared",
+            "userId": "fb_uid_shared",
+            "email": email,
+            "name": "Shared User",
+        },
+    )
+    assert fb_res.status_code == 200
+    assert fb_res.json()["user"]["id"] == unified_user_id
+    identities = fb_res.json()["user"]["identities"]
+    assert "google" in identities
+    assert "facebook" in identities
+
+
+def test_facebook_sign_in_cart_merge():
+    """Verify Facebook login merges guest cart items."""
+    session_client = TestClient(app)
+
+    # 1. Add item to guest cart
+    add_res = session_client.post("/api/v1/cart/items", json={"product_id": 1, "quantity": 1})
+    assert add_res.status_code == 201
+    assert "guest_cart_token" in session_client.cookies
+
+    # 2. Login via Facebook
+    fb_res = session_client.post(
+        "/api/v1/auth/facebook",
+        json={
+            "accessToken": "mock_fb_cart_token",
+            "userId": "fb_cart_user_1",
+            "email": "cart.fb@example.com",
+            "name": "Cart FB User",
+        },
+    )
+    assert fb_res.status_code == 200
+    assert fb_res.json()["cartMerged"] is True
+
+    # 3. Retrieve cart
+    cart_res = session_client.get("/api/v1/cart")
+    assert cart_res.status_code == 200
+    assert cart_res.json()["itemCount"] >= 1
+

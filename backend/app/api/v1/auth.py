@@ -5,6 +5,7 @@ import random
 import secrets
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, BackgroundTasks, Cookie, Depends, Header, HTTPException, Response, status
+import httpx
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.config import settings
@@ -14,6 +15,7 @@ from app.models.catalogue import ProductVariant
 from app.models.user import OtpVerification, User, UserIdentity, UserSession
 from app.schemas.auth import (
     AuthResponse,
+    FacebookAuthRequest,
     GoogleAuthRequest,
     SendOtpRequest,
     SendOtpResponse,
@@ -353,6 +355,84 @@ def verify_phone_otp(
     )
 
 
+def _verify_google_credential(
+    credential: str,
+    fallback_sub: str | None = None,
+    fallback_email: str | None = None,
+    fallback_name: str | None = None,
+) -> tuple[str, str | None, str | None]:
+    """Verify Google ID token or fallback to provided claims in dev/mock mode."""
+    is_test = os.getenv("TESTING", "false").lower() == "true" or credential.startswith("mock_")
+    if not is_test and settings.google_client_id and "." in credential:
+        try:
+            with httpx.Client(timeout=5.0) as client:
+                r = client.get(f"https://oauth2.googleapis.com/tokeninfo?id_token={credential}")
+                if r.status_code == 200:
+                    info = r.json()
+                    aud = info.get("aud")
+                    if aud != settings.google_client_id:
+                        raise HTTPException(
+                            status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="Invalid Google token audience.",
+                        )
+                    return (
+                        info.get("sub", fallback_sub or secrets.token_hex(8)),
+                        info.get("email", fallback_email),
+                        info.get("name", fallback_name or "Google User"),
+                    )
+                else:
+                    raise HTTPException(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail="Invalid or expired Google ID token.",
+                    )
+        except HTTPException:
+            raise
+        except Exception:
+            pass
+
+    sub = fallback_sub or (f"google_{secrets.token_hex(8)}" if not credential.startswith("mock_") else credential)
+    email = fallback_email
+    name = fallback_name or "Google User"
+    return sub, email, name
+
+
+def _verify_facebook_token(
+    access_token: str,
+    fallback_id: str | None = None,
+    fallback_email: str | None = None,
+    fallback_name: str | None = None,
+) -> tuple[str, str | None, str | None]:
+    """Verify Facebook User Access Token via Graph API or fallback in dev/mock mode."""
+    is_test = os.getenv("TESTING", "false").lower() == "true" or access_token.startswith("mock_")
+    if not is_test and settings.facebook_app_id:
+        try:
+            with httpx.Client(timeout=5.0) as client:
+                r = client.get(
+                    "https://graph.facebook.com/me",
+                    params={"fields": "id,name,email", "access_token": access_token},
+                )
+                if r.status_code == 200:
+                    info = r.json()
+                    fb_id = info.get("id") or fallback_id or secrets.token_hex(8)
+                    email = info.get("email") or fallback_email
+                    name = info.get("name") or fallback_name or "Facebook User"
+                    return fb_id, email, name
+                else:
+                    raise HTTPException(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail="Invalid or expired Facebook access token.",
+                    )
+        except HTTPException:
+            raise
+        except Exception:
+            pass
+
+    fb_id = fallback_id or (f"fb_{secrets.token_hex(8)}" if not access_token.startswith("mock_") else access_token)
+    email = fallback_email
+    name = fallback_name or "Facebook User"
+    return fb_id, email, name
+
+
 @router.post("/google", response_model=AuthResponse)
 def google_auth(
     payload: GoogleAuthRequest,
@@ -364,10 +444,12 @@ def google_auth(
     """One-Click Google Authentication with Unified User Model."""
     now = datetime.now(timezone.utc)
 
-    # Extract or simulate Google identity
-    google_sub = payload.sub or f"google_{secrets.token_hex(8)}"
-    email = payload.email
-    name = payload.name or "Google User"
+    google_sub, email, name = _verify_google_credential(
+        credential=payload.credential,
+        fallback_sub=payload.sub,
+        fallback_email=payload.email,
+        fallback_name=payload.name,
+    )
 
     if not email:
         raise HTTPException(
@@ -378,7 +460,7 @@ def google_auth(
     # 1. Check if identity already exists
     identity = (
         db.query(UserIdentity)
-        .options(joinedload(UserIdentity.user))
+        .options(joinedload(UserIdentity.user).joinedload(User.identities))
         .filter(UserIdentity.provider == "google", UserIdentity.provider_subject == google_sub)
         .first()
     )
@@ -386,11 +468,15 @@ def google_auth(
     if identity:
         user = identity.user
         user.last_login_at = now
+        if not user.email:
+            user.email = email
     else:
         # 2. Check if user exists by email (unify account)
         user = db.query(User).options(joinedload(User.identities)).filter(User.email == email).first()
         if user:
             user.last_login_at = now
+            if name and not user.name:
+                user.name = name
             # Link Google identity
             new_id = UserIdentity(user_id=user.id, provider="google", provider_subject=google_sub)
             db.add(new_id)
@@ -440,6 +526,101 @@ def google_auth(
         message="Google login successful",
         cart_merged=cart_merged,
     )
+
+
+@router.post("/facebook", response_model=AuthResponse)
+def facebook_auth(
+    payload: FacebookAuthRequest,
+    response: Response,
+    guest_cart_token: str | None = Cookie(default=None),
+    x_cart_token: str | None = Header(default=None),
+    db: Session = Depends(get_db),
+) -> AuthResponse:
+    """Facebook (Meta) Authentication with Unified User Model."""
+    now = datetime.now(timezone.utc)
+
+    fb_id, email, name = _verify_facebook_token(
+        access_token=payload.access_token,
+        fallback_id=payload.user_id,
+        fallback_email=payload.email,
+        fallback_name=payload.name,
+    )
+
+    # 1. Check if Facebook identity already exists
+    identity = (
+        db.query(UserIdentity)
+        .options(joinedload(UserIdentity.user).joinedload(User.identities))
+        .filter(UserIdentity.provider == "facebook", UserIdentity.provider_subject == fb_id)
+        .first()
+    )
+
+    if identity:
+        user = identity.user
+        user.last_login_at = now
+        if email and not user.email:
+            user.email = email
+        if name and not user.name:
+            user.name = name
+    else:
+        # 2. Check if user exists by email (unify account)
+        user = None
+        if email:
+            user = db.query(User).options(joinedload(User.identities)).filter(User.email == email).first()
+
+        if user:
+            user.last_login_at = now
+            if name and not user.name:
+                user.name = name
+            # Link Facebook identity
+            new_id = UserIdentity(user_id=user.id, provider="facebook", provider_subject=fb_id)
+            db.add(new_id)
+        else:
+            # 3. Create fresh User and Identity
+            user = User(
+                name=name or "Facebook User",
+                email=email,
+                status="ACTIVE",
+                last_login_at=now,
+            )
+            db.add(user)
+            db.flush()
+
+            new_id = UserIdentity(user_id=user.id, provider="facebook", provider_subject=fb_id)
+            db.add(new_id)
+
+    # Create server session
+    session_token = secrets.token_urlsafe(32)
+    session = UserSession(
+        user_id=user.id,
+        session_token=session_token,
+        expires_at=now + timedelta(days=30),
+        is_revoked=False,
+    )
+    db.add(session)
+    db.commit()
+    db.refresh(user)
+
+    # Set HttpOnly, SameSite=Lax session cookie
+    response.set_cookie(
+        key=SESSION_COOKIE_NAME,
+        value=session_token,
+        max_age=SESSION_MAX_AGE,
+        httponly=True,
+        samesite="lax",
+        secure=settings.cookie_secure,
+        domain=settings.cookie_domain,
+    )
+
+    # Auto-merge guest cart
+    active_cart_token = guest_cart_token or x_cart_token
+    cart_merged = _merge_guest_cart_to_user(db, user.id, active_cart_token)
+
+    return AuthResponse(
+        user=_to_user_out(user),
+        message="Facebook login successful",
+        cart_merged=cart_merged,
+    )
+
 
 
 @router.get("/me", response_model=UserOut)

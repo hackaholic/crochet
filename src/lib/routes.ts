@@ -1,6 +1,6 @@
 import type { Product } from '../data/products';
 
-export type AppPage = 'home' | 'shop' | 'product' | 'cart' | 'wishlist' | 'checkout' | 'account' | 'about' | 'contact' | 'shipping' | 'returns' | 'privacy' | 'terms' | 'notFound';
+export type AppPage = 'home' | 'shop' | 'product' | 'cart' | 'wishlist' | 'checkout' | 'account' | 'admin' | 'about' | 'contact' | 'shipping' | 'returns' | 'privacy' | 'terms' | 'notFound';
 
 const pagePaths: Record<Exclude<AppPage, 'product' | 'notFound'>, string> = {
   home: '/',
@@ -9,6 +9,7 @@ const pagePaths: Record<Exclude<AppPage, 'product' | 'notFound'>, string> = {
   wishlist: '/wishlist',
   checkout: '/checkout',
   account: '/account',
+  admin: '/admin',
   about: '/about',
   contact: '/contact',
   shipping: '/shipping-policy',
@@ -40,6 +41,7 @@ export function pageFromPath(pathname: string): AppPage {
   if (pathname === '/wishlist') return 'wishlist';
   if (pathname === '/checkout') return 'checkout';
   if (pathname === '/account') return 'account';
+  if (pathname === '/admin') return 'admin';
   if (pathname === '/about') return 'about';
   if (pathname === '/contact') return 'contact';
   if (pathname === '/shipping-policy') return 'shipping';

@@ -1,0 +1,16 @@
+import { useEffect, useState } from 'react';
+import { getAdminAnalytics, type AdminAnalytics } from '../lib/api/admin';
+import { LoadingState } from '../components/StorefrontState';
+
+export default function AdminPage() {
+  const [data, setData] = useState<AdminAnalytics | null>(null);
+  const [state, setState] = useState<'loading' | 'ready' | 'forbidden' | 'error'>('loading');
+  const load = () => { setState('loading'); getAdminAnalytics().then(result => { setData(result); setState('ready'); }).catch(error => setState(error instanceof Error && /401|403/.test(error.message) ? 'forbidden' : 'error')); };
+  useEffect(load, []);
+  if (state === 'loading') return <main className="min-h-screen bg-[#FAF7F2] pt-28"><LoadingState label="Loading store dashboard…" /></main>;
+  if (state === 'forbidden') return <main className="min-h-screen bg-[#FAF7F2] px-4 pt-36 text-center"><h1 className="text-3xl font-medium text-[#2C1810]">Admin access required</h1><p className="mt-3 text-[#8B6B4A]">Sign in with an administrator account to manage Sulocraft.</p></main>;
+  if (state === 'error' || !data) return <main className="min-h-screen bg-[#FAF7F2] px-4 pt-36 text-center"><p className="text-[#8B6A4A]">The dashboard could not be loaded.</p><button onClick={load} className="mt-4 rounded-full bg-[#C4622D] px-5 py-2.5 text-sm font-semibold text-white">Try again</button></main>;
+  const cards = [['Revenue', `₹${data.totalRevenue}`], ['Orders', data.totalOrders], ['Customers', data.totalCustomers], ['Products', data.totalProducts]];
+  return <main className="min-h-screen bg-[#FAF7F2] pt-28"><div className="mx-auto max-w-6xl px-4 py-10"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#C4622D]">Sulocraft operations</p><h1 className="mt-2 text-4xl font-medium text-[#2C1810]">Store dashboard</h1><div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{cards.map(([label, value]) => <div key={String(label)} className="rounded-2xl border border-[#EDE4D0] bg-white p-5"><p className="text-2xl font-semibold text-[#2C1810]">{value}</p><p className="mt-1 text-sm text-[#8B6B4A]">{label}</p></div>)}</div><div className="mt-8 grid gap-6 lg:grid-cols-2"><section className="rounded-2xl border border-[#EDE4D0] bg-white p-6"><h2 className="text-xl font-semibold text-[#2C1810]">Order status</h2><div className="mt-4 grid grid-cols-3 gap-3 text-center"><Stat label="Pending" value={data.pendingOrders} /><Stat label="Delivered" value={data.deliveredOrders} /><Stat label="Cancelled" value={data.cancelledOrders} /></div></section><section className="rounded-2xl border border-[#EDE4D0] bg-white p-6"><h2 className="text-xl font-semibold text-[#2C1810]">Low stock alerts</h2>{data.lowStockItems.length ? data.lowStockItems.map(item => <div key={item.variantId} className="mt-3 flex justify-between border-t border-[#EDE4D0] pt-3 text-sm"><span>{item.productName} · {item.variantName}</span><strong className="text-[#C4622D]">{item.stockQuantity} left</strong></div>) : <p className="mt-3 text-sm text-[#8B6B4A]">All variants are sufficiently stocked.</p>}</section></div></div></main>;
+}
+function Stat({ label, value }: { label: string; value: number }) { return <div><p className="text-xl font-semibold text-[#2C1810]">{value}</p><p className="text-xs text-[#8B6B4A]">{label}</p></div>; }
