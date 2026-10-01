@@ -639,7 +639,7 @@ def _seed_taxonomy_and_products(db: Session) -> None:
                 parent_id=None,
                 display_order=parent_idx,
                 is_active=True,
-                show_when_empty=True,
+                show_when_empty=False,
             )
             db.add(parent_cat)
             db.flush()
@@ -649,7 +649,7 @@ def _seed_taxonomy_and_products(db: Session) -> None:
             parent_cat.image_key = parent_data.get("image_key")
             parent_cat.image = parent_data.get("image_key")
             parent_cat.display_order = parent_idx
-            parent_cat.show_when_empty = True
+            parent_cat.show_when_empty = False
         category_slug_map[parent_data["slug"]] = parent_cat
 
         for child_idx, child_data in enumerate(parent_data.get("children", []), start=1):
@@ -661,7 +661,7 @@ def _seed_taxonomy_and_products(db: Session) -> None:
                     parent_id=parent_cat.id,
                     display_order=child_idx,
                     is_active=True,
-                    show_when_empty=True,
+                    show_when_empty=False,
                 )
                 db.add(child_cat)
                 db.flush()
@@ -669,7 +669,7 @@ def _seed_taxonomy_and_products(db: Session) -> None:
                 child_cat.name = child_data["name"]
                 child_cat.parent_id = parent_cat.id
                 child_cat.display_order = child_idx
-                child_cat.show_when_empty = True
+                child_cat.show_when_empty = False
             category_slug_map[child_data["slug"]] = child_cat
 
     # 2. Seed Collections

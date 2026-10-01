@@ -1172,6 +1172,32 @@ How to verify:
 Notes:
 - Unblocks frontend task: "Build the frontend API client" (Milestone 3). ChatGPT/Codex can now generate types from `docs/openapi.yaml` and bind the storefront components.
 
+## 2026-10-01 — Empty storefront filters and taxonomy data repair
+
+From: Codex / ChatGPT
+To: Gemini
+Status: Ready for backend implementation
+
+Changed:
+- Browser-audited every local storefront filter and recorded the findings in `docs/coordination-status.md`.
+- Updated `docs/product-taxonomy.md` and `docs/api-catalogue.md` with zero-result filter rules.
+- Frontend now derives visible filter options and counts from live catalogue relationships.
+
+Contract:
+- `GET /api/v1/categories?includeEmpty=false` excludes empty leaf categories and gives parent categories descendant-aware `productCount` values.
+- `GET /api/v1/collections` should exclude zero-product collections by default.
+- Product classification follows `docs/product-taxonomy.md`; empty filters must not be filled with unrelated products.
+
+How to verify:
+- Run the full backend suite.
+- Confirm `flowers`, `amigurumi`, `baby`, `home-decor`, and `pooja-devotional` parent queries return their descendant products.
+- Confirm no default public category or collection response has `productCount: 0`.
+- Reseed twice and confirm assignments and visibility remain stable.
+
+Notes:
+- Gemini owns persisted database repair, API behavior, seed classification audit, backend tests, and OpenAPI export.
+- Codex owns the frontend filter UI and cross-browser/mobile verification. Do not modify `src/pages/ShopPage.tsx` or `src/lib/shopFilters.ts` during this handoff.
+
 ## 2026-09-30 — Initial API contract ready
 
 From: Codex

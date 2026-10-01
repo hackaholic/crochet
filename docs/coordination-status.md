@@ -6,7 +6,7 @@ This file records the current cross-team integration gate. Update it when a hand
 
 Status: Ready for integration
 
-Frontend owner: Codex / ChatGPT  
+Frontend owner: Codex / ChatGPT
 Backend owner: Gemini
 
 ### What is ready
@@ -24,7 +24,7 @@ Backend owner: Gemini
 
 Status: Ready for integration
 
-Frontend owner: Codex / ChatGPT  
+Frontend owner: Codex / ChatGPT
 Backend owner: Gemini
 
 ### What is ready
@@ -265,6 +265,48 @@ Backend owner: Gemini
 Status: Complete
 
 Codex added a typed catalogue client at `src/lib/api/catalogue.ts` and a shared `CatalogueProvider`. Home, shop, product, search, and wishlist screens now read the live `/api/v1/products` response. The frontend uses the backend slug for product URLs and handles loading, retry, and API failures. The production build passes, and the API confirms CORS access for `http://localhost:8080`.
+
+## 2026-10-01 — Storefront filter and taxonomy audit
+
+Status: Frontend complete; backend data repair assigned to Gemini
+
+Frontend owner: Codex / ChatGPT
+Backend owner: Gemini
+
+### Browser audit findings
+
+- All 47 category filters, 15 collection filters, four price ranges, and the customizable filter were exercised individually on the local storefront.
+- Parent categories returned zero because the frontend compared only direct product category slugs.
+- Empty category children were exposed because the seed set `show_when_empty=true` globally.
+- `Gifts for Him`, `Under ₹299`, and `₹300 – ₹599` had zero products.
+- Occasion and Availability panels collapsed after each selection because the inline filter panel component remounted.
+
+### Codex / ChatGPT scope
+
+- Parent filters match products in descendant categories.
+- Category, collection, and price controls derive counts from live product relationships and hide zero-result options.
+- Filter controls display counts and retain expanded state after selection.
+- Browser regression audit is repeated on desktop and mobile before push.
+
+### Frontend verification result
+
+- All 24 visible category filters return at least one product; parent counts are descendant-aware.
+- All 14 visible occasion/collection filters return at least one product.
+- Only the two populated price ranges are shown; customizable returns nine products.
+- Newest, both price sorts, and Best Selling were exercised; Newest now prioritizes products carrying the backend-managed `New` badge.
+- Desktop and 390px mobile browser checks show no overflow, console errors, or panel-state resets.
+- Frontend suite: 17 files and 30 tests passing; type-check and pre-production build passing.
+
+### Gemini backend handoff
+
+1. Repair persisted category data so `show_when_empty` is `false` unless an administrator explicitly enables it for a deliberate storefront placeholder. Provide an idempotent migration or data-repair step; changing only future seed behavior is insufficient.
+2. Keep `GET /api/v1/categories?includeEmpty=false` free of empty leaf categories and verify each parent `productCount` includes all active descendants.
+3. Make `GET /api/v1/collections` omit zero-product collections by default, with an explicit administrative preview option if needed. Re-export `docs/openapi.yaml` for any query-contract change.
+4. Audit all 16 seeded products against `docs/product-taxonomy.md`: exactly one primary leaf category, only semantically correct secondary categories, appropriate gift/merchandising collections, and useful discovery tags. Do not assign unrelated products merely to populate an empty filter.
+5. Keep `Gifts for Him` hidden while empty unless a genuinely suitable product is approved and assigned.
+6. Add regression tests covering empty-option exclusion, descendant counts, parent-category product queries, collection counts, and seed idempotency. Run the full backend suite and record the result here.
+
+Contract: `docs/product-taxonomy.md` and `docs/api-catalogue.md`.
 
 ## 2026-09-30 — Independent frontend task
 

@@ -26,6 +26,7 @@ All endpoints conform to Section 2, 8, 10, 13, and 18 of the [Multi-Agent Implem
 | `GET` | `/categories` | Retrieve hierarchical categories tree (or flat list if `?flat=true`) |
 | `GET` | `/categories/{slug}` | Single category detail |
 | `GET` | `/categories/{slug}/products` | All products belonging to a category or its subcategories |
+| `GET` | `/collections` | Active gift and merchandising collections with product counts |
 | `GET` | `/products` | Filterable, searchable, and sortable product catalogue |
 | `GET` | `/products/search?q={query}` | Keyword search across product name, description, tags, and categories |
 | `GET` | `/products/{slug_or_id}` | Full product detail with variants, SKUs, gallery, and reviews |
@@ -130,6 +131,13 @@ Retrieve category tree with subcategories.
 
 **Query Parameters:**
 * `flat` (boolean, optional, default: `false`): If `true`, returns a flat list of all categories instead of a nested tree.
+* `includeEmpty` (boolean, optional, default: `false`): If `false`, excludes empty leaf categories. Parent counts include all active descendant categories.
+
+Each category returns `productCount`. Customer-facing filters must omit options with `productCount = 0`; selecting a parent category must match products assigned to any descendant.
+
+### `GET /collections`
+
+Returns active, currently scheduled collections with `productCount`. The backend should exclude empty collections by default and may support `includeEmpty=true` for administrative preview. Customer-facing filters must never display collections with `productCount = 0`.
 
 **Example Response:**
 ```json

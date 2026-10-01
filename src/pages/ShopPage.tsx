@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import ProductCard from '../components/ProductCard';
 import { FilterIcon, XIcon, ChevronDownIcon } from '../components/Icons';
 import type { Product } from '../data/products';
 import { useCatalogue } from '../components/CatalogueProvider';
-import { flattenCategories } from '../lib/api/catalogue';
+import { buildCategoryFilterOptions, buildCollectionFilterOptions, buildPriceFilterOptions, productMatchesCategory, sortShopProducts } from '../lib/shopFilters';
 
 interface ShopPageProps {
   onAddToCart: (product: Product) => void;
@@ -38,7 +38,9 @@ function FilterSection({ title, children, defaultOpen = true }: { title: string;
 
 export default function ShopPage({ onAddToCart, onToggleWishlist, wishlist, onProductClick }: ShopPageProps) {
   const { products, categories, collections } = useCatalogue();
-  const categoryFilters = flattenCategories(categories);
+  const categoryFilters = useMemo(() => buildCategoryFilterOptions(categories, products), [categories, products]);
+  const collectionFilters = useMemo(() => buildCollectionFilterOptions(collections, products), [collections, products]);
+  const priceFilters = useMemo(() => buildPriceFilterOptions(priceRanges, products), [products]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(() => {
     const category = new URLSearchParams(window.location.search).get('category');
     return category ? [category] : [];
@@ -56,10 +58,11 @@ export default function ShopPage({ onAddToCart, onToggleWishlist, wishlist, onPr
   const toggleCategory = (cat: string) =>
     setSelectedCategories(prev => prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]);
 
-  const filtered = products.filter(p => {
-    if (selectedCategories.length > 0 && !selectedCategories.some(slug =>
-      p.primaryCategory?.slug === slug || p.categories?.some(category => category.slug === slug)
-    )) return false;
+  const filtered = sortShopProducts(products.filter(p => {
+    if (selectedCategories.length > 0 && !selectedCategories.some(slug => {
+      const option = categoryFilters.find(item => item.category.slug === slug);
+      return option ? productMatchesCategory(p, option) : false;
+    })) return false;
     if (selectedOccasions.length > 0 && !selectedOccasions.some(slug =>
       p.collections?.some(collection => collection.slug === slug)
     )) return false;
@@ -69,12 +72,7 @@ export default function ShopPage({ onAddToCart, onToggleWishlist, wishlist, onPr
     }
     if (customizableOnly && !p.customizable) return false;
     return true;
-  }).sort((a, b) => {
-    if (sortBy === 'Price: Low to High') return a.price - b.price;
-    if (sortBy === 'Price: High to Low') return b.price - a.price;
-    if (sortBy === 'Best Selling') return b.reviews - a.reviews;
-    return 0;
-  });
+  }), sortBy);
 
   const clearAll = () => {
     setSelectedCategories([]);
@@ -84,70 +82,74 @@ export default function ShopPage({ onAddToCart, onToggleWishlist, wishlist, onPr
   };
 
   const activeFilters = selectedCategories.length + (selectedPriceRange !== null ? 1 : 0) + selectedOccasions.length + (customizableOnly ? 1 : 0);
-  const categoryName = (slug: string) => categoryFilters.find(category => category.slug === slug)?.name ?? slug;
+  const categoryName = (slug: string) => categoryFilters.find(option => option.category.slug === slug)?.category.name ?? slug;
+  const customizableCount = products.filter(product => product.customizable).length;
 
-  const FilterPanel = () => (
+  const renderFilterPanel = () => (
     <div className="space-y-0">
       <FilterSection title="Category">
         <div className="space-y-2">
-          {categoryFilters.map(cat => (
-            <label key={cat.slug} className="flex items-center gap-3 cursor-pointer group">
-              <div
-                onClick={() => toggleCategory(cat.slug)}
-                className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors cursor-pointer shrink-0 ${selectedCategories.includes(cat.slug) ? 'bg-[#C4622D] border-[#C4622D]' : 'border-[#D4C5B5] group-hover:border-[#C4622D]'}`}
+          {categoryFilters.map(({ category, productCount }) => (
+            <button key={category.slug} type="button" aria-label={`${category.name}, ${productCount} products`} aria-pressed={selectedCategories.includes(category.slug)} onClick={() => toggleCategory(category.slug)} className="group flex w-full items-center gap-3 text-left">
+              <span
+                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors ${selectedCategories.includes(category.slug) ? 'border-[#C4622D] bg-[#C4622D]' : 'border-[#D4C5B5] group-hover:border-[#C4622D]'}`}
               >
-                {selectedCategories.includes(cat.slug) && (
+                {selectedCategories.includes(category.slug) && (
                   <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
                     <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 )}
-              </div>
-              <span className="text-sm text-[#5C3D2E] group-hover:text-[#2C1810] transition-colors">{cat.name}</span>
-            </label>
+              </span>
+              <span className="text-sm text-[#5C3D2E] transition-colors group-hover:text-[#2C1810]">{category.name}</span>
+              <span className="ml-auto text-xs text-[#8B6B4A]">{productCount}</span>
+            </button>
           ))}
         </div>
       </FilterSection>
 
       <FilterSection title="Price">
         <div className="space-y-2">
-          {priceRanges.map((range, i) => (
-            <label key={range.label} className="flex items-center gap-3 cursor-pointer group">
-              <div
-                onClick={() => setSelectedPriceRange(selectedPriceRange === i ? null : i)}
-                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors cursor-pointer shrink-0 ${selectedPriceRange === i ? 'bg-[#C4622D] border-[#C4622D]' : 'border-[#D4C5B5] group-hover:border-[#C4622D]'}`}
+          {priceFilters.map(({ range, index, productCount }) => (
+            <button key={range.label} type="button" aria-label={`${range.label}, ${productCount} products`} aria-pressed={selectedPriceRange === index} onClick={() => setSelectedPriceRange(selectedPriceRange === index ? null : index)} className="group flex w-full items-center gap-3 text-left">
+              <span
+                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${selectedPriceRange === index ? 'border-[#C4622D] bg-[#C4622D]' : 'border-[#D4C5B5] group-hover:border-[#C4622D]'}`}
               >
-                {selectedPriceRange === i && <div className="w-2 h-2 rounded-full bg-white" />}
-              </div>
+                {selectedPriceRange === index && <span className="h-2 w-2 rounded-full bg-white" />}
+              </span>
               <span className="text-sm text-[#5C3D2E]">{range.label}</span>
-            </label>
+              <span className="ml-auto text-xs text-[#8B6B4A]">{productCount}</span>
+            </button>
           ))}
         </div>
       </FilterSection>
 
       <FilterSection title="Occasion" defaultOpen={false}>
         <div className="flex flex-wrap gap-2">
-          {collections.map(collection => (
+          {collectionFilters.map(({ collection, productCount }) => (
             <button
               key={collection.slug}
+              type="button"
+              aria-label={`${collection.name}, ${productCount} products`}
+              aria-pressed={selectedOccasions.includes(collection.slug)}
               onClick={() => setSelectedOccasions(prev => prev.includes(collection.slug) ? prev.filter(slug => slug !== collection.slug) : [...prev, collection.slug])}
               className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${selectedOccasions.includes(collection.slug) ? 'bg-[#C4622D] text-white border-[#C4622D]' : 'border-[#EDE4D0] text-[#5C3D2E] hover:border-[#C4622D]'}`}
             >
-              {collection.name}
+              {collection.name} ({productCount})
             </button>
           ))}
         </div>
       </FilterSection>
 
       <FilterSection title="Availability" defaultOpen={false}>
-        <label className="flex items-center gap-3 cursor-pointer">
-          <div
-            onClick={() => setCustomizableOnly(!customizableOnly)}
-            className={`relative w-10 h-6 rounded-full transition-colors cursor-pointer ${customizableOnly ? 'bg-[#C4622D]' : 'bg-[#D4C5B5]'}`}
+        <button type="button" role="switch" aria-label={`Customizable only, ${customizableCount} products`} aria-checked={customizableOnly} onClick={() => setCustomizableOnly(!customizableOnly)} className="flex w-full items-center gap-3 text-left">
+          <span
+            className={`relative h-6 w-10 rounded-full transition-colors ${customizableOnly ? 'bg-[#C4622D]' : 'bg-[#D4C5B5]'}`}
           >
-            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${customizableOnly ? 'translate-x-5' : 'translate-x-1'}`} />
-          </div>
+            <span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${customizableOnly ? 'translate-x-5' : 'translate-x-1'}`} />
+          </span>
           <span className="text-sm text-[#5C3D2E]">Customizable only</span>
-        </label>
+          <span className="ml-auto text-xs text-[#8B6B4A]">{customizableCount}</span>
+        </button>
       </FilterSection>
 
       {activeFilters > 0 && (
@@ -219,7 +221,7 @@ export default function ShopPage({ onAddToCart, onToggleWishlist, wishlist, onPr
           <aside className="hidden lg:block w-60 shrink-0">
             <div className="sticky top-28">
               <h3 className="font-semibold text-[#2C1810] mb-5">Filters</h3>
-              <FilterPanel />
+              {renderFilterPanel()}
             </div>
           </aside>
 
@@ -261,7 +263,7 @@ export default function ShopPage({ onAddToCart, onToggleWishlist, wishlist, onPr
               <button onClick={() => setFilterOpen(false)} className="p-1"><XIcon size={22} className="text-[#5C3D2E]" /></button>
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-4">
-              <FilterPanel />
+              {renderFilterPanel()}
             </div>
             <div className="px-5 py-4 border-t border-[#EDE4D0]">
               <button

@@ -205,6 +205,8 @@ Public category output uses camelCase consistently:
 
 Default public behavior returns only active categories with available published/in-stock products. `showWhenEmpty=true` may explicitly expose an empty category. Admin endpoints can retrieve inactive and empty records.
 
+Storefront filter controls must also derive their availability and counts from the currently loaded catalogue. Parent-category filters include products assigned to any descendant category. Empty category, collection, and price options are not shown to customers.
+
 Category product queries include descendant categories and deduplicate products.
 
 ### Collections
