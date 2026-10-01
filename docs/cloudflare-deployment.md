@@ -38,7 +38,7 @@ The Coming Soon mode makes no API calls, so it is safe to publish before the VPS
 Use a separate Worker for the shared development site. It must never deploy over the production Worker.
 
 1. Create or select the `sulocraft-dev` Worker and connect the same `hackaholic/crochet` repository.
-2. Configure its Workers Build:
+2. Configure its Workers Build once:
 
    | Field | Value |
    | --- | --- |
@@ -52,7 +52,9 @@ Use a separate Worker for the shared development site. It must never deploy over
 4. In **Settings → Domains & Routes**, add the custom domain `dev.sulocraft.com` to `sulocraft-dev`.
 5. Protect `dev.sulocraft.com` with Cloudflare Access until launch testing is complete.
 
-The committed `.env.preprod` makes this a full-storefront build and points it to `https://api-dev.sulocraft.com/api/v1`. The `wrangler.jsonc` `dev` environment publishes a separately named Worker, so `npx wrangler deploy --env dev` cannot overwrite the production `sulocraft` Worker.
+The committed `.env.preprod` makes this a full-storefront build and points it to `https://api-dev.sulocraft.com/api/v1`. These are public Vite build settings, so no Cloudflare dashboard variable is required and no variable needs to be edited between deployments. Never add credentials or secrets to this file.
+
+The `wrangler.jsonc` `dev` environment publishes a separately named Worker, so `npx wrangler deploy --env dev` cannot overwrite the production `sulocraft` Worker. The build command must remain `pnpm build:dev`; the generic `pnpm build` intentionally loads `.env.production` and produces the production Coming Soon site.
 
 The development frontend requires the VPS staging API at `api-dev.sulocraft.com`. Until that API is deployed and reachable, catalogue and account features that need FastAPI will show their normal unavailable/error states.
 
