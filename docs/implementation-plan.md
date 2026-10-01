@@ -72,7 +72,7 @@ This plan turns the multi-agent specification into small, ordered tasks. Only on
 | ID | Owner | Task | Status | Handoff / completion condition |
 | --- | --- | --- | --- | --- |
 | BE-09 | Gemini | Admin catalog, inventory, order status & analytics | Done | Product/variant CRUD, inventory adjustment, order status transitions, and store analytics; published `docs/api-admin.md` |
-| FE-10 | ChatGPT / Codex | Admin dashboard UI | Ready | Build admin views for catalog management, stock adjustments, and order fulfillment |
+| FE-10 | Codex | Admin dashboard UI | In progress | Build admin views for catalog management, stock adjustments, and order fulfillment |
 
 ## Milestone 10 — Promotions, coupons & customer reviews
 

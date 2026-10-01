@@ -22,6 +22,7 @@ from app.models.order import (
     PaymentStatus,
 )
 from app.models.account import Wishlist, WishlistItem
+from app.models.notification import NotificationLog
 from app.models.payment import Payment, PaymentProviderName, PaymentRecordStatus
 from app.models.promotion import Coupon
 from app.models.user import OtpVerification, User, UserIdentity, UserSession
@@ -32,6 +33,7 @@ __all__ = [
     "CartItem",
     "Category",
     "Coupon",
+    "NotificationLog",
     "Occasion",
     "Order",
     "OrderItem",

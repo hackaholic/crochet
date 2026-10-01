@@ -4,7 +4,7 @@ import os
 import random
 import secrets
 from datetime import datetime, timedelta, timezone
-from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Response, status
+from fastapi import APIRouter, BackgroundTasks, Cookie, Depends, Header, HTTPException, Response, status
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.config import settings
@@ -20,6 +20,7 @@ from app.schemas.auth import (
     UserOut,
     VerifyOtpRequest,
 )
+from app.services.notification import dispatch_otp_background
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -191,6 +192,7 @@ def _merge_guest_cart_to_user(db: Session, user_id: int, guest_token: str | None
 @router.post("/phone/send-otp", response_model=SendOtpResponse)
 def send_phone_otp(
     payload: SendOtpRequest,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ) -> SendOtpResponse:
     """Request a 6-digit OTP code to mobile phone with cooldown throttling."""
@@ -229,6 +231,9 @@ def send_phone_otp(
     )
     db.add(otp_record)
     db.commit()
+
+    # Dispatch SMS in background task
+    background_tasks.add_task(dispatch_otp_background, payload.phone, otp_code)
 
     return SendOtpResponse(
         status="ok",

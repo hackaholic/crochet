@@ -3,12 +3,13 @@
 import re
 import uuid
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from app.api.v1.auth import get_current_admin
 from app.db.session import get_db
+from app.services.notification import dispatch_order_status_background
 from app.services.storage import get_storage_provider
 from app.models.catalogue import (
     Category,
@@ -737,6 +738,7 @@ def get_admin_order(
 def update_order_status(
     order_number_or_id: str,
     payload: AdminOrderStatusUpdate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ) -> AdminOrderDetailOut:
     """Transition order status, update courier tracking info, and restore inventory if cancelled."""
@@ -796,6 +798,13 @@ def update_order_status(
 
     db.commit()
     db.refresh(order)
+    background_tasks.add_task(
+        dispatch_order_status_background,
+        order.id,
+        target_status,
+        order.courier_name,
+        order.tracking_number,
+    )
     return _order_to_admin_detail(order)
 
 

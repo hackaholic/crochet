@@ -44,6 +44,24 @@ class Settings:
     otp_provider: str = os.getenv("OTP_PROVIDER", "mock")
     otp_api_key: str | None = os.getenv("OTP_API_KEY")
 
+    # SMS Notifications (Fast2SMS / Twilio / Mock)
+    sms_provider: str = os.getenv("SMS_PROVIDER", os.getenv("OTP_PROVIDER", "mock"))
+    fast2sms_api_key: str | None = os.getenv("FAST2SMS_API_KEY", os.getenv("OTP_API_KEY"))
+    fast2sms_route: str = os.getenv("FAST2SMS_ROUTE", "otp")  # 'otp' for DLT-free quick OTP, or 'dlt'
+    twilio_account_sid: str | None = os.getenv("TWILIO_ACCOUNT_SID")
+    twilio_auth_token: str | None = os.getenv("TWILIO_AUTH_TOKEN")
+    twilio_from_phone: str | None = os.getenv("TWILIO_FROM_PHONE")
+
+    # Email Notifications (SMTP / Resend / Mock)
+    email_provider: str = os.getenv("EMAIL_PROVIDER", "mock")
+    email_from: str = os.getenv("EMAIL_FROM", "Sulocraft <orders@sulocraft.com>")
+    smtp_host: str = os.getenv("SMTP_HOST", "smtp.gmail.com")
+    smtp_port: int = int(os.getenv("SMTP_PORT", "587"))
+    smtp_user: str | None = os.getenv("SMTP_USER")
+    smtp_password: str | None = os.getenv("SMTP_PASSWORD")
+    smtp_tls: bool = os.getenv("SMTP_TLS", "true").lower() in ("true", "1", "yes")
+    resend_api_key: str | None = os.getenv("RESEND_API_KEY")
+
     @property
     def cors_origins(self) -> list[str]:
         """Combine primary frontend URL and additional origins into a clean unique list."""

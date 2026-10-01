@@ -6,7 +6,7 @@ Conforms to Sections 18, 20, 21, 22, and 26 of the E-commerce Multi-Agent Specif
 from datetime import datetime, timedelta, timezone
 import secrets
 from typing import Any
-from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Query, Response, status
+from fastapi import APIRouter, BackgroundTasks, Cookie, Depends, Header, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session, joinedload
 
 from app.api.v1.auth import get_current_user, get_optional_current_user
@@ -23,6 +23,10 @@ from app.models.order import (
     PaymentStatus,
 )
 from app.models.promotion import Coupon
+from app.services.notification import (
+    dispatch_order_placed_background,
+    dispatch_order_status_background,
+)
 from app.models.user import User
 from app.schemas.order import (
     AddressCreate,
@@ -295,6 +299,7 @@ def set_default_address(
 @router.post("/orders", response_model=OrderOut, status_code=status.HTTP_201_CREATED)
 def checkout(
     order_in: OrderCreate,
+    background_tasks: BackgroundTasks,
     user: User | None = Depends(get_optional_current_user),
     cart_token: str | None = Depends(_get_cart_token),
     db: Session = Depends(get_db),
@@ -543,6 +548,7 @@ def checkout(
 
     db.commit()
     db.refresh(order)
+    background_tasks.add_task(dispatch_order_placed_background, order.id)
     return _to_order_out(order)
 
 
@@ -668,6 +674,7 @@ def get_order_tracking(
 @router.post("/orders/{order_id_or_number}/cancel", response_model=OrderOut)
 def cancel_order(
     order_id_or_number: str,
+    background_tasks: BackgroundTasks,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> OrderOut:
@@ -730,4 +737,5 @@ def cancel_order(
 
     db.commit()
     db.refresh(order)
+    background_tasks.add_task(dispatch_order_status_background, order.id, OrderStatus.CANCELLED.value)
     return _to_order_out(order)

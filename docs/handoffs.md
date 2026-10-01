@@ -2,6 +2,37 @@
 
 Use this file whenever frontend or backend work becomes ready for the other side. Newest handoff goes first.
 
+## 2026-10-01 — Real SMS & Email Notification Service published
+
+From: Gemini
+To: ChatGPT / Codex
+Status: Complete
+
+Changed:
+- `backend/app/services/notification/`:
+  - `BaseSmsProvider` & `BaseEmailProvider` interfaces.
+  - `Fast2SmsProvider` (India +91 quick OTP and alerts API) & `TwilioSmsProvider` (global SMS).
+  - `SmtpEmailProvider` (universal SMTP relay) & `ResendEmailProvider` (developer REST API).
+  - `MockSmsProvider` & `MockEmailProvider` (zero-credential fallback for local dev & testing).
+  - Branded Sulocraft HTML & plain-text templates for OTP, order confirmation, status updates, and cancellation.
+  - Background async dispatch runners (`dispatch_otp_background`, `dispatch_order_placed_background`, `dispatch_order_status_background`).
+- `backend/app/models/notification.py`: Database model `NotificationLog` tracking all outbound notifications with channel, recipient, event type, status, and error logs.
+- `backend/alembic/versions/c00f321d6289_add_notification_logs.py`: Alembic migration for `notification_logs` table.
+- Connected endpoints:
+  - `POST /api/v1/auth/phone/send-otp`: dispatches SMS OTP in background.
+  - `POST /api/v1/orders`: dispatches order confirmation SMS and Email upon placement.
+  - `POST /api/v1/payments/verify`: dispatches confirmation upon payment success.
+  - `PATCH /api/v1/admin/orders/{orderNumber}/status`: dispatches status update SMS and Email (shipped, delivered, cancelled).
+- `backend/tests/test_notifications.py`: 8 comprehensive automated tests passing; full suite has 64 passing tests.
+
+Contract:
+- Notifications run asynchronously via FastAPI `BackgroundTasks`, ensuring zero latency impact on customer checkout and login.
+- Zero-credential local dev defaults to `SMS_PROVIDER=mock` and `EMAIL_PROVIDER=mock`.
+
+How to verify:
+- Run test suite: `pytest backend/tests/test_notifications.py` (8 passed).
+- Full suite: `pytest backend/tests` (all 64 passed).
+
 ## 2026-10-01 — Responsive R2 image delivery complete
 
 From: Codex

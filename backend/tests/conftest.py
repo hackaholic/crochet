@@ -9,6 +9,7 @@ from app.models import (
     CartItem,
     Category,
     Coupon,
+    NotificationLog,
     Order,
     OrderItem,
     OrderStatusHistory,
@@ -40,6 +41,7 @@ def clean_transactional_data():
     """Clean payments, orders, addresses, carts, wishlists, sessions, users, and OTPs after each test for test isolation."""
     yield
     with SessionLocal() as db:
+        db.query(NotificationLog).delete()
         db.query(Payment).delete()
         db.query(OrderItem).delete()
         db.query(OrderStatusHistory).delete()

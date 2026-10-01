@@ -2,6 +2,21 @@
 
 This file records the current cross-team integration gate. Update it when a handoff becomes usable or becomes blocked.
 
+## 2026-10-01 — Real SMS & Email Notification Service gate
+
+Status: Ready for integration
+
+Frontend owner: Codex / ChatGPT  
+Backend owner: Gemini
+
+### What is ready
+
+- **SMS Providers**: Decoupled `BaseSmsProvider` with `Fast2SmsProvider` (India +91 quick OTP and order alerts), `TwilioSmsProvider` (global standard), and `MockSmsProvider` (zero-credential testing).
+- **Email Providers**: Decoupled `BaseEmailProvider` with `SmtpEmailProvider` (universal SMTP relay), `ResendEmailProvider` (developer REST API), and `MockEmailProvider` (zero-credential testing).
+- **Audit Logging**: `NotificationLog` model and Alembic migration `c00f321d6289_add_notification_logs.py` recording all outbound messages with status (`SENT`, `FAILED`, `MOCK`), channel, recipient, and timestamps.
+- **Asynchronous Execution**: FastAPI `BackgroundTasks` ensures instant user responses during checkout and authentication.
+- **Automated Tests**: 64 of 64 tests passing across all 10 test modules (8 dedicated notification tests).
+
 ## 2026-09-30 — Alembic Database Migration & Schema Version Control gate
 
 Status: Ready for integration

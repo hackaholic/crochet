@@ -2,6 +2,14 @@
 
 Record decisions that affect more than one file, task, or future agent. Newest entries go first.
 
+## 2026-10-01 — SMS & Email notification service architecture
+
+Decision: Implement a decoupled notification provider layer supporting both SMS (Fast2SMS for India mobile OTPs and alerts, Twilio for international, Mock for testing) and Email (SMTP relay, Resend API, Mock for testing) with asynchronous background dispatch via FastAPI `BackgroundTasks` and transactional audit logging in `notification_logs`.
+
+Reason: External SMS and Email gateways introduce network latency (200ms–2000ms) and potential rate limits or provider downtime. Decoupling notification dispatch via background tasks ensures checkout and sign-in requests complete in milliseconds without blocking. Storing audit logs provides traceability for customer delivery inquiries and debugging bounced messages.
+
+Impact: Created `backend/app/services/notification/`, added `NotificationLog` model with Alembic migration `c00f321d6289_add_notification_logs.py`, and wired notifications into `/auth/phone/send-otp`, `/orders`, `/payments/verify`, and `/admin/orders/{id}/status`.
+
 ## 2026-09-30 — Alembic database migration & schema version control
 
 Decision: Use Alembic as the canonical database migration tool for SQLAlchemy. All future schema modifications must be versioned in `backend/alembic/versions/`. Container startup runs `alembic upgrade head` automatically.

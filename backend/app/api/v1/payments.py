@@ -4,7 +4,7 @@ Conforms to Section 25 (Payment Architecture) and Milestone 7 of the Specificati
 """
 
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request, status
 from sqlalchemy.orm import Session, joinedload
 
 from app.api.v1.auth import get_optional_current_user
@@ -12,6 +12,7 @@ from app.db.session import get_db
 from app.models.order import Order, OrderStatus, OrderStatusHistory, PaymentStatus
 from app.models.payment import Payment, PaymentRecordStatus
 from app.models.user import User
+from app.services.notification import dispatch_order_placed_background
 from app.schemas.payment import (
     PaymentIntentCreate,
     PaymentIntentOut,
@@ -125,6 +126,7 @@ def create_payment_intent(
 @router.post("/verify", response_model=PaymentOut)
 def verify_payment(
     payload: PaymentVerifyRequest,
+    background_tasks: BackgroundTasks,
     user: User | None = Depends(get_optional_current_user),
     db: Session = Depends(get_db),
 ) -> PaymentOut:
@@ -194,6 +196,7 @@ def verify_payment(
 
     db.commit()
     db.refresh(payment)
+    background_tasks.add_task(dispatch_order_placed_background, order.id)
     return _to_payment_out(payment)
 
 
