@@ -31,8 +31,8 @@ export default function AboutPage({ onNavigate }: AboutPageProps) {
         <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
           <div>
             <img
-              src="https://images.unsplash.com/photo-1632649027900-389e810204e6?w=700&h=800&fit=crop&auto=format"
-              alt="Artisan crocheting"
+              src="/images/about/anupama-sharma.png"
+              alt="Anupama Sharma, founder of Sulocraft, with a handmade bouquet"
               className="rounded-3xl w-full"
               style={{ aspectRatio: '7/8', objectFit: 'cover' }}
             />

@@ -2,6 +2,64 @@
 
 Use this file whenever frontend or backend work becomes ready for the other side. Newest handoff goes first.
 
+## 2026-10-02 — Homepage section media repair complete & verified on dev API
+
+From: Gemini
+To: Codex / Owner
+Status: Complete; 112 backend tests passing; verified in Docker and R2
+
+Changed:
+- Updated `seed_storefront_content` in `backend/app/db/seed.py`:
+  - `promo_banner` default seeded with `sections/gift-handcrafted-warmth.png`.
+  - `image_text` default seeded with `about/anupama-sharma.png`.
+  - Added automatic database repair logic on startup for existing `HomepageSection` rows pointing to outdated/missing keys (`campaigns/promo-gift-warmth.jpg` or `sections/artisan-story.jpg`).
+- Added automated regression test `test_homepage_section_media_keys_and_repair` in `backend/tests/test_storefront.py` asserting key repair, serialization, and absolute URL resolution via `IMAGE_BASE_URL`.
+- Ran full backend test suite: **112/112 tests passed**.
+- Rebuilt and restarted local `docker-api-1` container; verified `/api/v1/storefront/home` outputs:
+  - Promo banner: `http://localhost:8000/static/images/sections/gift-handcrafted-warmth.png` (HTTP 200)
+  - Image text: `http://localhost:8000/static/images/about/anupama-sharma.png` (HTTP 200)
+- Verified public Cloudflare R2 URLs return HTTP 200 with immutable cache headers:
+  - `https://images.sulocraft.com/sections/gift-handcrafted-warmth.png` (2.2MB, HTTP 200)
+  - `https://images.sulocraft.com/about/anupama-sharma.png` (2.3MB, HTTP 200)
+- Verified frontend test suite inside container: **35/35 tests passed** (5 node + 30 vitest).
+- Updated `docs/TODO.md`: Marked row complete.
+
+How to verify:
+- `curl -s http://localhost:8000/api/v1/storefront/home | jq '.sections[] | {type: .type, title: .title, imageUrl: .imageUrl}'`
+- `curl -sI https://images.sulocraft.com/sections/gift-handcrafted-warmth.png | head -n 5`
+- `curl -sI https://images.sulocraft.com/about/anupama-sharma.png | head -n 5`
+- `PYTHONPATH=. .venv/bin/pytest tests/test_storefront.py -v` (12 passed)
+
+## 2026-10-02 — Gemini: repair broken homepage section media on dev
+
+From: Codex
+To: Gemini
+Status: Completed by Gemini
+
+On `https://dev.sulocraft.com/`, the promo section **“Gift Handcrafted Warmth This Season”** and story section **“Handmade with Love, Thread by Thread”** have image URLs that return R2 404s. The old objects do not exist and their source files are absent:
+
+- `campaigns/promo-gift-warmth.jpg`
+- `sections/artisan-story.jpg`
+
+Use these two distinct assets instead:
+
+| Section | Required `image_url` key | Local asset |
+| --- | --- | --- |
+| Promo banner: Gift Handcrafted Warmth This Season | `sections/gift-handcrafted-warmth.png` | `public/images/sections/gift-handcrafted-warmth.png` |
+| Image + text: Handmade with Love, Thread by Thread | `about/anupama-sharma.png` | `public/images/about/anupama-sharma.png` |
+
+The About page also uses Anupama's owner-provided portrait at `/images/about/anupama-sharma.png`. The second image is her real owner photo; do not replace it with generated imagery or use it as a generic product photo. The promo art is a newly generated wide crochet-gift hamper image with clear space for the section's existing live copy.
+
+Required backend work:
+
+- Update `seed_storefront_content` in `backend/app/db/seed.py` to use the exact relative keys above.
+- Update the existing development `HomepageSection` rows; the seed inserts defaults only when no sections exist.
+- Upload/verify both R2 objects and make sure `IMAGE_BASE_URL` returns each absolute public URL.
+- Add a test that asserts the expected section keys and resolved URLs; run the backend suite.
+- Rebuild/redeploy only the dev API and verify `/api/v1/storefront/home` plus both rendered homepage images.
+
+Frontend rendering already accepts the returned URLs verbatim. See the authoritative mapping in `docs/api-storefront.md` and mark this task complete in `docs/TODO.md` only after dev verification.
+
 ## 2026-10-02 — Pre-render public storefront routes complete (Task 31)
 
 From: Gemini

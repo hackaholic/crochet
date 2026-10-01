@@ -954,7 +954,7 @@ def seed_storefront_content(db: Session) -> None:
                 "section_type": "promo_banner",
                 "title": "Gift Handcrafted Warmth This Season",
                 "description": "Every stitch carries intention. Order early for personalized bouquets and festive keepsakes.",
-                "image_url": "campaigns/promo-gift-warmth.jpg",
+                "image_url": "sections/gift-handcrafted-warmth.png",
                 "image_alt": "Handcrafted crochet gifts and bouquets",
                 "cta_text": "Explore Gift Guide",
                 "cta_url": "/shop?collection=gifts",
@@ -973,7 +973,7 @@ def seed_storefront_content(db: Session) -> None:
                 "section_type": "image_text",
                 "title": "Handmade with Love, Thread by Thread",
                 "description": "Founded by Anupama Sharma, Sulocraft preserves traditional crochet artistry through modern heirloom designs crafted in small artisanal batches.",
-                "image_url": "sections/artisan-story.jpg",
+                "image_url": "about/anupama-sharma.png",
                 "image_alt": "Sulocraft artisan crocheting flowers",
                 "image_position": "left",
                 "cta_text": "Our Story",
@@ -984,6 +984,14 @@ def seed_storefront_content(db: Session) -> None:
         ]
         for s in sections_data:
             db.add(HomepageSection(**s))
+    else:
+        # Repair existing development rows pointing to outdated/missing image keys
+        existing_sections = db.query(HomepageSection).all()
+        for s in existing_sections:
+            if s.section_type == "promo_banner" and (s.image_url == "campaigns/promo-gift-warmth.jpg" or not s.image_url):
+                s.image_url = "sections/gift-handcrafted-warmth.png"
+            elif s.section_type == "image_text" and (s.image_url == "sections/artisan-story.jpg" or not s.image_url):
+                s.image_url = "about/anupama-sharma.png"
 
     db.commit()
 

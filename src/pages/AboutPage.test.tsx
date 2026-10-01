@@ -7,6 +7,7 @@ describe('AboutPage', () => {
     render(<AboutPage onNavigate={vi.fn()} />);
 
     expect(screen.getAllByText(/Anupama Sharma/i).length).toBeGreaterThan(0);
+    expect(screen.getByRole('img', { name: /Anupama Sharma, founder of Sulocraft/i })).toHaveAttribute('src', '/images/about/anupama-sharma.png');
     expect(screen.getByText(/named after my mother, Sulochana/i)).toBeInTheDocument();
     expect(screen.getByText(/still hanging at my aunt's house/i)).toBeInTheDocument();
     expect(screen.queryByText(/Kavya Reddy/i)).not.toBeInTheDocument();

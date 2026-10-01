@@ -294,6 +294,7 @@ def test_get_storefront_home_returns_brand_hero_and_resolved_sections():
     assert pb["enabled"] is True
     assert pb["title"] == "Gift Handcrafted Warmth This Season"
     assert "imageUrl" in pb
+    assert pb["imageUrl"].endswith("/sections/gift-handcrafted-warmth.png")
     assert "ctaText" in pb
     assert "ctaUrl" in pb
 
@@ -314,7 +315,50 @@ def test_get_storefront_home_returns_brand_hero_and_resolved_sections():
     assert it["title"] == "Handmade with Love, Thread by Thread"
     assert "description" in it
     assert "imageUrl" in it
+    assert it["imageUrl"].endswith("/about/anupama-sharma.png")
     assert it["imagePosition"] in ("left", "right")
+
+
+def test_homepage_section_media_keys_and_repair():
+    """Verify promo banner and image text use valid media keys and repair existing rows."""
+    from app.models.storefront import HomepageSection
+    from app.db.seed import seed_storefront_content
+
+    with SessionLocal() as db:
+        # Check current seeded values
+        pb = db.query(HomepageSection).filter(HomepageSection.section_type == "promo_banner").first()
+        assert pb is not None
+        assert pb.image_url == "sections/gift-handcrafted-warmth.png"
+
+        it = db.query(HomepageSection).filter(HomepageSection.section_type == "image_text").first()
+        assert it is not None
+        assert it.image_url == "about/anupama-sharma.png"
+
+        # Simulate legacy/broken rows
+        pb.image_url = "campaigns/promo-gift-warmth.jpg"
+        it.image_url = "sections/artisan-story.jpg"
+        db.commit()
+
+        # Re-run seed_storefront_content; it must repair them
+        seed_storefront_content(db)
+
+        db.refresh(pb)
+        db.refresh(it)
+        assert pb.image_url == "sections/gift-handcrafted-warmth.png"
+        assert it.image_url == "about/anupama-sharma.png"
+
+    # Verify public API resolves absolute URLs correctly
+    response = client.get("/api/v1/storefront/home")
+    assert response.status_code == 200
+    sections = response.json()["sections"]
+
+    pb_out = next(s for s in sections if s["type"] == "promo_banner")
+    assert pb_out["imageUrl"].endswith("/sections/gift-handcrafted-warmth.png")
+    assert pb_out["imageUrl"].startswith("http")
+
+    it_out = next(s for s in sections if s["type"] == "image_text")
+    assert it_out["imageUrl"].endswith("/about/anupama-sharma.png")
+    assert it_out["imageUrl"].startswith("http")
 
 
 def test_storefront_home_section_scheduling_and_disabled_filtering():

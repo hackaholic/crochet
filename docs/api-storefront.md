@@ -77,6 +77,17 @@ interface HomepageCampaign {
 }
 ```
 
+## Managed homepage section images
+
+The following approved assets have distinct purposes. Persist their relative keys; the API resolves each with `IMAGE_BASE_URL`.
+
+| Homepage section | Required database `image_url` key | Asset |
+| --- | --- | --- |
+| `promo_banner` — “Gift Handcrafted Warmth This Season” | `sections/gift-handcrafted-warmth.png` | Original warm festive crochet gift hamper artwork, wide composition with text-safe space |
+| `image_text` — “Handmade with Love, Thread by Thread” | `about/anupama-sharma.png` | Owner-provided portrait of Anupama Sharma; same asset is used on the static About page |
+
+The previous keys `campaigns/promo-gift-warmth.jpg` and `sections/artisan-story.jpg` do not have corresponding local files or public R2 objects. They must not remain in the live development section records. Gemini must update both seed defaults and existing development rows, verify the new public URLs return HTTP 200, and verify `/api/v1/storefront/home` returns those exact resolved `imageUrl` values. Since the seed only inserts sections when none exist, updating seed defaults alone is insufficient. Add a backend regression test for the expected keys and serialized URLs.
+
 ## Admin endpoints (Requires Admin Session)
 
 | Method | Endpoint | Description |
