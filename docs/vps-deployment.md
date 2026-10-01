@@ -52,7 +52,8 @@ The deployment script uploads a timestamped release to `/opt/sulocraft/releases`
 1. Copy `backend/.env.preprod.example` to `backend/.env.preprod`.
 2. Replace every required placeholder locally. The resulting file is ignored by Git.
 3. Put `dev.sulocraft.com` and `api-dev.sulocraft.com` behind Cloudflare Access while `APP_ENV=staging` permits mock checkout testing.
-4. Point `api-dev.sulocraft.com` to the VPS through Cloudflare, or temporarily use the host IP for a private smoke test.
+4. Point `api-dev.sulocraft.com` to the VPS through Cloudflare. The staging environment sets `API_DOMAIN=api-dev.sulocraft.com`; Caddy obtains and renews the origin certificate using persistent `caddy_data` and `caddy_config` volumes.
+5. After direct-origin HTTPS succeeds, use Cloudflare SSL/TLS mode **Full (strict)** for the proxied hostname.
 5. Run:
 
    ```bash

@@ -1,17 +1,15 @@
-# Caddyfile for Sulocraft API Reverse Proxy on VPS behind Cloudflare
-# Cloudflare handles external TLS/SSL for api.sulocraft.com
+# Caddyfile for the Sulocraft API reverse proxy.
+# API_DOMAIN selects api-dev.sulocraft.com in staging and api.sulocraft.com in
+# production. Caddy obtains and renews the origin certificate automatically.
 
 {
     admin off
 }
 
-# Reverse proxy routing for api.sulocraft.com
-:80 {
+(api_backend) {
     reverse_proxy api:8000 {
         header_up Host {host}
         header_up X-Real-IP {remote_host}
-        header_up X-Forwarded-For {remote_host}
-        header_up X-Forwarded-Proto {scheme}
     }
 
     # Security headers
@@ -20,4 +18,14 @@
         X-Frame-Options DENY
         Referrer-Policy strict-origin-when-cross-origin
     }
+}
+
+{$API_DOMAIN:api.sulocraft.com} {
+    import api_backend
+}
+
+# The release script checks the new stack through the VPS loopback interface
+# before activating it. Keep this HTTP-only endpoint available locally.
+http://127.0.0.1 {
+    import api_backend
 }
