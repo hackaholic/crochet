@@ -1,5 +1,7 @@
 # API Contract: Product Catalogue Domain
 
+> **Taxonomy update**: [product-taxonomy.md](product-taxonomy.md) is the controlling launch taxonomy contract. Existing examples that model gift occasions as product categories are legacy fixtures and must be replaced by first-class collections.
+
 > **Status**: Approved & Published  
 > **Source of Truth**: FastAPI backend (`/api/v1/`) and [`docs/openapi.yaml`](openapi.yaml)  
 > **Backend Owner**: Gemini  

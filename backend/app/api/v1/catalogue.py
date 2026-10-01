@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import func, or_
@@ -7,8 +8,10 @@ from app.api.v1.auth import get_current_user
 from app.db.session import get_db
 from app.models.catalogue import (
     Category,
+    Collection,
     Occasion,
     Product,
+    ProductCollection,
     ProductImage,
     ProductVariant,
     Review,
@@ -18,6 +21,9 @@ from app.models.catalogue import (
 from app.models.user import User
 from app.schemas.catalogue import (
     CategoryOut,
+    CategorySummary,
+    CollectionOut,
+    CollectionSummary,
     OccasionOut,
     ProductDetail,
     ProductImageOut,
@@ -31,27 +37,122 @@ router = APIRouter(tags=["catalogue"])
 
 
 # -----------------------------------------------------------------------------
-# Categories Endpoints (Section 18)
+# Categories Endpoints (Section 18 & Taxonomy Contract)
 # -----------------------------------------------------------------------------
+
+def _collect_descendant_category_ids(category: Category, all_cats: list[Category]) -> set[int]:
+    """Helper to collect IDs of category and all its descendants recursively."""
+    descendants = {category.id}
+    children = [c for c in all_cats if c.parent_id == category.id]
+    for child in children:
+        descendants.update(_collect_descendant_category_ids(child, all_cats))
+    return descendants
+
 
 @router.get("/categories", response_model=list[CategoryOut])
 def get_categories(
     flat: bool = Query(default=False, description="Return flat list instead of hierarchical tree"),
+    include_empty: bool = Query(default=False, alias="includeEmpty", description="Include empty categories"),
     db: Session = Depends(get_db),
 ) -> list[CategoryOut]:
-    """Retrieve all categories. By default returns root categories with nested children."""
-    if flat:
-        categories = db.query(Category).order_by(Category.display_order, Category.id).all()
-        return [CategoryOut.model_validate(c) for c in categories]
-
-    # Return top-level categories with nested children
-    root_categories = (
+    """Retrieve all categories conforming to product-taxonomy spec."""
+    all_categories = (
         db.query(Category)
-        .filter(Category.parent_id.is_(None))
         .order_by(Category.display_order, Category.id)
         .all()
     )
-    return [CategoryOut.model_validate(c) for c in root_categories]
+
+    # Filter out categories with inactive ancestors
+    cat_by_id = {c.id: c for c in all_categories}
+
+    def is_ancestry_active(c: Category) -> bool:
+        curr: Category | None = c
+        while curr:
+            if not curr.is_active:
+                return False
+            curr = cat_by_id.get(curr.parent_id) if curr.parent_id else None
+        return True
+
+    active_categories = [c for c in all_categories if is_ancestry_active(c)]
+
+    # Precompute product counts per category (active products only)
+    active_prod_cats = (
+        db.query(product_categories.c.product_id, product_categories.c.category_id)
+        .join(Product, Product.id == product_categories.c.product_id)
+        .filter(Product.status == "ACTIVE")
+        .all()
+    )
+    direct_pids = defaultdict(set)
+    for pid, cid in active_prod_cats:
+        direct_pids[cid].add(pid)
+
+    # Compute descendant product count for each active category
+    product_counts: dict[int, int] = {}
+    for cat in active_categories:
+        desc_ids = _collect_descendant_category_ids(cat, active_categories)
+        pids = set().union(*(direct_pids[cid] for cid in desc_ids if cid in direct_pids)) if desc_ids else set()
+        product_counts[cat.id] = len(pids)
+
+    # Filter based on empty/show_when_empty
+    def should_include(c: Category) -> bool:
+        if include_empty:
+            return True
+        if product_counts.get(c.id, 0) > 0 or c.show_when_empty:
+            return True
+        desc_ids = _collect_descendant_category_ids(c, active_categories) - {c.id}
+        for desc_id in desc_ids:
+            desc_cat = cat_by_id.get(desc_id)
+            if desc_cat and (product_counts.get(desc_id, 0) > 0 or desc_cat.show_when_empty):
+                return True
+        return False
+
+    filtered_categories = [c for c in active_categories if should_include(c)]
+    filtered_ids = {c.id for c in filtered_categories}
+
+    if flat:
+        result = []
+        for c in filtered_categories:
+            c_dict = {
+                "id": c.id,
+                "name": c.name,
+                "slug": c.slug,
+                "parentId": c.parent_id,
+                "description": c.description,
+                "imageUrl": c.image_url,
+                "icon": c.icon,
+                "displayOrder": c.display_order,
+                "isActive": c.is_active,
+                "showWhenEmpty": c.show_when_empty,
+                "productCount": product_counts.get(c.id, 0),
+                "children": [],
+            }
+            result.append(CategoryOut.model_validate(c_dict))
+        return result
+
+    # Hierarchical tree construction
+    def build_node(c: Category) -> CategoryOut:
+        children = [
+            build_node(child)
+            for child in active_categories
+            if child.parent_id == c.id and child.id in filtered_ids
+        ]
+        return CategoryOut.model_validate({
+            "id": c.id,
+            "name": c.name,
+            "slug": c.slug,
+            "parentId": c.parent_id,
+            "description": c.description,
+            "imageUrl": c.image_url,
+            "icon": c.icon,
+            "displayOrder": c.display_order,
+            "isActive": c.is_active,
+            "showWhenEmpty": c.show_when_empty,
+            "productCount": product_counts.get(c.id, 0),
+            "children": children,
+        })
+
+    roots = [c for c in filtered_categories if c.parent_id is None or c.parent_id not in filtered_ids]
+    return [build_node(r) for r in roots]
 
 
 @router.get("/categories/{slug}", response_model=CategoryOut)
@@ -59,57 +160,84 @@ def get_category_by_slug(
     slug: str,
     db: Session = Depends(get_db),
 ) -> CategoryOut:
-    """Retrieve a single category by its slug."""
-    category = db.query(Category).filter(Category.slug == slug).first()
-    if not category:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Category '{slug}' not found",
-        )
-    return CategoryOut.model_validate(category)
-
-
-@router.get("/categories/{slug}/products", response_model=list[ProductListItem])
-def get_category_products(
-    slug: str,
-    response: Response,
-    sort: str = Query(default="featured"),
-    limit: int = Query(default=50, ge=1, le=100),
-    offset: int = Query(default=0, ge=0),
-    db: Session = Depends(get_db),
-) -> list[ProductListItem]:
-    """Retrieve all products under a category (including subcategories)."""
-    category = db.query(Category).filter(Category.slug == slug).first()
+    """Retrieve a single category by its slug with accurate descendant product count."""
+    category = db.query(Category).filter(Category.slug == slug, Category.is_active.is_(True)).first()
     if not category:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Category '{slug}' not found",
         )
 
-    # Collect category ID and any children IDs
-    category_ids = [category.id] + [child.id for child in category.children]
+    all_categories = db.query(Category).filter(Category.is_active.is_(True)).all()
+    desc_ids = _collect_descendant_category_ids(category, all_categories)
 
-    query = (
-        db.query(Product)
-        .filter(Product.status == "ACTIVE")
-        .filter(Product.categories.any(Category.id.in_(category_ids)))
+    active_pids = (
+        db.query(Product.id)
+        .join(product_categories, product_categories.c.product_id == Product.id)
+        .filter(Product.status == "ACTIVE", product_categories.c.category_id.in_(desc_ids))
+        .distinct()
+        .count()
     )
 
-    total_count = query.count()
-    response.headers["X-Total-Count"] = str(total_count)
+    children_out = []
+    for ch in category.children:
+        if ch.is_active:
+            ch_desc = _collect_descendant_category_ids(ch, all_categories)
+            ch_pids = (
+                db.query(Product.id)
+                .join(product_categories, product_categories.c.product_id == Product.id)
+                .filter(Product.status == "ACTIVE", product_categories.c.category_id.in_(ch_desc))
+                .distinct()
+                .count()
+            )
+            children_out.append(
+                CategoryOut.model_validate({
+                    "id": ch.id,
+                    "name": ch.name,
+                    "slug": ch.slug,
+                    "parentId": ch.parent_id,
+                    "description": ch.description,
+                    "imageUrl": ch.image_url,
+                    "icon": ch.icon,
+                    "displayOrder": ch.display_order,
+                    "isActive": ch.is_active,
+                    "showWhenEmpty": ch.show_when_empty,
+                    "productCount": ch_pids,
+                    "children": [],
+                })
+            )
 
-    products = query.offset(offset).limit(limit).all()
-    return [_to_product_list_item(p) for p in products]
+    return CategoryOut.model_validate({
+        "id": category.id,
+        "name": category.name,
+        "slug": category.slug,
+        "parentId": category.parent_id,
+        "description": category.description,
+        "imageUrl": category.image_url,
+        "icon": category.icon,
+        "displayOrder": category.display_order,
+        "isActive": category.is_active,
+        "showWhenEmpty": category.show_when_empty,
+        "productCount": active_pids,
+        "children": children_out,
+    })
 
-
-# -----------------------------------------------------------------------------
-# Products Endpoints (Section 18)
-# -----------------------------------------------------------------------------
 
 def _to_product_list_item(p: Product) -> ProductListItem:
     """Helper to convert ORM Product to ProductListItem schema."""
-    primary_category = p.categories[0].name if p.categories else "Other"
-    category_names = [c.name for c in p.categories]
+    prim_cat = p.primary_category
+    primary_category_name = prim_cat.name if prim_cat else (p.categories[0].name if p.categories else "Other")
+    primary_cat_summary = (
+        CategorySummary(id=prim_cat.id, name=prim_cat.name, slug=prim_cat.slug)
+        if prim_cat
+        else None
+    )
+    categories_summary = [
+        CategorySummary(id=c.id, name=c.name, slug=c.slug) for c in p.categories
+    ]
+    collections_summary = [
+        CollectionSummary(id=col.id, name=col.name, slug=col.slug) for col in p.collections
+    ]
     tag_names = [t.name for t in p.tags]
 
     # Find starting price from variants or fallback
@@ -136,8 +264,10 @@ def _to_product_list_item(p: Product) -> ProductListItem:
         review_count=p.reviews_count,
         image=p.primary_image,
         image_urls=gallery_urls,
-        category=primary_category,
-        categories=category_names,
+        category=primary_category_name,
+        primary_category=primary_cat_summary,
+        categories=categories_summary,
+        collections=collections_summary,
         badge=p.badge,
         tags=tag_names,
         description=p.short_description or p.description,
@@ -147,10 +277,204 @@ def _to_product_list_item(p: Product) -> ProductListItem:
     )
 
 
+@router.get("/categories/{slug}/products", response_model=list[ProductListItem])
+def get_category_products(
+    slug: str,
+    response: Response,
+    sort: str = Query(default="featured"),
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    db: Session = Depends(get_db),
+) -> list[ProductListItem]:
+    """Retrieve all products under a category (including subcategories) deduplicated."""
+    category = db.query(Category).filter(Category.slug == slug).first()
+    if not category:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Category '{slug}' not found",
+        )
+
+    all_categories = db.query(Category).all()
+    category_ids = list(_collect_descendant_category_ids(category, all_categories))
+
+    query = (
+        db.query(Product)
+        .options(
+            joinedload(Product.product_categories),
+            joinedload(Product.categories),
+            joinedload(Product.product_collections),
+            joinedload(Product.collections),
+            joinedload(Product.tags),
+            joinedload(Product.variants),
+            joinedload(Product.images),
+        )
+        .filter(Product.status == "ACTIVE")
+        .filter(Product.categories.any(Category.id.in_(category_ids)))
+        .distinct()
+    )
+
+    total_count = query.count()
+    response.headers["X-Total-Count"] = str(total_count)
+
+    products = query.offset(offset).limit(limit).all()
+    return [_to_product_list_item(p) for p in products]
+
+
+# -----------------------------------------------------------------------------
+# Collections Endpoints (Section 18 & Taxonomy Contract)
+# -----------------------------------------------------------------------------
+
+@router.get("/collections", response_model=list[CollectionOut])
+def get_collections(
+    db: Session = Depends(get_db),
+) -> list[CollectionOut]:
+    """Retrieve active and currently scheduled collections ordered by display_order."""
+    now = datetime.now(timezone.utc)
+    collections = (
+        db.query(Collection)
+        .filter(
+            Collection.is_active.is_(True),
+            or_(Collection.starts_at.is_(None), Collection.starts_at <= now),
+            or_(Collection.ends_at.is_(None), Collection.ends_at >= now),
+        )
+        .order_by(Collection.display_order, Collection.id)
+        .all()
+    )
+
+    col_ids = [c.id for c in collections]
+    counts_query = (
+        db.query(ProductCollection.collection_id, func.count(Product.id.distinct()))
+        .join(Product, Product.id == ProductCollection.product_id)
+        .filter(Product.status == "ACTIVE", ProductCollection.collection_id.in_(col_ids))
+        .group_by(ProductCollection.collection_id)
+        .all()
+    )
+    counts_map = dict(counts_query)
+
+    result = []
+    for col in collections:
+        c_dict = {
+            "id": col.id,
+            "name": col.name,
+            "slug": col.slug,
+            "description": col.description,
+            "imageUrl": col.image_url,
+            "collectionType": col.collection_type,
+            "displayOrder": col.display_order,
+            "isActive": col.is_active,
+            "startsAt": col.starts_at,
+            "endsAt": col.ends_at,
+            "productCount": counts_map.get(col.id, 0),
+        }
+        result.append(CollectionOut.model_validate(c_dict))
+    return result
+
+
+@router.get("/collections/{slug}", response_model=CollectionOut)
+def get_collection_by_slug(
+    slug: str,
+    db: Session = Depends(get_db),
+) -> CollectionOut:
+    """Retrieve a single active scheduled collection by slug."""
+    now = datetime.now(timezone.utc)
+    col = (
+        db.query(Collection)
+        .filter(
+            Collection.slug == slug,
+            Collection.is_active.is_(True),
+            or_(Collection.starts_at.is_(None), Collection.starts_at <= now),
+            or_(Collection.ends_at.is_(None), Collection.ends_at >= now),
+        )
+        .first()
+    )
+    if not col:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Collection '{slug}' not found",
+        )
+
+    product_count = (
+        db.query(Product.id)
+        .join(ProductCollection, ProductCollection.product_id == Product.id)
+        .filter(Product.status == "ACTIVE", ProductCollection.collection_id == col.id)
+        .distinct()
+        .count()
+    )
+
+    return CollectionOut.model_validate({
+        "id": col.id,
+        "name": col.name,
+        "slug": col.slug,
+        "description": col.description,
+        "imageUrl": col.image_url,
+        "collectionType": col.collection_type,
+        "displayOrder": col.display_order,
+        "isActive": col.is_active,
+        "startsAt": col.starts_at,
+        "endsAt": col.ends_at,
+        "productCount": product_count,
+    })
+
+
+@router.get("/collections/{slug}/products", response_model=list[ProductListItem])
+def get_collection_products(
+    slug: str,
+    response: Response,
+    sort: str = Query(default="featured"),
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    db: Session = Depends(get_db),
+) -> list[ProductListItem]:
+    """Retrieve all active products in a collection ordered by assignment display_order."""
+    now = datetime.now(timezone.utc)
+    col = (
+        db.query(Collection)
+        .filter(
+            Collection.slug == slug,
+            Collection.is_active.is_(True),
+            or_(Collection.starts_at.is_(None), Collection.starts_at <= now),
+            or_(Collection.ends_at.is_(None), Collection.ends_at >= now),
+        )
+        .first()
+    )
+    if not col:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Collection '{slug}' not found",
+        )
+
+    query = (
+        db.query(Product)
+        .join(ProductCollection, ProductCollection.product_id == Product.id)
+        .options(
+            joinedload(Product.product_categories),
+            joinedload(Product.categories),
+            joinedload(Product.product_collections),
+            joinedload(Product.collections),
+            joinedload(Product.tags),
+            joinedload(Product.variants),
+            joinedload(Product.images),
+        )
+        .filter(Product.status == "ACTIVE", ProductCollection.collection_id == col.id)
+        .order_by(ProductCollection.display_order, Product.id)
+        .distinct()
+    )
+
+    total_count = query.count()
+    response.headers["X-Total-Count"] = str(total_count)
+
+    products = query.offset(offset).limit(limit).all()
+    return [_to_product_list_item(p) for p in products]
+
+
+
+
+
 @router.get("/products", response_model=list[ProductListItem])
 def list_products(
     response: Response,
     category: str | None = Query(default=None, description="Filter by category slug or name"),
+    collection: str | None = Query(default=None, description="Filter by collection slug or name"),
     tag: str | None = Query(default=None, description="Filter by tag name (e.g. romantic, birthday)"),
     occasion: str | None = Query(default=None, description="Alias for occasion/tag filtering"),
     color: str | None = Query(default=None, description="Filter by color attribute in variants"),
@@ -169,7 +493,10 @@ def list_products(
     query = (
         db.query(Product)
         .options(
+            joinedload(Product.product_categories),
             joinedload(Product.categories),
+            joinedload(Product.product_collections),
+            joinedload(Product.collections),
             joinedload(Product.tags),
             joinedload(Product.variants),
             joinedload(Product.images),
@@ -179,11 +506,32 @@ def list_products(
 
     # Category filter
     if category and category.lower() != "all":
+        target_cat = (
+            db.query(Category)
+            .filter(or_(Category.slug.ilike(category), Category.name.ilike(category)))
+            .first()
+        )
+        if target_cat:
+            all_cats = db.query(Category).all()
+            category_ids = list(_collect_descendant_category_ids(target_cat, all_cats))
+            query = query.filter(Product.categories.any(Category.id.in_(category_ids)))
+        else:
+            query = query.filter(
+                Product.categories.any(
+                    or_(
+                        Category.slug.ilike(category),
+                        Category.name.ilike(category),
+                    )
+                )
+            )
+
+    # Collection filter
+    if collection:
         query = query.filter(
-            Product.categories.any(
+            Product.collections.any(
                 or_(
-                    Category.slug.ilike(category),
-                    Category.name.ilike(category),
+                    Collection.slug.ilike(collection),
+                    Collection.name.ilike(collection),
                 )
             )
         )
@@ -275,7 +623,10 @@ def search_products(
     products = (
         db.query(Product)
         .options(
+            joinedload(Product.product_categories),
             joinedload(Product.categories),
+            joinedload(Product.product_collections),
+            joinedload(Product.collections),
             joinedload(Product.tags),
             joinedload(Product.variants),
             joinedload(Product.images),
@@ -305,7 +656,10 @@ def get_product_detail(
     query = (
         db.query(Product)
         .options(
+            joinedload(Product.product_categories),
             joinedload(Product.categories),
+            joinedload(Product.product_collections),
+            joinedload(Product.collections),
             joinedload(Product.tags),
             joinedload(Product.variants),
             joinedload(Product.images),
@@ -324,8 +678,19 @@ def get_product_detail(
             detail=f"Product '{slug_or_id}' not found",
         )
 
-    primary_category = product.categories[0].name if product.categories else "Other"
-    category_names = [c.name for c in product.categories]
+    prim_cat = product.primary_category
+    primary_category_name = prim_cat.name if prim_cat else (product.categories[0].name if product.categories else "Other")
+    primary_cat_summary = (
+        CategorySummary(id=prim_cat.id, name=prim_cat.name, slug=prim_cat.slug)
+        if prim_cat
+        else None
+    )
+    categories_summary = [
+        CategorySummary(id=c.id, name=c.name, slug=c.slug) for c in product.categories
+    ]
+    collections_summary = [
+        CollectionSummary(id=col.id, name=col.name, slug=col.slug) for col in product.collections
+    ]
     tag_names = [t.name for t in product.tags]
 
     image_urls = [img.url for img in product.images]
@@ -390,8 +755,10 @@ def get_product_detail(
         slug=product.slug,
         short_description=product.short_description,
         description=product.description,
-        category=primary_category,
-        categories=category_names,
+        category=primary_category_name,
+        primary_category=primary_cat_summary,
+        categories=categories_summary,
+        collections=collections_summary,
         tags=tag_names,
         images=image_urls,
         image_urls=image_urls,

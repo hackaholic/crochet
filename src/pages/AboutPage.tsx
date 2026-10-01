@@ -4,12 +4,6 @@ interface AboutPageProps {
   onNavigate: (page: 'home' | 'shop' | 'product' | 'cart' | 'wishlist' | 'checkout' | 'about') => void;
 }
 
-const team = [
-  { name: 'Anupama Sharma', role: 'Founder & Lead Artisan', image: 'https://i.pravatar.cc/200?img=47', bio: 'Started crocheting at 14, turned passion into purpose at 27.' },
-  { name: 'Sunita Nair', role: 'Master Crochet Artist', image: 'https://i.pravatar.cc/200?img=44', bio: '18 years of experience in traditional Indian textile arts.' },
-  { name: 'Riya Joshi', role: 'Design & Patterns Lead', image: 'https://i.pravatar.cc/200?img=41', bio: 'Blends contemporary aesthetics with Indian craft traditions.' },
-];
-
 export default function AboutPage({ onNavigate }: AboutPageProps) {
   return (
     <div className="min-h-screen bg-[#FAF7F2] pt-28">
@@ -27,7 +21,7 @@ export default function AboutPage({ onNavigate }: AboutPageProps) {
             <ThreadCurve width={200} color="#C4622D" opacity={0.5} />
           </div>
           <p className="text-[#5C3D2E] text-lg leading-relaxed max-w-2xl mx-auto">
-            Sulocraft began not as a business, but as a feeling — the feeling of creating something beautiful with your own two hands and giving it to someone you love.
+            Named after Anupama's mother, Sulochana, Sulocraft carries a family story that began with a grandmother, a crochet hook, and yarn reclaimed from an old sweater.
           </p>
         </div>
       </section>
@@ -44,24 +38,34 @@ export default function AboutPage({ onNavigate }: AboutPageProps) {
             />
           </div>
           <div>
-            <p className="text-xs text-[#C4622D] font-semibold tracking-widest uppercase mb-4">How it began</p>
+            <p className="text-xs text-[#C4622D] font-semibold tracking-widest uppercase mb-4">The Story Behind Sulocraft</p>
             <h2 className="text-4xl font-medium text-[#2C1810] mb-6" style={{ fontFamily: 'var(--font-serif)' }}>
-              One Stitch Led to Another
+              One Chain at a Time
             </h2>
             <div className="space-y-4 text-[#5C3D2E] leading-relaxed">
               <p>
-                In 2021, Kavya Reddy sat in her small Bangalore apartment, crocheting a rose for her mother's birthday. When her mother cried at the sight of it — not from sadness, but from the realization that something so beautiful had been made by her daughter's hands — Kavya understood something profound.
+                Sulocraft is named after my mother, Sulochana. But my love for crochet began much earlier—with my grandmother.
               </p>
               <p>
-                Handmade objects carry something that manufactured ones never can: the energy, intention, and love of the person who made them. You can feel it in every stitch.
+                When I was around six, seven, or maybe eight years old, winter afternoons meant sitting beside my grandmother under the warm sun, near a coconut tree. She loved crochet, and those little afternoons became my first introduction to it.
               </p>
               <p>
-                What started as a hobby became a movement. Friends asked for custom orders. Strangers on Instagram reached out. By 2022, Sulocraft was born — a small studio of passionate artisans creating handmade crochet gifts, flowers, and décor for people across India.
+                My grandma bought me a crochet hook and gave me yarn reused from one of my father's old sweaters. Every now and then, she would offer a tip and tell beautiful stories while I learned—one chain, one stitch, one little discovery at a time.
               </p>
               <p>
-                Today, we're a team of 12 artisans, most of them women from Bangalore, Jaipur and Chennai, each bringing their own background in textile craft to the work they create together.
+                I was also inspired by a girl in our neighbourhood who made beautiful crochet pieces. Watching her made me want to try even more, so I practised—mostly on my own. I did not know what stitches were supposed to look like, how many belonged in a row, or what I was actually making. I simply kept trying.
+              </p>
+              <p>
+                Some of those early creations were gloriously disfigured. One was supposed to be a bird. Somehow, I made it anyway, and that little crochet bird is still hanging at my aunt's house all these years later.
+              </p>
+              <p>
+                Years later, when I finally had access to crochet hooks, yarn, and all the colours I could imagine, I realised the possibilities were infinite. What began beside my grandmother slowly became a love for creating things with my own hands.
+              </p>
+              <p className="font-medium text-[#2C1810]">
+                And that is where Sulocraft begins: a little bit of my grandmother, a little bit of my mother, and a little bit of that curious girl who kept making wonderfully crooked things.
               </p>
             </div>
+            <p className="mt-8 font-semibold text-[#C4622D]" style={{ fontFamily: 'var(--font-serif)' }}>— Anupama Sharma</p>
           </div>
         </div>
       </section>
@@ -123,22 +127,16 @@ export default function AboutPage({ onNavigate }: AboutPageProps) {
         </div>
       </section>
 
-      {/* Meet the makers */}
+      {/* Founder */}
       <section className="py-20 px-4" style={{ background: 'linear-gradient(135deg, #2C1810 0%, #5C3D2E 100%)' }}>
-        <div className="max-w-5xl mx-auto text-center">
-          <p className="text-[#F2C4CE] text-xs font-semibold tracking-widest uppercase mb-3">The People Behind It</p>
-          <h2 className="text-4xl font-medium text-white mb-4" style={{ fontFamily: 'var(--font-serif)' }}>Meet the Makers</h2>
-          <p className="text-white/50 mb-12 max-w-lg mx-auto">Every bloom has a creator. Every stitch has a story.</p>
-          <div className="grid md:grid-cols-3 gap-8">
-            {team.map(({ name, role, image, bio }) => (
-              <div key={name} className="text-center">
-                <img src={image} alt={name} className="w-28 h-28 rounded-full object-cover mx-auto mb-4 border-4 border-[#F2C4CE]/30" />
-                <h3 className="font-semibold text-white text-lg" style={{ fontFamily: 'var(--font-serif)' }}>{name}</h3>
-                <p className="text-[#F2C4CE] text-sm mb-2">{role}</p>
-                <p className="text-white/50 text-sm">{bio}</p>
-              </div>
-            ))}
-          </div>
+        <div className="max-w-3xl mx-auto text-center">
+          <p className="text-[#F2C4CE] text-xs font-semibold tracking-widest uppercase mb-3">From the Founder</p>
+          <h2 className="text-4xl font-medium text-white mb-5" style={{ fontFamily: 'var(--font-serif)' }}>Made with Memory and Possibility</h2>
+          <p className="text-white/70 text-lg leading-relaxed max-w-2xl mx-auto">
+            “I may not have known what I was doing back then, but I think that is where something important began. Now, one stitch at a time, I get to make something new.”
+          </p>
+          <p className="mt-7 text-[#F2C4CE] font-semibold">Anupama Sharma</p>
+          <p className="mt-1 text-white/50 text-sm">Founder, Sulocraft</p>
         </div>
       </section>
 
@@ -151,22 +149,9 @@ export default function AboutPage({ onNavigate }: AboutPageProps) {
               Handmade is<br />Sustainable by Default
             </h2>
             <div className="space-y-4 text-[#5C3D2E]">
-              <p>We don't need to add "eco-friendly" to our branding — handmade is inherently sustainable. No mass production. No excess inventory. Every item is made to order.</p>
-              <p>Our packaging is 100% recyclable. We use natural dyes where possible and source yarns from suppliers who practice fair trade.</p>
-              <p>We also support a small group of women artisans who work from home, giving them flexible, dignified work that fits around their lives.</p>
-            </div>
-            <div className="grid grid-cols-2 gap-4 mt-8">
-              {[
-                { n: '100%', label: 'Eco packaging' },
-                { n: '12', label: 'Artisans supported' },
-                { n: '0', label: 'Mass production' },
-                { n: '2K+', label: 'Happy customers' },
-              ].map(({ n, label }) => (
-                <div key={label} className="text-center p-4 bg-[#FAF7F2] rounded-xl border border-[#EDE4D0]">
-                  <p className="text-3xl font-bold text-[#C4622D]" style={{ fontFamily: 'var(--font-serif)' }}>{n}</p>
-                  <p className="text-xs text-[#8B6B4A] mt-1">{label}</p>
-                </div>
-              ))}
+              <p>Crochet is made with simple tools: a hook, yarn, patient hands, and time. Each Sulocraft piece is created through that direct, human process.</p>
+              <p>We choose materials and packaging thoughtfully, and we will publish specific sourcing and sustainability commitments only when we can verify them.</p>
+              <p>As Sulocraft grows, the same care that shaped Anupama's first stitches will guide how every product is designed, made, and sent.</p>
             </div>
           </div>
           <div className="relative">

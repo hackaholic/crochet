@@ -61,12 +61,26 @@ def test_get_products_list():
 
 
 def test_filter_products_by_category():
-    """Verify category filtering."""
+    """Verify category filtering for root category and subcategories."""
     response = client.get("/api/v1/products?category=flowers")
     assert response.status_code == 200
     data = response.json()
     assert len(data) > 0
-    assert all("Flowers" in p["categories"] for p in data)
+    flower_slugs = {"flowers", "bouquets", "single-flowers", "roses", "sunflowers", "tulips", "potted-plants"}
+    assert all(
+        any((c.get("slug") in flower_slugs or c.get("name") == "Flowers") if isinstance(c, dict) else c in flower_slugs for c in p["categories"])
+        for p in data
+    )
+
+    # Verify leaf subcategory filtering
+    res_sub = client.get("/api/v1/products?category=bouquets")
+    assert res_sub.status_code == 200
+    sub_data = res_sub.json()
+    assert len(sub_data) > 0
+    assert all(
+        any(c.get("slug") == "bouquets" if isinstance(c, dict) else c == "Bouquets" for c in p["categories"])
+        for p in sub_data
+    )
 
 
 def test_filter_products_by_tag():

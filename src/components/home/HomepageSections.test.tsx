@@ -15,6 +15,7 @@ describe('HomepageSections', () => {
     render(<HomepageSections sections={sections} wishlist={[]} onNavigate={vi.fn()} onAddToCart={vi.fn()} onToggleWishlist={vi.fn()} onProductClick={vi.fn()} />);
     const headings = screen.getAllByRole('heading').map(heading => heading.textContent);
     expect(headings).toEqual(['Shop by Category', 'Festival offer']);
+    expect(screen.getByRole('button', { name: /show all categories/i })).toBeInTheDocument();
     expect(screen.queryByText('Hidden')).not.toBeInTheDocument();
   });
 });

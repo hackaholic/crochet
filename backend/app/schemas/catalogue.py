@@ -1,33 +1,139 @@
+from datetime import datetime
 from typing import Any
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.core.images import build_image_url
 
 
-class CategoryBase(BaseModel):
-    """Base category fields."""
+class CategorySummary(BaseModel):
+    """Concise category representation for product classification."""
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    id: int | None = None
+    name: str
+    slug: str
+
+    @model_validator(mode="before")
+    @classmethod
+    def parse_category(cls, data: Any) -> Any:
+        if isinstance(data, str):
+            return {"name": data, "slug": data.lower().replace(" ", "-")}
+        return data
+
+
+class CollectionSummary(BaseModel):
+    """Concise collection representation for product classification."""
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    id: int | None = None
+    name: str
+    slug: str
+
+    @model_validator(mode="before")
+    @classmethod
+    def parse_collection(cls, data: Any) -> Any:
+        if isinstance(data, str):
+            return {"name": data, "slug": data.lower().replace(" ", "-")}
+        return data
+
+
+class CategoryOut(BaseModel):
+    """Category output schema with nested children hierarchy and product count."""
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     id: int
     name: str
     slug: str
-    parent_id: int | None = None
+    parent_id: int | None = Field(default=None, serialization_alias="parentId", alias="parentId")
     description: str | None = None
     image: str | None = None
+    image_url: str | None = Field(default=None, serialization_alias="imageUrl", alias="imageUrl")
     icon: str | None = None
-    display_order: int = 0
-    is_active: bool = True
-
-    @field_validator("image", mode="after")
-    @classmethod
-    def resolve_image(cls, v: str | None) -> str | None:
-        return build_image_url(v) if v else None
-
-
-class CategoryOut(CategoryBase):
-    """Category output schema with nested children hierarchy."""
-
-    model_config = ConfigDict(from_attributes=True)
+    display_order: int = Field(default=0, serialization_alias="displayOrder", alias="displayOrder")
+    is_active: bool = Field(default=True, serialization_alias="isActive", alias="isActive")
+    show_when_empty: bool = Field(default=False, serialization_alias="showWhenEmpty", alias="showWhenEmpty")
+    product_count: int = Field(default=0, serialization_alias="productCount", alias="productCount")
     children: list["CategoryOut"] = []
+
+    @model_validator(mode="before")
+    @classmethod
+    def resolve_category_fields(cls, data: Any) -> Any:
+        if hasattr(data, "__dict__"):
+            raw_img = getattr(data, "image_key", None) or getattr(data, "image", None)
+            url = build_image_url(raw_img) if raw_img else None
+            return {
+                "id": getattr(data, "id"),
+                "name": getattr(data, "name"),
+                "slug": getattr(data, "slug"),
+                "parentId": getattr(data, "parent_id", None),
+                "description": getattr(data, "description", None),
+                "image": url,
+                "imageUrl": url,
+                "icon": getattr(data, "icon", None),
+                "displayOrder": getattr(data, "display_order", 0),
+                "isActive": getattr(data, "is_active", True),
+                "showWhenEmpty": getattr(data, "show_when_empty", False),
+                "productCount": getattr(data, "product_count", 0),
+                "children": getattr(data, "children", []),
+            }
+        elif isinstance(data, dict):
+            raw_img = data.get("image_key") or data.get("image") or data.get("imageUrl")
+            url = build_image_url(raw_img) if raw_img else None
+            data["image"] = url
+            data["imageUrl"] = url
+            if "product_count" not in data and "productCount" in data:
+                data["product_count"] = data["productCount"]
+            return data
+        return data
+
+
+class CollectionOut(BaseModel):
+    """Collection public output schema conforming to launch taxonomy contract."""
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    id: int
+    name: str
+    slug: str
+    description: str | None = None
+    image_url: str | None = Field(default=None, serialization_alias="imageUrl", alias="imageUrl")
+    collection_type: str = Field(default="MERCHANDISING", serialization_alias="collectionType", alias="collectionType")
+    display_order: int = Field(default=0, serialization_alias="displayOrder", alias="displayOrder")
+    is_active: bool = Field(default=True, serialization_alias="isActive", alias="isActive")
+    starts_at: datetime | None = Field(default=None, serialization_alias="startsAt", alias="startsAt")
+    ends_at: datetime | None = Field(default=None, serialization_alias="endsAt", alias="endsAt")
+    product_count: int = Field(default=0, serialization_alias="productCount", alias="productCount")
+
+    @model_validator(mode="before")
+    @classmethod
+    def resolve_collection_fields(cls, data: Any) -> Any:
+        if hasattr(data, "__dict__"):
+            raw_img = getattr(data, "image_key", None)
+            url = build_image_url(raw_img) if raw_img else None
+            return {
+                "id": getattr(data, "id"),
+                "name": getattr(data, "name"),
+                "slug": getattr(data, "slug"),
+                "description": getattr(data, "description", None),
+                "imageUrl": url,
+                "collectionType": getattr(data, "collection_type", "MERCHANDISING"),
+                "displayOrder": getattr(data, "display_order", 0),
+                "isActive": getattr(data, "is_active", True),
+                "startsAt": getattr(data, "starts_at", None),
+                "endsAt": getattr(data, "ends_at", None),
+                "productCount": getattr(data, "product_count", 0),
+            }
+        elif isinstance(data, dict):
+            raw_img = data.get("image_key") or data.get("imageUrl")
+            url = build_image_url(raw_img) if raw_img else None
+            data["imageUrl"] = url
+            if "product_count" not in data and "productCount" in data:
+                data["product_count"] = data["productCount"]
+            return data
+        return data
 
 
 class OccasionOut(BaseModel):
@@ -148,8 +254,10 @@ class ProductListItem(BaseModel):
     review_count: int = Field(default=0, serialization_alias="reviewCount")
     image: str
     image_urls: list[str] = Field(default_factory=list, serialization_alias="imageUrls")
-    category: str
-    categories: list[str] = []
+    category: str = ""
+    primary_category: CategorySummary | None = Field(default=None, serialization_alias="primaryCategory")
+    categories: list[CategorySummary] = []
+    collections: list[CollectionSummary] = []
     badge: str | None = None
     tags: list[str] = []
     description: str | None = None
@@ -178,8 +286,10 @@ class ProductDetail(BaseModel):
     slug: str
     short_description: str | None = None
     description: str | None = None
-    category: str
-    categories: list[str] = []
+    category: str = ""
+    primary_category: CategorySummary | None = Field(default=None, serialization_alias="primaryCategory")
+    categories: list[CategorySummary] = []
+    collections: list[CollectionSummary] = []
     tags: list[str] = []
     images: list[str] = []
     image_urls: list[str] = Field(default_factory=list, serialization_alias="imageUrls")

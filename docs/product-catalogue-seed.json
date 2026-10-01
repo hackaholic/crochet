@@ -1,0 +1,505 @@
+{
+  "schemaVersion": 1,
+  "imageBasePath": "public/images",
+  "products": [
+    {
+      "name": "Forever Crochet Rose Bouquet",
+      "slug": "forever-crochet-rose-bouquet",
+      "defaultSku": "SULO-FLR-ROSE-001",
+      "primaryCategorySlug": "bouquets",
+      "secondaryCategorySlugs": [
+        "roses"
+      ],
+      "collectionSlugs": [
+        "best-sellers",
+        "anniversary-gifts",
+        "gifts-for-her",
+        "gifts"
+      ],
+      "tags": [
+        "romantic",
+        "anniversary",
+        "valentine",
+        "handmade",
+        "roses"
+      ],
+      "media": [
+        {
+          "key": "products/forever-crochet-rose-bouquet/primary.png",
+          "role": "primary",
+          "displayOrder": 0,
+          "altText": "Forever Crochet Rose Bouquet — primary product view",
+          "sha256": "f726d230b2969da1908f7d07616855b54944f7ba50b182c8f0a9cb81d53fbefa"
+        },
+        {
+          "key": "products/forever-crochet-rose-bouquet/gallery-01.png",
+          "role": "gallery",
+          "displayOrder": 1,
+          "altText": "Forever Crochet Rose Bouquet — alternate product view",
+          "sha256": "93ab14e198656b36716d28722af3bd82d82fb603c3a249f58062666f6ca62c41"
+        }
+      ]
+    },
+    {
+      "name": "Crochet Tulip Bouquet",
+      "slug": "crochet-tulip-bouquet",
+      "defaultSku": "SULO-FLR-TULIP-001",
+      "primaryCategorySlug": "tulips",
+      "secondaryCategorySlugs": [
+        "bouquets"
+      ],
+      "collectionSlugs": [
+        "new-arrivals",
+        "birthday-gifts",
+        "gifts-for-her",
+        "gifts"
+      ],
+      "tags": [
+        "romantic",
+        "birthday",
+        "tulips",
+        "handmade"
+      ],
+      "media": [
+        {
+          "key": "products/crochet-tulip-bouquet/primary.png",
+          "role": "primary",
+          "displayOrder": 0,
+          "altText": "Crochet Tulip Bouquet — primary product view",
+          "sha256": "55d9cb0c5acc440570103f5081e5ea52cbb9db13c7fbfe7f73619b5966bcaa9e"
+        },
+        {
+          "key": "products/crochet-tulip-bouquet/gallery-01.png",
+          "role": "gallery",
+          "displayOrder": 1,
+          "altText": "Crochet Tulip Bouquet — alternate product view",
+          "sha256": "19b23b8176b1431a954a24d2bc46d7de200aa1baf99aaa93ce2448b5806d1a25"
+        }
+      ]
+    },
+    {
+      "name": "Heart Bear",
+      "slug": "heart-bear",
+      "defaultSku": "SULO-BABY-BEAR-001",
+      "primaryCategorySlug": "toys",
+      "secondaryCategorySlugs": [
+        "teddy-bear"
+      ],
+      "collectionSlugs": [
+        "best-sellers",
+        "baby-shower-gifts",
+        "gifts-for-kids",
+        "gifts"
+      ],
+      "tags": [
+        "romantic",
+        "valentine",
+        "birthday",
+        "amigurumi",
+        "baby"
+      ],
+      "media": [
+        {
+          "key": "products/heart-bear/primary.png",
+          "role": "primary",
+          "displayOrder": 0,
+          "altText": "Heart Bear — primary product view",
+          "sha256": "cb4443fea88ab3e12e7d9797fb0ca030f568567315de998c8d54f0a237edb2f5"
+        },
+        {
+          "key": "products/heart-bear/gallery-01.png",
+          "role": "gallery",
+          "displayOrder": 1,
+          "altText": "Heart Bear — alternate product view",
+          "sha256": "68afdf3f1224b8734fdbbd067f625fb8d78fc4b1068ae435a1088560fdbda3af"
+        }
+      ]
+    },
+    {
+      "name": "Couple Bunny Set",
+      "slug": "couple-bunny-set",
+      "defaultSku": "SULO-AMI-BUNNY-001",
+      "primaryCategorySlug": "bunny",
+      "secondaryCategorySlugs": [],
+      "collectionSlugs": [
+        "wedding-gifts",
+        "anniversary-gifts",
+        "gifts-for-her",
+        "gifts"
+      ],
+      "tags": [
+        "romantic",
+        "anniversary",
+        "wedding",
+        "amigurumi"
+      ],
+      "media": [
+        {
+          "key": "products/couple-bunny-set/primary.png",
+          "role": "primary",
+          "displayOrder": 0,
+          "altText": "Couple Bunny Set — primary product view",
+          "sha256": "d5abc44f093708728e5820314136fc817fe543e11dc24b2a8f5a618749964b5e"
+        },
+        {
+          "key": "products/couple-bunny-set/gallery-01.png",
+          "role": "gallery",
+          "displayOrder": 1,
+          "altText": "Couple Bunny Set — alternate product view",
+          "sha256": "6f00c326bed1876d163b4ba0da278dc7a793b4d0573e18cf0037c761f8f7743d"
+        }
+      ]
+    },
+    {
+      "name": "Mini Panda Amigurumi",
+      "slug": "mini-panda-amigurumi",
+      "defaultSku": "SULO-AMI-PANDA-001",
+      "primaryCategorySlug": "animals",
+      "secondaryCategorySlugs": [
+        "mini-amigurumi"
+      ],
+      "collectionSlugs": [
+        "gifts-for-kids",
+        "birthday-gifts",
+        "gifts"
+      ],
+      "tags": [
+        "baby",
+        "birthday",
+        "amigurumi",
+        "panda"
+      ],
+      "media": [
+        {
+          "key": "products/mini-panda-amigurumi/primary.png",
+          "role": "primary",
+          "displayOrder": 0,
+          "altText": "Mini Panda Amigurumi — primary product view",
+          "sha256": "47f365fe8eeb82a50111df60f82e1bd56ae2679fdc69a2dd29961d2e918fadc0"
+        }
+      ]
+    },
+    {
+      "name": "Crochet Bunny",
+      "slug": "crochet-bunny",
+      "defaultSku": "SULO-AMI-BUNNY-002",
+      "primaryCategorySlug": "bunny",
+      "secondaryCategorySlugs": [
+        "toys"
+      ],
+      "collectionSlugs": [
+        "newborn-gifts",
+        "gifts-for-kids",
+        "gifts"
+      ],
+      "tags": [
+        "baby",
+        "birthday",
+        "amigurumi",
+        "bunny"
+      ],
+      "media": [
+        {
+          "key": "products/crochet-bunny/primary.png",
+          "role": "primary",
+          "displayOrder": 0,
+          "altText": "Crochet Bunny — primary product view",
+          "sha256": "766131bd9cb171d990dfdca03395c792fda74434dd810b6ba157fe9ea18b0098"
+        }
+      ]
+    },
+    {
+      "name": "Crochet Marigold Garland",
+      "slug": "crochet-marigold-garland",
+      "defaultSku": "SULO-POOJA-GARLAND-001",
+      "primaryCategorySlug": "garlands",
+      "secondaryCategorySlugs": [
+        "festival-decor"
+      ],
+      "collectionSlugs": [
+        "festival-gifts",
+        "housewarming-gifts",
+        "best-sellers",
+        "gifts"
+      ],
+      "tags": [
+        "pooja",
+        "diwali",
+        "festive",
+        "marigold",
+        "garland"
+      ],
+      "media": [
+        {
+          "key": "products/crochet-marigold-garland/primary.png",
+          "role": "primary",
+          "displayOrder": 0,
+          "altText": "Crochet Marigold Garland — primary product view",
+          "sha256": "47d193f26b149070b7869cbf818916594d58878e07d9ec66aa22166fa3d82cb8"
+        }
+      ]
+    },
+    {
+      "name": "Sunflower Bouquet",
+      "slug": "sunflower-bouquet",
+      "defaultSku": "SULO-FLR-SUNFLOWER-001",
+      "primaryCategorySlug": "sunflowers",
+      "secondaryCategorySlugs": [
+        "bouquets"
+      ],
+      "collectionSlugs": [
+        "birthday-gifts",
+        "housewarming-gifts",
+        "best-sellers",
+        "gifts"
+      ],
+      "tags": [
+        "birthday",
+        "housewarming",
+        "sunflowers"
+      ],
+      "media": [
+        {
+          "key": "products/sunflower-bouquet/primary.png",
+          "role": "primary",
+          "displayOrder": 0,
+          "altText": "Sunflower Bouquet — primary product view",
+          "sha256": "ad2d485b696b8447d73e36bb41607766d74cbcc3046d20e954cd7ad1ce7e1130"
+        }
+      ]
+    },
+    {
+      "name": "Crochet Hanging Planter",
+      "slug": "crochet-hanging-planter",
+      "defaultSku": "SULO-HOME-PLANT-001",
+      "primaryCategorySlug": "flower-plant-decor",
+      "secondaryCategorySlugs": [
+        "other-home-decor"
+      ],
+      "collectionSlugs": [
+        "housewarming-gifts",
+        "gifts-for-her",
+        "gifts"
+      ],
+      "tags": [
+        "housewarming",
+        "home",
+        "planter",
+        "decor"
+      ],
+      "media": [
+        {
+          "key": "products/crochet-hanging-planter/primary.png",
+          "role": "primary",
+          "displayOrder": 0,
+          "altText": "Crochet Hanging Planter — primary product view",
+          "sha256": "e6e8068eba618c0b4e25d2b48ab0321e8c289135969aa91586271c7612ca4e74"
+        }
+      ]
+    },
+    {
+      "name": "Boho Wall Hanging",
+      "slug": "boho-wall-hanging",
+      "defaultSku": "SULO-HOME-WALL-001",
+      "primaryCategorySlug": "wall-decor",
+      "secondaryCategorySlugs": [
+        "other-home-decor"
+      ],
+      "collectionSlugs": [
+        "housewarming-gifts",
+        "custom-gifts",
+        "gifts"
+      ],
+      "tags": [
+        "housewarming",
+        "home",
+        "boho",
+        "wall-hanging"
+      ],
+      "media": [
+        {
+          "key": "products/boho-wall-hanging/primary.png",
+          "role": "primary",
+          "displayOrder": 0,
+          "altText": "Boho Wall Hanging — primary product view",
+          "sha256": "6961b034fc829704df0b3df71999ecf87ba02b889e5705804858ba1c20a1f0e1"
+        }
+      ]
+    },
+    {
+      "name": "Love Letter Crochet Set",
+      "slug": "love-letter-crochet-set",
+      "defaultSku": "SULO-GIFT-LOVE-001",
+      "primaryCategorySlug": "single-flowers",
+      "secondaryCategorySlugs": [
+        "roses"
+      ],
+      "collectionSlugs": [
+        "anniversary-gifts",
+        "personalized-gifts",
+        "gifts-for-her",
+        "new-arrivals",
+        "gifts"
+      ],
+      "tags": [
+        "romantic",
+        "valentine",
+        "anniversary",
+        "personalized"
+      ],
+      "media": [
+        {
+          "key": "products/love-letter-crochet-set/primary.png",
+          "role": "primary",
+          "displayOrder": 0,
+          "altText": "Love Letter Crochet Set — primary product view",
+          "sha256": "1ef523766fbdec883c0d2a8ec229871604d3a21abc26eea4edc8f9b2058d183f"
+        }
+      ]
+    },
+    {
+      "name": "Mini Rose Box",
+      "slug": "mini-rose-box",
+      "defaultSku": "SULO-FLR-ROSE-002",
+      "primaryCategorySlug": "roses",
+      "secondaryCategorySlugs": [
+        "bouquets"
+      ],
+      "collectionSlugs": [
+        "birthday-gifts",
+        "gifts-for-her",
+        "gifts"
+      ],
+      "tags": [
+        "romantic",
+        "birthday",
+        "mother",
+        "roses"
+      ],
+      "media": [
+        {
+          "key": "products/mini-rose-box/primary.png",
+          "role": "primary",
+          "displayOrder": 0,
+          "altText": "Mini Rose Box — primary product view",
+          "sha256": "3baf1d7b6b892d8aa7b4127ad1d96b5794130b486a89ce511f640f098c77025a"
+        }
+      ]
+    },
+    {
+      "name": "Lotus Mala",
+      "slug": "lotus-mala",
+      "defaultSku": "SULO-POOJA-MALA-001",
+      "primaryCategorySlug": "garlands",
+      "secondaryCategorySlugs": [
+        "temple-decor"
+      ],
+      "collectionSlugs": [
+        "festival-gifts",
+        "gifts"
+      ],
+      "tags": [
+        "pooja",
+        "festive",
+        "lotus"
+      ],
+      "media": [
+        {
+          "key": "products/lotus-mala/primary.png",
+          "role": "primary",
+          "displayOrder": 0,
+          "altText": "Lotus Mala — primary product view",
+          "sha256": "6f4c87e7b75eb921b724038ff7e3a31eed4d870c565d24c8be520094af8afa0b"
+        }
+      ]
+    },
+    {
+      "name": "Crochet Toran",
+      "slug": "crochet-toran",
+      "defaultSku": "SULO-POOJA-TORAN-001",
+      "primaryCategorySlug": "torans",
+      "secondaryCategorySlugs": [
+        "festival-decor"
+      ],
+      "collectionSlugs": [
+        "festival-gifts",
+        "housewarming-gifts",
+        "best-sellers",
+        "gifts"
+      ],
+      "tags": [
+        "pooja",
+        "diwali",
+        "housewarming",
+        "toran"
+      ],
+      "media": [
+        {
+          "key": "products/crochet-toran/primary.png",
+          "role": "primary",
+          "displayOrder": 0,
+          "altText": "Crochet Toran — primary product view",
+          "sha256": "8145cc83a54430aba3823330e437a976a38a4a6eefb8e426365f195c4693b490"
+        }
+      ]
+    },
+    {
+      "name": "Daisy Coaster Set",
+      "slug": "daisy-coaster-set",
+      "defaultSku": "SULO-HOME-COASTER-001",
+      "primaryCategorySlug": "coasters",
+      "secondaryCategorySlugs": [
+        "doilies"
+      ],
+      "collectionSlugs": [
+        "housewarming-gifts",
+        "best-sellers",
+        "gifts"
+      ],
+      "tags": [
+        "home",
+        "housewarming",
+        "coasters",
+        "daisies"
+      ],
+      "media": [
+        {
+          "key": "products/daisy-coaster-set/primary.png",
+          "role": "primary",
+          "displayOrder": 0,
+          "altText": "Daisy Coaster Set — primary product view",
+          "sha256": "c1fe8b0154a3133b3ae39dfcd648a2ce922ac60a211d16db92309737bc8d01f3"
+        }
+      ]
+    },
+    {
+      "name": "Mini Teddy Bear",
+      "slug": "mini-teddy-bear",
+      "defaultSku": "SULO-AMI-TEDDY-001",
+      "primaryCategorySlug": "teddy-bear",
+      "secondaryCategorySlugs": [
+        "mini-amigurumi"
+      ],
+      "collectionSlugs": [
+        "gifts-for-kids",
+        "birthday-gifts",
+        "gifts"
+      ],
+      "tags": [
+        "baby",
+        "birthday",
+        "amigurumi",
+        "teddy"
+      ],
+      "media": [
+        {
+          "key": "products/mini-teddy-bear/primary.png",
+          "role": "primary",
+          "displayOrder": 0,
+          "altText": "Mini Teddy Bear — primary product view",
+          "sha256": "e8cf68eab35d2ba71550c299e19d725b7c8d2c075b27d4d2a140b2eb12356d51"
+        }
+      ]
+    }
+  ]
+}

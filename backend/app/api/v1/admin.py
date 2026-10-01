@@ -1,6 +1,7 @@
 """Admin API router conforming to Sections 18, 20, 34, and Milestone 9 of Specification."""
 
 import re
+from typing import Any
 import uuid
 from datetime import datetime, timezone
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile, status
@@ -13,7 +14,10 @@ from app.services.notification import dispatch_order_status_background
 from app.services.storage import get_storage_provider
 from app.models.catalogue import (
     Category,
+    Collection,
     Product,
+    ProductCategory,
+    ProductCollection,
     ProductImage,
     ProductVariant,
     Review,
@@ -45,6 +49,10 @@ from app.schemas.admin import (
     AdminCategoryCreate,
     AdminCategoryOut,
     AdminCategoryUpdate,
+    AdminCollectionAssignProducts,
+    AdminCollectionCreate,
+    AdminCollectionOut,
+    AdminCollectionUpdate,
     AdminInventoryAdjustRequest,
     AdminLowStockItem,
     AdminOrderDetailOut,
@@ -110,6 +118,9 @@ def _product_to_admin_out(p: Product) -> AdminProductOut:
     total_stock = sum(v.stock_quantity for v in variants_for_calc)
     min_price = min((v.price for v in variants_for_calc), default=0)
 
+    prim_cat = p.primary_category
+    primary_category_id = prim_cat.id if prim_cat else None
+
     return AdminProductOut(
         id=p.id,
         name=p.name,
@@ -123,8 +134,11 @@ def _product_to_admin_out(p: Product) -> AdminProductOut:
         customizable=p.customizable,
         rating=p.rating or 5.0,
         reviewsCount=p.reviews_count or 0,
+        primaryCategoryId=primary_category_id,
         categoryIds=[c.id for c in p.categories],
         categoryNames=[c.name for c in p.categories],
+        collectionIds=[c.id for c in p.collections],
+        collectionNames=[c.name for c in p.collections],
         tagIds=[t.id for t in p.tags],
         tagNames=[t.name for t in p.tags],
         galleryImages=[img.url for img in p.images],
@@ -145,11 +159,40 @@ def _category_to_admin_out(c: Category) -> AdminCategoryOut:
         slug=c.slug,
         parentId=c.parent_id,
         description=c.description,
-        image=c.image,
+        imageKey=c.image_key,
+        image=c.image_url,
+        imageUrl=c.image_url,
         icon=c.icon,
         displayOrder=c.display_order or 0,
         isActive=c.is_active,
+        showWhenEmpty=c.show_when_empty,
+        seoTitle=c.seo_title,
+        seoDescription=c.seo_description,
         productsCount=len(c.products) if c.products else 0,
+        createdAt=c.created_at,
+        updatedAt=c.updated_at,
+    )
+
+
+def _collection_to_admin_out(col: Collection) -> AdminCollectionOut:
+    """Convert Collection ORM to AdminCollectionOut."""
+    return AdminCollectionOut(
+        id=col.id,
+        name=col.name,
+        slug=col.slug,
+        description=col.description,
+        imageKey=col.image_key,
+        imageUrl=col.image_url,
+        collectionType=col.collection_type,
+        displayOrder=col.display_order or 0,
+        isActive=col.is_active,
+        startsAt=col.starts_at,
+        endsAt=col.ends_at,
+        seoTitle=col.seo_title,
+        seoDescription=col.seo_description,
+        productsCount=len(col.products) if col.products else 0,
+        createdAt=col.created_at,
+        updatedAt=col.updated_at,
     )
 
 
@@ -236,7 +279,10 @@ def list_admin_products(
     query = (
         db.query(Product)
         .options(
+            joinedload(Product.product_categories),
             joinedload(Product.categories),
+            joinedload(Product.product_collections),
+            joinedload(Product.collections),
             joinedload(Product.tags),
             joinedload(Product.variants),
             joinedload(Product.images),
@@ -301,10 +347,29 @@ def create_product(
         metadata_json=payload.metadata_json,
     )
 
-    # Attach categories
-    if payload.category_ids:
-        categories = db.query(Category).filter(Category.id.in_(payload.category_ids)).all()
-        product.categories.extend(categories)
+    # Attach categories with primary indication
+    cat_ids = list(payload.category_ids)
+    prim_id = payload.primary_category_id or (cat_ids[0] if cat_ids else None)
+    if prim_id and prim_id not in cat_ids:
+        cat_ids.append(prim_id)
+    for idx, cid in enumerate(cat_ids):
+        product.product_categories.append(
+            ProductCategory(
+                category_id=cid,
+                is_primary=(cid == prim_id),
+                display_order=idx,
+            )
+        )
+
+    # Attach collections
+    if payload.collection_ids:
+        for idx, col_id in enumerate(payload.collection_ids):
+            product.product_collections.append(
+                ProductCollection(
+                    collection_id=col_id,
+                    display_order=idx,
+                )
+            )
 
     # Attach tags
     if payload.tag_ids:
@@ -371,7 +436,10 @@ def get_admin_product(
     product = (
         db.query(Product)
         .options(
+            joinedload(Product.product_categories),
             joinedload(Product.categories),
+            joinedload(Product.product_collections),
+            joinedload(Product.collections),
             joinedload(Product.tags),
             joinedload(Product.variants),
             joinedload(Product.images),
@@ -395,7 +463,10 @@ def update_product(
     product = (
         db.query(Product)
         .options(
+            joinedload(Product.product_categories),
             joinedload(Product.categories),
+            joinedload(Product.product_collections),
+            joinedload(Product.collections),
             joinedload(Product.tags),
             joinedload(Product.variants),
             joinedload(Product.images),
@@ -427,8 +498,32 @@ def update_product(
     if payload.metadata_json is not None:
         product.metadata_json = payload.metadata_json
 
-    if payload.category_ids is not None:
-        product.categories = db.query(Category).filter(Category.id.in_(payload.category_ids)).all()
+    if payload.category_ids is not None or payload.primary_category_id is not None:
+        cat_ids = list(payload.category_ids) if payload.category_ids is not None else [c.id for c in product.categories]
+        prim_id = payload.primary_category_id or (product.primary_category.id if product.primary_category else (cat_ids[0] if cat_ids else None))
+        if prim_id and prim_id not in cat_ids:
+            cat_ids.append(prim_id)
+        product.product_categories.clear()
+        for idx, cid in enumerate(cat_ids):
+            product.product_categories.append(
+                ProductCategory(
+                    product_id=product.id,
+                    category_id=cid,
+                    is_primary=(cid == prim_id),
+                    display_order=idx,
+                )
+            )
+
+    if payload.collection_ids is not None:
+        product.product_collections.clear()
+        for idx, col_id in enumerate(payload.collection_ids):
+            product.product_collections.append(
+                ProductCollection(
+                    product_id=product.id,
+                    collection_id=col_id,
+                    display_order=idx,
+                )
+            )
 
     if payload.tag_ids is not None:
         product.tags = db.query(Tag).filter(Tag.id.in_(payload.tag_ids)).all()
@@ -592,6 +687,15 @@ def delete_variant(
 # -----------------------------------------------------------------------------
 
 
+@router.get("/categories", response_model=list[AdminCategoryOut])
+def list_admin_categories(
+    db: Session = Depends(get_db),
+) -> list[AdminCategoryOut]:
+    """List all categories for admin inspection including inactive and empty."""
+    categories = db.query(Category).order_by(Category.display_order, Category.id).all()
+    return [_category_to_admin_out(c) for c in categories]
+
+
 @router.post("/categories", response_model=AdminCategoryOut, status_code=status.HTTP_201_CREATED)
 def create_category(
     payload: AdminCategoryCreate,
@@ -603,15 +707,24 @@ def create_category(
     if existing:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Category slug '{slug}' is already taken.")
 
+    if payload.parent_id is not None:
+        parent = db.query(Category).filter(Category.id == payload.parent_id).first()
+        if not parent:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Parent category {payload.parent_id} does not exist.")
+
     category = Category(
         name=payload.name,
         slug=slug,
         parent_id=payload.parent_id,
         description=payload.description,
-        image=payload.image,
+        image_key=payload.image_key,
+        image=payload.image or payload.image_key,
         icon=payload.icon,
         display_order=payload.display_order,
         is_active=payload.is_active,
+        show_when_empty=payload.show_when_empty,
+        seo_title=payload.seo_title,
+        seo_description=payload.seo_description,
     )
     db.add(category)
     db.commit()
@@ -625,20 +738,34 @@ def update_category(
     payload: AdminCategoryUpdate,
     db: Session = Depends(get_db),
 ) -> AdminCategoryOut:
-    """Update taxonomy category details."""
+    """Update taxonomy category details with cycle prevention."""
     category = db.query(Category).filter(Category.id == category_id).first()
     if not category:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
+
+    if payload.parent_id is not None:
+        if payload.parent_id == category.id or category.would_create_cycle(payload.parent_id):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Moving category would create a circular parent reference.",
+            )
+        parent = db.query(Category).filter(Category.id == payload.parent_id).first()
+        if not parent:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Parent category {payload.parent_id} does not exist.")
+        category.parent_id = payload.parent_id
+    elif payload.parent_id is None and "parentId" in payload.model_fields_set:
+        category.parent_id = None
 
     if payload.name is not None:
         category.name = payload.name
     if payload.slug is not None:
         category.slug = payload.slug
-    if payload.parent_id is not None:
-        category.parent_id = payload.parent_id
     if payload.description is not None:
         category.description = payload.description
-    if payload.image is not None:
+    if payload.image_key is not None:
+        category.image_key = payload.image_key
+        category.image = payload.image_key
+    elif payload.image is not None:
         category.image = payload.image
     if payload.icon is not None:
         category.icon = payload.icon
@@ -646,7 +773,14 @@ def update_category(
         category.display_order = payload.display_order
     if payload.is_active is not None:
         category.is_active = payload.is_active
+    if payload.show_when_empty is not None:
+        category.show_when_empty = payload.show_when_empty
+    if payload.seo_title is not None:
+        category.seo_title = payload.seo_title
+    if payload.seo_description is not None:
+        category.seo_description = payload.seo_description
 
+    category.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(category)
     return _category_to_admin_out(category)
@@ -657,14 +791,160 @@ def delete_category(
     category_id: int,
     db: Session = Depends(get_db),
 ) -> dict[str, str]:
-    """Delete a taxonomy category."""
+    """Safe delete a taxonomy category rejecting if subcategories or products are attached."""
     category = db.query(Category).filter(Category.id == category_id).first()
     if not category:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
 
+    has_children = db.query(Category).filter(Category.parent_id == category.id).count() > 0
+    if has_children:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot delete category '{category.name}' because it contains subcategories. Move or delete child categories first.",
+        )
+
+    has_products = len(category.products) > 0
+    if has_products:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot delete category '{category.name}' because products are assigned to it. Reassign products first.",
+        )
+
     db.delete(category)
     db.commit()
     return {"status": "ok", "message": f"Category '{category.name}' deleted successfully"}
+
+
+# -----------------------------------------------------------------------------
+# Collections Administration
+# -----------------------------------------------------------------------------
+
+
+@router.get("/collections", response_model=list[AdminCollectionOut])
+def list_admin_collections(
+    db: Session = Depends(get_db),
+) -> list[AdminCollectionOut]:
+    """List all collections for store administration."""
+    collections = db.query(Collection).order_by(Collection.display_order, Collection.id).all()
+    return [_collection_to_admin_out(col) for col in collections]
+
+
+@router.post("/collections", response_model=AdminCollectionOut, status_code=status.HTTP_201_CREATED)
+def create_collection(
+    payload: AdminCollectionCreate,
+    db: Session = Depends(get_db),
+) -> AdminCollectionOut:
+    """Create a new merchandising or evergreen collection."""
+    slug = payload.slug or _slugify(payload.name)
+    existing = db.query(Collection).filter(Collection.slug == slug).first()
+    if existing:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Collection slug '{slug}' is already taken.")
+
+    collection = Collection(
+        name=payload.name,
+        slug=slug,
+        description=payload.description,
+        image_key=payload.image_key,
+        collection_type=payload.collection_type,
+        display_order=payload.display_order,
+        is_active=payload.is_active,
+        starts_at=payload.starts_at,
+        ends_at=payload.ends_at,
+        seo_title=payload.seo_title,
+        seo_description=payload.seo_description,
+    )
+    db.add(collection)
+    db.commit()
+    db.refresh(collection)
+    return _collection_to_admin_out(collection)
+
+
+@router.get("/collections/{collection_id}", response_model=AdminCollectionOut)
+def get_admin_collection(
+    collection_id: int,
+    db: Session = Depends(get_db),
+) -> AdminCollectionOut:
+    """Get single collection by ID."""
+    col = db.query(Collection).filter(Collection.id == collection_id).first()
+    if not col:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Collection not found")
+    return _collection_to_admin_out(col)
+
+
+@router.patch("/collections/{collection_id}", response_model=AdminCollectionOut)
+def update_collection(
+    collection_id: int,
+    payload: AdminCollectionUpdate,
+    db: Session = Depends(get_db),
+) -> AdminCollectionOut:
+    """Update collection fields."""
+    col = db.query(Collection).filter(Collection.id == collection_id).first()
+    if not col:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Collection not found")
+
+    if payload.name is not None:
+        col.name = payload.name
+    if payload.slug is not None:
+        col.slug = payload.slug
+    if payload.description is not None:
+        col.description = payload.description
+    if payload.image_key is not None:
+        col.image_key = payload.image_key
+    if payload.collection_type is not None:
+        col.collection_type = payload.collection_type
+    if payload.display_order is not None:
+        col.display_order = payload.display_order
+    if payload.is_active is not None:
+        col.is_active = payload.is_active
+    if payload.starts_at is not None:
+        col.starts_at = payload.starts_at
+    if payload.ends_at is not None:
+        col.ends_at = payload.ends_at
+    if payload.seo_title is not None:
+        col.seo_title = payload.seo_title
+    if payload.seo_description is not None:
+        col.seo_description = payload.seo_description
+
+    col.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(col)
+    return _collection_to_admin_out(col)
+
+
+@router.delete("/collections/{collection_id}")
+def delete_collection(
+    collection_id: int,
+    db: Session = Depends(get_db),
+) -> dict[str, str]:
+    """Delete a collection and detach associated products."""
+    col = db.query(Collection).filter(Collection.id == collection_id).first()
+    if not col:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Collection not found")
+
+    db.query(ProductCollection).filter(ProductCollection.collection_id == collection_id).delete()
+    db.delete(col)
+    db.commit()
+    return {"status": "ok", "message": f"Collection '{col.name}' deleted successfully"}
+
+
+@router.post("/collections/{collection_id}/products")
+def assign_collection_products(
+    collection_id: int,
+    payload: AdminCollectionAssignProducts,
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    """Assign products to a collection, replacing existing memberships."""
+    col = db.query(Collection).filter(Collection.id == collection_id).first()
+    if not col:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Collection not found")
+
+    db.query(ProductCollection).filter(ProductCollection.collection_id == collection_id).delete()
+    for idx, pid in enumerate(payload.product_ids):
+        db.add(ProductCollection(collection_id=collection_id, product_id=pid, display_order=idx))
+
+    col.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    return {"status": "ok", "collectionId": collection_id, "productCount": len(payload.product_ids)}
 
 
 # -----------------------------------------------------------------------------

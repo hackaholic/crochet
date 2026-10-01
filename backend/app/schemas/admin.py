@@ -2,7 +2,8 @@
 
 from datetime import datetime
 from typing import Any
-from pydantic import BaseModel, ConfigDict, Field
+from app.core.images import build_image_url
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class AdminVariantCreate(BaseModel):
@@ -81,7 +82,9 @@ class AdminProductCreate(BaseModel):
     primary_image: str = Field(..., alias="primaryImage")
     badge: str | None = None
     customizable: bool = False
+    primary_category_id: int | None = Field(default=None, alias="primaryCategoryId")
     category_ids: list[int] = Field(default_factory=list, alias="categoryIds")
+    collection_ids: list[int] = Field(default_factory=list, alias="collectionIds")
     tag_ids: list[int] = Field(default_factory=list, alias="tagIds")
     gallery_images: list[str] = Field(default_factory=list, alias="galleryImages")
     variants: list[AdminVariantCreate] = Field(default_factory=list)
@@ -102,7 +105,9 @@ class AdminProductUpdate(BaseModel):
     primary_image: str | None = Field(default=None, alias="primaryImage")
     badge: str | None = None
     customizable: bool | None = None
+    primary_category_id: int | None = Field(default=None, alias="primaryCategoryId")
     category_ids: list[int] | None = Field(default=None, alias="categoryIds")
+    collection_ids: list[int] | None = Field(default=None, alias="collectionIds")
     tag_ids: list[int] | None = Field(default=None, alias="tagIds")
     gallery_images: list[str] | None = Field(default=None, alias="galleryImages")
     metadata_json: dict[str, Any] | None = Field(default=None, alias="metadata")
@@ -125,8 +130,11 @@ class AdminProductOut(BaseModel):
     customizable: bool
     rating: float
     reviews_count: int = Field(alias="reviewsCount")
+    primary_category_id: int | None = Field(default=None, alias="primaryCategoryId")
     category_ids: list[int] = Field(default_factory=list, alias="categoryIds")
     category_names: list[str] = Field(default_factory=list, alias="categoryNames")
+    collection_ids: list[int] = Field(default_factory=list, alias="collectionIds")
+    collection_names: list[str] = Field(default_factory=list, alias="collectionNames")
     tag_ids: list[int] = Field(default_factory=list, alias="tagIds")
     tag_names: list[str] = Field(default_factory=list, alias="tagNames")
     gallery_images: list[str] = Field(default_factory=list, alias="galleryImages")
@@ -158,10 +166,14 @@ class AdminCategoryCreate(BaseModel):
     slug: str | None = None
     parent_id: int | None = Field(default=None, alias="parentId")
     description: str | None = None
+    image_key: str | None = Field(default=None, alias="imageKey")
     image: str | None = None
     icon: str | None = None
     display_order: int = Field(default=0, alias="displayOrder")
     is_active: bool = Field(default=True, alias="isActive")
+    show_when_empty: bool = Field(default=False, alias="showWhenEmpty")
+    seo_title: str | None = Field(default=None, alias="seoTitle")
+    seo_description: str | None = Field(default=None, alias="seoDescription")
 
 
 class AdminCategoryUpdate(BaseModel):
@@ -173,10 +185,14 @@ class AdminCategoryUpdate(BaseModel):
     slug: str | None = None
     parent_id: int | None = Field(default=None, alias="parentId")
     description: str | None = None
+    image_key: str | None = Field(default=None, alias="imageKey")
     image: str | None = None
     icon: str | None = None
     display_order: int | None = Field(default=None, alias="displayOrder")
     is_active: bool | None = Field(default=None, alias="isActive")
+    show_when_empty: bool | None = Field(default=None, alias="showWhenEmpty")
+    seo_title: str | None = Field(default=None, alias="seoTitle")
+    seo_description: str | None = Field(default=None, alias="seoDescription")
 
 
 class AdminCategoryOut(BaseModel):
@@ -189,11 +205,149 @@ class AdminCategoryOut(BaseModel):
     slug: str
     parent_id: int | None = Field(default=None, alias="parentId")
     description: str | None = None
+    image_key: str | None = Field(default=None, alias="imageKey")
     image: str | None = None
+    image_url: str | None = Field(default=None, alias="imageUrl")
     icon: str | None = None
     display_order: int = Field(default=0, alias="displayOrder")
     is_active: bool = Field(default=True, alias="isActive")
+    show_when_empty: bool = Field(default=False, alias="showWhenEmpty")
+    seo_title: str | None = Field(default=None, alias="seoTitle")
+    seo_description: str | None = Field(default=None, alias="seoDescription")
     products_count: int = Field(default=0, alias="productsCount")
+    created_at: datetime | None = Field(default=None, alias="createdAt")
+    updated_at: datetime | None = Field(default=None, alias="updatedAt")
+
+    @model_validator(mode="before")
+    @classmethod
+    def resolve_images(cls, data: Any) -> Any:
+        if hasattr(data, "__dict__"):
+            raw_img = getattr(data, "image_key", None) or getattr(data, "image", None)
+            url = build_image_url(raw_img) if raw_img else None
+            return {
+                "id": getattr(data, "id"),
+                "name": getattr(data, "name"),
+                "slug": getattr(data, "slug"),
+                "parentId": getattr(data, "parent_id", None),
+                "description": getattr(data, "description", None),
+                "imageKey": getattr(data, "image_key", None),
+                "image": url,
+                "imageUrl": url,
+                "icon": getattr(data, "icon", None),
+                "displayOrder": getattr(data, "display_order", 0),
+                "isActive": getattr(data, "is_active", True),
+                "showWhenEmpty": getattr(data, "show_when_empty", False),
+                "seoTitle": getattr(data, "seo_title", None),
+                "seoDescription": getattr(data, "seo_description", None),
+                "productsCount": getattr(data, "products_count", 0),
+                "createdAt": getattr(data, "created_at", None),
+                "updatedAt": getattr(data, "updated_at", None),
+            }
+        elif isinstance(data, dict):
+            raw_img = data.get("image_key") or data.get("image") or data.get("imageUrl")
+            url = build_image_url(raw_img) if raw_img else None
+            data["image"] = url
+            data["imageUrl"] = url
+            return data
+        return data
+
+
+class AdminCollectionCreate(BaseModel):
+    """Payload to create a new collection."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    name: str = Field(..., min_length=2, max_length=150)
+    slug: str | None = None
+    description: str | None = None
+    image_key: str | None = Field(default=None, alias="imageKey")
+    collection_type: str = Field(default="MERCHANDISING", alias="collectionType")
+    display_order: int = Field(default=0, alias="displayOrder")
+    is_active: bool = Field(default=True, alias="isActive")
+    starts_at: datetime | None = Field(default=None, alias="startsAt")
+    ends_at: datetime | None = Field(default=None, alias="endsAt")
+    seo_title: str | None = Field(default=None, alias="seoTitle")
+    seo_description: str | None = Field(default=None, alias="seoDescription")
+
+
+class AdminCollectionUpdate(BaseModel):
+    """Payload to update an existing collection."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    name: str | None = None
+    slug: str | None = None
+    description: str | None = None
+    image_key: str | None = Field(default=None, alias="imageKey")
+    collection_type: str | None = Field(default=None, alias="collectionType")
+    display_order: int | None = Field(default=None, alias="displayOrder")
+    is_active: bool | None = Field(default=None, alias="isActive")
+    starts_at: datetime | None = Field(default=None, alias="startsAt")
+    ends_at: datetime | None = Field(default=None, alias="endsAt")
+    seo_title: str | None = Field(default=None, alias="seoTitle")
+    seo_description: str | None = Field(default=None, alias="seoDescription")
+
+
+class AdminCollectionOut(BaseModel):
+    """Collection representation for administration."""
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    id: int
+    name: str
+    slug: str
+    description: str | None = None
+    image_key: str | None = Field(default=None, alias="imageKey")
+    image_url: str | None = Field(default=None, alias="imageUrl")
+    collection_type: str = Field(default="MERCHANDISING", alias="collectionType")
+    display_order: int = Field(default=0, alias="displayOrder")
+    is_active: bool = Field(default=True, alias="isActive")
+    starts_at: datetime | None = Field(default=None, alias="startsAt")
+    ends_at: datetime | None = Field(default=None, alias="endsAt")
+    seo_title: str | None = Field(default=None, alias="seoTitle")
+    seo_description: str | None = Field(default=None, alias="seoDescription")
+    products_count: int = Field(default=0, alias="productsCount")
+    created_at: datetime | None = Field(default=None, alias="createdAt")
+    updated_at: datetime | None = Field(default=None, alias="updatedAt")
+
+    @model_validator(mode="before")
+    @classmethod
+    def resolve_images(cls, data: Any) -> Any:
+        if hasattr(data, "__dict__"):
+            raw_img = getattr(data, "image_key", None)
+            url = build_image_url(raw_img) if raw_img else None
+            return {
+                "id": getattr(data, "id"),
+                "name": getattr(data, "name"),
+                "slug": getattr(data, "slug"),
+                "description": getattr(data, "description", None),
+                "imageKey": getattr(data, "image_key", None),
+                "imageUrl": url,
+                "collectionType": getattr(data, "collection_type", "MERCHANDISING"),
+                "displayOrder": getattr(data, "display_order", 0),
+                "isActive": getattr(data, "is_active", True),
+                "startsAt": getattr(data, "starts_at", None),
+                "endsAt": getattr(data, "ends_at", None),
+                "seoTitle": getattr(data, "seo_title", None),
+                "seoDescription": getattr(data, "seo_description", None),
+                "productsCount": getattr(data, "products_count", 0),
+                "createdAt": getattr(data, "created_at", None),
+                "updatedAt": getattr(data, "updated_at", None),
+            }
+        elif isinstance(data, dict):
+            raw_img = data.get("image_key") or data.get("imageUrl")
+            url = build_image_url(raw_img) if raw_img else None
+            data["imageUrl"] = url
+            return data
+        return data
+
+
+class AdminCollectionAssignProducts(BaseModel):
+    """Payload to assign products to a collection."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    product_ids: list[int] = Field(..., alias="productIds")
 
 
 class AdminOrderStatusUpdate(BaseModel):

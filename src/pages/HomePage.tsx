@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { categories, occasions, reviews } from '../data/products';
+import { reviews } from '../data/products';
 import ProductCard from '../components/ProductCard';
 import { ArrowRightIcon, ChevronLeftIcon, ChevronRightIcon, FlowerDecor, StarIcon, ThreadCurve } from '../components/Icons';
 import type { Product } from '../data/products';
@@ -40,7 +40,7 @@ const instagramImages = [
 ];
 
 export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wishlist, onProductClick }: HomePageProps) {
-  const { products } = useCatalogue();
+  const { products, categories, collections } = useCatalogue();
   const bestsellers = products.filter(p => p.badge === 'Bestseller').concat(products.slice(0, 4));
   const romantic = products.filter(p => p.tags?.includes('romantic'));
   const pooja = products.filter(p => p.category === 'Pooja');
@@ -96,15 +96,11 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
           {categories.map(cat => (
             <button
               key={cat.id}
-              onClick={() => onNavigate('shop')}
+              onClick={() => window.location.assign(`/shop?category=${encodeURIComponent(cat.slug)}`)}
               className="group relative rounded-2xl overflow-hidden text-left"
-              style={{ aspectRatio: '3/4', background: cat.color }}
+              style={{ aspectRatio: '3/4', background: '#EDE4D0' }}
             >
-              <img
-                src={cat.image}
-                alt={cat.name}
-                className="absolute inset-0 w-full h-full object-cover opacity-85 group-hover:opacity-70 group-hover:scale-105 transition-all duration-500"
-              />
+              {cat.imageUrl && <img src={cat.imageUrl} alt={cat.name} className="absolute inset-0 w-full h-full object-cover opacity-85 group-hover:opacity-70 group-hover:scale-105 transition-all duration-500" loading="lazy" decoding="async" />}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-4">
                 <h3 className="text-white font-semibold text-sm leading-tight" style={{ fontFamily: 'var(--font-serif)' }}>{cat.name}</h3>
@@ -294,22 +290,17 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
             <h2 className="text-4xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>Gift by Occasion</h2>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-            {occasions.map(occ => (
+            {collections.map(collection => (
               <button
-                key={occ.id}
-                onClick={() => onNavigate('shop')}
+                key={collection.id}
+                onClick={() => window.location.assign(`/shop?collection=${encodeURIComponent(collection.slug)}`)}
                 className="group relative rounded-2xl overflow-hidden text-center"
                 style={{ aspectRatio: '4/3' }}
               >
-                <img
-                  src={occ.image}
-                  alt={occ.name}
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                />
+                {collection.imageUrl && <img src={collection.imageUrl} alt={collection.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" loading="lazy" decoding="async" />}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-3">
-                  <p className="text-xl mb-0.5">{occ.icon}</p>
-                  <p className="text-white font-semibold text-xs" style={{ fontFamily: 'var(--font-serif)' }}>{occ.name}</p>
+                  <p className="text-white font-semibold text-xs" style={{ fontFamily: 'var(--font-serif)' }}>{collection.name}</p>
                 </div>
               </button>
             ))}

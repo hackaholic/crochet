@@ -3,13 +3,17 @@
 from app.models.cart import Cart, CartItem
 from app.models.catalogue import (
     Category,
+    Collection,
     Occasion,
     Product,
+    ProductCategory,
+    ProductCollection,
     ProductImage,
     ProductVariant,
     Review,
     Tag,
     product_categories,
+    product_collections,
     product_tags,
 )
 from app.models.order import (
@@ -34,6 +38,7 @@ __all__ = [
     "Cart",
     "CartItem",
     "Category",
+    "Collection",
     "Coupon",
     "HomepageCampaign",
     "HomepageSection",
@@ -49,6 +54,8 @@ __all__ = [
     "PaymentMethod",
     "PaymentStatus",
     "Product",
+    "ProductCategory",
+    "ProductCollection",
     "ProductImage",
     "ProductVariant",
     "Review",
@@ -59,5 +66,6 @@ __all__ = [
     "Wishlist",
     "WishlistItem",
     "product_categories",
+    "product_collections",
     "product_tags",
 ]

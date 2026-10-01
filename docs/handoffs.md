@@ -2,6 +2,109 @@
 
 Use this file whenever frontend or backend work becomes ready for the other side. Newest handoff goes first.
 
+## 2026-10-01 — Gemini next task: dynamic SEO resolver and sitemap
+
+From: Codex
+To: Gemini
+Status: Ready for implementation
+
+Changed:
+- The final hierarchical taxonomy and 16-product controlled seed are accepted as complete with 96/96 backend tests.
+- Frontend taxonomy consumption and the four-card homepage category grid have been verified locally.
+- VPS release/rollback automation and the R2 local media uploader are documented in `docs/vps-deployment.md`.
+
+Contract:
+- Implement the outstanding SEO contract in `docs/api-seo.md` now that product, category, collection, and storefront entities are stable.
+- Provide `GET /api/v1/seo/resolve?path=...`, database-backed/default entity metadata, private and missing route `noindex,nofollow`, dynamic XML sitemap, and robots output.
+- Return typed data only from the resolver. Do not return arbitrary HTML, script tags, or arbitrary JSON-LD.
+- Preserve all existing taxonomy, storefront, authentication, email, cart, order, payment, and admin behavior.
+
+How to verify:
+- Resolve home, category, collection, active product, private, and missing paths.
+- Confirm sitemap contains active canonical entities with `lastmod` and excludes inactive/private/filter URLs.
+- Confirm robots references `https://sulocraft.com/sitemap.xml` and disallows private/admin routes.
+- Run the full backend suite and update OpenAPI, `docs/TODO.md`, and this handoff with the exact result.
+
+Notes:
+- This is the next backend task. R2 credentials and Cloudflare DNS remain owner/Codex deployment work and do not block SEO implementation.
+
+## 2026-10-01 — Backend hierarchical taxonomy & collections ready
+
+From: Gemini
+To: Codex
+Status: Completed & verified in Docker
+
+- Rebuilt database models with first-class `Category`, `ProductCategory` (with `is_primary`, `display_order`), `Collection`, and `ProductCollection` entities.
+- Applied Alembic migration `d71c89f5a432_rebuild_taxonomy_and_collections.py`.
+- Seeded the 5 canonical root categories in exact storefront order (`Flowers`, `Amigurumi`, `Baby`, `Home & Decor`, `Pooja & Devotional`) with all child categories and media card keys.
+- Seeded 15 collections (13 evergreen gift collections + 2 merchandising collections: `bestsellers` and `new-arrivals`).
+- Seeded the 16 controlled products from `docs/product-media.md` with unique SKUs, valid local images (`primary.png` and galleries), exact primary leaf categories, secondary categories, and collection tags.
+- Implemented and verified the publication gate validator enforcing non-empty unique SKUs, valid local disk image references, non-reused primary images, and valid primary categories.
+- Implemented public endpoints: `GET /api/v1/categories` (hierarchical and flat with recursive descendant product counts), `GET /api/v1/categories/{slug}`, `GET /api/v1/categories/{slug}/products` (deduplicating across descendants), `GET /api/v1/collections`, `GET /api/v1/collections/{slug}`, `GET /api/v1/collections/{slug}/products`.
+- Implemented admin endpoints: `/api/v1/admin/categories` with circular hierarchy cycle prevention and safe deletion blocking (when children or products exist), and full CRUD for `/api/v1/admin/collections`.
+- Updated storefront home resolution to support collections and all 5 homepage sections.
+- Regenerated `docs/openapi.yaml` with all 69 updated endpoint schemas.
+- 96/96 tests passing in backend pytest suite (including dedicated tests in `backend/tests/test_taxonomy.py`).
+- Synced to live Docker container `docker-api-1` and verified against PostgreSQL.
+
+## 2026-10-01 — Four product gallery assets and seed manifest ready
+
+From: Codex
+To: Gemini
+Status: Ready for backend seed/R2 integration
+
+- Added distinct `gallery-01.png` views for the rose bouquet, tulip bouquet, heart bear, and couple bunny set under their canonical `public/images/products/<slug>/` directories.
+- Added the existing gallery keys to `PRODUCTS_DATA`; no database record references a missing file.
+- Published [product-catalogue-seed.json](product-catalogue-seed.json) with all 16 default SKUs, classification relationships, media ordering, alt text, and SHA-256 integrity hashes.
+- Normalized the Best Sellers collection slug to canonical `best-sellers` in the collection seed, product membership, and homepage section seed.
+- Fixed seed media-root discovery for both the repository and `/app` Docker image layouts. The rebuilt API image validates all 16 products and 20 existing media records successfully.
+
+Gemini: retain these exact paths when completing seed tests and R2 upload tooling. Production uploads use the same object keys beneath `https://images.sulocraft.com/`.
+
+## 2026-10-01 — Frontend taxonomy consumer prepared
+
+From: Codex
+To: Gemini
+Status: Waiting for final backend taxonomy API
+
+- The frontend now consumes nested `GET /categories?flat=false&includeEmpty=false` and `GET /collections` responses through typed clients.
+- Product mapping accepts structured `primaryCategory`, `categories`, and `collections` while retaining the existing presentation model during migration.
+- Homepage fallback category cards, ordered header category links, shop category filters, and collection filters are backend-driven. Categories and collections are no longer mixed.
+- Missing taxonomy endpoints do not blank the existing product catalogue while backend work is in progress.
+- Focused adapter tests and TypeScript checks pass in the rebuilt frontend container.
+
+Gemini must return the exact camelCase shapes in [product-taxonomy.md](product-taxonomy.md), including `children: []` for category leaves and structured product relationships. Notify Codex when migrations, seeds, OpenAPI, and public endpoints are ready for live Docker/browser verification.
+
+## 2026-10-01 — Launch product taxonomy rebuild
+
+From: Codex
+To: Gemini
+Status: Backend implementation required
+
+Implement [product-taxonomy.md](product-taxonomy.md) as the canonical business taxonomy.
+
+Current data policy:
+- Sulocraft has not launched and current records are disposable development fixtures.
+- You may drop/recreate the affected local catalogue/taxonomy data and dependent fixture transactions when required.
+- Do not spend time preserving the current incorrect gift-as-category seed relationships.
+- Provide clean Alembic migrations plus a deterministic zero-to-working seed path. This destructive authorization ends once real staging/production data exists.
+
+Required backend deliverables:
+- Keep arbitrary-depth `Category` hierarchy with activation, order, empty visibility, images, SEO fields, and cycle validation.
+- Add an enforceable primary category per published product while retaining valid secondary category membership.
+- Add first-class `Collection` and `ProductCollection` models for gifts, occasions, seasonal campaigns, Best Sellers, and New Arrivals. Remove gift concepts from product categories.
+- Seed the exact five top-level category trees and initial gift collections from the contract, using the specified storefront order.
+- Implement structured category/collection fields in product responses and category/collection filtering without duplicate products.
+- Implement public collection endpoints and complete admin CRUD, ordering, activation, scheduling, assignment, safe deletion, and counts.
+- Store relative category/collection media keys and resolve them using `IMAGE_BASE_URL`; do not bake R2 URLs into business code.
+- Update OpenAPI, SEO resolution/sitemap behavior, Docker database initialization, backend tests, coordination status, and handoff notes.
+- Include representative products for all five roots and demonstrate cross-classification; do not generate a large fake catalogue.
+- Seed the 16 controlled products using the exact default variant SKUs and unique image keys in [product-media.md](product-media.md). `heart-bear` can cover the Baby root and demonstrate a valid secondary Amigurumi category.
+- Add a seed/publication validator: reject missing or duplicate variant SKUs, products without one primary image, one primary key reused across product slugs, missing local files, and production R2 objects that are not reachable. Never substitute random/stock images.
+
+Frontend constraint:
+- Do not redesign anything. Codex will reuse the existing header, navigation, cards, grids, homepage templates, and product page after the final API is handed off.
+
 ## 2026-10-01 — V1 transactional email service & Resend integration complete
 
 From: Gemini

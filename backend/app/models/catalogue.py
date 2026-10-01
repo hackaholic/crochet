@@ -5,15 +5,8 @@ from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, JS
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
+from app.core.images import build_image_url
 from app.db.base import Base
-
-# Association table for Many-to-Many relationship between Products and Categories
-product_categories = Table(
-    "product_categories",
-    Base.metadata,
-    Column("product_id", Integer, ForeignKey("products.id", ondelete="CASCADE"), primary_key=True),
-    Column("category_id", Integer, ForeignKey("categories.id", ondelete="CASCADE"), primary_key=True),
-)
 
 # Association table for Many-to-Many relationship between Products and Tags
 product_tags = Table(
@@ -24,8 +17,26 @@ product_tags = Table(
 )
 
 
+class ProductCategory(Base):
+    """Explicit association model between Products and Categories with primary designation."""
+
+    __tablename__ = "product_categories"
+
+    product_id = Column(Integer, ForeignKey("products.id", ondelete="CASCADE"), primary_key=True)
+    category_id = Column(Integer, ForeignKey("categories.id", ondelete="CASCADE"), primary_key=True)
+    is_primary = Column(Boolean, default=False, index=True)
+    display_order = Column(Integer, default=0)
+
+    product = relationship("Product", back_populates="product_categories", overlaps="products,categories")
+    category = relationship("Category", back_populates="category_products", overlaps="products,categories")
+
+
+# Retain table alias for backward compatibility with existing raw queries
+product_categories = ProductCategory.__table__
+
+
 class Category(Base):
-    """Hierarchical category model supporting arbitrary parent-child depth."""
+    """Hierarchical category model supporting arbitrary parent-child depth and cycle prevention."""
 
     __tablename__ = "categories"
 
@@ -35,12 +46,101 @@ class Category(Base):
     parent_id = Column(Integer, ForeignKey("categories.id", ondelete="SET NULL"), nullable=True, index=True)
     description = Column(Text, nullable=True)
     image = Column(String(500), nullable=True)
+    image_key = Column(String(500), nullable=True)
     icon = Column(String(20), nullable=True)
     display_order = Column(Integer, default=0)
-    is_active = Column(Boolean, default=True)
+    is_active = Column(Boolean, default=True, index=True)
+    show_when_empty = Column(Boolean, default=False)
+    seo_title = Column(String(255), nullable=True)
+    seo_description = Column(Text, nullable=True)
+
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     parent = relationship("Category", remote_side=[id], backref="children")
-    products = relationship("Product", secondary=product_categories, back_populates="categories")
+    category_products = relationship("ProductCategory", back_populates="category", cascade="all, delete-orphan", overlaps="products,categories")
+    products = relationship(
+        "Product",
+        secondary="product_categories",
+        back_populates="categories",
+        overlaps="category_products,category,product_categories,product",
+    )
+
+    @property
+    def image_url(self) -> str | None:
+        """Resolve full image URL from image_key or legacy image."""
+        raw = self.image_key or getattr(self, "image", None)
+        return build_image_url(raw) if raw else None
+
+    def would_create_cycle(self, potential_parent_id: int | None) -> bool:
+        """Check if assigning potential_parent_id as parent would create a cycle in the hierarchy."""
+        if potential_parent_id is None:
+            return False
+        if potential_parent_id == self.id:
+            return True
+        visited = set()
+        queue = [self]
+        while queue:
+            node = queue.pop(0)
+            if node.id in visited:
+                continue
+            visited.add(node.id)
+            if node.id == potential_parent_id:
+                return True
+            for child in getattr(node, "children", []):
+                queue.append(child)
+        return False
+
+
+class Collection(Base):
+    """Curated merchandising collections (occasions, gifts, campaigns, best sellers)."""
+
+    __tablename__ = "collections"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), nullable=False)
+    slug = Column(String(100), unique=True, index=True, nullable=False)
+    description = Column(Text, nullable=True)
+    image_key = Column(String(500), nullable=True)
+    collection_type = Column(String(50), default="MERCHANDISING", index=True)
+    display_order = Column(Integer, default=0)
+    is_active = Column(Boolean, default=True, index=True)
+    starts_at = Column(DateTime, nullable=True)
+    ends_at = Column(DateTime, nullable=True)
+    seo_title = Column(String(255), nullable=True)
+    seo_description = Column(Text, nullable=True)
+
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+    product_associations = relationship("ProductCollection", back_populates="collection", cascade="all, delete-orphan", overlaps="products,collections")
+    products = relationship(
+        "Product",
+        secondary="product_collections",
+        back_populates="collections",
+        overlaps="product_associations,collection,product_collections,product",
+    )
+
+    @property
+    def image_url(self) -> str | None:
+        """Resolve full image URL from image_key."""
+        return build_image_url(self.image_key) if self.image_key else None
+
+
+class ProductCollection(Base):
+    """Association model between Products and Collections."""
+
+    __tablename__ = "product_collections"
+
+    product_id = Column(Integer, ForeignKey("products.id", ondelete="CASCADE"), primary_key=True)
+    collection_id = Column(Integer, ForeignKey("collections.id", ondelete="CASCADE"), primary_key=True)
+    display_order = Column(Integer, default=0)
+
+    product = relationship("Product", back_populates="product_collections", overlaps="products,collections")
+    collection = relationship("Collection", back_populates="product_associations", overlaps="products,collections")
+
+
+product_collections = ProductCollection.__table__
 
 
 class Tag(Base):
@@ -55,7 +155,7 @@ class Tag(Base):
 
 
 class Product(Base):
-    """Core product model with flexible metadata and variants."""
+    """Core product model with flexible metadata, categories, collections, and variants."""
 
     __tablename__ = "products"
 
@@ -77,11 +177,46 @@ class Product(Base):
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     published_at = Column(DateTime, nullable=True)
 
-    categories = relationship("Category", secondary=product_categories, back_populates="products")
+    product_categories = relationship(
+        "ProductCategory",
+        back_populates="product",
+        cascade="all, delete-orphan",
+        order_by="ProductCategory.display_order",
+        overlaps="categories,products",
+    )
+    categories = relationship(
+        "Category",
+        secondary="product_categories",
+        back_populates="products",
+        overlaps="product_categories,category,category_products,product",
+    )
+    product_collections = relationship(
+        "ProductCollection",
+        back_populates="product",
+        cascade="all, delete-orphan",
+        order_by="ProductCollection.display_order",
+        overlaps="collections,products",
+    )
+    collections = relationship(
+        "Collection",
+        secondary="product_collections",
+        back_populates="products",
+        overlaps="product_collections,collection,product_associations,product",
+    )
     tags = relationship("Tag", secondary=product_tags, back_populates="products")
     variants = relationship("ProductVariant", back_populates="product", cascade="all, delete-orphan")
     images = relationship("ProductImage", back_populates="product", cascade="all, delete-orphan", order_by="ProductImage.sort_order")
     reviews = relationship("Review", back_populates="product", cascade="all, delete-orphan")
+
+    @property
+    def primary_category(self) -> Category | None:
+        """Resolve the primary Category for this product."""
+        for pc in self.product_categories:
+            if pc.is_primary:
+                return pc.category
+        if self.categories:
+            return self.categories[0]
+        return None
 
 
 class ProductVariant(Base):

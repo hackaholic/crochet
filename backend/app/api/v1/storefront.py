@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.api.v1.catalogue import _to_product_list_item
 from app.db.session import get_db
-from app.models.catalogue import Category, Product, Review, Tag
+from app.models.catalogue import Category, Collection, Product, Review, Tag
 from app.models.storefront import BrandSettings, HomepageCampaign, HomepageSection
 from app.schemas.storefront import (
     BrandSettingsOut,
@@ -59,7 +59,7 @@ def _resolve_homepage_section(db: Session, section: HomepageSection):
                 name=c.name,
                 slug=c.slug,
                 description=c.description,
-                image_url=c.image or "",
+                image_url=c.image_key or c.image or "",
             )
             for c in ordered_cats
         ]
@@ -75,37 +75,50 @@ def _resolve_homepage_section(db: Session, section: HomepageSection):
     elif sec_type == "product_collection":
         slug = (section.collection_slug or "bestsellers").lower().strip()
         limit = section.item_limit or 4
-
         query = db.query(Product).filter(Product.status == "ACTIVE")
-        if slug == "bestsellers":
-            bestsellers = query.filter(Product.badge == "Bestseller").order_by(Product.rating.desc(), Product.reviews_count.desc()).limit(limit).all()
-            if len(bestsellers) < limit:
-                # Top rated/reviewed products as backfill
-                existing_ids = {p.id for p in bestsellers}
-                extras = (
-                    query.filter(~Product.id.in_(existing_ids))
-                    .order_by(Product.reviews_count.desc(), Product.rating.desc())
-                    .limit(limit - len(bestsellers))
-                    .all()
-                )
-                products = bestsellers + extras
+
+        if slug in ("bestsellers", "best-sellers"):
+            col = db.query(Collection).filter(Collection.slug.in_(["bestsellers", "best-sellers"]), Collection.is_active == True).first()
+            if col and col.products:
+                products = [p for p in col.products if p.status == "ACTIVE"][:limit]
             else:
-                products = bestsellers
-        elif slug in ("new-arrivals", "new"):
-            products = query.order_by(Product.id.desc()).limit(limit).all()
-        else:
-            # Check if matching category slug
-            category = db.query(Category).filter(Category.slug == slug).first()
-            if category:
-                category_ids = [category.id] + [ch.id for ch in category.children]
-                products = query.filter(Product.categories.any(Category.id.in_(category_ids))).limit(limit).all()
-            else:
-                # Check tag
-                tag = db.query(Tag).filter(Tag.name.ilike(slug)).first()
-                if tag:
-                    products = query.filter(Product.tags.any(Tag.id == tag.id)).limit(limit).all()
+                bestsellers = query.filter(Product.badge == "Bestseller").order_by(Product.rating.desc(), Product.reviews_count.desc()).limit(limit).all()
+                if len(bestsellers) < limit:
+                    # Top rated/reviewed products as backfill
+                    existing_ids = {p.id for p in bestsellers}
+                    extras = (
+                        query.filter(~Product.id.in_(existing_ids))
+                        .order_by(Product.reviews_count.desc(), Product.rating.desc())
+                        .limit(limit - len(bestsellers))
+                        .all()
+                    )
+                    products = bestsellers + extras
                 else:
-                    products = query.limit(limit).all()
+                    products = bestsellers
+        elif slug in ("new-arrivals", "new"):
+            col = db.query(Collection).filter(Collection.slug.in_(["new-arrivals", "new"]), Collection.is_active == True).first()
+            if col and col.products:
+                products = [p for p in col.products if p.status == "ACTIVE"][:limit]
+            else:
+                products = query.order_by(Product.id.desc()).limit(limit).all()
+        else:
+            # Check if matching collection slug
+            col = db.query(Collection).filter(Collection.slug == slug, Collection.is_active == True).first()
+            if col and col.products:
+                products = [p for p in col.products if p.status == "ACTIVE"][:limit]
+            else:
+                # Check if matching category slug
+                category = db.query(Category).filter(Category.slug == slug).first()
+                if category:
+                    category_ids = [category.id] + [ch.id for ch in category.children]
+                    products = query.filter(Product.categories.any(Category.id.in_(category_ids))).limit(limit).all()
+                else:
+                    # Check tag
+                    tag = db.query(Tag).filter(Tag.name.ilike(slug)).first()
+                    if tag:
+                        products = query.filter(Product.tags.any(Tag.id == tag.id)).limit(limit).all()
+                    else:
+                        products = query.limit(limit).all()
 
         items = [_to_product_list_item(p) for p in products]
         return ProductCollectionSectionOut(
@@ -279,4 +292,3 @@ def get_storefront_content(db: Session = Depends(get_db)) -> StorefrontResponse:
         brand=brand_out,
         hero_campaigns=hero_campaigns,
     )
-

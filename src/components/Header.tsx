@@ -1,8 +1,15 @@
 import { useState, useEffect } from 'react';
 import { SearchIcon, HeartIcon, ShoppingBagIcon, UserIcon, MenuIcon, XIcon, YarnLogo } from './Icons';
 import type { AppPage } from '../lib/routes';
+import { useCatalogue } from './CatalogueProvider';
 
 type Page = AppPage;
+
+interface NavLink {
+  label: string;
+  page?: Page;
+  href?: string;
+}
 
 interface HeaderProps {
   currentPage: Page;
@@ -14,17 +21,19 @@ interface HeaderProps {
   onAccountOpen: () => void;
 }
 
-const navLinks = [
+const baseNavLinks: NavLink[] = [
   { label: 'Home', page: 'home' as Page },
   { label: 'Shop', page: 'shop' as Page },
-  { label: 'Categories', href: '/shop' },
-  { label: 'Gifts', href: '/shop?category=Gifts' },
-  { label: 'Pooja Collection', href: '/shop?category=Pooja' },
-  { label: 'Custom Orders', href: '/contact?subject=custom-order' },
-  { label: 'About Us', page: 'about' as Page },
 ];
 
 export default function Header({ currentPage, onNavigate, cartCount, wishlistCount, onSearchOpen, onCartOpen, onAccountOpen }: HeaderProps) {
+  const { categories } = useCatalogue();
+  const navLinks: NavLink[] = [
+    ...baseNavLinks,
+    ...categories.slice(0, 3).map(category => ({ label: category.name, href: `/shop?category=${encodeURIComponent(category.slug)}` })),
+    { label: 'Custom Orders', href: '/contact?subject=custom-order' },
+    { label: 'About Us', page: 'about' as Page },
+  ];
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 

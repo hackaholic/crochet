@@ -9,11 +9,19 @@ export interface Product {
   image: string;
   images?: string[];
   category: string;
+  primaryCategory?: TaxonomyReference;
+  categories?: TaxonomyReference[];
+  collections?: TaxonomyReference[];
   badge?: string;
   tags?: string[];
   description?: string;
   customizable?: boolean;
   inStock?: boolean;
+}
+
+export interface TaxonomyReference {
+  name: string;
+  slug: string;
 }
 
 const IMG = (id: string, w = 600, h = 600) =>
@@ -214,78 +222,6 @@ export const products: Product[] = [
     tags: ['baby', 'birthday', 'just because'],
     customizable: false,
   },
-];
-
-export const categories = [
-  {
-    id: 'romantic',
-    name: 'Romantic Gifts',
-    description: 'Crochet roses, tulips, hearts and couple dolls',
-    image: IMG('photo-1700171518313-5dd219beaaa6', 500, 600),
-    color: '#F2C4CE',
-  },
-  {
-    id: 'birthday',
-    name: 'Birthday Gifts',
-    description: 'Cute toys, flowers and personalized gifts',
-    image: IMG('photo-1602773984044-3ecbed81556d', 500, 600),
-    color: '#C5B9D6',
-  },
-  {
-    id: 'pooja',
-    name: 'Pooja & Spiritual',
-    description: 'Garlands, lotus flowers and festive décor',
-    image: IMG('photo-1700170447159-9d2d0da133a5', 500, 600),
-    color: '#EDE4D0',
-  },
-  {
-    id: 'home',
-    name: 'Home Décor',
-    description: 'Wall hangings, planters, coasters and baskets',
-    image: IMG('photo-1618574760337-2750f6251d20', 500, 600),
-    color: '#C2D9BF',
-  },
-  {
-    id: 'flowers',
-    name: 'Flowers & Bouquets',
-    description: 'Roses, sunflowers, tulips and mixed bouquets',
-    image: IMG('photo-1700171394718-2457b1190444', 500, 600),
-    color: '#F5E0D3',
-  },
-  {
-    id: 'amigurumi',
-    name: 'Amigurumi',
-    description: 'Handmade crochet animals and miniature dolls',
-    image: IMG('photo-1753370241607-5d48d8aaa70e', 500, 600),
-    color: '#EBF3EA',
-  },
-  {
-    id: 'baby',
-    name: 'Baby Collection',
-    description: 'Booties, caps, rattles and nursery decorations',
-    image: IMG('photo-1629019317873-3f603b269723', 500, 600),
-    color: '#EDE9F5',
-  },
-  {
-    id: 'keychains',
-    name: 'Keychains & Mini Gifts',
-    description: 'Small affordable crochet gifts and accessories',
-    image: IMG('photo-1700171458554-46cfd3f2a87a', 500, 600),
-    color: '#F2C4CE',
-  },
-];
-
-export const occasions = [
-  { id: 'birthday', name: 'Birthday', icon: '🎂', image: IMG('photo-1602773984044-3ecbed81556d', 400, 300) },
-  { id: 'anniversary', name: 'Anniversary', icon: '💍', image: IMG('photo-1700171518313-5dd219beaaa6', 400, 300) },
-  { id: 'valentine', name: "Valentine's Day", icon: '❤️', image: IMG('photo-1646182504823-a02b768e28b5', 400, 300) },
-  { id: 'wedding', name: 'Wedding', icon: '💐', image: IMG('photo-1700171394718-2457b1190444', 400, 300) },
-  { id: 'babyshower', name: 'Baby Shower', icon: '🍼', image: IMG('photo-1629019317873-3f603b269723', 400, 300) },
-  { id: 'housewarming', name: 'Housewarming', icon: '🏠', image: IMG('photo-1618574760337-2750f6251d20', 400, 300) },
-  { id: 'rakhi', name: 'Rakhi', icon: '🪡', image: IMG('photo-1700170447159-9d2d0da133a5', 400, 300) },
-  { id: 'diwali', name: 'Diwali', icon: '🪔', image: IMG('photo-1700171458554-46cfd3f2a87a', 400, 300) },
-  { id: 'mother', name: "Mother's Day", icon: '🌷', image: IMG('photo-1608825154649-2e9bb4cd4211', 400, 300) },
-  { id: 'justbecause', name: 'Just Because', icon: '🎁', image: IMG('photo-1602773974733-b56200c8653f', 400, 300) },
 ];
 
 export const reviews = [

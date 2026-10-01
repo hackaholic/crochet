@@ -6,6 +6,8 @@ build/
 !.env.example
 !.env.production
 !**/.env.example
+*.preprod*
+.env.preprod*
 .vite/
 .wrangler/
 vite.config.*.timestamp-*

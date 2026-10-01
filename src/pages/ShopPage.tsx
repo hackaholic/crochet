@@ -3,6 +3,7 @@ import ProductCard from '../components/ProductCard';
 import { FilterIcon, XIcon, ChevronDownIcon } from '../components/Icons';
 import type { Product } from '../data/products';
 import { useCatalogue } from '../components/CatalogueProvider';
+import { flattenCategories } from '../lib/api/catalogue';
 
 interface ShopPageProps {
   onAddToCart: (product: Product) => void;
@@ -11,14 +12,12 @@ interface ShopPageProps {
   onProductClick: (product: Product) => void;
 }
 
-const categoryFilters = ['Flowers', 'Gifts', 'Home Décor', 'Amigurumi', 'Pooja', 'Baby', 'Keychains'];
 const priceRanges = [
   { label: 'Under ₹299', min: 0, max: 299 },
   { label: '₹300 – ₹599', min: 300, max: 599 },
   { label: '₹600 – ₹999', min: 600, max: 999 },
   { label: 'Above ₹999', min: 1000, max: Infinity },
 ];
-const occasions = ['Romantic', 'Birthday', 'Wedding', 'Pooja', 'Baby Shower', 'Housewarming'];
 const sortOptions = ['Featured', 'Newest', 'Price: Low to High', 'Price: High to Low', 'Best Selling'];
 
 function FilterSection({ title, children, defaultOpen = true }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
@@ -38,13 +37,17 @@ function FilterSection({ title, children, defaultOpen = true }: { title: string;
 }
 
 export default function ShopPage({ onAddToCart, onToggleWishlist, wishlist, onProductClick }: ShopPageProps) {
-  const { products } = useCatalogue();
+  const { products, categories, collections } = useCatalogue();
+  const categoryFilters = flattenCategories(categories);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(() => {
     const category = new URLSearchParams(window.location.search).get('category');
     return category ? [category] : [];
   });
   const [selectedPriceRange, setSelectedPriceRange] = useState<number | null>(null);
-  const [selectedOccasions, setSelectedOccasions] = useState<string[]>([]);
+  const [selectedOccasions, setSelectedOccasions] = useState<string[]>(() => {
+    const collection = new URLSearchParams(window.location.search).get('collection');
+    return collection ? [collection] : [];
+  });
   const [customizableOnly, setCustomizableOnly] = useState(false);
   const [sortBy, setSortBy] = useState('Featured');
   const [filterOpen, setFilterOpen] = useState(false);
@@ -54,9 +57,11 @@ export default function ShopPage({ onAddToCart, onToggleWishlist, wishlist, onPr
     setSelectedCategories(prev => prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]);
 
   const filtered = products.filter(p => {
-    if (selectedCategories.length > 0 && !selectedCategories.some(c =>
-      p.category.toLowerCase().includes(c.toLowerCase()) ||
-      (c === 'Gifts' && p.tags?.includes('romantic'))
+    if (selectedCategories.length > 0 && !selectedCategories.some(slug =>
+      p.primaryCategory?.slug === slug || p.categories?.some(category => category.slug === slug)
+    )) return false;
+    if (selectedOccasions.length > 0 && !selectedOccasions.some(slug =>
+      p.collections?.some(collection => collection.slug === slug)
     )) return false;
     if (selectedPriceRange !== null) {
       const r = priceRanges[selectedPriceRange];
@@ -79,24 +84,25 @@ export default function ShopPage({ onAddToCart, onToggleWishlist, wishlist, onPr
   };
 
   const activeFilters = selectedCategories.length + (selectedPriceRange !== null ? 1 : 0) + selectedOccasions.length + (customizableOnly ? 1 : 0);
+  const categoryName = (slug: string) => categoryFilters.find(category => category.slug === slug)?.name ?? slug;
 
   const FilterPanel = () => (
     <div className="space-y-0">
       <FilterSection title="Category">
         <div className="space-y-2">
           {categoryFilters.map(cat => (
-            <label key={cat} className="flex items-center gap-3 cursor-pointer group">
+            <label key={cat.slug} className="flex items-center gap-3 cursor-pointer group">
               <div
-                onClick={() => toggleCategory(cat)}
-                className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors cursor-pointer shrink-0 ${selectedCategories.includes(cat) ? 'bg-[#C4622D] border-[#C4622D]' : 'border-[#D4C5B5] group-hover:border-[#C4622D]'}`}
+                onClick={() => toggleCategory(cat.slug)}
+                className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors cursor-pointer shrink-0 ${selectedCategories.includes(cat.slug) ? 'bg-[#C4622D] border-[#C4622D]' : 'border-[#D4C5B5] group-hover:border-[#C4622D]'}`}
               >
-                {selectedCategories.includes(cat) && (
+                {selectedCategories.includes(cat.slug) && (
                   <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
                     <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 )}
               </div>
-              <span className="text-sm text-[#5C3D2E] group-hover:text-[#2C1810] transition-colors">{cat}</span>
+              <span className="text-sm text-[#5C3D2E] group-hover:text-[#2C1810] transition-colors">{cat.name}</span>
             </label>
           ))}
         </div>
@@ -120,13 +126,13 @@ export default function ShopPage({ onAddToCart, onToggleWishlist, wishlist, onPr
 
       <FilterSection title="Occasion" defaultOpen={false}>
         <div className="flex flex-wrap gap-2">
-          {occasions.map(occ => (
+          {collections.map(collection => (
             <button
-              key={occ}
-              onClick={() => setSelectedOccasions(prev => prev.includes(occ) ? prev.filter(o => o !== occ) : [...prev, occ])}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${selectedOccasions.includes(occ) ? 'bg-[#C4622D] text-white border-[#C4622D]' : 'border-[#EDE4D0] text-[#5C3D2E] hover:border-[#C4622D]'}`}
+              key={collection.slug}
+              onClick={() => setSelectedOccasions(prev => prev.includes(collection.slug) ? prev.filter(slug => slug !== collection.slug) : [...prev, collection.slug])}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${selectedOccasions.includes(collection.slug) ? 'bg-[#C4622D] text-white border-[#C4622D]' : 'border-[#EDE4D0] text-[#5C3D2E] hover:border-[#C4622D]'}`}
             >
-              {occ}
+              {collection.name}
             </button>
           ))}
         </div>
@@ -183,8 +189,14 @@ export default function ShopPage({ onAddToCart, onToggleWishlist, wishlist, onPr
           <div className="flex flex-wrap gap-2 flex-1">
             {selectedCategories.map(cat => (
               <span key={cat} className="flex items-center gap-1.5 px-3 py-1 bg-[#F2C4CE] text-[#C4622D] rounded-full text-xs font-medium">
-                {cat}
+                {categoryName(cat)}
                 <button onClick={() => toggleCategory(cat)}><XIcon size={12} /></button>
+              </span>
+            ))}
+            {selectedOccasions.map(slug => (
+              <span key={slug} className="flex items-center gap-1.5 px-3 py-1 bg-[#F2C4CE] text-[#C4622D] rounded-full text-xs font-medium">
+                {collections.find(collection => collection.slug === slug)?.name ?? slug}
+                <button onClick={() => setSelectedOccasions(previous => previous.filter(value => value !== slug))}><XIcon size={12} /></button>
               </span>
             ))}
           </div>

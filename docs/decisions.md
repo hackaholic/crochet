@@ -2,6 +2,22 @@
 
 Record decisions that affect more than one file, task, or future agent. Newest entries go first.
 
+## 2026-10-01 — Keep the founder story as static editorial content
+
+Decision: The verified Sulocraft origin story and About-page prose live in frontend source for V1. Products, taxonomy, prices, availability, campaigns, homepage sections, contact channels, and other operational content remain backend-managed.
+
+Reason: The founder story is stable brand history, benefits from immediate indexable rendering, and does not need an admin workflow. Static content must still be factual; fictional founders, team members, business metrics, dates, sourcing claims, and customer counts are prohibited.
+
+Impact: Anupama Sharma's account of learning crochet from her grandmother and naming Sulocraft after her mother, Sulochana, is the canonical About-page narrative. Future edits require normal content review and deployment.
+
+## 2026-10-01 — Product categories separated from gift collections
+
+Decision: Categories describe what a product is; collections describe gift intent, occasion, campaign, or merchandising. Tags describe flexible discovery attributes. Products remain single records and can join multiple classifications while keeping one primary leaf category.
+
+Reason: Most Sulocraft products can be gifts. Treating gifts as product categories creates duplicate products, confusing navigation, and a taxonomy that cannot grow cleanly.
+
+Impact: The disposable development catalogue may be reset. Gemini implements [product-taxonomy.md](product-taxonomy.md); Codex later consumes the dynamic APIs without changing the existing visual design.
+
 ## 2026-10-01 — Cloudflare incoming email and Resend transactional email
 
 Decision: Use Cloudflare Email Routing for incoming `hello@`, `support@`, and `orders@sulocraft.com` mail forwarded to the owner's private Gmail, and use Resend behind the backend `EmailService` for all automated V1 messages. Default automated sender is `Sulocraft <orders@sulocraft.com>`.

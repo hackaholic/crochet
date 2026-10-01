@@ -9,8 +9,7 @@ paths:
       tags:
       - catalogue
       summary: Get Categories
-      description: Retrieve all categories. By default returns root categories with
-        nested children.
+      description: Retrieve all categories conforming to product-taxonomy spec.
       operationId: get_categories_api_v1_categories_get
       parameters:
       - name: flat
@@ -22,6 +21,15 @@ paths:
           default: false
           title: Flat
         description: Return flat list instead of hierarchical tree
+      - name: includeEmpty
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: Include empty categories
+          default: false
+          title: Includeempty
+        description: Include empty categories
       responses:
         '200':
           description: Successful Response
@@ -43,7 +51,8 @@ paths:
       tags:
       - catalogue
       summary: Get Category By Slug
-      description: Retrieve a single category by its slug.
+      description: Retrieve a single category by its slug with accurate descendant
+        product count.
       operationId: get_category_by_slug_api_v1_categories__slug__get
       parameters:
       - name: slug
@@ -70,7 +79,8 @@ paths:
       tags:
       - catalogue
       summary: Get Category Products
-      description: Retrieve all products under a category (including subcategories).
+      description: Retrieve all products under a category (including subcategories)
+        deduplicated.
       operationId: get_category_products_api_v1_categories__slug__products_get
       parameters:
       - name: slug
@@ -120,6 +130,107 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/collections:
+    get:
+      tags:
+      - catalogue
+      summary: Get Collections
+      description: Retrieve active and currently scheduled collections ordered by
+        display_order.
+      operationId: get_collections_api_v1_collections_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/CollectionOut'
+                type: array
+                title: Response Get Collections Api V1 Collections Get
+  /api/v1/collections/{slug}:
+    get:
+      tags:
+      - catalogue
+      summary: Get Collection By Slug
+      description: Retrieve a single active scheduled collection by slug.
+      operationId: get_collection_by_slug_api_v1_collections__slug__get
+      parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Slug
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectionOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/collections/{slug}/products:
+    get:
+      tags:
+      - catalogue
+      summary: Get Collection Products
+      description: Retrieve all active products in a collection ordered by assignment
+        display_order.
+      operationId: get_collection_products_api_v1_collections__slug__products_get
+      parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Slug
+      - name: sort
+        in: query
+        required: false
+        schema:
+          type: string
+          default: featured
+          title: Sort
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 50
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductListItem'
+                title: Response Get Collection Products Api V1 Collections  Slug  Products
+                  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/products:
     get:
       tags:
@@ -138,6 +249,16 @@ paths:
           description: Filter by category slug or name
           title: Category
         description: Filter by category slug or name
+      - name: collection
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filter by collection slug or name
+          title: Collection
+        description: Filter by collection slug or name
       - name: tag
         in: query
         required: false
@@ -2812,6 +2933,54 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/categories:
+    get:
+      tags:
+      - admin
+      summary: List Admin Categories
+      description: List all categories for admin inspection including inactive and
+        empty.
+      operationId: list_admin_categories_api_v1_admin_categories_get
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminCategoryOut'
+                title: Response List Admin Categories Api V1 Admin Categories Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
     post:
       tags:
       - admin
@@ -2867,7 +3036,7 @@ paths:
       tags:
       - admin
       summary: Update Category
-      description: Update taxonomy category details.
+      description: Update taxonomy category details with cycle prevention.
       operationId: update_category_api_v1_admin_categories__category_id__patch
       parameters:
       - name: category_id
@@ -2923,7 +3092,8 @@ paths:
       tags:
       - admin
       summary: Delete Category
-      description: Delete a taxonomy category.
+      description: Safe delete a taxonomy category rejecting if subcategories or products
+        are attached.
       operationId: delete_category_api_v1_admin_categories__category_id__delete
       parameters:
       - name: category_id
@@ -2967,6 +3137,325 @@ paths:
                   type: string
                 title: Response Delete Category Api V1 Admin Categories  Category
                   Id  Delete
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/collections:
+    get:
+      tags:
+      - admin
+      summary: List Admin Collections
+      description: List all collections for store administration.
+      operationId: list_admin_collections_api_v1_admin_collections_get
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminCollectionOut'
+                title: Response List Admin Collections Api V1 Admin Collections Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - admin
+      summary: Create Collection
+      description: Create a new merchandising or evergreen collection.
+      operationId: create_collection_api_v1_admin_collections_post
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCollectionCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCollectionOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/collections/{collection_id}:
+    get:
+      tags:
+      - admin
+      summary: Get Admin Collection
+      description: Get single collection by ID.
+      operationId: get_admin_collection_api_v1_admin_collections__collection_id__get
+      parameters:
+      - name: collection_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Collection Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCollectionOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    patch:
+      tags:
+      - admin
+      summary: Update Collection
+      description: Update collection fields.
+      operationId: update_collection_api_v1_admin_collections__collection_id__patch
+      parameters:
+      - name: collection_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Collection Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCollectionUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCollectionOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - admin
+      summary: Delete Collection
+      description: Delete a collection and detach associated products.
+      operationId: delete_collection_api_v1_admin_collections__collection_id__delete
+      parameters:
+      - name: collection_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Collection Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+                title: Response Delete Collection Api V1 Admin Collections  Collection
+                  Id  Delete
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/collections/{collection_id}/products:
+    post:
+      tags:
+      - admin
+      summary: Assign Collection Products
+      description: Assign products to a collection, replacing existing memberships.
+      operationId: assign_collection_products_api_v1_admin_collections__collection_id__products_post
+      parameters:
+      - name: collection_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Collection Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCollectionAssignProducts'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Assign Collection Products Api V1 Admin Collections  Collection
+                  Id  Products Post
         '422':
           description: Validation Error
           content:
@@ -4317,13 +4806,13 @@ paths:
                 type: object
                 title: Response Health Check Health Get
   /static/images/{image_path}:
-    head:
+    get:
       tags:
       - system
       summary: Get Mock Static Image
       description: Serve local static assets or redirect to high-res photography during
         development.
-      operationId: get_mock_static_image_static_images__image_path__head
+      operationId: get_mock_static_image_static_images__image_path__get
       parameters:
       - name: image_path
         in: path
@@ -4343,13 +4832,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-    get:
+    head:
       tags:
       - system
       summary: Get Mock Static Image
       description: Serve local static assets or redirect to high-res photography during
         development.
-      operationId: get_mock_static_image_static_images__image_path__head
+      operationId: get_mock_static_image_static_images__image_path__get
       parameters:
       - name: image_path
         in: path
@@ -4670,6 +5159,11 @@ components:
           - type: string
           - type: 'null'
           title: Description
+        imageKey:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imagekey
         image:
           anyOf:
           - type: string
@@ -4688,6 +5182,20 @@ components:
           type: boolean
           title: Isactive
           default: true
+        showWhenEmpty:
+          type: boolean
+          title: Showwhenempty
+          default: false
+        seoTitle:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Seotitle
+        seoDescription:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Seodescription
       type: object
       required:
       - name
@@ -4714,11 +5222,21 @@ components:
           - type: string
           - type: 'null'
           title: Description
+        imageKey:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imagekey
         image:
           anyOf:
           - type: string
           - type: 'null'
           title: Image
+        imageUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imageurl
         icon:
           anyOf:
           - type: string
@@ -4732,10 +5250,36 @@ components:
           type: boolean
           title: Isactive
           default: true
+        showWhenEmpty:
+          type: boolean
+          title: Showwhenempty
+          default: false
+        seoTitle:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Seotitle
+        seoDescription:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Seodescription
         productsCount:
           type: integer
           title: Productscount
           default: 0
+        createdAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Createdat
+        updatedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Updatedat
       type: object
       required:
       - id
@@ -4765,6 +5309,11 @@ components:
           - type: string
           - type: 'null'
           title: Description
+        imageKey:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imagekey
         image:
           anyOf:
           - type: string
@@ -4785,9 +5334,242 @@ components:
           - type: boolean
           - type: 'null'
           title: Isactive
+        showWhenEmpty:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Showwhenempty
+        seoTitle:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Seotitle
+        seoDescription:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Seodescription
       type: object
       title: AdminCategoryUpdate
       description: Payload to update an existing category.
+    AdminCollectionAssignProducts:
+      properties:
+        productIds:
+          items:
+            type: integer
+          type: array
+          title: Productids
+      type: object
+      required:
+      - productIds
+      title: AdminCollectionAssignProducts
+      description: Payload to assign products to a collection.
+    AdminCollectionCreate:
+      properties:
+        name:
+          type: string
+          maxLength: 150
+          minLength: 2
+          title: Name
+        slug:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Slug
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        imageKey:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imagekey
+        collectionType:
+          type: string
+          title: Collectiontype
+          default: MERCHANDISING
+        displayOrder:
+          type: integer
+          title: Displayorder
+          default: 0
+        isActive:
+          type: boolean
+          title: Isactive
+          default: true
+        startsAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Startsat
+        endsAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Endsat
+        seoTitle:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Seotitle
+        seoDescription:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Seodescription
+      type: object
+      required:
+      - name
+      title: AdminCollectionCreate
+      description: Payload to create a new collection.
+    AdminCollectionOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        slug:
+          type: string
+          title: Slug
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        imageKey:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imagekey
+        imageUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imageurl
+        collectionType:
+          type: string
+          title: Collectiontype
+          default: MERCHANDISING
+        displayOrder:
+          type: integer
+          title: Displayorder
+          default: 0
+        isActive:
+          type: boolean
+          title: Isactive
+          default: true
+        startsAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Startsat
+        endsAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Endsat
+        seoTitle:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Seotitle
+        seoDescription:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Seodescription
+        productsCount:
+          type: integer
+          title: Productscount
+          default: 0
+        createdAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Createdat
+        updatedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Updatedat
+      type: object
+      required:
+      - id
+      - name
+      - slug
+      title: AdminCollectionOut
+      description: Collection representation for administration.
+    AdminCollectionUpdate:
+      properties:
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+        slug:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Slug
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        imageKey:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imagekey
+        collectionType:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Collectiontype
+        displayOrder:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Displayorder
+        isActive:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Isactive
+        startsAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Startsat
+        endsAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Endsat
+        seoTitle:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Seotitle
+        seoDescription:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Seodescription
+      type: object
+      title: AdminCollectionUpdate
+      description: Payload to update an existing collection.
     AdminCouponCreate:
       properties:
         code:
@@ -5763,11 +6545,21 @@ components:
           type: boolean
           title: Customizable
           default: false
+        primaryCategoryId:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Primarycategoryid
         categoryIds:
           items:
             type: integer
           type: array
           title: Categoryids
+        collectionIds:
+          items:
+            type: integer
+          type: array
+          title: Collectionids
         tagIds:
           items:
             type: integer
@@ -5861,6 +6653,11 @@ components:
         reviewsCount:
           type: integer
           title: Reviewscount
+        primaryCategoryId:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Primarycategoryid
         categoryIds:
           items:
             type: integer
@@ -5871,6 +6668,16 @@ components:
             type: string
           type: array
           title: Categorynames
+        collectionIds:
+          items:
+            type: integer
+          type: array
+          title: Collectionids
+        collectionNames:
+          items:
+            type: string
+          type: array
+          title: Collectionnames
         tagIds:
           items:
             type: integer
@@ -5975,6 +6782,11 @@ components:
           - type: boolean
           - type: 'null'
           title: Customizable
+        primaryCategoryId:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Primarycategoryid
         categoryIds:
           anyOf:
           - items:
@@ -5982,6 +6794,13 @@ components:
             type: array
           - type: 'null'
           title: Categoryids
+        collectionIds:
+          anyOf:
+          - items:
+              type: integer
+            type: array
+          - type: 'null'
+          title: Collectionids
         tagIds:
           anyOf:
           - items:
@@ -6553,7 +7372,7 @@ components:
           title: Eyebrow
         categories:
           items:
-            $ref: '#/components/schemas/CategorySummary'
+            $ref: '#/components/schemas/app__schemas__storefront__CategorySummary'
           type: array
           title: Categories
       type: object
@@ -6574,11 +7393,11 @@ components:
         slug:
           type: string
           title: Slug
-        parent_id:
+        parentId:
           anyOf:
           - type: integer
           - type: 'null'
-          title: Parent Id
+          title: Parentid
         description:
           anyOf:
           - type: string
@@ -6589,19 +7408,32 @@ components:
           - type: string
           - type: 'null'
           title: Image
+        imageUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imageurl
         icon:
           anyOf:
           - type: string
           - type: 'null'
           title: Icon
-        display_order:
+        displayOrder:
           type: integer
-          title: Display Order
+          title: Displayorder
           default: 0
-        is_active:
+        isActive:
           type: boolean
-          title: Is Active
+          title: Isactive
           default: true
+        showWhenEmpty:
+          type: boolean
+          title: Showwhenempty
+          default: false
+        productCount:
+          type: integer
+          title: Productcount
+          default: 0
         children:
           items:
             $ref: '#/components/schemas/CategoryOut'
@@ -6614,8 +7446,9 @@ components:
       - name
       - slug
       title: CategoryOut
-      description: Category output schema with nested children hierarchy.
-    CategorySummary:
+      description: Category output schema with nested children hierarchy and product
+        count.
+    CollectionOut:
       properties:
         id:
           type: integer
@@ -6632,16 +7465,64 @@ components:
           - type: 'null'
           title: Description
         imageUrl:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Imageurl
-          default: ''
+        collectionType:
+          type: string
+          title: Collectiontype
+          default: MERCHANDISING
+        displayOrder:
+          type: integer
+          title: Displayorder
+          default: 0
+        isActive:
+          type: boolean
+          title: Isactive
+          default: true
+        startsAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Startsat
+        endsAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Endsat
+        productCount:
+          type: integer
+          title: Productcount
+          default: 0
       type: object
       required:
       - id
       - name
       - slug
-      title: CategorySummary
-      description: Summarized category for homepage category grids.
+      title: CollectionOut
+      description: Collection public output schema conforming to launch taxonomy contract.
+    CollectionSummary:
+      properties:
+        id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Id
+        name:
+          type: string
+          title: Name
+        slug:
+          type: string
+          title: Slug
+      type: object
+      required:
+      - name
+      - slug
+      title: CollectionSummary
+      description: Concise collection representation for product classification.
     CouponApplyRequest:
       properties:
         code:
@@ -7489,11 +8370,22 @@ components:
         category:
           type: string
           title: Category
+          default: ''
+        primaryCategory:
+          anyOf:
+          - $ref: '#/components/schemas/app__schemas__catalogue__CategorySummary'
+          - type: 'null'
         categories:
           items:
-            type: string
+            $ref: '#/components/schemas/app__schemas__catalogue__CategorySummary'
           type: array
           title: Categories
+          default: []
+        collections:
+          items:
+            $ref: '#/components/schemas/CollectionSummary'
+          type: array
+          title: Collections
           default: []
         tags:
           items:
@@ -7593,7 +8485,6 @@ components:
       - id
       - name
       - slug
-      - category
       - price
       title: ProductDetail
       description: Full product detail conforming to Section 2 of Specification.
@@ -7685,11 +8576,22 @@ components:
         category:
           type: string
           title: Category
+          default: ''
+        primaryCategory:
+          anyOf:
+          - $ref: '#/components/schemas/app__schemas__catalogue__CategorySummary'
+          - type: 'null'
         categories:
           items:
-            type: string
+            $ref: '#/components/schemas/app__schemas__catalogue__CategorySummary'
           type: array
           title: Categories
+          default: []
+        collections:
+          items:
+            $ref: '#/components/schemas/CollectionSummary'
+          type: array
+          title: Collections
           default: []
         badge:
           anyOf:
@@ -7726,7 +8628,6 @@ components:
       - slug
       - price
       - image
-      - category
       title: ProductListItem
       description: Product card summary conforming to Section 2 of Specification &
         frontend UI.
@@ -8282,3 +9183,49 @@ components:
       type: object
       title: WishlistOut
       description: Customer wishlist response.
+    app__schemas__catalogue__CategorySummary:
+      properties:
+        id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Id
+        name:
+          type: string
+          title: Name
+        slug:
+          type: string
+          title: Slug
+      type: object
+      required:
+      - name
+      - slug
+      title: CategorySummary
+      description: Concise category representation for product classification.
+    app__schemas__storefront__CategorySummary:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        slug:
+          type: string
+          title: Slug
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        imageUrl:
+          type: string
+          title: Imageurl
+          default: ''
+      type: object
+      required:
+      - id
+      - name
+      - slug
+      title: CategorySummary
+      description: Summarized category for homepage category grids.
