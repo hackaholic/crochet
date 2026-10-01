@@ -12,7 +12,10 @@ from app.db.session import get_db
 from app.models.order import Order, OrderStatus, OrderStatusHistory, PaymentStatus
 from app.models.payment import Payment, PaymentRecordStatus
 from app.models.user import User
-from app.services.notification import dispatch_order_placed_background
+from app.services.notification import (
+    dispatch_order_placed_background,
+    dispatch_payment_confirmed_background,
+)
 from app.schemas.payment import (
     PaymentIntentCreate,
     PaymentIntentOut,
@@ -204,6 +207,7 @@ def verify_payment(
     db.commit()
     db.refresh(payment)
     background_tasks.add_task(dispatch_order_placed_background, order.id)
+    background_tasks.add_task(dispatch_payment_confirmed_background, order.id, payment.id)
     return _to_payment_out(payment)
 
 
@@ -211,6 +215,7 @@ def verify_payment(
 async def payment_webhook(
     provider: str,
     request: Request,
+    background_tasks: BackgroundTasks,
     x_razorpay_signature: str | None = Header(default=None),
     x_signature: str | None = Header(default=None),
     db: Session = Depends(get_db),
@@ -263,6 +268,8 @@ async def payment_webhook(
                 )
                 db.add(history)
                 db.commit()
+                background_tasks.add_task(dispatch_order_placed_background, order.id)
+                background_tasks.add_task(dispatch_payment_confirmed_background, order.id, payment.id)
 
     return PaymentWebhookResult(status="ok", message="Webhook processed successfully.")
 

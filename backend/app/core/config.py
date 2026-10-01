@@ -69,8 +69,11 @@ class Settings:
     twilio_from_phone: str | None = os.getenv("TWILIO_FROM_PHONE")
 
     # Email Notifications (SMTP / Resend / Mock)
-    email_provider: str = os.getenv("EMAIL_PROVIDER", "mock")
-    email_from: str = os.getenv("EMAIL_FROM", "Sulocraft <orders@sulocraft.com>")
+    email_provider: str = os.getenv("EMAIL_PROVIDER", "mock" if os.getenv("APP_ENV", "development") != "production" else "resend")
+    email_from_orders: str = os.getenv("EMAIL_FROM_ORDERS", "Sulocraft <orders@sulocraft.com>")
+    email_from_support: str = os.getenv("EMAIL_FROM_SUPPORT", "Sulocraft Support <support@sulocraft.com>")
+    email_from_hello: str = os.getenv("EMAIL_FROM_HELLO", "Sulocraft <hello@sulocraft.com>")
+    email_from: str = os.getenv("EMAIL_FROM", os.getenv("EMAIL_FROM_ORDERS", "Sulocraft <orders@sulocraft.com>"))
     smtp_host: str = os.getenv("SMTP_HOST", "smtp.gmail.com")
     smtp_port: int = int(os.getenv("SMTP_PORT", "587"))
     smtp_user: str | None = os.getenv("SMTP_USER")

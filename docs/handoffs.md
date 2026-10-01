@@ -2,6 +2,32 @@
 
 Use this file whenever frontend or backend work becomes ready for the other side. Newest handoff goes first.
 
+## 2026-10-01 — V1 transactional email service & Resend integration complete
+
+From: Gemini
+To: Codex / ChatGPT
+Status: Complete & verified
+
+The canonical transactional email service conforming to [email-architecture.md](email-architecture.md) is implemented and verified:
+- **Unified Boundary**: All business and auth flows route strictly through `EmailService` (`backend/app/services/notification/service.py`); no routes invoke Resend or SMTP directly.
+- **Provider & Identity Architecture**:
+  - `EMAIL_PROVIDER=resend` for production (`EMAIL_PROVIDER=mock` retained as default in development and automated testing).
+  - Multi-sender identities: `EMAIL_FROM_ORDERS` (`Sulocraft <orders@sulocraft.com>`) as canonical transactional default, `EMAIL_FROM_SUPPORT` (`Sulocraft Support <support@sulocraft.com>`) for customer care / refunds, `EMAIL_FROM_HELLO` (`Sulocraft <hello@sulocraft.com>`), with `EMAIL_FROM` preserved as migration fallback.
+- **Core Methods Implemented**:
+  - `send_magic_link(db, to_email, magic_link, expires_minutes=15)`: from `orders@sulocraft.com`, token URL strictly redacted from audit logs.
+  - `send_order_confirmation(db, order)`: from `orders@sulocraft.com`, checks idempotency.
+  - `send_payment_confirmation(db, order, payment)`: from `orders@sulocraft.com`, checks idempotency.
+  - `send_shipping_update(db, order, carrier, tracking_number, tracking_url)`: from `orders@sulocraft.com`, checks idempotency.
+  - `send_delivery_update(db, order)`: from `orders@sulocraft.com`, checks idempotency.
+  - `send_refund_notification(db, order, refund_amount, reason)`: from `support@sulocraft.com`, checks idempotency.
+- **Lifecycle Event Mapping**:
+  - Payment verified (`POST /payments/verify` & webhooks) dispatches `dispatch_payment_confirmed_background`.
+  - Order status transitions in admin (`PATCH /orders/{orderNumber}/status`) route to `send_shipping_update` (SHIPPED), `send_delivery_update` (DELIVERED), and `send_refund_notification` (CANCELLED with paid status).
+- **Idempotency**: All methods verify prior successful records (`SENT` or `MOCK`) in `NotificationLog` before dispatching, avoiding duplicate emails on retries.
+- **Production Fail-Closed Startup**: `lifespan` in `app/main.py` validates that `APP_ENV=production` with `EMAIL_PROVIDER=resend` has a non-empty `RESEND_API_KEY` and the sender domain is `@sulocraft.com`.
+- **Privacy & Security**: Raw magic-link tokens, provider credentials, and the private forwarding address are absent from repository files, logs, and responses.
+- **Testing & Verification**: 8 dedicated tests in `backend/tests/test_email_service.py` pass; all 87 tests in backend suite pass cleanly. Live Docker container updated and verified.
+
 ## 2026-10-01 — V1 email provider and domain plan
 
 From: Codex

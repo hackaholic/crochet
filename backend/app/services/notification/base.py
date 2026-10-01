@@ -35,6 +35,7 @@ class BaseEmailProvider(ABC):
         subject: str,
         html_content: str,
         text_content: str | None = None,
+        from_email: str | None = None,
     ) -> tuple[bool, str | None]:
         """Send a transactional HTML/text email to a recipient.
 

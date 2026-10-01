@@ -2,6 +2,31 @@
 
 This file records the current cross-team integration gate. Update it when a handoff becomes usable or becomes blocked.
 
+## 2026-10-01 — V1 Transactional Email & Resend Service gate
+
+Status: Ready for integration
+
+Frontend owner: Codex / ChatGPT  
+Backend owner: Gemini
+
+### What is ready
+
+- **EmailService Unified Abstraction**: `EmailService` (`backend/app/services/notification/service.py`) encapsulates all outbound transactional email. No business or auth route interacts directly with Resend or SMTP.
+- **Provider & Sender Identities**:
+  - `EMAIL_PROVIDER=resend` for production, with zero-credential `MockEmailProvider` default in development/tests.
+  - Multi-sender identities: `EMAIL_FROM_ORDERS` (`Sulocraft <orders@sulocraft.com>`) as canonical transactional default, `EMAIL_FROM_SUPPORT` (`Sulocraft Support <support@sulocraft.com>`), `EMAIL_FROM_HELLO` (`Sulocraft <hello@sulocraft.com>`), and `EMAIL_FROM` migration fallback.
+- **Six Core Methods**:
+  - `send_magic_link(db, to_email, magic_link, expires_minutes=15)`
+  - `send_order_confirmation(db, order)`
+  - `send_payment_confirmation(db, order, payment)`
+  - `send_shipping_update(db, order, carrier, tracking_number, tracking_url)`
+  - `send_delivery_update(db, order)`
+  - `send_refund_notification(db, order, refund_amount, reason)`
+- **Idempotency Guard**: All order events verify against prior successful `NotificationLog` records (`SENT` or `MOCK`) before sending, preventing duplicate emails on webhook retries or status updates.
+- **Production Fail-Closed Startup**: Application startup fails closed with `RuntimeError` if `APP_ENV=production` and `EMAIL_PROVIDER=resend` is missing `RESEND_API_KEY` or sender does not use `@sulocraft.com`.
+- **Privacy & Redaction**: Raw magic-link tokens, provider credentials, and private forwarding addresses are strictly excluded from git, responses, and audit logs (`[magic link dispatched — URL redacted]`).
+- **Automated Tests**: 8 dedicated tests in `backend/tests/test_email_service.py` pass; full backend test suite has 87 of 87 tests passing.
+
 ## 2026-10-01 — Global V1 authentication gate
 
 Status: Ready for integration

@@ -311,3 +311,289 @@ If you didn't request this link, you can safely ignore this email — your accou
 """
 
     return html, text
+
+
+def render_payment_confirmation_email(order_data: dict, payment_data: dict) -> tuple[str, str]:
+    """Generate HTML and plain text for payment receipt/confirmation."""
+    order_number = order_data.get("orderNumber", "")
+    customer_name = order_data.get("shippingAddress", {}).get("name", "Valued Customer")
+    total_amount = order_data.get("totalAmount", 0)
+    provider = payment_data.get("provider", "ONLINE").upper()
+    payment_id = payment_data.get("provider_payment_id") or payment_data.get("providerPaymentId") or "Confirmed"
+    tracking_url = order_data.get("trackingUrl", f"https://sulocraft.com/account/orders/{order_number}")
+
+    html = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Sulocraft - Payment Confirmed #{order_number}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #faf7f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #faf7f5; padding: 30px 15px;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06);">
+                    <tr>
+                        <td style="background-color: #832729; padding: 32px 30px; text-align: center;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 26px; font-weight: 700;">SULOCRAFT</h1>
+                            <p style="margin: 8px 0 0; color: #f5dcd7; font-size: 14px;">Payment Received with Thanks</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 36px 30px;">
+                            <h2 style="margin: 0 0 16px; color: #2b1f1d; font-size: 20px;">Payment Successful, {customer_name}!</h2>
+                            <p style="margin: 0 0 24px; color: #5a4b48; font-size: 15px; line-height: 1.6;">
+                                We have received your payment of <strong>&#8377;{int(total_amount):,}</strong> for Order <strong>#{order_number}</strong>.
+                            </p>
+                            <div style="background-color: #faf7f5; border-radius: 8px; padding: 20px; margin-bottom: 28px;">
+                                <table width="100%" cellspacing="0" cellpadding="0">
+                                    <tr>
+                                        <td style="color: #7d6b67; font-size: 13px;">Transaction ID:</td>
+                                        <td style="text-align: right; font-weight: 600; color: #2b1f1d;">{payment_id}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color: #7d6b67; font-size: 13px; padding-top: 8px;">Payment Gateway:</td>
+                                        <td style="text-align: right; font-weight: 600; color: #2b1f1d; padding-top: 8px;">{provider}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color: #7d6b67; font-size: 13px; padding-top: 8px;">Amount Paid:</td>
+                                        <td style="text-align: right; font-weight: 700; color: #832729; font-size: 18px; padding-top: 8px;">&#8377;{int(total_amount):,}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div style="text-align: center; margin: 32px 0 16px;">
+                                <a href="{tracking_url}" style="background-color: #832729; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 15px; display: inline-block;">
+                                    Track Your Order
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="background-color: #f7f3ef; padding: 24px 30px; text-align: center; color: #8a7a76; font-size: 13px; border-top: 1px solid #ede4df;">
+                            &copy; Sulocraft. All rights reserved.
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+"""
+
+    text = f"""SULOCRAFT - PAYMENT CONFIRMED #{order_number}
+
+Hello {customer_name},
+
+We have received your payment of Rs.{int(total_amount):,} for Order #{order_number}.
+Transaction ID: {payment_id}
+Gateway: {provider}
+
+Track order: {tracking_url}
+"""
+    return html, text
+
+
+def render_order_shipping_email(
+    order_data: dict,
+    carrier: str | None = None,
+    tracking_number: str | None = None,
+    tracking_url: str | None = None,
+) -> tuple[str, str]:
+    """Generate HTML and plain text for shipping confirmation with courier & tracking details."""
+    order_number = order_data.get("orderNumber", "")
+    customer_name = order_data.get("shippingAddress", {}).get("name", "Valued Customer")
+    dest_url = tracking_url or order_data.get("trackingUrl", f"https://sulocraft.com/account/orders/{order_number}")
+    carrier_name = carrier or "Express Courier"
+    tracking_code = tracking_number or "Pending"
+
+    html = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Sulocraft - Order #{order_number} Has Shipped!</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #faf7f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #faf7f5; padding: 30px 15px;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06);">
+                    <tr>
+                        <td style="background-color: #832729; padding: 32px 30px; text-align: center;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 26px; font-weight: 700;">SULOCRAFT</h1>
+                            <p style="margin: 8px 0 0; color: #f5dcd7; font-size: 14px;">Your Handcrafted Package is on its Way</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 36px 30px;">
+                            <h2 style="margin: 0 0 16px; color: #2b1f1d; font-size: 20px;">Great News, {customer_name}!</h2>
+                            <p style="margin: 0 0 20px; color: #5a4b48; font-size: 15px; line-height: 1.6;">
+                                Your order <strong>#{order_number}</strong> has been carefully packed and dispatched.
+                            </p>
+                            <div style="background-color: #f0f7f4; border: 1px solid #d4ebd9; border-radius: 8px; padding: 18px 20px; margin: 24px 0;">
+                                <p style="margin: 0 0 8px; color: #216335; font-size: 15px; font-weight: 600;">
+                                    Carrier: {carrier_name}
+                                </p>
+                                <p style="margin: 0; color: #216335; font-size: 14px;">
+                                    Tracking Number: <strong>{tracking_code}</strong>
+                                </p>
+                            </div>
+                            <div style="text-align: center; margin: 32px 0 16px;">
+                                <a href="{dest_url}" style="background-color: #832729; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 15px; display: inline-block;">
+                                    Track Shipment
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="background-color: #f7f3ef; padding: 24px 30px; text-align: center; color: #8a7a76; font-size: 13px; border-top: 1px solid #ede4df;">
+                            &copy; Sulocraft. All rights reserved.
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+"""
+
+    text = f"""SULOCRAFT - ORDER SHIPPED #{order_number}
+
+Hello {customer_name},
+
+Your order #{order_number} has been dispatched!
+Carrier: {carrier_name}
+Tracking Number: {tracking_code}
+
+Track online: {dest_url}
+"""
+    return html, text
+
+
+def render_order_delivery_email(order_data: dict) -> tuple[str, str]:
+    """Generate HTML and plain text for delivered status notification."""
+    order_number = order_data.get("orderNumber", "")
+    customer_name = order_data.get("shippingAddress", {}).get("name", "Valued Customer")
+    tracking_url = order_data.get("trackingUrl", f"https://sulocraft.com/account/orders/{order_number}")
+
+    html = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Sulocraft - Order #{order_number} Delivered!</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #faf7f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #faf7f5; padding: 30px 15px;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06);">
+                    <tr>
+                        <td style="background-color: #832729; padding: 32px 30px; text-align: center;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 26px; font-weight: 700;">SULOCRAFT</h1>
+                            <p style="margin: 8px 0 0; color: #f5dcd7; font-size: 14px;">Package Delivered</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 36px 30px;">
+                            <h2 style="margin: 0 0 16px; color: #2b1f1d; font-size: 20px;">Delivered to Your Door, {customer_name}!</h2>
+                            <p style="margin: 0 0 20px; color: #5a4b48; font-size: 15px; line-height: 1.6;">
+                                Your order <strong>#{order_number}</strong> has been delivered. We hope our artisanal crochet creation brings warmth and joy to your home!
+                            </p>
+                            <div style="text-align: center; margin: 32px 0 16px;">
+                                <a href="{tracking_url}" style="background-color: #832729; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 15px; display: inline-block;">
+                                    View Order & Leave Review
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="background-color: #f7f3ef; padding: 24px 30px; text-align: center; color: #8a7a76; font-size: 13px; border-top: 1px solid #ede4df;">
+                            &copy; Sulocraft. All rights reserved.
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+"""
+
+    text = f"""SULOCRAFT - ORDER DELIVERED #{order_number}
+
+Hello {customer_name},
+
+Your order #{order_number} has been delivered! We hope you love your handmade piece.
+
+View order and leave a review: {tracking_url}
+"""
+    return html, text
+
+
+def render_refund_notification_email(
+    order_data: dict,
+    refund_amount: float,
+    reason: str | None = None,
+) -> tuple[str, str]:
+    """Generate HTML and plain text for refund notification."""
+    order_number = order_data.get("orderNumber", "")
+    customer_name = order_data.get("shippingAddress", {}).get("name", "Valued Customer")
+    reason_clean = reason or "Order cancellation requested."
+
+    html = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Sulocraft - Refund Issued #{order_number}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #faf7f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #faf7f5; padding: 30px 15px;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06);">
+                    <tr>
+                        <td style="background-color: #832729; padding: 32px 30px; text-align: center;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 26px; font-weight: 700;">SULOCRAFT</h1>
+                            <p style="margin: 8px 0 0; color: #f5dcd7; font-size: 14px;">Customer Care & Support</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 36px 30px;">
+                            <h2 style="margin: 0 0 16px; color: #2b1f1d; font-size: 20px;">Refund Notice, {customer_name}</h2>
+                            <p style="margin: 0 0 20px; color: #5a4b48; font-size: 15px; line-height: 1.6;">
+                                A refund of <strong>&#8377;{int(refund_amount):,}</strong> has been initiated for your Order <strong>#{order_number}</strong>.
+                            </p>
+                            <div style="background-color: #faf7f5; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+                                <p style="margin: 0 0 8px; color: #7d6b67; font-size: 13px;">Reason: <strong style="color: #2b1f1d;">{reason_clean}</strong></p>
+                                <p style="margin: 0; color: #7d6b67; font-size: 13px;">The amount will reflect in your original payment method in 5–7 business days.</p>
+                            </div>
+                            <p style="margin: 0; color: #5a4b48; font-size: 14px; line-height: 1.5;">
+                                If you have any questions, feel free to reply to this email or reach us at <a href="mailto:support@sulocraft.com" style="color: #832729;">support@sulocraft.com</a>.
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="background-color: #f7f3ef; padding: 24px 30px; text-align: center; color: #8a7a76; font-size: 13px; border-top: 1px solid #ede4df;">
+                            &copy; Sulocraft Support. All rights reserved.
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+"""
+
+    text = f"""SULOCRAFT - REFUND PROCESSED #{order_number}
+
+Hello {customer_name},
+
+A refund of Rs.{int(refund_amount):,} has been initiated for Order #{order_number}.
+Reason: {reason_clean}
+Funds typically reflect within 5–7 business days.
+
+Questions? Contact support@sulocraft.com
+"""
+    return html, text

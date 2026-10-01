@@ -24,8 +24,11 @@ class MockEmailProvider(BaseEmailProvider):
         subject: str,
         html_content: str,
         text_content: str | None = None,
+        from_email: str | None = None,
     ) -> tuple[bool, str | None]:
+        sender = from_email or settings.email_from_orders
         entry = {
+            "from": sender,
             "to": to_email,
             "subject": subject,
             "html": html_content,
@@ -33,7 +36,7 @@ class MockEmailProvider(BaseEmailProvider):
             "provider": "mock",
         }
         self.sent_emails.append(entry)
-        logger.info("[MockEmail] -> To: %s | Subject: %s", to_email, subject)
+        logger.info("[MockEmail] -> From: %s | To: %s | Subject: %s", sender, to_email, subject)
         return True, None
 
     def clear(self) -> None:
@@ -58,7 +61,7 @@ class SmtpEmailProvider(BaseEmailProvider):
         self.user = user or settings.smtp_user
         self.password = password or settings.smtp_password
         self.use_tls = use_tls if use_tls is not None else settings.smtp_tls
-        self.from_email = from_email or settings.email_from
+        self.from_email = from_email or settings.email_from_orders
 
     def send_email(
         self,
@@ -66,13 +69,15 @@ class SmtpEmailProvider(BaseEmailProvider):
         subject: str,
         html_content: str,
         text_content: str | None = None,
+        from_email: str | None = None,
     ) -> tuple[bool, str | None]:
         if not self.host or not self.user or not self.password:
             return False, "SMTP configuration incomplete (HOST, USER, PASSWORD required)"
 
+        sender = from_email or self.from_email or settings.email_from_orders
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
-        msg["From"] = self.from_email
+        msg["From"] = sender
         msg["To"] = to_email
 
         if text_content:
@@ -107,7 +112,7 @@ class ResendEmailProvider(BaseEmailProvider):
 
     def __init__(self, api_key: str | None = None, from_email: str | None = None) -> None:
         self.api_key = api_key or settings.resend_api_key
-        self.from_email = from_email or settings.email_from
+        self.from_email = from_email or settings.email_from_orders
 
     def send_email(
         self,
@@ -115,12 +120,14 @@ class ResendEmailProvider(BaseEmailProvider):
         subject: str,
         html_content: str,
         text_content: str | None = None,
+        from_email: str | None = None,
     ) -> tuple[bool, str | None]:
         if not self.api_key:
             return False, "Resend API key not configured"
 
+        sender = from_email or self.from_email or settings.email_from_orders
         payload = {
-            "from": self.from_email,
+            "from": sender,
             "to": [to_email],
             "subject": subject,
             "html": html_content,

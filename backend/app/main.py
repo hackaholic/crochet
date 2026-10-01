@@ -1,7 +1,8 @@
 """FastAPI entry point for Sulocraft."""
 
+import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -78,6 +79,13 @@ class CSRFOriginProtectionMiddleware(BaseHTTPMiddleware):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifecycle manager to initialize database schema and seed initial data."""
+    if settings.app_env.lower() == "production" and settings.email_provider.lower() == "resend":
+        if not settings.resend_api_key or not settings.resend_api_key.strip():
+            raise RuntimeError("Production EMAIL_PROVIDER=resend requires RESEND_API_KEY to be configured.")
+        sender = settings.email_from_orders
+        if "@sulocraft.com" not in sender.lower():
+            raise RuntimeError(f"Production email sender '{sender}' must be on the @sulocraft.com domain.")
+
     init_db()
     with SessionLocal() as db:
         seed_catalogue(db)
