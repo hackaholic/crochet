@@ -3979,12 +3979,290 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/storefront/sections:
+    get:
+      tags:
+      - admin
+      summary: List Admin Homepage Sections
+      description: List all configured homepage sections ordered by display_order.
+      operationId: list_admin_homepage_sections_api_v1_admin_storefront_sections_get
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminHomepageSectionOut'
+                title: Response List Admin Homepage Sections Api V1 Admin Storefront
+                  Sections Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - admin
+      summary: Create Admin Homepage Section
+      description: Create a new controlled homepage section.
+      operationId: create_admin_homepage_section_api_v1_admin_storefront_sections_post
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminHomepageSectionCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminHomepageSectionOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/storefront/sections/{section_id}:
+    get:
+      tags:
+      - admin
+      summary: Get Admin Homepage Section
+      description: Retrieve details for a single homepage section.
+      operationId: get_admin_homepage_section_api_v1_admin_storefront_sections__section_id__get
+      parameters:
+      - name: section_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Section Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminHomepageSectionOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    put:
+      tags:
+      - admin
+      summary: Update Admin Homepage Section
+      description: Update attributes, ordering, or visibility for a homepage section.
+      operationId: update_admin_homepage_section_api_v1_admin_storefront_sections__section_id__put
+      parameters:
+      - name: section_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Section Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminHomepageSectionUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminHomepageSectionOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - admin
+      summary: Delete Admin Homepage Section
+      description: Delete a homepage section.
+      operationId: delete_admin_homepage_section_api_v1_admin_storefront_sections__section_id__delete
+      parameters:
+      - name: section_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Section Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  anyOf:
+                  - type: string
+                  - type: integer
+                title: Response Delete Admin Homepage Section Api V1 Admin Storefront
+                  Sections  Section Id  Delete
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/storefront/home:
+    get:
+      tags:
+      - storefront
+      summary: Get Storefront Home
+      description: Retrieve full dynamic storefront homepage with brand, hero campaigns,
+        and resolved sections.
+      operationId: get_storefront_home_api_v1_storefront_home_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorefrontHomeResponse'
   /api/v1/storefront:
     get:
       tags:
       - storefront
       summary: Get Storefront Content
-      description: Retrieve public brand profile and active scheduled homepage campaigns.
+      description: Retrieve public brand profile and active scheduled homepage campaigns
+        (legacy compatibility).
       operationId: get_storefront_content_api_v1_storefront_get
       responses:
         '200':
@@ -4789,6 +5067,280 @@ components:
       type: object
       title: AdminHomepageCampaignUpdate
       description: Admin payload to update an existing homepage campaign.
+    AdminHomepageSectionCreate:
+      properties:
+        sectionType:
+          type: string
+          title: Sectiontype
+        title:
+          type: string
+          title: Title
+        eyebrow:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Eyebrow
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        imageUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imageurl
+        imageAlt:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imagealt
+        imagePosition:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imageposition
+          default: left
+        ctaText:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ctatext
+        ctaUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ctaurl
+        collectionSlug:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Collectionslug
+        itemLimit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Itemlimit
+          default: 4
+        displayOrder:
+          type: integer
+          title: Displayorder
+          default: 0
+        isEnabled:
+          type: boolean
+          title: Isenabled
+          default: true
+        startsAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Startsat
+        endsAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Endsat
+        metadataJson:
+          additionalProperties: true
+          type: object
+          title: Metadatajson
+      type: object
+      required:
+      - sectionType
+      - title
+      title: AdminHomepageSectionCreate
+      description: Admin payload to create a homepage section.
+    AdminHomepageSectionOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        sectionType:
+          type: string
+          title: Sectiontype
+        title:
+          type: string
+          title: Title
+        eyebrow:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Eyebrow
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        imageUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imageurl
+        imageAlt:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imagealt
+        imagePosition:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imageposition
+          default: left
+        ctaText:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ctatext
+        ctaUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ctaurl
+        collectionSlug:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Collectionslug
+        itemLimit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Itemlimit
+          default: 4
+        displayOrder:
+          type: integer
+          title: Displayorder
+          default: 0
+        isEnabled:
+          type: boolean
+          title: Isenabled
+          default: true
+        startsAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Startsat
+        endsAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Endsat
+        metadataJson:
+          additionalProperties: true
+          type: object
+          title: Metadatajson
+        createdAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Createdat
+        updatedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Updatedat
+      type: object
+      required:
+      - id
+      - sectionType
+      - title
+      title: AdminHomepageSectionOut
+      description: Admin detailed representation of a homepage section.
+    AdminHomepageSectionUpdate:
+      properties:
+        sectionType:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Sectiontype
+        title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Title
+        eyebrow:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Eyebrow
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        imageUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imageurl
+        imageAlt:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imagealt
+        imagePosition:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imageposition
+        ctaText:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ctatext
+        ctaUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ctaurl
+        collectionSlug:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Collectionslug
+        itemLimit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Itemlimit
+        displayOrder:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Displayorder
+        isEnabled:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Isenabled
+        startsAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Startsat
+        endsAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Endsat
+        metadataJson:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Metadatajson
+      type: object
+      title: AdminHomepageSectionUpdate
+      description: Admin payload to update an existing homepage section.
     AdminInventoryAdjustRequest:
       properties:
         stockQuantity:
@@ -5893,6 +6445,43 @@ components:
       type: object
       title: CartOut
       description: Complete shopping cart representation.
+    CategoryGridSectionOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        order:
+          type: integer
+          title: Order
+        enabled:
+          type: boolean
+          title: Enabled
+          default: true
+        type:
+          type: string
+          const: category_grid
+          title: Type
+          default: category_grid
+        title:
+          type: string
+          title: Title
+        eyebrow:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Eyebrow
+        categories:
+          items:
+            $ref: '#/components/schemas/CategorySummary'
+          type: array
+          title: Categories
+      type: object
+      required:
+      - id
+      - order
+      - title
+      title: CategoryGridSectionOut
+      description: Controlled category grid section template.
     CategoryOut:
       properties:
         id:
@@ -5945,6 +6534,33 @@ components:
       - slug
       title: CategoryOut
       description: Category output schema with nested children hierarchy.
+    CategorySummary:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        slug:
+          type: string
+          title: Slug
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        imageUrl:
+          type: string
+          title: Imageurl
+      type: object
+      required:
+      - id
+      - name
+      - slug
+      - imageUrl
+      title: CategorySummary
+      description: Summarized category for homepage category grids.
     CouponApplyRequest:
       properties:
         code:
@@ -6124,6 +6740,62 @@ components:
       - imageAlt
       title: HomepageCampaignOut
       description: Public homepage campaign item representation.
+    ImageTextSectionOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        order:
+          type: integer
+          title: Order
+        enabled:
+          type: boolean
+          title: Enabled
+          default: true
+        type:
+          type: string
+          const: image_text
+          title: Type
+          default: image_text
+        title:
+          type: string
+          title: Title
+        description:
+          type: string
+          title: Description
+        imageUrl:
+          type: string
+          title: Imageurl
+        imageAlt:
+          type: string
+          title: Imagealt
+        imagePosition:
+          type: string
+          enum:
+          - left
+          - right
+          title: Imageposition
+          default: left
+        ctaText:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ctatext
+        ctaUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ctaurl
+      type: object
+      required:
+      - id
+      - order
+      - title
+      - description
+      - imageUrl
+      - imageAlt
+      title: ImageTextSectionOut
+      description: Controlled artisanal story/craft editorial section template.
     OccasionOut:
       properties:
         id:
@@ -6645,6 +7317,47 @@ components:
       - message
       title: PaymentWebhookResult
       description: Webhook acknowledgment response.
+    ProductCollectionSectionOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        order:
+          type: integer
+          title: Order
+        enabled:
+          type: boolean
+          title: Enabled
+          default: true
+        type:
+          type: string
+          const: product_collection
+          title: Type
+          default: product_collection
+        title:
+          type: string
+          title: Title
+        eyebrow:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Eyebrow
+        collectionSlug:
+          type: string
+          title: Collectionslug
+        products:
+          items:
+            $ref: '#/components/schemas/ProductListItem'
+          type: array
+          title: Products
+      type: object
+      required:
+      - id
+      - order
+      - title
+      - collectionSlug
+      title: ProductCollectionSectionOut
+      description: Controlled product collection carousel/grid section template.
     ProductDetail:
       properties:
         id:
@@ -6972,6 +7685,58 @@ components:
       type: object
       title: ProfileUpdate
       description: Payload to update customer profile fields.
+    PromoBannerSectionOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        order:
+          type: integer
+          title: Order
+        enabled:
+          type: boolean
+          title: Enabled
+          default: true
+        type:
+          type: string
+          const: promo_banner
+          title: Type
+          default: promo_banner
+        title:
+          type: string
+          title: Title
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        imageUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imageurl
+        imageAlt:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imagealt
+        ctaText:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ctatext
+        ctaUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ctaurl
+      type: object
+      required:
+      - id
+      - order
+      - title
+      title: PromoBannerSectionOut
+      description: Controlled promotional banner section template.
     ReviewCreateRequest:
       properties:
         rating:
@@ -7061,6 +7826,70 @@ components:
       - text
       title: ReviewOut
       description: Customer product reviews.
+    ReviewSectionOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        order:
+          type: integer
+          title: Order
+        enabled:
+          type: boolean
+          title: Enabled
+          default: true
+        type:
+          type: string
+          const: review_section
+          title: Type
+          default: review_section
+        title:
+          type: string
+          title: Title
+        reviews:
+          items:
+            $ref: '#/components/schemas/ReviewSummary'
+          type: array
+          title: Reviews
+      type: object
+      required:
+      - id
+      - order
+      - title
+      title: ReviewSectionOut
+      description: Controlled customer reviews section template.
+    ReviewSummary:
+      properties:
+        id:
+          type: integer
+          title: Id
+        authorName:
+          type: string
+          title: Authorname
+        location:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Location
+        rating:
+          type: integer
+          title: Rating
+          default: 5
+        text:
+          type: string
+          title: Text
+        avatarUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Avatarurl
+      type: object
+      required:
+      - id
+      - authorName
+      - text
+      title: ReviewSummary
+      description: Summarized customer testimonial for homepage review section.
     SendOtpRequest:
       properties:
         phone:
@@ -7100,6 +7929,43 @@ components:
       - phone
       title: SendOtpResponse
       description: Response after sending OTP.
+    StorefrontHomeResponse:
+      properties:
+        brand:
+          $ref: '#/components/schemas/BrandSettingsOut'
+        hero:
+          items:
+            $ref: '#/components/schemas/HomepageCampaignOut'
+          type: array
+          title: Hero
+        heroCampaigns:
+          items:
+            $ref: '#/components/schemas/HomepageCampaignOut'
+          type: array
+          title: Herocampaigns
+        sections:
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/CategoryGridSectionOut'
+            - $ref: '#/components/schemas/ProductCollectionSectionOut'
+            - $ref: '#/components/schemas/PromoBannerSectionOut'
+            - $ref: '#/components/schemas/ReviewSectionOut'
+            - $ref: '#/components/schemas/ImageTextSectionOut'
+            discriminator:
+              propertyName: type
+              mapping:
+                category_grid: '#/components/schemas/CategoryGridSectionOut'
+                image_text: '#/components/schemas/ImageTextSectionOut'
+                product_collection: '#/components/schemas/ProductCollectionSectionOut'
+                promo_banner: '#/components/schemas/PromoBannerSectionOut'
+                review_section: '#/components/schemas/ReviewSectionOut'
+          type: array
+          title: Sections
+      type: object
+      required:
+      - brand
+      title: StorefrontHomeResponse
+      description: Comprehensive dynamic storefront homepage composition response.
     StorefrontResponse:
       properties:
         brand:
@@ -7113,7 +7979,7 @@ components:
       required:
       - brand
       title: StorefrontResponse
-      description: Public storefront aggregate response for the homepage.
+      description: Public storefront aggregate response for the homepage (legacy compatibility).
     UserOut:
       properties:
         id:

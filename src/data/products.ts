@@ -13,6 +13,7 @@ export interface Product {
   tags?: string[];
   description?: string;
   customizable?: boolean;
+  inStock?: boolean;
 }
 
 const IMG = (id: string, w = 600, h = 600) =>

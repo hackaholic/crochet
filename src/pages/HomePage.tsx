@@ -5,7 +5,8 @@ import { ArrowRightIcon, StarIcon, ThreadCurve } from '../components/Icons';
 import type { Product } from '../data/products';
 import { useCatalogue } from '../components/CatalogueProvider';
 import HeroCarousel from '../components/HeroCarousel';
-import { getStorefrontContent, type HomepageCampaign } from '../lib/api/storefront';
+import HomepageSections from '../components/home/HomepageSections';
+import { getStorefrontHome, type HomepageCampaign, type HomepageSection } from '../lib/api/storefront';
 
 type Page = 'home' | 'shop' | 'product' | 'cart' | 'wishlist' | 'checkout' | 'about';
 
@@ -53,12 +54,16 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
   };
 
   const [heroCampaigns, setHeroCampaigns] = useState<HomepageCampaign[]>([]);
+  const [homepageSections, setHomepageSections] = useState<HomepageSection[]>([]);
   const [heroLoading, setHeroLoading] = useState(true);
 
   useEffect(() => {
     const controller = new AbortController();
-    getStorefrontContent(controller.signal)
-      .then(content => setHeroCampaigns(content.heroCampaigns.slice(0, 5)))
+    getStorefrontHome(controller.signal)
+      .then(content => {
+        setHeroCampaigns(content.hero.slice(0, 5));
+        setHomepageSections(content.sections);
+      })
       .catch(() => setHeroCampaigns([]))
       .finally(() => { if (!controller.signal.aborted) setHeroLoading(false); });
     return () => controller.abort();
@@ -68,6 +73,16 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
     <div className="bg-[#FAF7F2]">
       <HeroCarousel campaigns={heroCampaigns} loading={heroLoading} onShop={() => onNavigate('shop')} onCustom={() => onNavigate('about')} />
 
+      {homepageSections.length > 0 ? (
+        <HomepageSections
+          sections={homepageSections}
+          wishlist={wishlist}
+          onNavigate={url => window.location.assign(url)}
+          onAddToCart={onAddToCart}
+          onToggleWishlist={onToggleWishlist}
+          onProductClick={onProductClick}
+        />
+      ) : <>
       {/* ── CATEGORIES ── */}
       <section className="py-20 px-4 max-w-7xl mx-auto">
         <div className="text-center mb-12">
@@ -457,6 +472,7 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
           </div>
         </div>
       </section>
+      </>}
     </div>
   );
 }

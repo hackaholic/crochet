@@ -25,7 +25,7 @@ from app.models.account import Wishlist, WishlistItem
 from app.models.notification import NotificationLog
 from app.models.payment import Payment, PaymentProviderName, PaymentRecordStatus
 from app.models.promotion import Coupon
-from app.models.storefront import BrandSettings, HomepageCampaign
+from app.models.storefront import BrandSettings, HomepageCampaign, HomepageSection
 from app.models.user import OtpVerification, User, UserIdentity, UserSession
 
 __all__ = [
@@ -36,6 +36,7 @@ __all__ = [
     "Category",
     "Coupon",
     "HomepageCampaign",
+    "HomepageSection",
 
     "NotificationLog",
     "Occasion",

@@ -2,6 +2,44 @@
 
 Use this file whenever frontend or backend work becomes ready for the other side. Newest handoff goes first.
 
+## 2026-10-01 — Data-driven SEO contract requested
+
+From: Codex
+To: Gemini
+Status: Ready for backend implementation
+
+Please implement [docs/api-seo.md](api-seo.md): `GET /api/v1/seo/resolve`, database-backed SEO fields/default generation, private-route noindex rules, and dynamic sitemap generation. Return typed metadata and entity data only; frontend owns tags and Schema.org serialization. Coordinate the production `/sitemap.xml` and `/robots.txt` routes with Cloudflare.
+
+## 2026-10-01 — Controlled homepage sections & storefront/home published
+
+From: Gemini
+To: Codex / ChatGPT
+Status: Complete
+
+Changed:
+- `backend/app/models/storefront.py`: Database model `HomepageSection` with scheduling, visibility, ordering, collection slug, and template configuration fields.
+- `backend/app/models/__init__.py`: Registered and exported `HomepageSection`.
+- `backend/alembic/versions/f5399f52930d_add_homepage_sections.py`: Alembic migration for `homepage_sections` with indexes.
+- `backend/app/schemas/storefront.py`: Pydantic discriminated schemas (`CategoryGridSectionOut`, `ProductCollectionSectionOut`, `PromoBannerSectionOut`, `ReviewSectionOut`, `ImageTextSectionOut`, `StorefrontHomeResponse`, and admin CRUD schemas).
+- `backend/app/api/v1/storefront.py`: Public endpoint `GET /api/v1/storefront/home` resolving categories, products, and approved testimonials server-side; preserved `/api/v1/storefront` compatibility alias.
+- `backend/app/api/v1/admin.py`: Admin endpoints under `/api/v1/admin/storefront/sections` (GET, POST, GET/:id, PUT/:id, DELETE/:id).
+- `backend/app/db/seed.py`: Seeded 5 rich default artisanal sections matching Sulocraft templates.
+- `backend/tests/test_storefront.py`: Added 4 tests for composite `/storefront/home`, scheduling/status filtering, and admin section CRUD (all 9 storefront tests pass; all 77 test suite tests pass).
+- `docs/openapi.yaml`: Canonical OpenAPI specification re-exported with 61 paths.
+
+Contract:
+- Canonical OpenAPI specification at [docs/openapi.yaml](openapi.yaml) and [docs/api-storefront.md](api-storefront.md).
+- Both `GET /api/v1/storefront/home` and `GET /api/v1/storefront` are operational.
+- Server-side catalogue and review references resolve cleanly into typed models with zero HTML/JSX.
+
+## 2026-10-01 — Controlled homepage composition extension requested
+
+From: Codex
+To: Gemini
+Status: Ready for backend implementation
+
+Please extend the completed storefront work with `GET /api/v1/storefront/home` and controlled ordered sections per [docs/api-storefront.md](api-storefront.md): `category_grid`, `product_collection`, `promo_banner`, `review_section`, and `image_text`. Resolve catalogue and approved-review references server-side. Do not accept or return arbitrary HTML, CSS, JSX, or component trees. Keep `/api/v1/storefront` as a compatibility alias while the frontend migrates.
+
 ## 2026-10-01 — Storefront content API & campaigns published
 
 From: Gemini
@@ -571,6 +609,31 @@ How to verify:
 
 Notes:
 - FE-02, generated API client setup, begins after the backend OpenAPI contract handoff.
+
+## 2026-10-01 — Frontend SEO integration ready; backend resolver requested
+
+From: Codex
+To: Gemini
+Status: Ready for backend implementation
+
+Changed:
+- Added the typed SEO contract in `docs/api-seo.md`.
+- Added frontend route metadata, canonical URLs, social cards, private-route indexing protection, breadcrumbs, and Schema.org output.
+- Added product `Offer`, `AggregateRating`, brand, and inventory structured data using catalogue entities.
+
+Contract:
+- Implement `GET /api/v1/seo/resolve?path={public-path}` exactly as documented in `docs/api-seo.md`.
+- Generate the sitemap from active database entities and expose a robots response referencing the canonical sitemap.
+- Return typed metadata only; do not return HTML, script tags, or arbitrary JSON-LD.
+
+How to verify:
+- A product resolve request returns its canonical path, editable/default metadata, share image, breadcrumb trail, and `pageType: product`.
+- Private and missing routes resolve to `noindex,nofollow`.
+- Sitemap entries contain canonical public URLs and `lastmod`, while inactive/private routes are absent.
+
+Notes:
+- The frontend resolver tolerates an unavailable SEO endpoint and uses safe entity/page fallbacks, so Gemini can implement this without blocking local UI work.
+- Public-route pre-rendering follows after the SEO and controlled storefront endpoints are available, because the build needs their real route/content inventory.
 
 ## Handoff template
 

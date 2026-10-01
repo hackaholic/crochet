@@ -27,12 +27,15 @@ from app.models.order import (
     PaymentStatus,
 )
 from app.models.promotion import Coupon
-from app.models.storefront import BrandSettings, HomepageCampaign
+from app.models.storefront import BrandSettings, HomepageCampaign, HomepageSection
 from app.models.user import User
 from app.schemas.storefront import (
     AdminHomepageCampaignCreate,
     AdminHomepageCampaignOut,
     AdminHomepageCampaignUpdate,
+    AdminHomepageSectionCreate,
+    AdminHomepageSectionOut,
+    AdminHomepageSectionUpdate,
     BrandSettingsOut,
     BrandSettingsUpdate,
 )
@@ -1294,6 +1297,146 @@ def delete_admin_campaign(
     db.delete(campaign)
     db.commit()
     return {"status": "ok", "message": "Campaign deleted successfully", "id": campaign_id}
+
+
+# -----------------------------------------------------------------------------
+# Storefront Homepage Sections Management
+# -----------------------------------------------------------------------------
+
+@router.get("/storefront/sections", response_model=list[AdminHomepageSectionOut])
+def list_admin_homepage_sections(
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> list[AdminHomepageSectionOut]:
+    """List all configured homepage sections ordered by display_order."""
+    sections = db.query(HomepageSection).order_by(HomepageSection.display_order.asc(), HomepageSection.id.asc()).all()
+    return [AdminHomepageSectionOut.model_validate(s) for s in sections]
+
+
+@router.post("/storefront/sections", response_model=AdminHomepageSectionOut, status_code=status.HTTP_201_CREATED)
+def create_admin_homepage_section(
+    payload: AdminHomepageSectionCreate,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> AdminHomepageSectionOut:
+    """Create a new controlled homepage section."""
+    allowed_types = {"category_grid", "product_collection", "promo_banner", "review_section", "image_text"}
+    if payload.section_type not in allowed_types:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Invalid sectionType '{payload.section_type}'. Must be one of: {', '.join(sorted(allowed_types))}",
+        )
+
+    section = HomepageSection(
+        section_type=payload.section_type,
+        title=payload.title,
+        eyebrow=payload.eyebrow,
+        description=payload.description,
+        image_url=payload.image_url,
+        image_alt=payload.image_alt,
+        image_position=payload.image_position or "left",
+        cta_text=payload.cta_text,
+        cta_url=payload.cta_url,
+        collection_slug=payload.collection_slug,
+        item_limit=payload.item_limit or 4,
+        display_order=payload.display_order,
+        is_enabled=payload.is_enabled,
+        starts_at=payload.starts_at,
+        ends_at=payload.ends_at,
+        metadata_json=payload.metadata_json or {},
+    )
+    db.add(section)
+    db.commit()
+    db.refresh(section)
+    return AdminHomepageSectionOut.model_validate(section)
+
+
+@router.get("/storefront/sections/{section_id}", response_model=AdminHomepageSectionOut)
+def get_admin_homepage_section(
+    section_id: int,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> AdminHomepageSectionOut:
+    """Retrieve details for a single homepage section."""
+    section = db.query(HomepageSection).filter(HomepageSection.id == section_id).first()
+    if not section:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Section not found")
+    return AdminHomepageSectionOut.model_validate(section)
+
+
+@router.put("/storefront/sections/{section_id}", response_model=AdminHomepageSectionOut)
+def update_admin_homepage_section(
+    section_id: int,
+    payload: AdminHomepageSectionUpdate,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> AdminHomepageSectionOut:
+    """Update attributes, ordering, or visibility for a homepage section."""
+    section = db.query(HomepageSection).filter(HomepageSection.id == section_id).first()
+    if not section:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Section not found")
+
+    allowed_types = {"category_grid", "product_collection", "promo_banner", "review_section", "image_text"}
+    if payload.section_type is not None:
+        if payload.section_type not in allowed_types:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Invalid sectionType '{payload.section_type}'. Must be one of: {', '.join(sorted(allowed_types))}",
+            )
+        section.section_type = payload.section_type
+
+    if payload.title is not None:
+        section.title = payload.title
+    if payload.eyebrow is not None:
+        section.eyebrow = payload.eyebrow
+    if payload.description is not None:
+        section.description = payload.description
+    if payload.image_url is not None:
+        section.image_url = payload.image_url
+    if payload.image_alt is not None:
+        section.image_alt = payload.image_alt
+    if payload.image_position is not None:
+        section.image_position = payload.image_position
+    if payload.cta_text is not None:
+        section.cta_text = payload.cta_text
+    if payload.cta_url is not None:
+        section.cta_url = payload.cta_url
+    if payload.collection_slug is not None:
+        section.collection_slug = payload.collection_slug
+    if payload.item_limit is not None:
+        section.item_limit = payload.item_limit
+    if payload.display_order is not None:
+        section.display_order = payload.display_order
+    if payload.is_enabled is not None:
+        section.is_enabled = payload.is_enabled
+    if payload.starts_at is not None:
+        section.starts_at = payload.starts_at
+    if payload.ends_at is not None:
+        section.ends_at = payload.ends_at
+    if payload.metadata_json is not None:
+        section.metadata_json = payload.metadata_json
+
+    section.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(section)
+    return AdminHomepageSectionOut.model_validate(section)
+
+
+@router.delete("/storefront/sections/{section_id}")
+def delete_admin_homepage_section(
+    section_id: int,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> dict[str, str | int]:
+    """Delete a homepage section."""
+    section = db.query(HomepageSection).filter(HomepageSection.id == section_id).first()
+    if not section:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Section not found")
+
+    db.delete(section)
+    db.commit()
+    return {"status": "ok", "message": "Section deleted successfully", "id": section_id}
+
 
 
 

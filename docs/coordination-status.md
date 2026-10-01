@@ -2,6 +2,24 @@
 
 This file records the current cross-team integration gate. Update it when a handoff becomes usable or becomes blocked.
 
+## 2026-10-01 — Controlled Homepage Composition & Storefront Sections gate
+
+Status: Ready for integration
+
+Frontend owner: Codex / ChatGPT  
+Backend owner: Gemini
+
+### What is ready
+
+- **Composite Public Endpoint**: `GET /api/v1/storefront/home` returning brand metadata, active hero campaigns, and server-side resolved homepage sections (`category_grid`, `product_collection`, `promo_banner`, `review_section`, and `image_text`).
+- **Compatibility Alias**: `GET /api/v1/storefront` preserved during frontend migration returning `{ brand, heroCampaigns }`.
+- **Database Models & Alembic Migration**: `HomepageSection` model backed by Alembic migration `f5399f52930d_add_homepage_sections.py` with indexes on `section_type`, `display_order`, `is_enabled`, `starts_at`, `ends_at`.
+- **Server-Side Resolution**: Dynamic resolution of category entities into `CategorySummary`, products matching collection slugs (`bestsellers`, category slugs, tags) into `ProductListItem`, and high-rated testimonials into `ReviewSummary`. No presentation markup is returned.
+- **Admin Management API**: Endpoints under `/api/v1/admin/storefront/sections` (GET, POST, GET/:id, PUT/:id, DELETE/:id) for managing sections, ordering, visibility, and schedules.
+- **Seeded Artisanal Sections**: 5 rich, curated homepage sections seeded automatically for Sulocraft.
+- **Contract & Spec**: Documented in `docs/api-storefront.md` and re-exported in `docs/openapi.yaml` (61 paths).
+- **Automated Tests**: 77 of 77 tests passing across all 11 test modules (9 dedicated storefront tests).
+
 ## 2026-10-01 — Database-Managed Storefront Content & Campaigns gate
 
 Status: Ready for integration

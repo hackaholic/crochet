@@ -41,6 +41,7 @@ function toProduct(product: CatalogueProduct): Product {
     tags: product.tags ?? [],
     description: product.description ?? undefined,
     customizable: product.customizable ?? false,
+    inStock: product.inStock ?? product.inventoryStatus !== 'OUT_OF_STOCK',
   };
 }
 

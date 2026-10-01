@@ -14,7 +14,7 @@ from app.models.catalogue import (
     Review,
     Tag,
 )
-from app.models.storefront import BrandSettings, HomepageCampaign
+from app.models.storefront import BrandSettings, HomepageCampaign, HomepageSection
 from app.models.user import User, UserIdentity
 
 
@@ -646,6 +646,60 @@ def seed_storefront_content(db: Session) -> None:
         ]
         for c in campaigns_data:
             db.add(HomepageCampaign(**c))
+
+    if db.query(HomepageSection).count() == 0:
+        sections_data = [
+            {
+                "section_type": "category_grid",
+                "title": "Shop by Category",
+                "eyebrow": "Browse by Collection",
+                "display_order": 1,
+                "is_enabled": True,
+                "item_limit": 4,
+                "metadata_json": {"category_slugs": ["flowers", "gifts", "pooja-items", "amigurumi"]},
+            },
+            {
+                "section_type": "product_collection",
+                "title": "Most Loved Creations",
+                "eyebrow": "Customer Favourites",
+                "collection_slug": "bestsellers",
+                "display_order": 2,
+                "is_enabled": True,
+                "item_limit": 4,
+            },
+            {
+                "section_type": "promo_banner",
+                "title": "Gift Handcrafted Warmth This Season",
+                "description": "Every stitch carries intention. Order early for personalized bouquets and festive keepsakes.",
+                "image_url": "https://images.unsplash.com/photo-1700171518313-5dd219beaaa6?w=1600&auto=format&fit=crop&q=80",
+                "image_alt": "Handcrafted crochet gifts and bouquets",
+                "cta_text": "Explore Gift Guide",
+                "cta_url": "/shop?category=Gifts",
+                "display_order": 3,
+                "is_enabled": True,
+            },
+            {
+                "section_type": "review_section",
+                "title": "Loved by Over 500+ Happy Customers",
+                "display_order": 4,
+                "is_enabled": True,
+                "item_limit": 3,
+            },
+            {
+                "section_type": "image_text",
+                "title": "Handmade with Love, Thread by Thread",
+                "description": "Sulocraft was born from a passion for preserving traditional crochet artistry while designing contemporary pieces for modern homes. Each creation takes between 4 to 20 hours of focused craftsmanship.",
+                "image_url": "https://images.unsplash.com/photo-1602773974733-b56200c8653f?w=1200&auto=format&fit=crop&q=80",
+                "image_alt": "Artisan handcrafting crochet pieces",
+                "image_position": "left",
+                "cta_text": "Read Our Story",
+                "cta_url": "/about",
+                "display_order": 5,
+                "is_enabled": True,
+            },
+        ]
+        for s in sections_data:
+            db.add(HomepageSection(**s))
 
     db.commit()
 

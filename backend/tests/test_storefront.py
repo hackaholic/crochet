@@ -227,3 +227,214 @@ def test_admin_storefront_unauthorized_forbidden():
     cust_cookies = _login_customer("9999911002")
     forbidden_res = client.get("/api/v1/admin/storefront/brand", cookies=cust_cookies)
     assert forbidden_res.status_code == 403
+
+
+def test_get_storefront_home_returns_brand_hero_and_resolved_sections():
+    """Verify GET /api/v1/storefront/home returns brand, hero, and all 5 resolved sections."""
+    response = client.get("/api/v1/storefront/home")
+    assert response.status_code == 200
+    data = response.json()
+
+    assert "brand" in data
+    assert data["brand"]["name"] == "Sulocraft"
+    assert data["brand"]["ownerName"] == "Anupama"
+
+    assert "hero" in data
+    assert len(data["hero"]) >= 1
+    assert "heroCampaigns" in data
+
+    assert "sections" in data
+    sections = data["sections"]
+    assert len(sections) >= 5
+
+    section_types = [s["type"] for s in sections]
+    assert "category_grid" in section_types
+    assert "product_collection" in section_types
+    assert "promo_banner" in section_types
+    assert "review_section" in section_types
+    assert "image_text" in section_types
+
+    # 1. Category Grid verification
+    cg = next(s for s in sections if s["type"] == "category_grid")
+    assert cg["order"] == 1
+    assert cg["enabled"] is True
+    assert cg["title"] == "Shop by Category"
+    assert len(cg["categories"]) > 0
+    cat0 = cg["categories"][0]
+    assert "id" in cat0
+    assert "name" in cat0
+    assert "slug" in cat0
+    assert "imageUrl" in cat0
+
+    # 2. Product Collection verification
+    pc = next(s for s in sections if s["type"] == "product_collection")
+    assert pc["order"] == 2
+    assert pc["enabled"] is True
+    assert pc["title"] == "Most Loved Creations"
+    assert pc["collectionSlug"] == "bestsellers"
+    assert len(pc["products"]) > 0
+    prod0 = pc["products"][0]
+    assert "id" in prod0
+    assert "name" in prod0
+    assert "price" in prod0
+    assert "rating" in prod0
+
+    # 3. Promo Banner verification
+    pb = next(s for s in sections if s["type"] == "promo_banner")
+    assert pb["order"] == 3
+    assert pb["enabled"] is True
+    assert pb["title"] == "Gift Handcrafted Warmth This Season"
+    assert "imageUrl" in pb
+    assert "ctaText" in pb
+    assert "ctaUrl" in pb
+
+    # 4. Review Section verification
+    rs = next(s for s in sections if s["type"] == "review_section")
+    assert rs["order"] == 4
+    assert rs["enabled"] is True
+    assert len(rs["reviews"]) > 0
+    rev0 = rs["reviews"][0]
+    assert "authorName" in rev0
+    assert "rating" in rev0
+    assert "text" in rev0
+
+    # 5. Image Text verification
+    it = next(s for s in sections if s["type"] == "image_text")
+    assert it["order"] == 5
+    assert it["enabled"] is True
+    assert it["title"] == "Handmade with Love, Thread by Thread"
+    assert "description" in it
+    assert "imageUrl" in it
+    assert it["imagePosition"] in ("left", "right")
+
+
+def test_storefront_home_section_scheduling_and_disabled_filtering():
+    """Verify disabled and out-of-schedule sections are excluded from /storefront/home."""
+    from app.models.storefront import HomepageSection
+
+    now = datetime.now(timezone.utc)
+    with SessionLocal() as db:
+        # 1. Disabled section
+        s_disabled = HomepageSection(
+            section_type="promo_banner",
+            title="Disabled Section",
+            display_order=100,
+            is_enabled=False,
+        )
+        # 2. Future section
+        s_future = HomepageSection(
+            section_type="promo_banner",
+            title="Future Section",
+            display_order=101,
+            is_enabled=True,
+            starts_at=now + timedelta(days=2),
+        )
+        # 3. Expired section
+        s_expired = HomepageSection(
+            section_type="promo_banner",
+            title="Expired Section",
+            display_order=102,
+            is_enabled=True,
+            ends_at=now - timedelta(days=2),
+        )
+        db.add_all([s_disabled, s_future, s_expired])
+        db.commit()
+        disabled_id = s_disabled.id
+        future_id = s_future.id
+        expired_id = s_expired.id
+
+    try:
+        response = client.get("/api/v1/storefront/home")
+        assert response.status_code == 200
+        sec_ids = [s["id"] for s in response.json()["sections"]]
+        assert disabled_id not in sec_ids
+        assert future_id not in sec_ids
+        assert expired_id not in sec_ids
+    finally:
+        with SessionLocal() as db:
+            db.query(HomepageSection).filter(
+                HomepageSection.id.in_([disabled_id, future_id, expired_id])
+            ).delete(synchronize_session=False)
+            db.commit()
+
+
+def test_admin_section_crud():
+    """Verify admin can create, read, update, list, and delete homepage sections."""
+    admin_cookies = _login_admin("9999900000")
+
+    # 1. Create with invalid type -> 422
+    invalid_res = client.post(
+        "/api/v1/admin/storefront/sections",
+        cookies=admin_cookies,
+        json={"sectionType": "invalid_random_type", "title": "Bad Section"},
+    )
+    assert invalid_res.status_code == 422
+
+    # 2. Create valid section
+    create_payload = {
+        "sectionType": "promo_banner",
+        "title": "Festive Flash Sale",
+        "description": "20% off all crochet bouquets this weekend only.",
+        "imageUrl": "https://images.sulocraft.com/sale.jpg",
+        "imageAlt": "Festive bouquets sale",
+        "ctaText": "Shop Sale",
+        "ctaUrl": "/shop?sale=true",
+        "displayOrder": 10,
+        "isEnabled": True,
+    }
+    create_res = client.post(
+        "/api/v1/admin/storefront/sections",
+        cookies=admin_cookies,
+        json=create_payload,
+    )
+    assert create_res.status_code == 201
+    section_data = create_res.json()
+    section_id = section_data["id"]
+    assert section_data["sectionType"] == "promo_banner"
+    assert section_data["title"] == "Festive Flash Sale"
+    assert section_data["displayOrder"] == 10
+    assert section_data["isEnabled"] is True
+
+    # 3. Get section detail
+    get_res = client.get(f"/api/v1/admin/storefront/sections/{section_id}", cookies=admin_cookies)
+    assert get_res.status_code == 200
+    assert get_res.json()["title"] == "Festive Flash Sale"
+
+    # 4. List sections
+    list_res = client.get("/api/v1/admin/storefront/sections", cookies=admin_cookies)
+    assert list_res.status_code == 200
+    ids = [s["id"] for s in list_res.json()]
+    assert section_id in ids
+
+    # 5. Update section
+    update_res = client.put(
+        f"/api/v1/admin/storefront/sections/{section_id}",
+        cookies=admin_cookies,
+        json={"title": "Updated Flash Sale", "displayOrder": 15, "isEnabled": False},
+    )
+    assert update_res.status_code == 200
+    assert update_res.json()["title"] == "Updated Flash Sale"
+    assert update_res.json()["displayOrder"] == 15
+    assert update_res.json()["isEnabled"] is False
+
+    # 6. Delete section
+    del_res = client.delete(f"/api/v1/admin/storefront/sections/{section_id}", cookies=admin_cookies)
+    assert del_res.status_code == 200
+    assert del_res.json()["status"] == "ok"
+
+    # Verify 404 after deletion
+    get_after_res = client.get(f"/api/v1/admin/storefront/sections/{section_id}", cookies=admin_cookies)
+    assert get_after_res.status_code == 404
+
+
+def test_admin_section_unauthorized_forbidden():
+    """Verify unauthenticated calls return 401 and customer calls return 403 on admin section routes."""
+    # Unauthenticated
+    unauth_res = client.get("/api/v1/admin/storefront/sections")
+    assert unauth_res.status_code == 401
+
+    # Customer forbidden
+    cust_cookies = _login_customer("9999911003")
+    forbidden_res = client.get("/api/v1/admin/storefront/sections", cookies=cust_cookies)
+    assert forbidden_res.status_code == 403
+

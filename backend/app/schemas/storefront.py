@@ -1,7 +1,10 @@
 """Pydantic schemas for Storefront and Brand content conforming to docs/api-storefront.md."""
 
 from datetime import datetime
+from typing import Annotated, Any, Literal, Union
 from pydantic import BaseModel, ConfigDict, Field
+
+from app.schemas.catalogue import ProductListItem
 
 
 class BrandSettingsOut(BaseModel):
@@ -45,12 +48,131 @@ class HomepageCampaignOut(BaseModel):
 
 
 class StorefrontResponse(BaseModel):
-    """Public storefront aggregate response for the homepage."""
+    """Public storefront aggregate response for the homepage (legacy compatibility)."""
 
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     brand: BrandSettingsOut
     hero_campaigns: list[HomepageCampaignOut] = Field(default_factory=list, serialization_alias="heroCampaigns")
+
+
+# -----------------------------------------------------------------------------
+# Controlled Homepage Sections Schemas
+# -----------------------------------------------------------------------------
+
+class CategorySummary(BaseModel):
+    """Summarized category for homepage category grids."""
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    id: int
+    name: str
+    slug: str
+    description: str | None = None
+    image_url: str = Field(..., serialization_alias="imageUrl", alias="imageUrl")
+
+
+class ReviewSummary(BaseModel):
+    """Summarized customer testimonial for homepage review section."""
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    id: int
+    author_name: str = Field(..., serialization_alias="authorName", alias="authorName")
+    location: str | None = None
+    rating: int = 5
+    text: str
+    avatar_url: str | None = Field(default=None, serialization_alias="avatarUrl", alias="avatarUrl")
+
+
+class BaseHomepageSectionOut(BaseModel):
+    """Base fields shared by all homepage section templates."""
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    id: int
+    order: int
+    enabled: bool = True
+
+
+class CategoryGridSectionOut(BaseHomepageSectionOut):
+    """Controlled category grid section template."""
+
+    type: Literal["category_grid"] = "category_grid"
+    title: str
+    eyebrow: str | None = None
+    categories: list[CategorySummary] = Field(default_factory=list)
+
+
+class ProductCollectionSectionOut(BaseHomepageSectionOut):
+    """Controlled product collection carousel/grid section template."""
+
+    type: Literal["product_collection"] = "product_collection"
+    title: str
+    eyebrow: str | None = None
+    collection_slug: str = Field(..., serialization_alias="collectionSlug", alias="collectionSlug")
+    products: list[ProductListItem] = Field(default_factory=list)
+
+
+class PromoBannerSectionOut(BaseHomepageSectionOut):
+    """Controlled promotional banner section template."""
+
+    type: Literal["promo_banner"] = "promo_banner"
+    title: str
+    description: str | None = None
+    image_url: str | None = Field(default=None, serialization_alias="imageUrl", alias="imageUrl")
+    image_alt: str | None = Field(default=None, serialization_alias="imageAlt", alias="imageAlt")
+    cta_text: str | None = Field(default=None, serialization_alias="ctaText", alias="ctaText")
+    cta_url: str | None = Field(default=None, serialization_alias="ctaUrl", alias="ctaUrl")
+
+
+class ReviewSectionOut(BaseHomepageSectionOut):
+    """Controlled customer reviews section template."""
+
+    type: Literal["review_section"] = "review_section"
+    title: str
+    reviews: list[ReviewSummary] = Field(default_factory=list)
+
+
+class ImageTextSectionOut(BaseHomepageSectionOut):
+    """Controlled artisanal story/craft editorial section template."""
+
+    type: Literal["image_text"] = "image_text"
+    title: str
+    description: str
+    image_url: str = Field(..., serialization_alias="imageUrl", alias="imageUrl")
+    image_alt: str = Field(..., serialization_alias="imageAlt", alias="imageAlt")
+    image_position: Literal["left", "right"] = Field(
+        default="left",
+        serialization_alias="imagePosition",
+        alias="imagePosition",
+    )
+    cta_text: str | None = Field(default=None, serialization_alias="ctaText", alias="ctaText")
+    cta_url: str | None = Field(default=None, serialization_alias="ctaUrl", alias="ctaUrl")
+
+
+HomepageSectionOut = Annotated[
+    Union[
+        CategoryGridSectionOut,
+        ProductCollectionSectionOut,
+        PromoBannerSectionOut,
+        ReviewSectionOut,
+        ImageTextSectionOut,
+    ],
+    Field(discriminator="type"),
+]
+
+
+class StorefrontHomeResponse(BaseModel):
+    """Comprehensive dynamic storefront homepage composition response."""
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    brand: BrandSettingsOut
+    hero: list[HomepageCampaignOut] = Field(default_factory=list)
+    hero_campaigns: list[HomepageCampaignOut] = Field(default_factory=list, serialization_alias="heroCampaigns")
+    sections: list[HomepageSectionOut] = Field(default_factory=list)
+
 
 
 class AdminHomepageCampaignOut(HomepageCampaignOut):
@@ -97,3 +219,76 @@ class AdminHomepageCampaignUpdate(BaseModel):
     is_active: bool | None = Field(default=None, alias="isActive")
     starts_at: datetime | None = Field(default=None, alias="startsAt")
     ends_at: datetime | None = Field(default=None, alias="endsAt")
+
+
+class AdminHomepageSectionOut(BaseModel):
+    """Admin detailed representation of a homepage section."""
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    id: int
+    section_type: str = Field(..., serialization_alias="sectionType", alias="sectionType")
+    title: str
+    eyebrow: str | None = None
+    description: str | None = None
+    image_url: str | None = Field(default=None, serialization_alias="imageUrl", alias="imageUrl")
+    image_alt: str | None = Field(default=None, serialization_alias="imageAlt", alias="imageAlt")
+    image_position: str | None = Field(default="left", serialization_alias="imagePosition", alias="imagePosition")
+    cta_text: str | None = Field(default=None, serialization_alias="ctaText", alias="ctaText")
+    cta_url: str | None = Field(default=None, serialization_alias="ctaUrl", alias="ctaUrl")
+    collection_slug: str | None = Field(default=None, serialization_alias="collectionSlug", alias="collectionSlug")
+    item_limit: int | None = Field(default=4, serialization_alias="itemLimit", alias="itemLimit")
+    display_order: int = Field(default=0, serialization_alias="displayOrder", alias="displayOrder")
+    is_enabled: bool = Field(default=True, serialization_alias="isEnabled", alias="isEnabled")
+    starts_at: datetime | None = Field(default=None, serialization_alias="startsAt", alias="startsAt")
+    ends_at: datetime | None = Field(default=None, serialization_alias="endsAt", alias="endsAt")
+    metadata_json: dict[str, Any] = Field(default_factory=dict, serialization_alias="metadataJson", alias="metadataJson")
+    created_at: datetime | None = Field(default=None, serialization_alias="createdAt")
+    updated_at: datetime | None = Field(default=None, serialization_alias="updatedAt")
+
+
+class AdminHomepageSectionCreate(BaseModel):
+    """Admin payload to create a homepage section."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    section_type: str = Field(..., alias="sectionType")
+    title: str
+    eyebrow: str | None = None
+    description: str | None = None
+    image_url: str | None = Field(default=None, alias="imageUrl")
+    image_alt: str | None = Field(default=None, alias="imageAlt")
+    image_position: str | None = Field(default="left", alias="imagePosition")
+    cta_text: str | None = Field(default=None, alias="ctaText")
+    cta_url: str | None = Field(default=None, alias="ctaUrl")
+    collection_slug: str | None = Field(default=None, alias="collectionSlug")
+    item_limit: int | None = Field(default=4, alias="itemLimit")
+    display_order: int = Field(default=0, alias="displayOrder")
+    is_enabled: bool = Field(default=True, alias="isEnabled")
+    starts_at: datetime | None = Field(default=None, alias="startsAt")
+    ends_at: datetime | None = Field(default=None, alias="endsAt")
+    metadata_json: dict[str, Any] = Field(default_factory=dict, alias="metadataJson")
+
+
+class AdminHomepageSectionUpdate(BaseModel):
+    """Admin payload to update an existing homepage section."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    section_type: str | None = Field(default=None, alias="sectionType")
+    title: str | None = None
+    eyebrow: str | None = None
+    description: str | None = None
+    image_url: str | None = Field(default=None, alias="imageUrl")
+    image_alt: str | None = Field(default=None, alias="imageAlt")
+    image_position: str | None = Field(default=None, alias="imagePosition")
+    cta_text: str | None = Field(default=None, alias="ctaText")
+    cta_url: str | None = Field(default=None, alias="ctaUrl")
+    collection_slug: str | None = Field(default=None, alias="collectionSlug")
+    item_limit: int | None = Field(default=None, alias="itemLimit")
+    display_order: int | None = Field(default=None, alias="displayOrder")
+    is_enabled: bool | None = Field(default=None, alias="isEnabled")
+    starts_at: datetime | None = Field(default=None, alias="startsAt")
+    ends_at: datetime | None = Field(default=None, alias="endsAt")
+    metadata_json: dict[str, Any] | None = Field(default=None, alias="metadataJson")
+

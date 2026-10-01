@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -22,6 +22,7 @@ import { useCart } from './components/CartProvider';
 import AuthModal from './components/AuthModal';
 import type { User } from './lib/api/auth';
 import { useWishlist } from './components/WishlistProvider';
+import SeoManager from './components/SeoManager';
 
 export default function App() {
   const location = useLocation();
@@ -73,64 +74,9 @@ export default function App() {
 
   const cartCount = cart.reduce((s, i) => s + i.quantity, 0);
 
-  useEffect(() => {
-    const pageTitles: Partial<Record<AppPage, string>> = {
-      home: 'Handmade crochet gifts',
-      shop: 'Shop handmade crochet gifts',
-      cart: 'Your cart',
-      wishlist: 'Your wishlist',
-      checkout: 'Checkout',
-      admin: 'Store dashboard',
-      about: 'Our story',
-      contact: 'Contact us',
-      shipping: 'Shipping policy',
-      returns: 'Return policy',
-      privacy: 'Privacy policy',
-      terms: 'Terms and conditions',
-      notFound: 'Page not found',
-    };
-    const title = selectedProduct?.name ?? pageTitles[showNotFound ? 'notFound' : page] ?? 'Handmade crochet gifts';
-    const description = selectedProduct?.description ?? 'Thoughtful handmade crochet gifts, flowers, décor, and keepsakes made with care.';
-
-    document.title = `${title} | Sulocraft`;
-    document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute('content', description);
-
-    let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
-    if (!canonical) {
-      canonical = document.createElement('link');
-      canonical.rel = 'canonical';
-      document.head.appendChild(canonical);
-    }
-    canonical.href = `${window.location.origin}${location.pathname}`;
-
-    const schemaId = 'sulocraft-product-schema';
-    document.getElementById(schemaId)?.remove();
-    if (selectedProduct) {
-      const schema = document.createElement('script');
-      schema.id = schemaId;
-      schema.type = 'application/ld+json';
-      schema.text = JSON.stringify({
-        '@context': 'https://schema.org',
-        '@type': 'Product',
-        name: selectedProduct.name,
-        description: selectedProduct.description,
-        image: selectedProduct.images ?? [selectedProduct.image],
-        category: selectedProduct.category,
-        brand: { '@type': 'Brand', name: 'Sulocraft' },
-        offers: {
-          '@type': 'Offer',
-          priceCurrency: 'INR',
-          price: selectedProduct.price,
-          availability: 'https://schema.org/InStock',
-          url: `${window.location.origin}${location.pathname}`,
-        },
-      });
-      document.head.appendChild(schema);
-    }
-  }, [location.pathname, page, selectedProduct, showNotFound]);
-
   return (
     <div className="min-h-screen" style={{ fontFamily: 'var(--font-sans)' }}>
+      <SeoManager page={showNotFound ? 'notFound' : page} pathname={location.pathname} product={selectedProduct} />
       <a href="#main-content" className="sr-only fixed left-4 top-4 z-100 rounded-full bg-[#2C1810] px-5 py-3 text-sm font-semibold text-white focus:not-sr-only">
         Skip to content
       </a>
