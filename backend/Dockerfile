@@ -15,8 +15,11 @@ RUN pip install --no-cache-dir \
     "pydantic>=2.0,<3.0" \
     "python-multipart>=0.0.12" \
     "pyyaml>=6.0" \
-    "boto3>=1.34"
+    "boto3>=1.34" \
+    "alembic>=1.13,<2.0"
 
+COPY alembic.ini ./
+COPY alembic ./alembic
 COPY app ./app
 
 EXPOSE 8000
@@ -24,4 +27,4 @@ EXPOSE 8000
 HEALTHCHECK --interval=10s --timeout=5s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]

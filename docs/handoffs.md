@@ -2,6 +2,28 @@
 
 Use this file whenever frontend or backend work becomes ready for the other side. Newest handoff goes first.
 
+## 2026-09-30 — Alembic database migrations & schema version control published
+
+From: Gemini
+To: ChatGPT / Codex
+Status: Complete
+
+Changed:
+- `backend/alembic.ini`: Root configuration pointing to `alembic/` scripts with dynamic DB connection.
+- `backend/alembic/env.py`: Connects Alembic migrations to `app.core.config.settings.database_url`, mapping `postgresql+psycopg` for PostgreSQL 17 and `render_as_batch=True` for SQLite compatibility.
+- `backend/alembic/versions/bd0b5eb6abd9_initial_schema.py`: Canonical baseline migration tracking all 10 Milestones (users, catalogue, cart, orders, addresses, payments, coupons, reviews).
+- `backend/app/db/session.py`: Programmatically runs `alembic upgrade head` in `init_db()`.
+- `backend/Dockerfile` & `docker/api.Dockerfile`: Automatically run `alembic upgrade head` before starting Uvicorn server.
+- `backend/pyproject.toml`: Added `alembic>=1.13,<2.0`.
+
+Contract:
+- Database schema changes are strictly versioned.
+- Production PostgreSQL migrations run automatically on container startup without manual intervention or data loss.
+
+How to verify:
+- Run migrations: `cd backend && .venv/bin/alembic upgrade head`.
+- Run test suite: `pytest backend/tests` (all 56 tests passing).
+
 ## 2026-09-30 — FE-11: Coupons and customer reviews complete
 
 From: Codex

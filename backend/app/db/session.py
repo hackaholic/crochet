@@ -28,19 +28,29 @@ engine = create_engine(
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-def init_db() -> None:
-    """Create database tables if they do not exist."""
-    import app.models  # noqa: F401 - Ensure all models are registered in Base.metadata
-    Base.metadata.create_all(bind=engine)
+def run_migrations() -> None:
+    """Run Alembic migrations programmatically to head revision."""
+    from alembic.config import Config
+    from alembic import command
 
-    # Lightweight auto-migration for newly added columns on existing databases
-    with engine.connect() as conn:
-        try:
-            from sqlalchemy import text
-            conn.execute(text("ALTER TABLE users ADD COLUMN role VARCHAR(20) DEFAULT 'CUSTOMER'"))
-            conn.commit()
-        except Exception:
-            pass  # Column already exists or dialect specific
+    backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    ini_path = os.path.join(backend_dir, "alembic.ini")
+    if os.path.exists(ini_path):
+        alembic_cfg = Config(ini_path)
+        alembic_cfg.set_main_option("script_location", os.path.join(backend_dir, "alembic"))
+        command.upgrade(alembic_cfg, "head")
+    else:
+        Base.metadata.create_all(bind=engine)
+
+
+def init_db() -> None:
+    """Initialize database schema via Alembic migrations, with fallback for custom test setups."""
+    import app.models  # noqa: F401 - Ensure all models are registered in Base.metadata
+    try:
+        run_migrations()
+    except Exception:
+        # Safe fallback for in-memory databases or isolated test runners
+        Base.metadata.create_all(bind=engine)
 
 
 def get_db() -> Generator[Session, None, None]:

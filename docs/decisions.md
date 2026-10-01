@@ -2,6 +2,13 @@
 
 Record decisions that affect more than one file, task, or future agent. Newest entries go first.
 
+## 2026-09-30 — Alembic database migration & schema version control
+
+Decision: Use Alembic as the canonical database migration tool for SQLAlchemy. All future schema modifications must be versioned in `backend/alembic/versions/`. Container startup runs `alembic upgrade head` automatically.
+
+Reason: `Base.metadata.create_all()` cannot alter existing tables in production PostgreSQL without data loss. Alembic allows incremental, safe, and reversible schema evolution in production while maintaining SQLite compatibility in development.
+
+Impact: Initial baseline migration `bd0b5eb6abd9_initial_schema.py` generated for Milestones 1–10. Production `backend/Dockerfile` and `docker/api.Dockerfile` execute `alembic upgrade head` before serving traffic.
 ## 2026-09-30 — Sulocraft brand confirmation & SEO domain alignment
 
 Decision: The official website and brand name is confirmed as **Sulocraft** (`sulocraft.com`). All backend models, default brand values, seed records, health endpoints, schemas, and storefront copywriting are aligned to Sulocraft.

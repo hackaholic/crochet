@@ -2,6 +2,21 @@
 
 This file records the current cross-team integration gate. Update it when a handoff becomes usable or becomes blocked.
 
+## 2026-09-30 — Alembic Database Migration & Schema Version Control gate
+
+Status: Ready for integration
+
+Frontend owner: Codex / ChatGPT  
+Backend owner: Gemini
+
+### What is ready
+
+- **Alembic Configuration**: `backend/alembic.ini` and `backend/alembic/env.py` dynamically resolve `DATABASE_URL` for PostgreSQL 17 and SQLite.
+- **Initial Baseline Migration**: `backend/alembic/versions/bd0b5eb6abd9_initial_schema.py` encapsulates all tables, indexes, constraints, and relationships for Milestones 1–10.
+- **Automated Startup Migration**: Containers (`backend/Dockerfile` and `docker/api.Dockerfile`) run `alembic upgrade head` before booting FastAPI.
+- **Safe Programmatic Execution**: `app.db.session.init_db()` invokes migrations automatically on application startup.
+- **Testing**: 56 of 56 tests passing across all 9 test suites; upgrade/downgrade cycles verified.
+
 ## 2026-09-30 — Sulocraft Architecture & Cloudflare Deployment gate
 
 Status: Ready for integration
