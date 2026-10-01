@@ -46,7 +46,7 @@ export default function Footer({ onNavigate }: FooterProps) {
         </svg>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 pt-16 pb-12">
+      <div className="storefront-shell pt-16 pb-12">
         {/* Newsletter */}
         <div className="text-center mb-16 pb-16 border-b border-white/10">
           <p className="text-[#F2C4CE] text-xs tracking-widest uppercase mb-3">Stay Connected</p>

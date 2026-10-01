@@ -57,7 +57,7 @@ export default function Header({ currentPage, onNavigate, cartCount, wishlistCou
         className={`transition-all duration-300 ${scrolled ? 'bg-white/95 backdrop-blur-md shadow-sm py-3' : 'bg-[#FAF7F2] py-4'}`}
         style={{ borderBottom: '1px solid #EDE4D0' }}
       >
-        <div className="max-w-7xl mx-auto px-4 flex items-center justify-between gap-4">
+        <div className="storefront-shell flex items-center justify-between gap-4">
           {/* Logo */}
           <button
             onClick={() => onNavigate('home')}

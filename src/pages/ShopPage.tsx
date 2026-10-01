@@ -161,8 +161,8 @@ export default function ShopPage({ onAddToCart, onToggleWishlist, wishlist, onPr
   return (
     <div className="min-h-screen bg-[#FAF7F2] pt-28">
       {/* Page header */}
-      <div className="bg-white border-b border-[#EDE4D0] px-4 py-10">
-        <div className="max-w-7xl mx-auto">
+      <div className="border-b border-[#EDE4D0] bg-white py-10">
+        <div className="storefront-shell">
           <p className="text-xs text-[#8B6B4A] mb-2">
             <button className="hover:text-[#C4622D]">Home</button> / <span>Shop</span>
           </p>
@@ -173,7 +173,7 @@ export default function ShopPage({ onAddToCart, onToggleWishlist, wishlist, onPr
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="storefront-shell py-8">
         {/* Top bar */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
           {/* Mobile filter button */}
@@ -234,7 +234,7 @@ export default function ShopPage({ onAddToCart, onToggleWishlist, wishlist, onPr
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-5">
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:gap-5 xl:grid-cols-4 2xl:grid-cols-5">
                 {filtered.map(product => (
                   <ProductCard
                     key={product.id}

@@ -57,6 +57,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Full-width storefront sections share fluid gutters without a global max width. */
+.storefront-shell {
+  width: 100%;
+  padding-inline: clamp(1rem, 3vw, 4rem);
+}
+
 /* Hide scrollbar but keep scroll */
 ::-webkit-scrollbar {
   width: 6px;

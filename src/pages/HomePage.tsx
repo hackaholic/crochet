@@ -39,9 +39,11 @@ const instagramImages = [
   'photo-1646182504823-a02b768e28b5',
 ];
 
+const uniqueProducts = (items: Product[]) => Array.from(new Map(items.map(product => [product.id, product])).values());
+
 export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wishlist, onProductClick }: HomePageProps) {
   const { products, categories, collections } = useCatalogue();
-  const bestsellers = products.filter(p => p.badge === 'Bestseller').concat(products.slice(0, 4));
+  const bestsellers = uniqueProducts(products.filter(p => p.badge === 'Bestseller').concat(products.slice(0, 4)));
   const romantic = products.filter(p => p.tags?.includes('romantic'));
   const pooja = products.filter(p => p.category === 'Pooja');
   const amigurumi = products.filter(p => p.category === 'Amigurumi');
@@ -73,7 +75,14 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
     <div className="bg-[#FAF7F2]">
       <HeroCarousel campaigns={heroCampaigns} loading={heroLoading} onShop={() => onNavigate('shop')} onCustom={() => onNavigate('about')} />
 
-      {homepageSections.length > 0 ? (
+      {heroLoading ? (
+        <section className="storefront-shell py-12 sm:py-16" aria-busy="true" aria-label="Loading homepage sections">
+          <div className="mb-8 h-8 w-64 animate-pulse rounded-lg bg-[#EDE4D0]" />
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            {Array.from({ length: 4 }, (_, index) => <div key={index} className="aspect-[3/4] animate-pulse rounded-2xl bg-[#EDE4D0]" />)}
+          </div>
+        </section>
+      ) : homepageSections.length > 0 ? (
         <HomepageSections
           sections={homepageSections}
           wishlist={wishlist}
@@ -84,7 +93,7 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
         />
       ) : <>
       {/* ── CATEGORIES ── */}
-      <section className="py-20 px-4 max-w-7xl mx-auto">
+      <section className="py-16 sm:py-20 storefront-shell">
         <div className="text-center mb-12">
           <p className="text-xs text-[#C4622D] font-semibold tracking-widest uppercase mb-3">Browse by Collection</p>
           <h2 className="text-4xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>Shop by Category</h2>
@@ -115,8 +124,8 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
       </section>
 
       {/* ── ROMANTIC COLLECTION ── */}
-      <section className="py-20 px-4 bg-white">
-        <div className="max-w-7xl mx-auto">
+      <section className="py-16 sm:py-20 bg-white">
+        <div className="storefront-shell">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
             <div>
               <p className="text-xs text-[#C4622D] font-semibold tracking-widest uppercase mb-3">For Someone Special</p>
@@ -131,8 +140,8 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
               View all <ArrowRightIcon size={18} />
             </button>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
-            {romantic.slice(0, 4).concat(products.filter(p => p.category === 'Gifts').slice(0, 2)).slice(0, 6).map(product => (
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-6 xl:grid-cols-5">
+            {uniqueProducts(romantic.slice(0, 4).concat(products.filter(p => p.category === 'Gifts').slice(0, 2))).slice(0, 6).map(product => (
               <ProductCard
                 key={product.id}
                 product={product}
@@ -147,8 +156,8 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
       </section>
 
       {/* ── BESTSELLERS (horizontal scroll) ── */}
-      <section className="py-20 px-4">
-        <div className="max-w-7xl mx-auto">
+      <section className="py-16 sm:py-20">
+        <div className="storefront-shell">
           <div className="flex items-end justify-between mb-10">
             <div>
               <p className="text-xs text-[#C4622D] font-semibold tracking-widest uppercase mb-3">Community Favourites</p>
@@ -180,10 +189,10 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
       </section>
 
       {/* ── POOJA COLLECTION ── */}
-      <section className="py-20 px-4 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #FAF7F2 0%, #F5E8D5 100%)' }}>
+      <section className="py-16 sm:py-20 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #FAF7F2 0%, #F5E8D5 100%)' }}>
         {/* Decorative top border */}
         <div className="absolute top-0 left-0 right-0 h-1" style={{ background: 'linear-gradient(90deg, #C4622D, #EDE4D0, #C4622D)' }} />
-        <div className="max-w-7xl mx-auto">
+        <div className="storefront-shell">
           <div className="text-center mb-12">
             <p className="text-xs text-[#8B6B4A] font-semibold tracking-widest uppercase mb-3">Crafted for Devotion</p>
             <h2 className="text-4xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>
@@ -197,7 +206,7 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
             </div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {pooja.concat(products.filter(p => p.tags?.includes('festive'))).slice(0, 4).map(product => (
+            {uniqueProducts(pooja.concat(products.filter(p => p.tags?.includes('festive')))).slice(0, 4).map(product => (
               <ProductCard
                 key={product.id}
                 product={product}
@@ -217,7 +226,7 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
       </section>
 
       {/* ── CUSTOM ORDERS ── */}
-      <section className="py-20 px-4 bg-[#2C1810] relative overflow-hidden">
+      <section className="py-16 sm:py-20 bg-[#2C1810] relative overflow-hidden">
         {/* Decorative */}
         <div className="absolute top-0 right-0 opacity-10">
           <FlowerDecor size={300} color="#F2C4CE" />
@@ -225,7 +234,7 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
         <div className="absolute bottom-0 left-0 opacity-10">
           <FlowerDecor size={200} color="#EDE4D0" />
         </div>
-        <div className="max-w-5xl mx-auto text-center relative">
+        <div className="storefront-shell text-center relative">
           <p className="text-[#F2C4CE] text-xs tracking-widest uppercase font-semibold mb-4">Bespoke Creations</p>
           <h2 className="text-4xl lg:text-5xl font-medium text-white mb-6" style={{ fontFamily: 'var(--font-serif)' }}>
             Have Something Special in Mind?
@@ -258,8 +267,8 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
       </section>
 
       {/* ── AMIGURUMI ── */}
-      <section className="py-20 px-4 bg-white">
-        <div className="max-w-7xl mx-auto">
+      <section className="py-16 sm:py-20 bg-white">
+        <div className="storefront-shell">
           <div className="text-center mb-12">
             <p className="text-xs text-[#C4622D] font-semibold tracking-widest uppercase mb-3">Handmade Companions</p>
             <h2 className="text-4xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>
@@ -268,7 +277,7 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
             <p className="text-[#8B6B4A] mt-3">Each little creature is stitched with personality and charm</p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {amigurumi.concat(products.filter(p => p.category === 'Amigurumi')).slice(0, 4).map(product => (
+            {uniqueProducts(amigurumi.concat(products.filter(p => p.category === 'Amigurumi'))).slice(0, 4).map(product => (
               <ProductCard
                 key={product.id}
                 product={product}
@@ -283,8 +292,8 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
       </section>
 
       {/* ── OCCASIONS ── */}
-      <section className="py-20 px-4" style={{ background: '#FAF7F2' }}>
-        <div className="max-w-7xl mx-auto">
+      <section className="py-16 sm:py-20" style={{ background: '#FAF7F2' }}>
+        <div className="storefront-shell">
           <div className="text-center mb-12">
             <p className="text-xs text-[#C4622D] font-semibold tracking-widest uppercase mb-3">Every Moment Counts</p>
             <h2 className="text-4xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>Gift by Occasion</h2>
@@ -309,7 +318,7 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
       </section>
 
       {/* ── PROCESS / CRAFTSMANSHIP ── */}
-      <section className="py-20 px-4 bg-[#2C1810] text-white relative overflow-hidden">
+      <section className="py-16 sm:py-20 bg-[#2C1810] text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-5">
           <svg width="100%" height="100%">
             <defs>
@@ -321,7 +330,7 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
             <rect width="100%" height="100%" fill="url(#stitch)" />
           </svg>
         </div>
-        <div className="max-w-7xl mx-auto relative">
+        <div className="storefront-shell relative">
           <div className="text-center mb-16">
             <p className="text-[#F2C4CE] text-xs tracking-widest uppercase font-semibold mb-4">Our Process</p>
             <h2 className="text-4xl lg:text-5xl font-medium" style={{ fontFamily: 'var(--font-serif)' }}>
@@ -349,8 +358,8 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
       </section>
 
       {/* ── REVIEWS ── */}
-      <section className="py-20 px-4 bg-white">
-        <div className="max-w-7xl mx-auto">
+      <section className="py-16 sm:py-20 bg-white">
+        <div className="storefront-shell">
           <div className="text-center mb-12">
             <p className="text-xs text-[#C4622D] font-semibold tracking-widest uppercase mb-3">From Our Community</p>
             <h2 className="text-4xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>
@@ -380,8 +389,8 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
       </section>
 
       {/* ── INSTAGRAM / SOCIAL ── */}
-      <section className="py-20 px-4" style={{ background: '#FAF7F2' }}>
-        <div className="max-w-7xl mx-auto">
+      <section className="py-16 sm:py-20" style={{ background: '#FAF7F2' }}>
+        <div className="storefront-shell">
           <div className="text-center mb-10">
             <p className="text-xs text-[#C4622D] font-semibold tracking-widest uppercase mb-3">@crochetbloom</p>
             <h2 className="text-4xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>Stitched Stories</h2>
@@ -410,8 +419,8 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
       </section>
 
       {/* ── PERSONALIZATION ── */}
-      <section className="py-20 px-4 bg-white">
-        <div className="max-w-7xl mx-auto">
+      <section className="py-16 sm:py-20 bg-white">
+        <div className="storefront-shell">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
               <p className="text-xs text-[#C4622D] font-semibold tracking-widest uppercase mb-4">Make It Yours</p>

@@ -38,7 +38,8 @@ describe('HeroCarousel', () => {
   it('moves between campaigns using accessible controls', () => {
     render(<HeroCarousel campaigns={campaigns} onShop={vi.fn()} onCustom={vi.fn()} />);
     const frame = screen.getByTestId('hero-slide-frame');
-    expect(frame).toHaveClass('h-[calc(100%-7rem)]', 'max-w-7xl');
+    expect(frame).toHaveClass('h-[calc(100%-7rem)]', 'storefront-shell');
+    expect(frame).not.toHaveClass('max-w-7xl');
     expect(screen.getByLabelText('Choose featured campaign')).toHaveClass('justify-center', 'bottom-4');
     expect(screen.getByLabelText('Choose featured campaign')).toHaveStyle({ left: '0px', right: '0px', width: '100%' });
     expect(screen.getByTestId('hero-image')).toHaveAttribute('src', campaigns[0].imageUrl);

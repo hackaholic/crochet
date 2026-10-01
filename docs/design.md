@@ -44,7 +44,8 @@ Rules: use `ink` or `brown-dark` for readable text; reserve terracotta for the m
 
 | Element | Standard |
 | --- | --- |
-| Content width | `max-w-7xl` with horizontal padding of `px-4` minimum |
+| Storefront width | Full viewport via `.storefront-shell`, with fluid `clamp(1rem, 3vw, 4rem)` side gutters and no global maximum width |
+| Readable content | Constrain prose, forms, checkout steps, dialogs, and hero copy locally; do not constrain the surrounding section |
 | Panels and cards | White or cream surface, `rounded-xl` or `rounded-2xl`, subtle beige border |
 | Primary button | Terracotta fill, white semibold Nunito label, fully rounded |
 | Secondary button | Cream or white surface, brown text, beige border, fully rounded |
@@ -55,6 +56,8 @@ Rules: use `ink` or `brown-dark` for readable text; reserve terracotta for the m
 ## Responsive rules
 
 Start with a narrow layout, retain checkout and cart actions at every width, and make tap targets at least 44px high or wide. Grids should collapse before text or controls become cramped. Do not rely on hover for an action that mobile users need. Verify the final render in Chrome/Chromium, Firefox, and the mobile viewport matrix in `docs/testing-plan.md`; account for Firefox font metrics and test the longest database-driven content.
+
+Storefront discovery surfaces—including the hero, category grids, product collections, promotions, reviews, header, and footer—must use the available viewport width. Use full-bleed section backgrounds and `.storefront-shell` for responsive gutters. On wide screens, add useful columns or horizontal rail capacity instead of stretching a narrow centered layout. Text blocks retain sensible line lengths inside the full-width section. Operational pages such as authentication, checkout, account forms, and long-form prose may remain constrained for readability and task focus.
 
 ## Assets and content
 

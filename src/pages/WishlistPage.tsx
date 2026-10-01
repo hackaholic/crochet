@@ -18,7 +18,7 @@ export default function WishlistPage({ wishlist, onAddToCart, onToggleWishlist, 
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] pt-28">
-      <div className="max-w-7xl mx-auto px-4 py-10">
+      <div className="storefront-shell py-10">
         <div className="flex items-end justify-between mb-10">
           <div>
             <h1 className="text-4xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>My Wishlist</h1>
@@ -34,7 +34,7 @@ export default function WishlistPage({ wishlist, onAddToCart, onToggleWishlist, 
         {items.length === 0 ? (
           <EmptyState icon="🤍" title="Your wishlist is empty" description="Save items you love by clicking the heart icon on any product" action={{ label: 'Explore Collection', onClick: () => onNavigate('shop') }} />
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-5">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-5 xl:grid-cols-5">
             {items.map(product => (
               <ProductCard
                 key={product.id}

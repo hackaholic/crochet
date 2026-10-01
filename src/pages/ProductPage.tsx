@@ -80,7 +80,7 @@ export default function ProductPage({ product: initialProduct, onAddToCart, onTo
   return (
     <div className="min-h-screen bg-[#FAF7F2] pt-28 pb-24 lg:pb-0">
       {/* Breadcrumb */}
-      <div className="max-w-7xl mx-auto px-4 pt-6 pb-2">
+      <div className="storefront-shell pb-2 pt-6">
         <p className="text-xs text-[#8B6B4A]">
           <button onClick={() => onNavigate('home')} className="hover:text-[#C4622D]">Home</button>
           {' / '}
@@ -90,7 +90,7 @@ export default function ProductPage({ product: initialProduct, onAddToCart, onTo
         </p>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="storefront-shell py-8">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16">
           {/* ── Gallery ── */}
           <div>

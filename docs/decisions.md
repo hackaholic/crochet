@@ -120,6 +120,14 @@ Impact: Backend features will be added under `backend/`; the frontend will consu
 
 The project will keep shared planning and working context in `docs/`. The root README is the entry point for people and agents joining the project.
 
+## 2026-10-01 — Full-width storefront discovery layout
+
+Decision: Storefront discovery surfaces use the complete viewport width with fluid responsive gutters. Hero artwork and section backgrounds are full bleed; category grids, product collections, promotions, reviews, the header, and the footer use the shared `.storefront-shell` layout. Readable copy, forms, checkout tasks, and dialogs remain locally constrained.
+
+Reason: The catalogue should feel visually rich and make useful use of desktop space while retaining comfortable mobile gutters and readable text lengths.
+
+Impact: The previous global `max-w-7xl` storefront constraint is removed. Wide product grids can show five cards, and new storefront components must use `.storefront-shell` rather than adding a centered global maximum width.
+
 ## Template
 
 ```md

@@ -31,7 +31,7 @@ export default function HeroCarousel({ campaigns, loading = false, onShop, onCus
     return (
       <section className="relative h-[46rem] overflow-hidden bg-[#2C1810] pt-28 sm:h-[50rem] lg:h-[720px]" aria-busy={loading}>
         <div className="absolute inset-x-0 bottom-0 h-[calc(100%-7rem)] animate-pulse bg-gradient-to-br from-[#2C1810] via-[#5C3D2E] to-[#8B6B4A]" aria-hidden="true" />
-        <div className="relative mx-auto flex h-[calc(100%-7rem)] max-w-7xl items-start px-5 pb-24 pt-10 sm:px-8 sm:pt-14 lg:px-10 lg:pt-12" aria-hidden="true">
+        <div className="storefront-shell relative flex h-[calc(100%-7rem)] items-start pb-24 pt-10 sm:pt-14 lg:pt-12" aria-hidden="true">
           <div className="w-full max-w-2xl">
             <div className="h-8 w-36 animate-pulse rounded-full bg-white/20" />
             <div className="mt-7 h-12 w-full max-w-xl animate-pulse rounded-xl bg-white/18" />
@@ -77,7 +77,7 @@ export default function HeroCarousel({ campaigns, loading = false, onShop, onCus
       <div className="absolute inset-x-0 bottom-0 h-[calc(100%-7rem)] bg-gradient-to-r from-[#1F100B]/95 via-[#2C1810]/68 to-[#2C1810]/5" />
       <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#1F100B]/65 to-transparent" />
 
-      <div data-testid="hero-slide-frame" className="relative mx-auto flex h-[calc(100%-7rem)] max-w-7xl items-start px-5 pb-24 pt-10 sm:px-8 sm:pt-14 lg:px-10 lg:pt-12">
+      <div data-testid="hero-slide-frame" className="storefront-shell relative flex h-[calc(100%-7rem)] items-start pb-24 pt-10 sm:pt-14 lg:pt-12">
         <div className="flex w-full max-w-3xl flex-col text-white lg:max-w-2xl">
           <div className="h-8">
             <p className={`inline-flex rounded-full border border-white/25 bg-white/12 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white backdrop-blur-sm ${activeCampaign.eyebrow ? '' : 'invisible'}`}>
