@@ -1,9 +1,11 @@
-import { useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { categories, occasions, reviews } from '../data/products';
 import ProductCard from '../components/ProductCard';
-import { ArrowRightIcon, ChevronLeftIcon, ChevronRightIcon, StarIcon, FlowerDecor, ThreadCurve } from '../components/Icons';
+import { ArrowRightIcon, StarIcon, ThreadCurve } from '../components/Icons';
 import type { Product } from '../data/products';
 import { useCatalogue } from '../components/CatalogueProvider';
+import HeroCarousel from '../components/HeroCarousel';
+import { getStorefrontContent, type HomepageCampaign } from '../lib/api/storefront';
 
 type Page = 'home' | 'shop' | 'product' | 'cart' | 'wishlist' | 'checkout' | 'about';
 
@@ -50,128 +52,21 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
     }
   };
 
-  const [heroImg] = useState(0);
+  const [heroCampaigns, setHeroCampaigns] = useState<HomepageCampaign[]>([]);
+  const [heroLoading, setHeroLoading] = useState(true);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    getStorefrontContent(controller.signal)
+      .then(content => setHeroCampaigns(content.heroCampaigns.slice(0, 5)))
+      .catch(() => setHeroCampaigns([]))
+      .finally(() => { if (!controller.signal.aborted) setHeroLoading(false); });
+    return () => controller.abort();
+  }, []);
 
   return (
     <div className="bg-[#FAF7F2]">
-      {/* ── HERO ── */}
-      <section className="relative min-h-screen flex items-center overflow-hidden pt-28">
-        {/* Decorative background */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-32 right-0 w-1/2 h-full" style={{
-            background: 'linear-gradient(135deg, #F2C4CE22 0%, #EDE4D0 100%)',
-            borderRadius: '40% 0 0 40%',
-          }} />
-          <div className="absolute top-20 left-10 opacity-20">
-            <FlowerDecor size={120} color="#C4622D" />
-          </div>
-          <div className="absolute bottom-32 right-1/3 opacity-15">
-            <FlowerDecor size={80} color="#8FAF8C" />
-          </div>
-          {/* Thread curves */}
-          <div className="absolute top-40 left-0 opacity-30">
-            <ThreadCurve width={300} color="#C4622D" opacity={1} />
-          </div>
-          <div className="absolute bottom-48 right-0 opacity-20 rotate-180">
-            <ThreadCurve width={250} color="#8B6B4A" opacity={1} />
-          </div>
-          {/* Dot grid */}
-          <svg className="absolute inset-0 w-full h-full opacity-[0.04]" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
-                <circle cx="2" cy="2" r="1.5" fill="#8B6B4A" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#dots)" />
-          </svg>
-        </div>
-
-        <div className="relative max-w-7xl mx-auto px-4 grid lg:grid-cols-2 gap-16 items-center py-16">
-          {/* Text */}
-          <div>
-            <div className="inline-flex items-center gap-2 bg-[#F2C4CE]/40 px-4 py-2 rounded-full mb-6">
-              <span className="text-xs text-[#C4622D] font-semibold tracking-widest uppercase">Handmade in India</span>
-              <span className="text-[#C4622D]">🪡</span>
-            </div>
-            <h1 className="text-5xl lg:text-7xl font-medium text-[#2C1810] leading-tight mb-6" style={{ fontFamily: 'var(--font-serif)' }}>
-              Little Things.<br />
-              <em>Lovingly</em><br />
-              Handmade.
-            </h1>
-            <p className="text-[#5C3D2E] text-lg leading-relaxed mb-10 max-w-lg">
-              Discover handmade crochet gifts, flowers, décor and beautiful creations crafted stitch by stitch — each one carrying the warmth of the hands that made it.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <button
-                onClick={() => onNavigate('shop')}
-                className="px-8 py-4 bg-[#C4622D] text-white rounded-full font-semibold hover:bg-[#D4795A] transition-all hover:shadow-lg hover:-translate-y-0.5 flex items-center gap-2"
-              >
-                Shop Collection <ArrowRightIcon size={18} />
-              </button>
-              <button
-                onClick={() => onNavigate('about')}
-                className="px-8 py-4 border-2 border-[#2C1810] text-[#2C1810] rounded-full font-semibold hover:bg-[#2C1810] hover:text-white transition-all"
-              >
-                Create Something Custom
-              </button>
-            </div>
-            {/* Trust badges */}
-            <div className="flex flex-wrap gap-6 mt-10 pt-8 border-t border-[#EDE4D0]">
-              {[
-                { icon: '✋', label: '100% Handmade' },
-                { icon: '🌿', label: 'Eco Packaging' },
-                { icon: '🚚', label: 'Free Shipping ₹999+' },
-                { icon: '💝', label: 'Gift Wrapping' },
-              ].map(({ icon, label }) => (
-                <div key={label} className="flex items-center gap-2 text-sm text-[#8B6B4A]">
-                  <span>{icon}</span>
-                  <span className="font-medium">{label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Image collage */}
-          <div className="relative">
-            {/* Main image */}
-            <div className="relative rounded-3xl overflow-hidden" style={{ aspectRatio: '4/5', maxHeight: '620px' }}>
-              <img
-                src="https://images.unsplash.com/photo-1700171518313-5dd219beaaa6?w=800&h=1000&fit=crop&auto=format"
-                alt="Handmade crochet flowers"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(44,24,16,0.2) 0%, transparent 50%)' }} />
-            </div>
-
-            {/* Floating card 1 */}
-            <div className="absolute -left-8 top-16 bg-white rounded-2xl p-4 shadow-xl" style={{ maxWidth: '160px' }}>
-              <img
-                src="https://images.unsplash.com/photo-1700171394718-2457b1190444?w=150&h=100&fit=crop&auto=format"
-                alt="Crochet bouquet"
-                className="w-full rounded-xl mb-2"
-                style={{ height: '80px', objectFit: 'cover' }}
-              />
-              <p className="text-xs font-semibold text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>Tulip Bouquet</p>
-              <p className="text-xs text-[#C4622D] font-bold">₹499</p>
-            </div>
-
-            {/* Floating card 2 */}
-            <div className="absolute -right-6 bottom-20 bg-white rounded-2xl p-4 shadow-xl" style={{ maxWidth: '180px' }}>
-              <div className="flex items-center gap-1 mb-1">
-                {[1,2,3,4,5].map(i => <StarIcon key={i} size={10} className="text-[#C4622D]" />)}
-              </div>
-              <p className="text-xs text-[#5C3D2E] italic leading-snug">"Made with pure love!"</p>
-              <p className="text-xs text-[#8B6B4A] mt-1 font-medium">— Priya, Mumbai</p>
-            </div>
-
-            {/* Stats card */}
-            <div className="absolute right-4 top-8 bg-[#2C1810] text-white rounded-2xl p-4 shadow-xl">
-              <p className="text-3xl font-bold" style={{ fontFamily: 'var(--font-serif)' }}>2K+</p>
-              <p className="text-xs text-white/60 mt-0.5">Happy customers</p>
-            </div>
-          </div>
-        </div>
-      </section>
+      <HeroCarousel campaigns={heroCampaigns} loading={heroLoading} onShop={() => onNavigate('shop')} onCustom={() => onNavigate('about')} />
 
       {/* ── CATEGORIES ── */}
       <section className="py-20 px-4 max-w-7xl mx-auto">

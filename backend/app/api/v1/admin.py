@@ -27,7 +27,16 @@ from app.models.order import (
     PaymentStatus,
 )
 from app.models.promotion import Coupon
+from app.models.storefront import BrandSettings, HomepageCampaign
 from app.models.user import User
+from app.schemas.storefront import (
+    AdminHomepageCampaignCreate,
+    AdminHomepageCampaignOut,
+    AdminHomepageCampaignUpdate,
+    BrandSettingsOut,
+    BrandSettingsUpdate,
+)
+
 from app.schemas.admin import (
     AdminAnalyticsOut,
     AdminCategoryCreate,
@@ -1134,5 +1143,157 @@ async def upload_product_image(
         "contentType": file.content_type,
         "size": len(file_bytes),
     }
+
+
+# ---------------------------------------------------------------------------
+# Storefront Brand Settings & Homepage Campaigns Management
+# ---------------------------------------------------------------------------
+
+@router.get("/storefront/brand", response_model=BrandSettingsOut)
+def get_admin_brand_settings(
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> BrandSettingsOut:
+    """Retrieve storewide brand settings."""
+    brand = db.query(BrandSettings).order_by(BrandSettings.id.asc()).first()
+    if not brand:
+        brand = BrandSettings(
+            name="Sulocraft",
+            owner_name="Anupama",
+            instagram_url="https://instagram.com/sulocraft",
+            whatsapp_url="https://wa.me/919876543210",
+        )
+        db.add(brand)
+        db.commit()
+        db.refresh(brand)
+    return BrandSettingsOut.model_validate(brand)
+
+
+@router.put("/storefront/brand", response_model=BrandSettingsOut)
+def update_admin_brand_settings(
+    payload: BrandSettingsUpdate,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> BrandSettingsOut:
+    """Update storewide brand settings."""
+    brand = db.query(BrandSettings).order_by(BrandSettings.id.asc()).first()
+    if not brand:
+        brand = BrandSettings(id=1)
+        db.add(brand)
+
+    if payload.name is not None:
+        brand.name = payload.name
+    if payload.owner_name is not None:
+        brand.owner_name = payload.owner_name
+    if payload.instagram_url is not None:
+        brand.instagram_url = payload.instagram_url
+    if payload.whatsapp_url is not None:
+        brand.whatsapp_url = payload.whatsapp_url
+
+    brand.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(brand)
+    return BrandSettingsOut.model_validate(brand)
+
+
+@router.get("/storefront/campaigns", response_model=list[AdminHomepageCampaignOut])
+def list_admin_campaigns(
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> list[AdminHomepageCampaignOut]:
+    """List all homepage campaigns (including inactive or scheduled) ordered by priority."""
+    campaigns = (
+        db.query(HomepageCampaign)
+        .order_by(HomepageCampaign.priority.asc(), HomepageCampaign.id.asc())
+        .all()
+    )
+    return [AdminHomepageCampaignOut.model_validate(c) for c in campaigns]
+
+
+@router.post("/storefront/campaigns", response_model=AdminHomepageCampaignOut, status_code=status.HTTP_201_CREATED)
+def create_admin_campaign(
+    payload: AdminHomepageCampaignCreate,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> AdminHomepageCampaignOut:
+    """Create a new homepage campaign."""
+    now = datetime.now(timezone.utc)
+    campaign = HomepageCampaign(
+        title=payload.title,
+        emphasis=payload.emphasis,
+        description=payload.description,
+        eyebrow=payload.eyebrow,
+        image_url=payload.image_url,
+        image_alt=payload.image_alt,
+        destination=payload.destination,
+        priority=payload.priority,
+        is_active=payload.is_active,
+        starts_at=payload.starts_at,
+        ends_at=payload.ends_at,
+        created_at=now,
+        updated_at=now,
+    )
+    db.add(campaign)
+    db.commit()
+    db.refresh(campaign)
+    return AdminHomepageCampaignOut.model_validate(campaign)
+
+
+@router.put("/storefront/campaigns/{campaign_id}", response_model=AdminHomepageCampaignOut)
+def update_admin_campaign(
+    campaign_id: int,
+    payload: AdminHomepageCampaignUpdate,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> AdminHomepageCampaignOut:
+    """Update an existing homepage campaign."""
+    campaign = db.query(HomepageCampaign).filter(HomepageCampaign.id == campaign_id).first()
+    if not campaign:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found")
+
+    if payload.title is not None:
+        campaign.title = payload.title
+    if payload.emphasis is not None:
+        campaign.emphasis = payload.emphasis
+    if payload.description is not None:
+        campaign.description = payload.description
+    if payload.eyebrow is not None:
+        campaign.eyebrow = payload.eyebrow
+    if payload.image_url is not None:
+        campaign.image_url = payload.image_url
+    if payload.image_alt is not None:
+        campaign.image_alt = payload.image_alt
+    if payload.destination is not None:
+        campaign.destination = payload.destination
+    if payload.priority is not None:
+        campaign.priority = payload.priority
+    if payload.is_active is not None:
+        campaign.is_active = payload.is_active
+    if payload.starts_at is not None:
+        campaign.starts_at = payload.starts_at
+    if payload.ends_at is not None:
+        campaign.ends_at = payload.ends_at
+
+    campaign.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(campaign)
+    return AdminHomepageCampaignOut.model_validate(campaign)
+
+
+@router.delete("/storefront/campaigns/{campaign_id}")
+def delete_admin_campaign(
+    campaign_id: int,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> dict[str, str | int]:
+    """Delete a homepage campaign."""
+    campaign = db.query(HomepageCampaign).filter(HomepageCampaign.id == campaign_id).first()
+    if not campaign:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found")
+
+    db.delete(campaign)
+    db.commit()
+    return {"status": "ok", "message": "Campaign deleted successfully", "id": campaign_id}
+
 
 

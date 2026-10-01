@@ -14,7 +14,9 @@ from app.models.catalogue import (
     Review,
     Tag,
 )
+from app.models.storefront import BrandSettings, HomepageCampaign
 from app.models.user import User, UserIdentity
+
 
 
 def slugify(text: str) -> str:
@@ -441,11 +443,8 @@ REVIEWS_DATA = [
 ]
 
 
-def seed_catalogue(db: Session) -> None:
-    """Populate database with hierarchical taxonomy, products, variants, tags, and reviews."""
-    if db.query(Product).first():
-        return
-
+def _seed_taxonomy_and_products(db: Session) -> None:
+    """Seed Occasions, Categories, Tags, Products, Variants, and Reviews."""
     # 1. Seed Occasions
     for occ in OCCASIONS_DATA:
         existing = db.query(Occasion).filter_by(id=occ["id"]).first()
@@ -569,7 +568,94 @@ def seed_catalogue(db: Session) -> None:
             )
         )
 
-    # 6. Seed Default Admin User
+def seed_storefront_content(db: Session) -> None:
+    """Seed default brand settings and initial 5 homepage campaigns."""
+    brand = db.query(BrandSettings).order_by(BrandSettings.id.asc()).first()
+    if not brand:
+        brand = BrandSettings(
+            id=1,
+            name="Sulocraft",
+            owner_name="Anupama",
+            instagram_url="https://instagram.com/sulocraft",
+            whatsapp_url="https://wa.me/919876543210",
+        )
+        db.add(brand)
+    else:
+        if not brand.name:
+            brand.name = "Sulocraft"
+        if not brand.owner_name:
+            brand.owner_name = "Anupama"
+
+    if db.query(HomepageCampaign).count() == 0:
+        campaigns_data = [
+            {
+                "title": "Rooted in Warmth, Woven by Hand",
+                "emphasis": "Every loop tells a story",
+                "eyebrow": "Our Heritage",
+                "description": "Founded by Anupama, Sulocraft preserves traditional crochet artistry through modern heirloom designs crafted in small artisanal batches.",
+                "image_url": "https://images.sulocraft.com/products/hero-brand-story.jpg",
+                "image_alt": "Artisanal crochet yarn and handmade floral creation",
+                "destination": "/about",
+                "priority": 1,
+                "is_active": True,
+            },
+            {
+                "title": "Thoughtful Gifts for Festive Seasons",
+                "emphasis": "Cherished moments",
+                "eyebrow": "Festive Collection",
+                "description": "Discover handcrafted festive hampers, delicate crochet pooja blooms, and heartwarming gifts crafted to bring joy.",
+                "image_url": "https://images.sulocraft.com/products/hero-festive-gifting.jpg",
+                "image_alt": "Festive handcrafted crochet gift box with ribbon",
+                "destination": "/shop?category=Gifts",
+                "priority": 2,
+                "is_active": True,
+            },
+            {
+                "title": "Fresh Floral Blooms & Modern Accents",
+                "emphasis": "Just arrived in store",
+                "eyebrow": "New Releases",
+                "description": "Explore our latest collection of eternal potted flowers, handcrafted car charms, and pastel botanical bouquets.",
+                "image_url": "https://images.sulocraft.com/products/hero-new-arrivals.jpg",
+                "image_alt": "Handmade crochet flowers and miniature potted plants",
+                "destination": "/shop",
+                "priority": 3,
+                "is_active": True,
+            },
+            {
+                "title": "Artisanal Accents for Cozy Living",
+                "emphasis": "Bespoke elegance",
+                "eyebrow": "Home & Living",
+                "description": "Elevate your sanctuary with intricate coasters, bohemian wall hangings, and tactile home accents that radiate warmth.",
+                "image_url": "https://images.sulocraft.com/products/hero-home-decor.jpg",
+                "image_alt": "Crochet table coaster and boho wall hanging decor",
+                "destination": "/shop?category=Home+Decor",
+                "priority": 4,
+                "is_active": True,
+            },
+            {
+                "title": "Made Specially for Your Special Occasions",
+                "emphasis": "Personalized for you",
+                "eyebrow": "Custom Orders",
+                "description": "From personalized initials to custom colorways and bridal bouquets, collaborate directly with our artisans.",
+                "image_url": "https://images.sulocraft.com/products/hero-custom-creations.jpg",
+                "image_alt": "Custom colored yarn and bespoke crochet monogram project",
+                "destination": "/contact?subject=custom-order",
+                "priority": 5,
+                "is_active": True,
+            },
+        ]
+        for c in campaigns_data:
+            db.add(HomepageCampaign(**c))
+
+    db.commit()
+
+
+def seed_catalogue(db: Session) -> None:
+    """Populate database with hierarchical taxonomy, products, variants, tags, reviews, admin, and storefront."""
+    if not db.query(Product).first():
+        _seed_taxonomy_and_products(db)
+
+    # Seed Default Admin User
     admin_user = db.query(User).filter(User.phone == "9999900000").first()
     if not admin_user:
         admin_user = User(
@@ -583,7 +669,10 @@ def seed_catalogue(db: Session) -> None:
         db.flush()
         db.add(UserIdentity(user_id=admin_user.id, provider="phone", provider_subject="9999900000"))
 
+    seed_storefront_content(db)
     db.commit()
+
+
 
 
 if __name__ == "__main__":

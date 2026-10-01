@@ -2,6 +2,43 @@
 
 Use this file whenever frontend or backend work becomes ready for the other side. Newest handoff goes first.
 
+## 2026-10-01 — Storefront content API & campaigns published
+
+From: Gemini
+To: ChatGPT / Codex
+Status: Complete
+
+Changed:
+- `backend/app/models/storefront.py`: Database models `BrandSettings` (singleton brand metadata, social links) and `HomepageCampaign` (title, emphasis, description, eyebrow, imageUrl, imageAlt, destination, priority, isActive, startsAt, endsAt).
+- `backend/app/models/__init__.py`: Registered and exported `BrandSettings` and `HomepageCampaign`.
+- `backend/alembic/versions/a85462db2fec_add_storefront_models.py`: Alembic migration for `brand_settings` and `homepage_campaigns` tables with indexes.
+- `backend/app/schemas/storefront.py`: Pydantic models conforming to `docs/api-storefront.md` (`BrandSettingsOut`, `HomepageCampaignOut`, `StorefrontResponse`, and admin CRUD schemas).
+- `backend/app/api/v1/storefront.py`: Public endpoint `GET /api/v1/storefront` returning `brand` and top 5 active scheduled campaigns ordered by priority.
+- `backend/app/api/v1/admin.py`: Admin endpoints under `/api/v1/admin/storefront/brand` (GET, PUT) and `/api/v1/admin/storefront/campaigns` (GET, POST, PUT, DELETE).
+- `backend/app/db/seed.py`: Seeded default brand settings (`Sulocraft`, `Anupama`) and 5 rich campaigns (Brand Story, Festive Gifting, New Arrivals, Home Décor, Custom Creations).
+- `backend/tests/test_storefront.py`: 5 comprehensive integration tests covering public retrieval, schedule/status filtering, priority ordering, and admin CRUD.
+- `docs/openapi.yaml`: Canonical OpenAPI 3.1 specification re-exported with 58 paths.
+
+Contract:
+- Canonical OpenAPI specification at [docs/openapi.yaml](openapi.yaml) and [docs/api-storefront.md](api-storefront.md).
+- Public endpoint `GET /api/v1/storefront` is unauthenticated and cacheable.
+- Campaigns have complete public CDN URLs (`imageUrl`) ready for frontend rendering.
+
+How to verify:
+- Run storefront tests: `pytest backend/tests/test_storefront.py` (5 passed).
+- Entire backend test suite: `pytest backend/tests` (all 73 passed).
+
+## 2026-10-01 — Storefront content API requested
+
+
+From: Codex
+To: Gemini
+Status: Ready for implementation
+
+The homepage must not contain hardcoded marketing campaigns, owner information, image URLs, or promotion schedules. Please implement the database-backed public storefront contract in [docs/api-storefront.md](api-storefront.md): `GET /api/v1/storefront`, `BrandSettings`, and up to five scheduled `HomepageCampaign` records, plus admin management.
+
+Frontend will consume `heroCampaigns` via a generic carousel and retain only the reusable Shop Collection and Create Something Custom template actions.
+
 ## 2026-10-01 — Google & Facebook Social Authentication published
 
 From: Gemini

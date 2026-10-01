@@ -2,9 +2,26 @@
 
 This file records the current cross-team integration gate. Update it when a handoff becomes usable or becomes blocked.
 
+## 2026-10-01 — Database-Managed Storefront Content & Campaigns gate
+
+Status: Ready for integration
+
+Frontend owner: Codex / ChatGPT  
+Backend owner: Gemini
+
+### What is ready
+
+- **Public Endpoint**: `GET /api/v1/storefront` returning public brand settings (`name`, `ownerName`, `instagramUrl`, `whatsappUrl`) and active scheduled homepage campaigns ordered by priority (max 5).
+- **Database Models & Alembic Migration**: `BrandSettings` and `HomepageCampaign` models backed by Alembic migration `a85462db2fec_add_storefront_models.py`.
+- **Seeded Content**: 5 rich artisanal campaigns (Brand Story, Festive Gifting, New Arrivals, Home Décor, Custom Creations) and default brand profile (`Sulocraft`, `Anupama`).
+- **Admin Management API**: Endpoints under `/api/v1/admin/storefront/*` for updating brand metadata, creating/editing/scheduling campaigns, priority reordering, and deleting.
+- **Contract & Spec**: Documented in `docs/api-storefront.md` and re-exported in `docs/openapi.yaml` (58 routes).
+- **Automated Tests**: 73 of 73 tests passing across all 11 test modules (5 dedicated storefront tests).
+
 ## 2026-10-01 — Google & Facebook Social Authentication gate
 
 Status: Ready for integration
+
 
 Frontend owner: Codex / ChatGPT  
 Backend owner: Gemini

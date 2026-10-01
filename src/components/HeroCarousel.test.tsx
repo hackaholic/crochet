@@ -1,0 +1,38 @@
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import HeroCarousel from './HeroCarousel';
+import type { HomepageCampaign } from '../lib/api/storefront';
+
+const campaigns: HomepageCampaign[] = [
+  { id: 1, title: 'First campaign', emphasis: 'Handmade', description: 'First description', eyebrow: 'New', imageUrl: 'https://images.example/one.webp', imageAlt: 'First campaign image', priority: 1 },
+  { id: 2, title: 'Second campaign', description: 'Second description', eyebrow: 'Festive', imageUrl: 'https://images.example/two.webp', imageAlt: 'Second campaign image', priority: 2 },
+];
+
+beforeAll(() => {
+  Object.defineProperty(window, 'matchMedia', { writable: true, value: vi.fn().mockReturnValue({ matches: false }) });
+});
+
+afterEach(cleanup);
+
+describe('HeroCarousel', () => {
+  it('renders API campaign content and keeps both template actions', () => {
+    const onShop = vi.fn();
+    const onCustom = vi.fn();
+    render(<HeroCarousel campaigns={campaigns} onShop={onShop} onCustom={onCustom} />);
+
+    expect(screen.getByText('First campaign')).toBeInTheDocument();
+    expect(screen.getByText('Handmade')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /shop collection/i }));
+    fireEvent.click(screen.getByRole('button', { name: /create something custom/i }));
+    expect(onShop).toHaveBeenCalledOnce();
+    expect(onCustom).toHaveBeenCalledOnce();
+  });
+
+  it('moves between campaigns using accessible controls', () => {
+    render(<HeroCarousel campaigns={campaigns} onShop={vi.fn()} onCustom={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /next promotion/i }));
+    expect(screen.getByText('Second campaign')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /previous promotion/i }));
+    expect(screen.getByText('First campaign')).toBeInTheDocument();
+  });
+});

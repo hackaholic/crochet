@@ -3671,6 +3671,328 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/storefront/brand:
+    get:
+      tags:
+      - admin
+      summary: Get Admin Brand Settings
+      description: Retrieve storewide brand settings.
+      operationId: get_admin_brand_settings_api_v1_admin_storefront_brand_get
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrandSettingsOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    put:
+      tags:
+      - admin
+      summary: Update Admin Brand Settings
+      description: Update storewide brand settings.
+      operationId: update_admin_brand_settings_api_v1_admin_storefront_brand_put
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrandSettingsUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrandSettingsOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/storefront/campaigns:
+    get:
+      tags:
+      - admin
+      summary: List Admin Campaigns
+      description: List all homepage campaigns (including inactive or scheduled) ordered
+        by priority.
+      operationId: list_admin_campaigns_api_v1_admin_storefront_campaigns_get
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminHomepageCampaignOut'
+                title: Response List Admin Campaigns Api V1 Admin Storefront Campaigns
+                  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - admin
+      summary: Create Admin Campaign
+      description: Create a new homepage campaign.
+      operationId: create_admin_campaign_api_v1_admin_storefront_campaigns_post
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminHomepageCampaignCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminHomepageCampaignOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/storefront/campaigns/{campaign_id}:
+    put:
+      tags:
+      - admin
+      summary: Update Admin Campaign
+      description: Update an existing homepage campaign.
+      operationId: update_admin_campaign_api_v1_admin_storefront_campaigns__campaign_id__put
+      parameters:
+      - name: campaign_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Campaign Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminHomepageCampaignUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminHomepageCampaignOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - admin
+      summary: Delete Admin Campaign
+      description: Delete a homepage campaign.
+      operationId: delete_admin_campaign_api_v1_admin_storefront_campaigns__campaign_id__delete
+      parameters:
+      - name: campaign_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Campaign Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  anyOf:
+                  - type: string
+                  - type: integer
+                title: Response Delete Admin Campaign Api V1 Admin Storefront Campaigns  Campaign
+                  Id  Delete
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/storefront:
+    get:
+      tags:
+      - storefront
+      summary: Get Storefront Content
+      description: Retrieve public brand profile and active scheduled homepage campaigns.
+      operationId: get_storefront_content_api_v1_storefront_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorefrontResponse'
   /health:
     get:
       tags:
@@ -4274,6 +4596,199 @@ components:
       type: object
       title: AdminCouponUpdate
       description: Payload to update an existing coupon.
+    AdminHomepageCampaignCreate:
+      properties:
+        title:
+          type: string
+          title: Title
+        emphasis:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Emphasis
+        description:
+          type: string
+          title: Description
+        eyebrow:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Eyebrow
+        imageUrl:
+          type: string
+          title: Imageurl
+        imageAlt:
+          type: string
+          title: Imagealt
+        destination:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Destination
+        priority:
+          type: integer
+          title: Priority
+          default: 0
+        isActive:
+          type: boolean
+          title: Isactive
+          default: true
+        startsAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Startsat
+        endsAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Endsat
+      type: object
+      required:
+      - title
+      - description
+      - imageUrl
+      - imageAlt
+      title: AdminHomepageCampaignCreate
+      description: Admin payload to create a new homepage campaign.
+    AdminHomepageCampaignOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        title:
+          type: string
+          title: Title
+        emphasis:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Emphasis
+        description:
+          type: string
+          title: Description
+        eyebrow:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Eyebrow
+        imageUrl:
+          type: string
+          title: Imageurl
+        imageAlt:
+          type: string
+          title: Imagealt
+        destination:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Destination
+        priority:
+          type: integer
+          title: Priority
+          default: 0
+        startsAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Startsat
+        endsAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Endsat
+        isActive:
+          type: boolean
+          title: Isactive
+          default: true
+        createdAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Createdat
+        updatedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Updatedat
+      type: object
+      required:
+      - id
+      - title
+      - description
+      - imageUrl
+      - imageAlt
+      title: AdminHomepageCampaignOut
+      description: Admin detailed representation of a homepage campaign including
+        status.
+    AdminHomepageCampaignUpdate:
+      properties:
+        title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Title
+        emphasis:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Emphasis
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        eyebrow:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Eyebrow
+        imageUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imageurl
+        imageAlt:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imagealt
+        destination:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Destination
+        priority:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Priority
+        isActive:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Isactive
+        startsAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Startsat
+        endsAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Endsat
+      type: object
+      title: AdminHomepageCampaignUpdate
+      description: Admin payload to update an existing homepage campaign.
     AdminInventoryAdjustRequest:
       properties:
         stockQuantity:
@@ -5143,6 +5658,54 @@ components:
       required:
       - file
       title: Body_upload_product_image_api_v1_admin_images_upload_post
+    BrandSettingsOut:
+      properties:
+        name:
+          type: string
+          title: Name
+          default: Sulocraft
+        ownerName:
+          type: string
+          title: Ownername
+          default: Anupama
+        instagramUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Instagramurl
+        whatsappUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Whatsappurl
+      type: object
+      title: BrandSettingsOut
+      description: Public brand profile representation.
+    BrandSettingsUpdate:
+      properties:
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+        ownerName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ownername
+        instagramUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Instagramurl
+        whatsappUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Whatsappurl
+      type: object
+      title: BrandSettingsUpdate
+      description: Payload to update storewide brand settings.
     CartItemAdd:
       properties:
         productVariantId:
@@ -5504,6 +6067,63 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
+    HomepageCampaignOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        title:
+          type: string
+          title: Title
+        emphasis:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Emphasis
+        description:
+          type: string
+          title: Description
+        eyebrow:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Eyebrow
+        imageUrl:
+          type: string
+          title: Imageurl
+        imageAlt:
+          type: string
+          title: Imagealt
+        destination:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Destination
+        priority:
+          type: integer
+          title: Priority
+          default: 0
+        startsAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Startsat
+        endsAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Endsat
+      type: object
+      required:
+      - id
+      - title
+      - description
+      - imageUrl
+      - imageAlt
+      title: HomepageCampaignOut
+      description: Public homepage campaign item representation.
     OccasionOut:
       properties:
         id:
@@ -6480,6 +7100,20 @@ components:
       - phone
       title: SendOtpResponse
       description: Response after sending OTP.
+    StorefrontResponse:
+      properties:
+        brand:
+          $ref: '#/components/schemas/BrandSettingsOut'
+        heroCampaigns:
+          items:
+            $ref: '#/components/schemas/HomepageCampaignOut'
+          type: array
+          title: Herocampaigns
+      type: object
+      required:
+      - brand
+      title: StorefrontResponse
+      description: Public storefront aggregate response for the homepage.
     UserOut:
       properties:
         id:
