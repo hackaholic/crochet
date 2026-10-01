@@ -2,6 +2,101 @@
 
 Use this file whenever frontend or backend work becomes ready for the other side. Newest handoff goes first.
 
+## 2026-10-02 — Downloads/sulocraft 11-image batch mapped to catalogue (24 products total)
+
+From: Gemini
+To: Codex / Owner
+Status: Complete; 113 backend tests passing; 36 frontend tests passing; verified in local Docker stack
+
+Changed:
+- Updated `docs/product-media.md` and `docs/product-catalogue-seed.json`:
+  - `sunflower-bouquet`: added gallery image `products/sunflower-bouquet/gallery-01-owner-lifestyle.png`.
+  - Added 6 new products with unique SKUs, sha256 checksums, and structured media:
+    1. `baby-blanket`: SKU `SULO-BABY-BLNK-001`, category `blankets` (Baby root)
+    2. `bunny-amigurami-set`: SKU `SULO-AMI-BUNNY-003`, category `bunny` (Amigurumi root)
+    3. `amigurumi-flower-bouquet`: SKU `SULO-FLR-AMI-001`, category `bouquets` (Flowers root) + `mini-amigurumi`
+    4. `octopus-amigurami-set`: SKU `SULO-AMI-OCTO-001`, category `octopus` (Amigurumi root)
+    5. `pooja-dress`: SKU `SULO-POOJA-DRESS-001`, category `poshak-god-clothes` (Pooja root) with 1 primary + 3 gallery images
+    6. `potli-handbag`: SKU `SULO-ACC-POTLI-001`, category `other-home-decor` with 1 primary + 1 gallery image
+- Updated `backend/app/db/seed.py`:
+  - Added products 19 to 24 to `PRODUCTS_DATA` with full taxonomy, collections, and variants.
+  - Added lifestyle gallery image to `sunflower-bouquet`.
+- Updated `scripts/prerender-routes.mjs` and `scripts/prerender.node-test.mjs` with metadata for all 24 products.
+- Updated `backend/tests/conftest.py` cleanup and `backend/tests/test_catalogue.py` (total count 24, added assertions for all 6 new products and gallery assets).
+- Verified full test suites:
+  - **Backend**: 113/113 tests passed (`pytest tests/`).
+  - **Frontend**: 36/36 tests passed inside Docker (5 node + 31 vitest).
+- Rebuilt and restarted `docker-api-1`; verified `GET /api/v1/products` returns 24 products with absolute URLs and HTTP 200.
+
+How to verify:
+- `curl -s http://localhost:8000/api/v1/products | jq '{total: length, new_products: [.[] | select(.id >= 19) | {id: .id, name: .name, slug: .slug, image: .image}]}'`
+- `curl -s http://localhost:8000/api/v1/products/pooja-dress | jq '{name: .name, images: .images}'`
+- `curl -s http://localhost:8000/api/v1/products/sunflower-bouquet | jq '{name: .name, images: .images}'`
+- `curl -s http://localhost:8000/api/v1/products/potli-handbag | jq '{name: .name, images: .images}'`
+- `PYTHONPATH=. .venv/bin/pytest tests/test_catalogue.py -v` (12 passed)
+
+## 2026-10-02 — New Downloads/sulocraft image batch: Gemini catalogue mapping needed
+
+From: Codex
+To: Gemini / Owner
+Status: Completed by Gemini; ready for Codex localhost verification
+
+The 11 source images are in `/home/anu/Downloads/sulocraft/`, copied into `public/images/products/`, and uploaded to the `sulocraft-products` R2 bucket. Every upload used `--verify-public` and passed.
+
+| Download source | Local asset and R2 key | Intended mapping |
+| --- | --- | --- |
+| `Baby blanket.PNG` | `products/baby-blanket/primary.png` | Baby blanket product |
+| `Bunny amigurami .PNG` | `products/bunny-amigurami-set/primary.png` | Three-bunny amigurumi set; confirm whether distinct from existing Bunny listings |
+| `Flower bouquet .PNG` | `products/amigurumi-flower-bouquet/primary.png` | Mixed crochet flower-and-amigurumi bouquet |
+| `Octopus amigurami .PNG` | `products/octopus-amigurami-set/primary.png` | Two-octopus amigurumi set |
+| `Poja dress .PNG` | `products/pooja-dress/primary.png` | Pooja dress / deity outfit group; inspect the four images to decide if gallery photos or separate variants/products |
+| `Poja dress.PNG` | `products/pooja-dress/gallery-01.png` | Pooja dress group image 2 |
+| `Poja dress 2.PNG` | `products/pooja-dress/gallery-02.png` | Pooja dress group image 3 |
+| `Poja dress3.PNG` | `products/pooja-dress/gallery-03.png` | Pooja dress group image 4 |
+| `Potli handbag .PNG` | `products/potli-handbag/primary.png` | Crochet potli handbag |
+| `Potli handbag.PNG` | `products/potli-handbag/gallery-01.png` | Potli handbag alternate close-up |
+| `Sunflower bouquet .PNG` | `products/sunflower-bouquet/gallery-01-owner-lifestyle.png` | Lifestyle/gallery photo for existing Sunflower Bouquet |
+
+Public delivery keys are exactly the local relative keys above, under `https://images.sulocraft.com/`.
+
+Gemini: add or update the catalogue database/seed/media records for these keys, using the established taxonomy and unique SKU rules. Inspect the Pooja dress images and bunny image against existing products to avoid incorrect duplicates. Preserve useful per-image `alt_text` (the media model already supports it); the storefront should render backend-provided image URLs and alt text, not hardcode content. Do not invent selling prices or product facts; ask Anupama only for details that block a valid listing. Add/update regression tests and mark this handoff complete with local API results and test counts.
+
+After Gemini completes: Codex rebuilds the local Docker app and checks all affected product listings/images in the browser at `http://localhost:8080` and the API at `http://localhost:8000`. Only after local verification passes should the changes be committed/pushed and synced to the VPS through the release automation, then VPS health and image URLs checked.
+
+## 2026-10-02 — Owner-supplied products and media added to catalogue (18 products)
+
+From: Gemini
+To: Codex / Owner
+Status: Complete; 113 backend tests passing; 36 frontend tests passing; verified in local Docker stack
+
+Changed:
+- Updated `docs/product-media.md` and `docs/product-catalogue-seed.json`:
+  - `crochet-bunny`: updated primary image to `products/crochet-bunny/owner-pink-bunny.png` and added gallery image `products/crochet-bunny/gallery-01-owner-collage.png` with sha256 hashes.
+  - Added `baby-gift-hamper`: SKU `SULO-BABY-HAMPER-001`, category `baby-gift-sets`, primary image `products/baby-gift-hamper/primary.png`.
+  - Added `crochet-heart-planter`: SKU `SULO-HOME-HEART-001`, category `flower-plant-decor`, primary image `products/crochet-heart-planter/primary.png`.
+- Updated `backend/app/db/seed.py`:
+  - `crochet-bunny`: updated media keys and variant attributes to Pink.
+  - Added product 17 `baby-gift-hamper` and product 18 `crochet-heart-planter` to `PRODUCTS_DATA` with full taxonomy, collections, and variants.
+- Updated `scripts/prerender-routes.mjs` and `scripts/prerender.node-test.mjs` with metadata for the 2 new products.
+- Updated `backend/tests/conftest.py` cleanup and `backend/tests/test_catalogue.py` (total count 18, added `test_owner_supplied_products_and_media`).
+- Verified all **113 backend tests** and **36 frontend tests** passing.
+- Rebuilt and restarted `docker-api-1`; verified `GET /api/v1/products` returns 18 products with absolute URLs and HTTP 200.
+
+How to verify:
+- `curl -s http://localhost:8000/api/v1/products | jq '{total: length, products: [.[] | {name: .name, slug: .slug, image: .image}]}'`
+- `curl -s http://localhost:8000/api/v1/products/crochet-bunny | jq '{name: .name, images: .images}'`
+- `curl -s http://localhost:8000/api/v1/products/baby-gift-hamper | jq '{name: .name, price: .price, images: .images}'`
+- `curl -s http://localhost:8000/api/v1/products/crochet-heart-planter | jq '{name: .name, price: .price, images: .images}'`
+- `PYTHONPATH=. .venv/bin/pytest tests/test_catalogue.py -v` (12 passed)
+
+## 2026-10-02 — Owner-supplied product image handoff
+
+From: Codex
+To: Gemini
+Status: Completed in the handoff above. Four images were uploaded to R2; Gemini added the bunny media mapping and two new product records, including tests. Codex confirmed the local API serves all four image assets and the local Shop page now lists 18 products.
+
+## 2026-10-02 — Homepage section media repair complete & verified on dev API
+
 ## 2026-10-02 — Homepage section media repair complete & verified on dev API
 
 From: Gemini

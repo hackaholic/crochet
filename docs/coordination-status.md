@@ -2,6 +2,81 @@
 
 This file records the current cross-team integration gate. Update it when a handoff becomes usable or becomes blocked.
 
+## 2026-10-02 — Downloads/sulocraft Catalogue Expansion (24 products total) gate
+
+Status: Ready for integration / Complete on backend & dev
+
+Frontend owner: Codex / ChatGPT
+Backend owner: Gemini
+
+### What is ready
+
+- **Catalogue Expansion (24 total products)**:
+  - `sunflower-bouquet`: added gallery image `products/sunflower-bouquet/gallery-01-owner-lifestyle.png`.
+  - `baby-blanket`: SKU `SULO-BABY-BLNK-001`, category `blankets`, primary image `products/baby-blanket/primary.png`.
+  - `bunny-amigurami-set`: SKU `SULO-AMI-BUNNY-003`, category `bunny`, primary image `products/bunny-amigurami-set/primary.png`.
+  - `amigurumi-flower-bouquet`: SKU `SULO-FLR-AMI-001`, category `bouquets`, primary image `products/amigurumi-flower-bouquet/primary.png`.
+  - `octopus-amigurami-set`: SKU `SULO-AMI-OCTO-001`, category `octopus`, primary image `products/octopus-amigurami-set/primary.png`.
+  - `pooja-dress`: SKU `SULO-POOJA-DRESS-001`, category `poshak-god-clothes`, primary + 3 gallery images.
+  - `potli-handbag`: SKU `SULO-ACC-POTLI-001`, category `other-home-decor`, primary + 1 gallery image.
+- **Manifests & Documentation**:
+  - `docs/product-media.md`: updated tables for 24 products and new galleries.
+  - `docs/product-catalogue-seed.json`: added all 6 products with verified sha256 checksums and galleries.
+- **Frontend Configuration**:
+  - `scripts/prerender-routes.mjs` and `scripts/prerender.node-test.mjs` updated for 24 products.
+- **Automated Tests**:
+  - Backend pytest suite: **113/113 passed** (including `test_owner_supplied_products_and_media`).
+  - Frontend test suite inside Docker: **36/36 passed** (5 node + 31 vitest).
+- **Live Local Stack**:
+  - Rebuilt and running in `docker-api-1`.
+  - `GET /api/v1/products` returns 24 products with resolved image URLs.
+
+## 2026-10-02 — Owner-Supplied Products Catalogue (18 products) gate
+
+Status: Ready for integration / Complete on backend & dev
+
+Frontend owner: Codex / ChatGPT
+Backend owner: Gemini
+
+### What is ready
+
+- **Catalogue Expansion (18 total products)**:
+  - `crochet-bunny`: updated primary image to `products/crochet-bunny/owner-pink-bunny.png` and added gallery image `products/crochet-bunny/gallery-01-owner-collage.png`.
+  - `baby-gift-hamper`: SKU `SULO-BABY-HAMPER-001`, category `baby-gift-sets`, primary image `products/baby-gift-hamper/primary.png`.
+  - `crochet-heart-planter`: SKU `SULO-HOME-HEART-001`, category `flower-plant-decor`, primary image `products/crochet-heart-planter/primary.png`.
+- **Manifests & Documentation**:
+  - `docs/product-media.md`: updated primary and gallery image tables.
+  - `docs/product-catalogue-seed.json`: updated media hashes and added the 2 new products.
+- **Frontend Pre-render Configuration**:
+  - `scripts/prerender-routes.mjs` and `scripts/prerender.node-test.mjs` include metadata for the 18 products.
+- **Automated Tests**:
+  - Backend test suite: **113/113 passed** (including `test_owner_supplied_products_and_media` in `backend/tests/test_catalogue.py`).
+  - Frontend test suite in Docker: **36/36 passed** (5 node + 31 vitest).
+- **Docker Stack**:
+  - Rebuilt `docker-api-1` and verified `GET /api/v1/products` returns all 18 products with absolute image URLs.
+
+## 2026-10-02 — Homepage Section Media Repair gate
+
+Status: Ready for integration / Complete on backend & dev
+
+Frontend owner: Codex / ChatGPT
+Backend owner: Gemini
+
+### What is ready
+
+- **Homepage Section Media Keys & Automatic Repair**:
+  - `seed_storefront_content` in `backend/app/db/seed.py` seeds `promo_banner` with `sections/gift-handcrafted-warmth.png` and `image_text` with `about/anupama-sharma.png`.
+  - Automatic database repair runs on startup to update existing development records from deprecated/missing keys (`campaigns/promo-gift-warmth.jpg` and `sections/artisan-story.jpg`).
+- **Cloudflare R2 Public Media**:
+  - `https://images.sulocraft.com/sections/gift-handcrafted-warmth.png` (2.2MB, HTTP 200, immutable cache).
+  - `https://images.sulocraft.com/about/anupama-sharma.png` (2.3MB, HTTP 200, immutable cache).
+- **Public API Resolution**:
+  - `GET /api/v1/storefront/home` resolves relative keys to absolute URLs using configured `IMAGE_BASE_URL`.
+- **Automated Tests**:
+  - Regression test `test_homepage_section_media_keys_and_repair` in `backend/tests/test_storefront.py`.
+  - Full backend test suite: **112/112 tests passing**.
+  - Frontend test suite (in Docker): **35/35 tests passing**.
+
 ## 2026-10-01 — V1 Authentication & Purchase Regression Suite gate
 
 Status: Ready for integration

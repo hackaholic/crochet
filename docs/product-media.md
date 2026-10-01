@@ -21,7 +21,7 @@ The SKU belongs to the default sellable variant. Future size, color, or customiz
 | `heart-bear` | `SULO-BABY-BEAR-001` | `products/heart-bear/primary.png` |
 | `couple-bunny-set` | `SULO-AMI-BUNNY-001` | `products/couple-bunny-set/primary.png` |
 | `mini-panda-amigurumi` | `SULO-AMI-PANDA-001` | `products/mini-panda-amigurumi/primary.png` |
-| `crochet-bunny` | `SULO-AMI-BUNNY-002` | `products/crochet-bunny/primary.png` |
+| `crochet-bunny` | `SULO-AMI-BUNNY-002` | `products/crochet-bunny/owner-pink-bunny.png` |
 | `crochet-marigold-garland` | `SULO-POOJA-GARLAND-001` | `products/crochet-marigold-garland/primary.png` |
 | `sunflower-bouquet` | `SULO-FLR-SUNFLOWER-001` | `products/sunflower-bouquet/primary.png` |
 | `crochet-hanging-planter` | `SULO-HOME-PLANT-001` | `products/crochet-hanging-planter/primary.png` |
@@ -32,6 +32,14 @@ The SKU belongs to the default sellable variant. Future size, color, or customiz
 | `crochet-toran` | `SULO-POOJA-TORAN-001` | `products/crochet-toran/primary.png` |
 | `daisy-coaster-set` | `SULO-HOME-COASTER-001` | `products/daisy-coaster-set/primary.png` |
 | `mini-teddy-bear` | `SULO-AMI-TEDDY-001` | `products/mini-teddy-bear/primary.png` |
+| `baby-gift-hamper` | `SULO-BABY-HAMPER-001` | `products/baby-gift-hamper/primary.png` |
+| `crochet-heart-planter` | `SULO-HOME-HEART-001` | `products/crochet-heart-planter/primary.png` |
+| `baby-blanket` | `SULO-BABY-BLNK-001` | `products/baby-blanket/primary.png` |
+| `bunny-amigurami-set` | `SULO-AMI-BUNNY-003` | `products/bunny-amigurami-set/primary.png` |
+| `amigurumi-flower-bouquet` | `SULO-FLR-AMI-001` | `products/amigurumi-flower-bouquet/primary.png` |
+| `octopus-amigurami-set` | `SULO-AMI-OCTO-001` | `products/octopus-amigurami-set/primary.png` |
+| `pooja-dress` | `SULO-POOJA-DRESS-001` | `products/pooja-dress/primary.png` |
+| `potli-handbag` | `SULO-ACC-POTLI-001` | `products/potli-handbag/primary.png` |
 
 Every listed file is a distinct generated asset under `public/images/`. Do not reuse another product's image as a fallback. If an asset is missing, return an explicit placeholder state and fix the data rather than silently substituting unrelated photography.
 
@@ -45,6 +53,12 @@ Production upload target for each file is the same object key beneath `https://i
 | `crochet-tulip-bouquet` | `products/crochet-tulip-bouquet/gallery-01.png` | Alternate three-quarter product view |
 | `heart-bear` | `products/heart-bear/gallery-01.png` | Alternate three-quarter product view |
 | `couple-bunny-set` | `products/couple-bunny-set/gallery-01.png` | Alternate three-quarter product view |
+| `crochet-bunny` | `products/crochet-bunny/gallery-01-owner-collage.png` | Owner collection collage view |
+| `pooja-dress` | `products/pooja-dress/gallery-01.png` | Pooja deity poshak alternate view 1 |
+| `pooja-dress` | `products/pooja-dress/gallery-02.png` | Pooja deity poshak alternate view 2 |
+| `pooja-dress` | `products/pooja-dress/gallery-03.png` | Pooja deity poshak alternate view 3 |
+| `potli-handbag` | `products/potli-handbag/gallery-01.png` | Potli handbag detail close-up |
+| `sunflower-bouquet` | `products/sunflower-bouquet/gallery-01-owner-lifestyle.png` | Lifestyle/gallery photo for Sunflower Bouquet |
 
 The structured SKU, classification, media order, alt text, and integrity hashes for all controlled products are published in [product-catalogue-seed.json](product-catalogue-seed.json). Only gallery files that exist and pass validation may be added to database seeds.
 

@@ -47,6 +47,14 @@ afterEach(() => {
 });
 
 describe('ShopPage filters', () => {
+  it('keeps the listing title, result count, and sort control together in the compact toolbar', () => {
+    render(<ShopPage wishlist={[]} onAddToCart={vi.fn()} onToggleWishlist={vi.fn()} onProductClick={vi.fn()} />);
+
+    expect(screen.getByRole('heading', { name: 'All Products' })).toBeInTheDocument();
+    expect(screen.getByText('1 handmade creations')).toBeInTheDocument();
+    expect(screen.getByLabelText('Sort by:')).toBeInTheDocument();
+  });
+
   it('shows only populated options, supports parent categories, and preserves expanded panels', () => {
     render(<ShopPage wishlist={[]} onAddToCart={vi.fn()} onToggleWishlist={vi.fn()} onProductClick={vi.fn()} />);
 

@@ -68,7 +68,7 @@ def clean_transactional_data():
         db.query(User).delete()
         db.query(ProductVariant).update({"stock_quantity": 50})
         # Clean any dynamically created test products and test categories
-        for tp in db.query(Product).filter(Product.id > 16).all():
+        for tp in db.query(Product).filter(Product.id > 24).all():
             db.delete(tp)
         db.query(Category).filter(Category.slug.like("test-%")).delete()
         db.commit()

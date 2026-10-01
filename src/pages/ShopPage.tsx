@@ -218,33 +218,44 @@ export default function ShopPage({ onAddToCart, onToggleWishlist, wishlist, onPr
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] pt-28">
-      {/* Page header */}
-      <div className="border-b border-[#EDE4D0] bg-white py-10">
-        <div className="storefront-shell">
-          <p className="text-xs text-[#8B6B4A] mb-2">
-            <button className="hover:text-[#C4622D]">Home</button> / <span>Shop</span>
-          </p>
-          <h1 className="text-4xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>
-            All Products
-          </h1>
-          <p className="text-[#8B6B4A] mt-2">{filtered.length} handmade creations</p>
-        </div>
-      </div>
-
-      <div className="storefront-shell py-8">
+      <div className="storefront-shell pb-10 pt-6 sm:pb-12 sm:pt-8">
         {/* Top bar */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-          {/* Mobile filter button */}
-          <button
-            onClick={() => setFilterOpen(true)}
-            className="lg:hidden flex items-center gap-2 px-4 py-2.5 border border-[#EDE4D0] rounded-full text-sm font-medium text-[#5C3D2E] hover:border-[#C4622D] transition-colors"
-          >
-            <FilterIcon size={16} />
-            Filters {activeFilters > 0 && <span className="bg-[#C4622D] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{activeFilters}</span>}
-          </button>
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-4 sm:mb-6">
+          <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
+            <h1 className="text-3xl font-medium text-[#2C1810] sm:text-4xl" style={{ fontFamily: 'var(--font-serif)' }}>
+              All Products
+            </h1>
+            <p className="text-sm text-[#8B6B4A]">{filtered.length} handmade creations</p>
+          </div>
 
-          {/* Active filter chips */}
-          <div className="flex flex-wrap gap-2 flex-1">
+          <div className="ml-auto flex items-center gap-3">
+            {/* Mobile filter button */}
+            <button
+              onClick={() => setFilterOpen(true)}
+              className="lg:hidden flex items-center gap-2 px-4 py-2.5 border border-[#EDE4D0] rounded-full text-sm font-medium text-[#5C3D2E] hover:border-[#C4622D] transition-colors"
+            >
+              <FilterIcon size={16} />
+              Filters {activeFilters > 0 && <span className="bg-[#C4622D] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{activeFilters}</span>}
+            </button>
+
+            {/* Sort */}
+            <div className="flex items-center gap-3">
+              <label htmlFor="shop-sort" className="hidden text-sm text-[#8B6B4A] md:block">Sort by:</label>
+              <select
+                id="shop-sort"
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value)}
+                className="px-4 py-2 border border-[#EDE4D0] rounded-full text-sm text-[#5C3D2E] bg-white focus:outline-none focus:border-[#C4622D] cursor-pointer"
+              >
+                {sortOptions.map(opt => <option key={opt}>{opt}</option>)}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Active filter chips */}
+        {activeFilters > 0 && (
+          <div className="mb-5 flex flex-wrap gap-2">
             {selectedCategories.map(cat => (
               <span key={cat} className="flex items-center gap-1.5 px-3 py-1 bg-[#F2C4CE] text-[#C4622D] rounded-full text-xs font-medium">
                 {categoryName(cat)}
@@ -257,20 +268,10 @@ export default function ShopPage({ onAddToCart, onToggleWishlist, wishlist, onPr
                 <button onClick={() => setSelectedOccasions(previous => previous.filter(value => value !== slug))}><XIcon size={12} /></button>
               </span>
             ))}
+            {selectedPriceRange !== null && <span className="rounded-full bg-[#F2C4CE] px-3 py-1 text-xs font-medium text-[#C4622D]">{priceFilters.find(item => item.index === selectedPriceRange)?.range.label}</span>}
+            {customizableOnly && <span className="rounded-full bg-[#F2C4CE] px-3 py-1 text-xs font-medium text-[#C4622D]">Customizable</span>}
           </div>
-
-          {/* Sort */}
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-[#8B6B4A] hidden md:block">Sort by:</span>
-            <select
-              value={sortBy}
-              onChange={e => setSortBy(e.target.value)}
-              className="px-4 py-2 border border-[#EDE4D0] rounded-full text-sm text-[#5C3D2E] bg-white focus:outline-none focus:border-[#C4622D] cursor-pointer"
-            >
-              {sortOptions.map(opt => <option key={opt}>{opt}</option>)}
-            </select>
-          </div>
-        </div>
+        )}
 
         <div className="flex gap-8">
           {/* Desktop sidebar */}

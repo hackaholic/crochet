@@ -194,6 +194,14 @@ export function getPublicRoutes() {
     'crochet-toran': { price: 2199, rating: 4.8, reviews: 81, category: 'Torans', desc: 'Traditional handcrafted entrance hanging with floral motifs, beads, and festive colorways welcoming prosperity.' },
     'daisy-coaster-set': { price: 899, rating: 4.8, reviews: 94, category: 'Coasters', desc: 'Set of four cheerful handmade daisy flower coasters, absorbing moisture while brightening coffee tables.' },
     'mini-teddy-bear': { price: 1099, rating: 4.9, reviews: 112, category: 'Teddy Bear', desc: 'Pocket-sized artisan teddy bear clutching a petite daisy blossom, stitched with premium hypoallergenic yarn.' },
+    'baby-gift-hamper': { price: 2499, rating: 4.9, reviews: 24, category: 'Baby Gift Sets', desc: 'Curated heirloom baby gift hamper featuring handmade crochet keepsakes, rattles, and booties crafted from soft baby-safe organic cotton yarn.' },
+    'crochet-heart-planter': { price: 899, rating: 4.8, reviews: 19, category: 'Flower / Plant Decor', desc: 'Charming handcrafted crochet heart planter pot with sweet amigurumi accents, perfect for small tabletop succulent decor and cozy room accents.' },
+    'baby-blanket': { price: 2199, rating: 4.9, reviews: 16, category: 'Blankets', desc: 'Luxuriously soft pastel baby blanket meticulously crocheted from breathable hypoallergenic cotton yarn for nursery warmth.' },
+    'bunny-amigurami-set': { price: 1999, rating: 4.8, reviews: 22, category: 'Bunny', desc: 'Charming trio of pastel hand-stitched amigurumi bunnies, crafted with delicate overalls and floppy ears.' },
+    'amigurumi-flower-bouquet': { price: 1899, rating: 4.9, reviews: 31, category: 'Bouquets', desc: 'Delightful fusion of handcrafted crochet floral stems and whimsical miniature amigurumi companions wrapped in textured paper.' },
+    'octopus-amigurami-set': { price: 1199, rating: 4.7, reviews: 18, category: 'Octopus', desc: 'Playful pair of tactile spiral-tentacled octopus amigurumi companions crafted from soothing premium cotton yarn.' },
+    'pooja-dress': { price: 799, rating: 5.0, reviews: 27, category: 'Poshak / God Clothes', desc: 'Exquisite hand-crocheted deity poshak outfit set with ornate festive borders, designed with devotion for Laddu Gopal and home mandir idols.' },
+    'potli-handbag': { price: 1299, rating: 4.8, reviews: 15, category: 'Other Home Decor', desc: 'Elegant traditional drawstring crochet potli handbag adorned with beaded tassels, perfect for weddings, festive occasions, and ethnic ensembles.' },
   };
 
   const productSlugs = seedProducts.length > 0

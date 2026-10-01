@@ -200,11 +200,18 @@
       ],
       "media": [
         {
-          "key": "products/crochet-bunny/primary.png",
+          "key": "products/crochet-bunny/owner-pink-bunny.png",
           "role": "primary",
           "displayOrder": 0,
-          "altText": "Crochet Bunny — primary product view",
-          "sha256": "766131bd9cb171d990dfdca03395c792fda74434dd810b6ba157fe9ea18b0098"
+          "altText": "Crochet Bunny — owner pink bunny view",
+          "sha256": "bc01aceaa563192b162567eae5ee98c2d19e06b2693ead0ccf1e660ad277cea1"
+        },
+        {
+          "key": "products/crochet-bunny/gallery-01-owner-collage.png",
+          "role": "gallery",
+          "displayOrder": 1,
+          "altText": "Crochet Bunny — owner collection collage view",
+          "sha256": "e1de0927f2c4ac600b3063e63ce1815b1efe4ec010c11b96d286a55d8251656d"
         }
       ]
     },
@@ -265,6 +272,13 @@
           "displayOrder": 0,
           "altText": "Sunflower Bouquet — primary product view",
           "sha256": "ad2d485b696b8447d73e36bb41607766d74cbcc3046d20e954cd7ad1ce7e1130"
+        },
+        {
+          "key": "products/sunflower-bouquet/gallery-01-owner-lifestyle.png",
+          "role": "gallery",
+          "displayOrder": 1,
+          "altText": "Sunflower Bouquet — owner lifestyle product view",
+          "sha256": "e4c74173934e2af5ca4579dba15c854270911753596b35632d2d69710d477e28"
         }
       ]
     },
@@ -498,6 +512,273 @@
           "displayOrder": 0,
           "altText": "Mini Teddy Bear — primary product view",
           "sha256": "e8cf68eab35d2ba71550c299e19d725b7c8d2c075b27d4d2a140b2eb12356d51"
+        }
+      ]
+    },
+    {
+      "name": "Baby Gift Hamper",
+      "slug": "baby-gift-hamper",
+      "defaultSku": "SULO-BABY-HAMPER-001",
+      "primaryCategorySlug": "baby-gift-sets",
+      "secondaryCategorySlugs": [
+        "toys"
+      ],
+      "collectionSlugs": [
+        "newborn-gifts",
+        "gifts"
+      ],
+      "tags": [
+        "baby",
+        "hamper",
+        "gift-set",
+        "newborn",
+        "handmade"
+      ],
+      "media": [
+        {
+          "key": "products/baby-gift-hamper/primary.png",
+          "role": "primary",
+          "displayOrder": 0,
+          "altText": "Baby Gift Hamper — primary product view",
+          "sha256": "c62475f052822eec3ec56d0076895020e403de41bae0f611b50fe9af5dae3817"
+        }
+      ]
+    },
+    {
+      "name": "Crochet Heart Planter",
+      "slug": "crochet-heart-planter",
+      "defaultSku": "SULO-HOME-HEART-001",
+      "primaryCategorySlug": "flower-plant-decor",
+      "secondaryCategorySlugs": [
+        "mini-amigurumi"
+      ],
+      "collectionSlugs": [
+        "housewarming-gifts",
+        "gifts",
+        "gifts-for-her"
+      ],
+      "tags": [
+        "home-decor",
+        "planter",
+        "heart",
+        "amigurumi",
+        "handmade"
+      ],
+      "media": [
+        {
+          "key": "products/crochet-heart-planter/primary.png",
+          "role": "primary",
+          "displayOrder": 0,
+          "altText": "Crochet Heart Planter — primary product view",
+          "sha256": "0d4fa9b3d2a90537941f9edc8974fa64e3c0beb0491b1581cfbc3279fd169962"
+        }
+      ]
+    },
+    {
+      "name": "Handmade Crochet Baby Blanket",
+      "slug": "baby-blanket",
+      "defaultSku": "SULO-BABY-BLNK-001",
+      "primaryCategorySlug": "blankets",
+      "secondaryCategorySlugs": [
+        "baby-gift-sets"
+      ],
+      "collectionSlugs": [
+        "newborn-gifts",
+        "gifts-for-kids",
+        "gifts"
+      ],
+      "tags": [
+        "baby",
+        "blanket",
+        "nursery",
+        "heirloom",
+        "cotton"
+      ],
+      "media": [
+        {
+          "key": "products/baby-blanket/primary.png",
+          "role": "primary",
+          "displayOrder": 0,
+          "altText": "Handmade Crochet Baby Blanket — primary product view",
+          "sha256": "196eff508ace47db514c7c12b9cc232e974fbfb93e23e5db3b0f143b49ede712"
+        }
+      ]
+    },
+    {
+      "name": "Pastel Bunny Amigurumi Trio",
+      "slug": "bunny-amigurami-set",
+      "defaultSku": "SULO-AMI-BUNNY-003",
+      "primaryCategorySlug": "bunny",
+      "secondaryCategorySlugs": [
+        "toys"
+      ],
+      "collectionSlugs": [
+        "gifts-for-kids",
+        "newborn-gifts",
+        "gifts"
+      ],
+      "tags": [
+        "bunny",
+        "amigurumi",
+        "baby",
+        "trio",
+        "pastel"
+      ],
+      "media": [
+        {
+          "key": "products/bunny-amigurami-set/primary.png",
+          "role": "primary",
+          "displayOrder": 0,
+          "altText": "Pastel Bunny Amigurumi Trio — primary product view",
+          "sha256": "18627f35b514627e458afcebd1d884c3cc30cd38b02670f1cd0385d072b057db"
+        }
+      ]
+    },
+    {
+      "name": "Amigurumi Floral Bloom Bouquet",
+      "slug": "amigurumi-flower-bouquet",
+      "defaultSku": "SULO-FLR-AMI-001",
+      "primaryCategorySlug": "bouquets",
+      "secondaryCategorySlugs": [
+        "mini-amigurumi"
+      ],
+      "collectionSlugs": [
+        "birthday-gifts",
+        "gifts-for-her",
+        "gifts",
+        "new-arrivals"
+      ],
+      "tags": [
+        "flowers",
+        "amigurumi",
+        "bouquet",
+        "pastel",
+        "gifts"
+      ],
+      "media": [
+        {
+          "key": "products/amigurumi-flower-bouquet/primary.png",
+          "role": "primary",
+          "displayOrder": 0,
+          "altText": "Amigurumi Floral Bloom Bouquet — primary product view",
+          "sha256": "350f2e0303125a13fc25d8b17b9ec1f46e94907adf5adfcbfc2336d41cdf68c6"
+        }
+      ]
+    },
+    {
+      "name": "Octopus Amigurumi Duo Set",
+      "slug": "octopus-amigurami-set",
+      "defaultSku": "SULO-AMI-OCTO-001",
+      "primaryCategorySlug": "octopus",
+      "secondaryCategorySlugs": [
+        "mini-amigurumi"
+      ],
+      "collectionSlugs": [
+        "gifts-for-kids",
+        "birthday-gifts",
+        "gifts"
+      ],
+      "tags": [
+        "octopus",
+        "amigurumi",
+        "kids",
+        "baby",
+        "handmade"
+      ],
+      "media": [
+        {
+          "key": "products/octopus-amigurami-set/primary.png",
+          "role": "primary",
+          "displayOrder": 0,
+          "altText": "Octopus Amigurumi Duo Set — primary product view",
+          "sha256": "c6a24ad1fbb1b6f79f15ae648edd15b2e13d57fa4b7930fe821ca4fe052096f9"
+        }
+      ]
+    },
+    {
+      "name": "Handcrafted Deity Poshak (Pooja Dress)",
+      "slug": "pooja-dress",
+      "defaultSku": "SULO-POOJA-DRESS-001",
+      "primaryCategorySlug": "poshak-god-clothes",
+      "secondaryCategorySlugs": [
+        "laddu-gopal-clothes"
+      ],
+      "collectionSlugs": [
+        "festival-gifts",
+        "gifts"
+      ],
+      "tags": [
+        "pooja",
+        "poshak",
+        "deity",
+        "dress",
+        "festive"
+      ],
+      "media": [
+        {
+          "key": "products/pooja-dress/primary.png",
+          "role": "primary",
+          "displayOrder": 0,
+          "altText": "Handcrafted Deity Poshak — primary product view",
+          "sha256": "b28e48d3c99dd55ae0ee0465738d3146dd3d3562f11b3152018d7bf9f83ffa5e"
+        },
+        {
+          "key": "products/pooja-dress/gallery-01.png",
+          "role": "gallery",
+          "displayOrder": 1,
+          "altText": "Handcrafted Deity Poshak — alternate view 1",
+          "sha256": "5c073798b8cd4da51108b7ea465cb3accffc5411c1ada46021c80a737640a713"
+        },
+        {
+          "key": "products/pooja-dress/gallery-02.png",
+          "role": "gallery",
+          "displayOrder": 2,
+          "altText": "Handcrafted Deity Poshak — alternate view 2",
+          "sha256": "01154304ef11e51c6bfd9bc31641748922d0d5974a578157a8fc03df7936fa15"
+        },
+        {
+          "key": "products/pooja-dress/gallery-03.png",
+          "role": "gallery",
+          "displayOrder": 3,
+          "altText": "Handcrafted Deity Poshak — alternate view 3",
+          "sha256": "71727e24415911d7403fde5cbbfeb0dcf9c63a95d504a094714cb1cc95fbe164"
+        }
+      ]
+    },
+    {
+      "name": "Handcrafted Crochet Potli Bag",
+      "slug": "potli-handbag",
+      "defaultSku": "SULO-ACC-POTLI-001",
+      "primaryCategorySlug": "other-home-decor",
+      "secondaryCategorySlugs": [
+        "festival-decor"
+      ],
+      "collectionSlugs": [
+        "gifts-for-her",
+        "festival-gifts",
+        "gifts"
+      ],
+      "tags": [
+        "potli",
+        "handbag",
+        "accessory",
+        "festive",
+        "traditional"
+      ],
+      "media": [
+        {
+          "key": "products/potli-handbag/primary.png",
+          "role": "primary",
+          "displayOrder": 0,
+          "altText": "Handcrafted Crochet Potli Bag — primary product view",
+          "sha256": "5e6adfa4871fb720065f3dd5c83561b91c3ec8970305de3f59da5bf06bfe3add"
+        },
+        {
+          "key": "products/potli-handbag/gallery-01.png",
+          "role": "gallery",
+          "displayOrder": 1,
+          "altText": "Handcrafted Crochet Potli Bag — detail view",
+          "sha256": "6037872f496faf816851f9850a651b2536b81edac1c924b0c046a7b00c7cdb7f"
         }
       ]
     }

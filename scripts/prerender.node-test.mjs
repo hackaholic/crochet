@@ -50,6 +50,14 @@ test('getPublicRoutes inventory structure', () => {
     'crochet-toran',
     'daisy-coaster-set',
     'mini-teddy-bear',
+    'baby-gift-hamper',
+    'crochet-heart-planter',
+    'baby-blanket',
+    'bunny-amigurami-set',
+    'amigurumi-flower-bouquet',
+    'octopus-amigurami-set',
+    'pooja-dress',
+    'potli-handbag',
   ];
 
   for (const slug of expectedProducts) {
