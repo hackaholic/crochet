@@ -34,9 +34,16 @@ export function productPath(product: Product): string {
   return `/products/${productSlug(product)}`;
 }
 
-export function pageFromPath(pathname: string): AppPage {
+export function normalizePathname(pathname: string): string {
+  if (!pathname || pathname === '/') return '/';
+  const trimmed = pathname.replace(/\/+$/, '');
+  return trimmed === '' ? '/' : trimmed;
+}
+
+export function pageFromPath(rawPathname: string): AppPage {
+  const pathname = normalizePathname(rawPathname);
   if (pathname.startsWith('/products/')) return 'product';
-  if (pathname === '/shop') return 'shop';
+  if (pathname === '/shop' || pathname.startsWith('/categories/') || pathname.startsWith('/collections/')) return 'shop';
   if (pathname === '/cart') return 'cart';
   if (pathname === '/wishlist') return 'wishlist';
   if (pathname === '/checkout') return 'checkout';

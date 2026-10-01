@@ -11,7 +11,14 @@ describe('storefront routes', () => {
 
   it('maps supported and unknown paths', () => {
     expect(pageFromPath('/account')).toBe('account');
+    expect(pageFromPath('/account/')).toBe('account');
+    expect(pageFromPath('/shop')).toBe('shop');
+    expect(pageFromPath('/shop/')).toBe('shop');
+    expect(pageFromPath('/categories/flowers')).toBe('shop');
+    expect(pageFromPath('/categories/amigurumi/')).toBe('shop');
+    expect(pageFromPath('/collections/bestsellers')).toBe('shop');
     expect(pageFromPath('/products/forever-crochet-rose-bouquet')).toBe('product');
+    expect(pageFromPath('/products/forever-crochet-rose-bouquet/')).toBe('product');
     expect(pageFromPath('/not-a-page')).toBe('notFound');
   });
 });

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router';
 import { SearchIcon, HeartIcon, ShoppingBagIcon, UserIcon, MenuIcon, XIcon, YarnLogo } from './Icons';
 import type { AppPage } from '../lib/routes';
 import { useCatalogue } from './CatalogueProvider';
@@ -26,7 +27,16 @@ const baseNavLinks: NavLink[] = [
   { label: 'Shop', page: 'shop' as Page },
 ];
 
+function useSafeNavigate() {
+  try {
+    return useNavigate();
+  } catch {
+    return null;
+  }
+}
+
 export default function Header({ currentPage, onNavigate, cartCount, wishlistCount, onSearchOpen, onCartOpen, onAccountOpen }: HeaderProps) {
+  const navigate = useSafeNavigate();
   const { categories } = useCatalogue();
   const navLinks: NavLink[] = [
     ...baseNavLinks,
@@ -36,6 +46,19 @@ export default function Header({ currentPage, onNavigate, cartCount, wishlistCou
   ];
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const handleNavClick = (page?: Page, href?: string) => {
+    if (href) {
+      if (navigate) {
+        navigate(href);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        window.location.assign(href);
+      }
+    } else if (page) {
+      onNavigate(page);
+    }
+  };
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 60);
@@ -79,7 +102,7 @@ export default function Header({ currentPage, onNavigate, cartCount, wishlistCou
             {navLinks.map(({ label, page, href }) => (
               <button
                 key={label}
-                onClick={() => href ? window.location.assign(href) : onNavigate(page!)}
+                onClick={() => handleNavClick(page, href)}
                 aria-current={currentPage === page ? 'page' : undefined}
                 className={`text-sm font-medium transition-colors hover:text-[#C4622D] ${currentPage === page && label === 'Home' ? 'text-[#C4622D]' : 'text-[#5C3D2E]'}`}
               >
@@ -137,7 +160,7 @@ export default function Header({ currentPage, onNavigate, cartCount, wishlistCou
             {navLinks.map(({ label, page, href }) => (
               <button
                 key={label}
-                onClick={() => { if (href) window.location.assign(href); else onNavigate(page!); setMobileOpen(false); }}
+                onClick={() => { handleNavClick(page, href); setMobileOpen(false); }}
                 className="block w-full text-left py-3 text-sm font-medium text-[#5C3D2E] border-b border-[#F5EDE0] hover:text-[#C4622D] transition-colors"
               >
                 {label}

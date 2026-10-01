@@ -24,8 +24,8 @@ class ProductCategory(Base):
 
     product_id = Column(Integer, ForeignKey("products.id", ondelete="CASCADE"), primary_key=True)
     category_id = Column(Integer, ForeignKey("categories.id", ondelete="CASCADE"), primary_key=True)
-    is_primary = Column(Boolean, default=False, index=True)
-    display_order = Column(Integer, default=0)
+    is_primary = Column(Boolean, default=False, nullable=False, index=True)
+    display_order = Column(Integer, default=0, nullable=False)
 
     product = relationship("Product", back_populates="product_categories", overlaps="products,categories")
     category = relationship("Category", back_populates="category_products", overlaps="products,categories")
@@ -49,8 +49,8 @@ class Category(Base):
     image_key = Column(String(500), nullable=True)
     icon = Column(String(20), nullable=True)
     display_order = Column(Integer, default=0)
-    is_active = Column(Boolean, default=True, index=True)
-    show_when_empty = Column(Boolean, default=False)
+    is_active = Column(Boolean, default=True)
+    show_when_empty = Column(Boolean, default=False, nullable=False)
     seo_title = Column(String(255), nullable=True)
     seo_description = Column(Text, nullable=True)
 
@@ -102,9 +102,9 @@ class Collection(Base):
     slug = Column(String(100), unique=True, index=True, nullable=False)
     description = Column(Text, nullable=True)
     image_key = Column(String(500), nullable=True)
-    collection_type = Column(String(50), default="MERCHANDISING", index=True)
-    display_order = Column(Integer, default=0)
-    is_active = Column(Boolean, default=True, index=True)
+    collection_type = Column(String(50), default="MERCHANDISING", nullable=False, index=True)
+    display_order = Column(Integer, default=0, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False, index=True)
     starts_at = Column(DateTime, nullable=True)
     ends_at = Column(DateTime, nullable=True)
     seo_title = Column(String(255), nullable=True)
@@ -134,7 +134,7 @@ class ProductCollection(Base):
 
     product_id = Column(Integer, ForeignKey("products.id", ondelete="CASCADE"), primary_key=True)
     collection_id = Column(Integer, ForeignKey("collections.id", ondelete="CASCADE"), primary_key=True)
-    display_order = Column(Integer, default=0)
+    display_order = Column(Integer, default=0, nullable=False)
 
     product = relationship("Product", back_populates="product_collections", overlaps="products,collections")
     collection = relationship("Collection", back_populates="product_associations", overlaps="products,collections")

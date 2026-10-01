@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router';
 import ProductCard from '../components/ProductCard';
 import { FilterIcon, XIcon, ChevronDownIcon } from '../components/Icons';
 import type { Product } from '../data/products';
@@ -20,6 +21,17 @@ const priceRanges = [
 ];
 const sortOptions = ['Featured', 'Newest', 'Price: Low to High', 'Price: High to Low', 'Best Selling'];
 
+function useSafeLocation() {
+  try {
+    return useLocation();
+  } catch {
+    return {
+      pathname: typeof window !== 'undefined' ? window.location.pathname : '/',
+      search: typeof window !== 'undefined' ? window.location.search : '',
+    };
+  }
+}
+
 function FilterSection({ title, children, defaultOpen = true }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
@@ -37,23 +49,67 @@ function FilterSection({ title, children, defaultOpen = true }: { title: string;
 }
 
 export default function ShopPage({ onAddToCart, onToggleWishlist, wishlist, onProductClick }: ShopPageProps) {
+  const location = useSafeLocation();
   const { products, categories, collections } = useCatalogue();
   const categoryFilters = useMemo(() => buildCategoryFilterOptions(categories, products), [categories, products]);
   const collectionFilters = useMemo(() => buildCollectionFilterOptions(collections, products), [collections, products]);
   const priceFilters = useMemo(() => buildPriceFilterOptions(priceRanges, products), [products]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(() => {
-    const category = new URLSearchParams(window.location.search).get('category');
-    return category ? [category] : [];
+    const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+    const category = params.get('category');
+    if (category) return [category];
+    const path = typeof window !== 'undefined' ? window.location.pathname.replace(/\/+$/, '') : '';
+    if (path.startsWith('/categories/')) {
+      const slug = path.replace(/^\/categories\//, '');
+      if (slug) return [slug];
+    }
+    return [];
   });
   const [selectedPriceRange, setSelectedPriceRange] = useState<number | null>(null);
   const [selectedOccasions, setSelectedOccasions] = useState<string[]>(() => {
-    const collection = new URLSearchParams(window.location.search).get('collection');
-    return collection ? [collection] : [];
+    const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+    const collection = params.get('collection');
+    if (collection) return [collection];
+    const path = typeof window !== 'undefined' ? window.location.pathname.replace(/\/+$/, '') : '';
+    if (path.startsWith('/collections/')) {
+      const slug = path.replace(/^\/collections\//, '');
+      if (slug) return [slug];
+    }
+    return [];
   });
   const [customizableOnly, setCustomizableOnly] = useState(false);
   const [sortBy, setSortBy] = useState('Featured');
   const [filterOpen, setFilterOpen] = useState(false);
   const [view, setView] = useState<'grid' | 'list'>('grid');
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const category = params.get('category');
+    const collection = params.get('collection');
+    const cleanPath = location.pathname.replace(/\/+$/, '');
+
+    if (category) {
+      setSelectedCategories([category]);
+    } else if (cleanPath.startsWith('/categories/')) {
+      const slug = cleanPath.replace(/^\/categories\//, '');
+      if (slug) setSelectedCategories([slug]);
+    } else if (cleanPath === '/shop') {
+      if (!category) {
+        setSelectedCategories([]);
+      }
+    }
+
+    if (collection) {
+      setSelectedOccasions([collection]);
+    } else if (cleanPath.startsWith('/collections/')) {
+      const slug = cleanPath.replace(/^\/collections\//, '');
+      if (slug) setSelectedOccasions([slug]);
+    } else if (cleanPath === '/shop') {
+      if (!collection) {
+        setSelectedOccasions([]);
+      }
+    }
+  }, [location.pathname, location.search]);
 
   const toggleCategory = (cat: string) =>
     setSelectedCategories(prev => prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]);

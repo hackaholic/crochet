@@ -15,7 +15,7 @@ import InfoPage from './pages/InfoPage';
 import AccountPage from './pages/AccountPage';
 import AdminPage from './pages/AdminPage';
 import type { Product } from './data/products';
-import { pageFromPath, pagePath, productPath, productSlug, type AppPage } from './lib/routes';
+import { normalizePathname, pageFromPath, pagePath, productPath, productSlug, type AppPage } from './lib/routes';
 import { useCatalogue } from './components/CatalogueProvider';
 import { ErrorState, LoadingState } from './components/StorefrontState';
 import { useCart } from './components/CartProvider';
@@ -30,7 +30,7 @@ export default function App() {
   const page = pageFromPath(location.pathname);
   const { products, loading: catalogueLoading, error: catalogueError, retry: retryCatalogue } = useCatalogue();
   const selectedProduct = page === 'product'
-    ? products.find(product => productSlug(product) === location.pathname.split('/').pop()) ?? null
+    ? products.find(product => productSlug(product) === normalizePathname(location.pathname).split('/').pop()) ?? null
     : null;
   const showNotFound = page === 'notFound' || (page === 'product' && selectedProduct === null);
   const { items: cart, add: addCartItem, update: updateCartItem, remove: removeCartItem, refresh: refreshCart } = useCart();
