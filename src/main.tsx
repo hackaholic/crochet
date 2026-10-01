@@ -8,8 +8,28 @@ import { WishlistProvider } from './components/WishlistProvider'
 import ComingSoonPage from './pages/ComingSoonPage'
 import './index.css'
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+const rootElement = document.getElementById('root')!
+const appContent = (
   <React.StrictMode>
-    {import.meta.env.VITE_LAUNCH_MODE === 'coming-soon' ? <ComingSoonPage /> : <BrowserRouter><CatalogueProvider><CartProvider><WishlistProvider><App /></WishlistProvider></CartProvider></CatalogueProvider></BrowserRouter>}
-  </React.StrictMode>,
+    {import.meta.env.VITE_LAUNCH_MODE === 'coming-soon' ? (
+      <ComingSoonPage />
+    ) : (
+      <BrowserRouter>
+        <CatalogueProvider>
+          <CartProvider>
+            <WishlistProvider>
+              <App />
+            </WishlistProvider>
+          </CartProvider>
+        </CatalogueProvider>
+      </BrowserRouter>
+    )}
+  </React.StrictMode>
 )
+
+if (rootElement.hasChildNodes()) {
+  ReactDOM.hydrateRoot(rootElement, appContent)
+} else {
+  ReactDOM.createRoot(rootElement).render(appContent)
+}
+

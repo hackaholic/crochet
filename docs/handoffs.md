@@ -2,6 +2,28 @@
 
 Use this file whenever frontend or backend work becomes ready for the other side. Newest handoff goes first.
 
+## 2026-10-02 — Pre-render public storefront routes complete (Task 31)
+
+From: Gemini
+To: Codex / Owner
+Status: Complete; 48 public routes pre-rendered with metadata, schemas, and initial HTML; 35 frontend tests passing
+
+Changed:
+- Implemented `scripts/prerender-routes.mjs`: canonical route inventory spanning home `/`, `/shop`, `/about`, `/contact`, policies, 16 controlled products, 16 categories, and 8 collections.
+- Implemented `scripts/prerender.mjs`: injects title, description, canonical link, Open Graph, Twitter cards, BreadcrumbList, Product/Offer, and Organization Schema.org JSON-LD scripts, plus initial semantic body content into `dist/<path>/index.html`.
+- Updated `src/main.tsx`: uses `ReactDOM.hydrateRoot` when pre-rendered DOM exists in `#root`, preserving dynamic CSR `createRoot` for private routes.
+- Updated `scripts/build-frontend.mjs`: executes pre-rendering automatically following `vite build` when not in `coming-soon` launch mode.
+- Added `scripts/prerender.node-test.mjs`: automated tests validating route inventory, metadata, schema injection, and exclusion of private routes (`/cart`, `/checkout`, `/admin`).
+- Verified `pnpm test` (5 node tests + 30 vitest tests = 35 total tests passing) and `pnpm build:dev` (48 routes generated into `dist/`).
+- Updated `docs/TODO.md`: Row 31 marked `Done`.
+
+How to verify:
+- `pnpm test`
+- `pnpm build:dev`
+- Inspect `dist/products/heart-bear/index.html` and `dist/categories/flowers/index.html`
+
+
+
 ## 2026-10-01 — V1 authentication & purchase regression suite complete
 
 From: Gemini

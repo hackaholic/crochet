@@ -8,7 +8,7 @@
     "build": "node scripts/build-frontend.mjs",
     "build:dev": "node scripts/build-frontend.mjs preprod",
     "build:production": "node scripts/build-frontend.mjs production",
-    "test": "node --test scripts/frontend-build-mode.node-test.mjs && vitest run",
+    "test": "node --test scripts/frontend-build-mode.node-test.mjs scripts/prerender.node-test.mjs && vitest run",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "format": "oxfmt"
