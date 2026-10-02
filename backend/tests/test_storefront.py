@@ -1,16 +1,31 @@
 """Automated tests for Storefront content & campaigns API conforming to docs/api-storefront.md."""
 
 from datetime import datetime, timedelta, timezone
+import hashlib
 import pytest
 from fastapi.testclient import TestClient
 
 from app.db.seed import seed_catalogue
 from app.db.session import SessionLocal
 from app.main import app
+from app.core.images import LOCAL_IMAGE_ASSET_MAP
 from app.models.storefront import BrandSettings, HomepageCampaign
 from app.models.user import User, UserIdentity
 
 client = TestClient(app)
+
+
+def test_all_occasion_image_keys_serve_distinct_local_artwork():
+    """Local occasion keys must serve the uploaded Sulocraft artwork, not stock fallbacks."""
+    hashes = set()
+    for object_key in LOCAL_IMAGE_ASSET_MAP:
+        response = client.get(f"/static/images/{object_key}")
+        assert response.status_code == 200
+        assert response.headers["content-type"].startswith("image/png")
+        assert response.content.startswith(b"\x89PNG\r\n\x1a\n")
+        hashes.add(hashlib.sha256(response.content).hexdigest())
+
+    assert len(hashes) == len(LOCAL_IMAGE_ASSET_MAP) == 13
 
 
 @pytest.fixture(autouse=True)
@@ -655,11 +670,11 @@ def test_occasion_grid_homepage_section():
     assert occ_sec["description"] == "Celebrate milestones, festivals, and memories with handcrafted warmth"
 
     occasions = occ_sec["occasions"]
-    assert len(occasions) == 9, "Occasion grid returns all 9 active initial occasions (4 evergreen + 5 seasonal)"
+    assert len(occasions) == 5, "Occasion grid returns exactly 5 enabled default occasions (DEC-010-010)"
 
-    # Verify occasions have distinct IDs and distinct valid images
+    # Verify occasions have distinct IDs and match the 5 defaults
     occ_ids = [o["id"] for o in occasions]
-    assert len(set(occ_ids)) == len(occ_ids)
+    assert occ_ids == ["birthday", "justbecause", "anniversary", "babyshower", "wedding"]
     assert "rakhi" not in occ_ids, "Rakhi must be hidden from occasion grid"
 
     image_urls = [o["imageUrl"] for o in occasions]

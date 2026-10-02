@@ -2998,20 +2998,7 @@ def update_admin_occasion(
     if not occasion:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Occasion not found")
 
-    if occasion.is_evergreen:
-        if payload.is_enabled is not None and not payload.is_enabled:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Evergreen occasions cannot be disabled. They remain active year-round.",
-            )
-        if ("starts_at" in payload.model_fields_set and payload.starts_at is not None) or (
-            "ends_at" in payload.model_fields_set and payload.ends_at is not None
-        ):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Evergreen occasions cannot have seasonal schedule dates. They remain active year-round.",
-            )
-
+    # All occasions are admin-toggleable and can have optional schedules (DEC-010-010)
     if payload.image_key is not None and payload.image_key != occasion.image_key:
         target_key = payload.image_key.strip()
         if target_key:
@@ -3081,10 +3068,10 @@ def delete_admin_occasion(
     if not occasion:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Occasion not found")
 
-    if occasion.is_evergreen:
+    if occasion_id in {"birthday", "anniversary", "wedding", "babyshower", "justbecause"}:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Evergreen occasions cannot be deleted.",
+            detail="Core initial occasions cannot be deleted. You can disable them instead.",
         )
 
     db.delete(occasion)

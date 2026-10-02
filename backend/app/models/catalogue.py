@@ -354,8 +354,8 @@ class Occasion(Base):
 
     @property
     def is_evergreen(self) -> bool:
-        """Core evergreen occasions remain visible year-round and ignore seasonal schedules."""
-        return self.id in EVERGREEN_OCCASION_IDS
+        """Evergreen status: all occasions are now admin-toggleable (DEC-010-010)."""
+        return False
 
     @property
     def image_url(self) -> str | None:
@@ -372,9 +372,6 @@ class Occasion(Base):
 
     def is_in_season(self, current_time: datetime | None = None) -> bool:
         """Evaluate whether this occasion's schedule window includes current time in Asia/Kolkata."""
-        if self.is_evergreen:
-            return True
-
         if not self.is_enabled:
             return False
 

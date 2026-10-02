@@ -142,7 +142,7 @@ def get_mock_static_image(image_path: str):
     """Serve local static assets or redirect to high-res photography during development."""
     from pathlib import Path
     from fastapi.responses import FileResponse, RedirectResponse
-    from app.core.images import resolve_mock_image_source
+    from app.core.images import LOCAL_IMAGE_ASSET_MAP, resolve_mock_image_source
 
     clean_path = image_path.lstrip("/")
     # Check if file exists locally on disk in public/images/
@@ -154,6 +154,19 @@ def get_mock_static_image(image_path: str):
     for candidate in candidates:
         if candidate.is_file():
             return FileResponse(candidate)
+
+    # Occasion DB/R2 object keys can differ from the checked-in local filenames.
+    # Serve the corresponding approved artwork in development instead of the
+    # generic upstream photo fallback.
+    local_asset = LOCAL_IMAGE_ASSET_MAP.get(clean_path)
+    if local_asset:
+        for candidate in (
+            Path(f"public/images/{local_asset}"),
+            Path(f"../public/images/{local_asset}"),
+            Path(f"/app/public/images/{local_asset}"),
+        ):
+            if candidate.is_file():
+                return FileResponse(candidate)
 
     upstream_url = resolve_mock_image_source(image_path)
     return RedirectResponse(url=upstream_url, status_code=307)
@@ -171,4 +184,3 @@ def root_robots() -> Response:
     """Root robots.txt endpoint for reverse proxies and web crawlers."""
     content = SeoService.generate_robots_txt()
     return Response(content=content, media_type="text/plain")
-

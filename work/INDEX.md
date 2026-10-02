@@ -9,6 +9,6 @@
 - **Work 007 — End-to-end purchase & mobile rendering QA** · Pending · [work folder](work-007-e2e-qa/)
 - **Work 008 — Customer promotions & reviews engine** · Pending · [work folder](work-008-promotions-reviews/)
 - **Work 009 — Storefront search typeahead** · In Progress · [work folder](work-009-storefront-search/)
-- **Work 010 — Seasonal Gift by Occasion** · Completed · [work folder](work-010-gift-by-occasion/)
+- **Work 010 — Seasonal Gift by Occasion** · In Progress · [work folder](work-010-gift-by-occasion/)
 - **Work 011 — Automated API Verification & Reporting Suite** · Completed · [work folder](work-011-api-verification/)
 - **Security — Automated security audit & release gate** · Completed · [work folder](security/)

@@ -141,17 +141,11 @@ def _resolve_homepage_section(db: Session, section: HomepageSection):
             .order_by(Occasion.display_order.asc(), Occasion.id.asc())
             .all()
         )
-        # Seasonal occasions: enabled, currently in season, distinct image
-        seasonal_occasions = [
+        # Public API returns enabled, in-season occasions in admin display order (DEC-010-010)
+        qualifying_occasions = [
             o for o in all_occasions
-            if not o.is_evergreen and o.is_enabled and o.is_in_season() and (o.image_url or o.image_key)
-        ]
-        # Evergreen occasions: core year-round occasions with distinct image
-        evergreen_occasions = [
-            o for o in all_occasions
-            if o.is_evergreen and (o.image_url or o.image_key)
-        ]
-        qualifying_occasions = (seasonal_occasions + evergreen_occasions)[:limit]
+            if o.is_enabled and o.is_in_season() and (o.image_url or o.image_key)
+        ][:limit]
 
         if not qualifying_occasions:
             return None

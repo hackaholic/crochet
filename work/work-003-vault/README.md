@@ -8,6 +8,6 @@
 
 **Architecture:** Public age recipients encrypt; matching private keys decrypt. Local developer private keys stay outside the repo. VPS private key stays at `/etc/sulocraft/age/keys.txt`, root-owned mode `0600`; it never enters app containers. VPS decrypts only required service groups under `/run/sulocraft/`.
 
-**Dependencies:** Gemini's handoff in `docs/handoffs.md`; variable inventory in `docs/secrets.md`; local Docker currently has an unrelated API seed blocker.
+**Dependencies:** Task-specific handoffs are recorded in this folder's `coordination.md` and task contracts; older Gemini reports are in the [handoff archive](../../docs/archive/handoffs-history.md). Variable inventory: `docs/secrets.md`. Local Docker currently has an unrelated API seed blocker.
 
 **Done when:** Local dev secrets can be decrypted safely; VPS deploy transfers encrypted groups only and materializes least-privilege runtime files; tests pass; local Docker is healthy and verified; owner reviews before dev deployment.

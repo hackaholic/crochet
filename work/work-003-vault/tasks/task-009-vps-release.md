@@ -1,7 +1,7 @@
 # Task 3.10 — Owner review and encrypted VPS release deployment
 
 **Owner:** Owner + Codex
-**Status:** Pending
+**Status:** Blocked — the live API was manually updated using the saved plaintext preprod env, but the SOPS/age deployment contract in Task 3.3 remains incomplete.
 
 ## Objective
 

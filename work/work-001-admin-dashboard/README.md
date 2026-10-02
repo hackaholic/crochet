@@ -6,7 +6,7 @@
 
 **Current state:** In Progress. The supplied layout and core dashboard, orders/order detail, finance, and returns screens are present in the existing `/admin` route and use API services. Gemini's backend handoff reports the dashboard, finance, order search/filter, and returns endpoints complete. Products, inventory, customers, and settings still render placeholder screens. Local Docker/browser acceptance has not been verified for this integration.
 
-**Dependencies:** Backend contracts in `docs/api-admin.md`; Gemini's backend handoff in `docs/handoffs.md`.
+**Dependencies:** Backend contracts in `docs/api-admin.md`; Gemini's prior completion report is in the [handoff archive](../../docs/archive/handoffs-history.md).
 
 **Constraints:** Do not redesign from scratch or hardcode business data. Run local Docker/browser verification before delivery.
 

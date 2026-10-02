@@ -62,39 +62,39 @@ def _login_admin() -> dict[str, str]:
 
 
 def test_initial_occasions_seeded_with_distinct_artwork_and_hidden_rakhi():
-    """Verify initial 9 occasions are active with distinct images, and Rakhi is hidden."""
+    """Verify exactly 5 initial occasions are active with distinct Sulocraft artwork, and remaining 8 are disabled (DEC-010-010)."""
     with SessionLocal() as db:
         occasions = db.query(Occasion).all()
         occ_map = {o.id: o for o in occasions}
 
-        # 9 required active occasions (4 evergreen + 5 active seasonal)
-        required_active = ["birthday", "anniversary", "valentine", "wedding", "decor", "diwali", "mother", "father", "babyshower"]
+        # 5 required active default occasions
+        required_active = ["birthday", "justbecause", "anniversary", "babyshower", "wedding"]
         for occ_id in required_active:
             assert occ_id in occ_map, f"Missing required occasion {occ_id}"
-            assert occ_map[occ_id].is_enabled is True, f"Occasion {occ_id} should be enabled"
+            assert occ_map[occ_id].is_enabled is True, f"Occasion {occ_id} should be enabled by default"
             assert occ_map[occ_id].image_key is not None, f"Occasion {occ_id} must have image_key"
 
-        # Check all active occasions have completely distinct image keys
-        active_keys = [occ_map[oid].image_key for oid in required_active]
-        assert len(active_keys) == len(set(active_keys)), f"Duplicate image keys found: {active_keys}"
+        # Check all 13 occasions exist and have completely distinct image keys
+        assert len(occasions) == 13
+        all_keys = [o.image_key for o in occasions]
+        assert len(all_keys) == len(set(all_keys)), f"Duplicate image keys found: {all_keys}"
 
-        # Evergreen core occasions have v2 artwork and is_evergreen = True
+        # Distinct Sulocraft artwork paths
         assert occ_map["birthday"].image_key == "occasions/birthday-gifting-v2.png"
+        assert occ_map["justbecause"].image_key == "occasions/justbecause-gifting.png"
         assert occ_map["anniversary"].image_key == "occasions/anniversary-gifting-v2.png"
+        assert occ_map["babyshower"].image_key == "occasions/babyshower-gifting.png"
         assert occ_map["wedding"].image_key == "occasions/wedding-gifting-v2.png"
-        for eid in ["birthday", "anniversary", "wedding", "babyshower"]:
-            assert occ_map[eid].is_evergreen is True
 
-        for sid in ["valentine", "decor", "diwali", "mother", "father", "rakhi"]:
-            assert occ_map[sid].is_evergreen is False
-
-        # Rakhi must exist but be hidden (is_enabled=False)
-        assert "rakhi" in occ_map
-        assert occ_map["rakhi"].is_enabled is False, "Rakhi must not be enabled on storefront"
+        # Remaining 8 occasions must be disabled by default (DEC-010-010)
+        disabled_defaults = ["valentine", "decor", "diwali", "mother", "father", "rakhi", "housewarming", "christmas"]
+        for dis_id in disabled_defaults:
+            assert dis_id in occ_map, f"Missing occasion {dis_id}"
+            assert occ_map[dis_id].is_enabled is False, f"Occasion {dis_id} must be disabled by default"
 
 
 def test_public_storefront_shows_only_active_in_season_occasions():
-    """Verify GET /storefront/home returns active occasions in seasonal-first order, never Rakhi."""
+    """Verify GET /storefront/home returns exactly the 5 enabled default occasions in admin display order."""
     res = client.get("/api/v1/storefront/home")
     assert res.status_code == 200
     data = res.json()
@@ -103,18 +103,12 @@ def test_public_storefront_shows_only_active_in_season_occasions():
     assert occ_section is not None, "Occasion grid section should be returned"
 
     visible_ids = [o["id"] for o in occ_section["occasions"]]
-    # Active seasonal occasions lead the grid in admin display order, followed by evergreen occasions
-    expected_order = [
-        "valentine", "decor", "diwali", "mother", "father",  # Seasonal (display_order 3, 5, 6, 7, 8)
-        "birthday", "anniversary", "wedding", "babyshower",   # Evergreen (display_order 1, 2, 4, 10)
-    ]
+    expected_order = ["birthday", "justbecause", "anniversary", "babyshower", "wedding"]
     assert visible_ids == expected_order, f"Expected {expected_order}, got {visible_ids}"
 
-    # Rakhi and off-season must NOT be in the visible grid
-    assert "rakhi" not in visible_ids
-    assert "housewarming" not in visible_ids
-    assert "justbecause" not in visible_ids
-    assert "christmas" not in visible_ids
+    # Disabled occasions must NOT be in the visible grid
+    for dis_id in ["valentine", "decor", "diwali", "mother", "father", "rakhi", "housewarming", "christmas"]:
+        assert dis_id not in visible_ids
 
     # Every visible occasion must have a non-empty image URL
     for item in occ_section["occasions"]:
@@ -329,41 +323,43 @@ def test_seed_repair_idempotence():
         seed_catalogue(db)
 
 
-def test_evergreen_occasions_cannot_be_disabled_scheduled_or_deleted():
-    """Evergreen occasions (birthday, anniversary, wedding, babyshower) reject disable, schedule, and delete."""
+def test_all_occasions_admin_toggleable_and_core_protected_from_deletion():
+    """All occasions can be enabled/disabled and scheduled by admin; core initial occasions cannot be deleted."""
     cookies = _login_admin()
 
-    # 1. Attempt to disable an evergreen occasion
-    res_disable = client.put("/api/v1/admin/occasions/birthday", json={"isEnabled": False}, cookies=cookies)
-    assert res_disable.status_code == 400
-    assert "Evergreen occasions cannot be disabled" in res_disable.json()["detail"]
+    try:
+        # 1. Admin can disable an initial occasion (e.g. birthday)
+        res_disable = client.put("/api/v1/admin/occasions/birthday", json={"isEnabled": False}, cookies=cookies)
+        assert res_disable.status_code == 200
+        assert res_disable.json()["isEnabled"] is False
 
-    # 2. Attempt to schedule dates on an evergreen occasion
-    now_ist = datetime.now(IST)
-    res_schedule = client.patch(
-        "/api/v1/admin/occasions/wedding",
-        json={"startsAt": (now_ist + timedelta(days=1)).isoformat()},
-        cookies=cookies,
-    )
-    assert res_schedule.status_code == 400
-    assert "Evergreen occasions cannot have seasonal schedule dates" in res_schedule.json()["detail"]
+        # 2. Admin can schedule dates on an initial occasion (e.g. wedding)
+        now_ist = datetime.now(IST)
+        res_schedule = client.patch(
+            "/api/v1/admin/occasions/wedding",
+            json={"startsAt": (now_ist + timedelta(days=1)).isoformat()},
+            cookies=cookies,
+        )
+        assert res_schedule.status_code == 200
+        assert res_schedule.json()["startsAt"] is not None
 
-    # 3. Attempt to delete an evergreen occasion
-    res_del_anniv = client.delete("/api/v1/admin/occasions/anniversary", cookies=cookies)
-    assert res_del_anniv.status_code == 400
-    assert "Evergreen occasions cannot be deleted" in res_del_anniv.json()["detail"]
-
-    res_del_baby = client.delete("/api/v1/admin/occasions/babyshower", cookies=cookies)
-    assert res_del_baby.status_code == 400
-    assert "Evergreen occasions cannot be deleted" in res_del_baby.json()["detail"]
+        # 3. Core initial occasions reject deletion to protect catalogue integrity
+        for core_id in ["birthday", "justbecause", "anniversary", "babyshower", "wedding"]:
+            res_del = client.delete(f"/api/v1/admin/occasions/{core_id}", cookies=cookies)
+            assert res_del.status_code == 400
+            assert "Core initial occasions cannot be deleted" in res_del.json()["detail"]
+    finally:
+        # Restore birthday enabled and wedding schedule
+        client.put("/api/v1/admin/occasions/birthday", json={"isEnabled": True}, cookies=cookies)
+        client.patch("/api/v1/admin/occasions/wedding", json={"startsAt": None, "endsAt": None}, cookies=cookies)
 
 
 def test_clearing_seasonal_dates_with_null():
-    """Admin can clear seasonal startsAt and endsAt by explicitly providing null."""
+    """Admin can clear startsAt and endsAt on any occasion by explicitly providing null."""
     cookies = _login_admin()
     now_ist = datetime.now(IST)
 
-    # First set dates on seasonal 'decor'
+    # First set dates on 'decor'
     res_set = client.patch(
         "/api/v1/admin/occasions/decor",
         json={
@@ -387,35 +383,31 @@ def test_clearing_seasonal_dates_with_null():
     assert res_clear.json()["endsAt"] is None
 
 
-def test_seasonal_first_grid_ordering_and_enable_disable_transitions():
-    """Active seasonal occasions appear before evergreen cards; enable/disable moves items in/out."""
+def test_admin_toggle_and_display_order_transitions():
+    """Storefront occasion grid displays enabled occasions in admin display order; toggling updates visibility."""
     cookies = _login_admin()
 
     try:
-        # Initial state: valentine is enabled and in season, leads the grid
+        # Initial state: 5 enabled defaults in order
         res1 = client.get("/api/v1/storefront/home")
         occ1 = next(s for s in res1.json()["sections"] if s["type"] == "occasion_grid")
         ids1 = [o["id"] for o in occ1["occasions"]]
-        assert ids1[0] == "valentine"
-        assert "birthday" in ids1
+        assert ids1 == ["birthday", "justbecause", "anniversary", "babyshower", "wedding"]
 
-        # Disable valentine
-        res_dis = client.patch("/api/v1/admin/occasions/valentine", json={"isEnabled": False}, cookies=cookies)
-        assert res_dis.status_code == 200
-        assert res_dis.json()["isEnabled"] is False
+        # Admin enables diwali
+        res_en = client.patch("/api/v1/admin/occasions/diwali", json={"isEnabled": True}, cookies=cookies)
+        assert res_en.status_code == 200
+        assert res_en.json()["isEnabled"] is True
 
-        # Now valentine is omitted, and decor (next seasonal) leads
+        # Now diwali appears in the storefront occasion grid in its display order
         res2 = client.get("/api/v1/storefront/home")
         occ2 = next(s for s in res2.json()["sections"] if s["type"] == "occasion_grid")
         ids2 = [o["id"] for o in occ2["occasions"]]
-        assert "valentine" not in ids2
-        assert ids2[0] == "decor"
-        # 4 evergreen occasions are still present
-        for eid in ["birthday", "anniversary", "wedding", "babyshower"]:
-            assert eid in ids2
+        assert "diwali" in ids2
+        assert ids2 == ["birthday", "justbecause", "anniversary", "babyshower", "wedding", "diwali"]
     finally:
-        # Re-enable valentine
-        client.patch("/api/v1/admin/occasions/valentine", json={"isEnabled": True}, cookies=cookies)
+        # Disable diwali again
+        client.patch("/api/v1/admin/occasions/diwali", json={"isEnabled": False}, cookies=cookies)
 
 
 def test_babyshower_product_associations_and_filtering():
@@ -430,12 +422,12 @@ def test_babyshower_product_associations_and_filtering():
     assert 19 in product_ids, "Handmade Crochet Baby Blanket (id 19) should be linked to babyshower"
 
 
-def test_seed_preserves_admin_edits_and_repairs_evergreen():
-    """Repeat seed execution preserves admin modifications while keeping evergreen occasions enabled."""
+def test_seed_preserves_admin_edits_and_repairs_occasions():
+    """Repeat seed execution preserves admin modifications while keeping occasion records intact."""
     cookies = _login_admin()
     from app.db.seed import seed_catalogue
 
-    # Custom admin update on seasonal 'diwali'
+    # Custom admin update on 'diwali'
     custom_desc = "Admin custom Diwali artisanal illumination gift description"
     client.patch("/api/v1/admin/occasions/diwali", json={"description": custom_desc}, cookies=cookies)
 
@@ -448,15 +440,20 @@ def test_seed_preserves_admin_edits_and_repairs_evergreen():
     assert res.status_code == 200
     assert res.json()["description"] == custom_desc
 
-    # Verify evergreen occasions are all enabled with v2 artwork
+
+def test_all_thirteen_occasion_images_accessible_and_valid():
+    """Verify all 13 occasion image keys return HTTP 200 from the image endpoint with no 404s."""
     with SessionLocal() as db:
-        for eid in ["birthday", "anniversary", "wedding", "babyshower"]:
-            occ = db.query(Occasion).filter_by(id=eid).first()
-            assert occ.is_enabled is True
-            assert occ.starts_at is None
-            assert occ.ends_at is None
-            assert occ.is_evergreen is True
-            if eid in {"birthday", "anniversary", "wedding"}:
-                assert "-v2.png" in occ.image_key
+        occasions = db.query(Occasion).all()
+        assert len(occasions) == 13
+
+        for occ in occasions:
+            assert occ.image_key is not None, f"Occasion {occ.id} must have image_key"
+            res = client.get(f"/static/images/{occ.image_key}")
+            assert res.status_code in (200, 307), f"Image for occasion {occ.id} ({occ.image_key}) returned HTTP {res.status_code}"
+            if res.status_code == 200:
+                assert res.headers["content-type"].startswith("image/"), f"Image for {occ.id} has invalid content-type {res.headers.get('content-type')}"
+            else:
+                assert "location" in res.headers, f"Redirect for {occ.id} missing location header"
 
 

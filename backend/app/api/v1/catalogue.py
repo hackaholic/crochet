@@ -809,15 +809,13 @@ def get_product_detail(
 
 @router.get("/occasions", response_model=list[OccasionOut])
 def get_occasions(db: Session = Depends(get_db)) -> list[OccasionOut]:
-    """Retrieve curated gift occasions: active seasonal occasions first, then evergreen occasions."""
+    """Retrieve curated gift occasions in admin display order (DEC-010-010)."""
     all_occasions = (
         db.query(Occasion)
         .order_by(Occasion.display_order.asc(), Occasion.id.asc())
         .all()
     )
-    seasonal = [o for o in all_occasions if not o.is_evergreen and o.is_enabled and o.is_in_season()]
-    evergreen = [o for o in all_occasions if o.is_evergreen]
-    return seasonal + evergreen
+    return [o for o in all_occasions if o.is_enabled and o.is_in_season()]
 
 
 

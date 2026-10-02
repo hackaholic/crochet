@@ -12,4 +12,6 @@
 
 **Verify:** Exercise with temporary age keys and dummy groups on a test/local deployment path; prove missing key/group and unhealthy service fail the deployment without secret disclosure.
 
+**Current integration finding (2026-10-03):** The first release-script attempt could not recreate PostgreSQL because its `/run/sulocraft` secret files were absent. At the owner's direction, Codex then synced the latest backend directly to `/opt/sulocraft`, backed up the VPS env and database, materialized the required runtime files from that saved plaintext env, and successfully rebuilt the active Compose services. This restored the live API but does not satisfy the encrypted SOPS/age contract. Implement and test the encrypted bootstrap without disturbing the current services; the active `current` symlink still names the older release.
+
 **Handoff:** Record changed files, test results, and any operator action in `notes.md`; update task 3.3 status.

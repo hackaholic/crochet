@@ -121,13 +121,12 @@ def test_get_product_detail_not_found():
 
 
 def test_get_occasions():
-    """Verify occasions list returns enabled and in-season occasions (9 active, no Rakhi)."""
+    """Verify occasions list returns enabled and in-season occasions (5 active defaults, no Rakhi)."""
     response = client.get("/api/v1/occasions")
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 9
-    assert any(o["id"] == "birthday" for o in data)
-    assert any(o["id"] == "babyshower" for o in data)
+    assert len(data) == 5
+    assert [o["id"] for o in data] == ["birthday", "justbecause", "anniversary", "babyshower", "wedding"]
     assert not any(o["id"] == "rakhi" for o in data)
 
 

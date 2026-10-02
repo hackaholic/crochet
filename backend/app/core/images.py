@@ -75,23 +75,43 @@ MOCK_IMAGE_MAP: dict[str, str] = {
     "categories/keychains.jpg": _unsplash("photo-1700171458554-46cfd3f2a87a", 600, 700),
     "categories/gifts.jpg": _unsplash("photo-1602773984044-3ecbed81556d", 600, 700),
 
-    # Occasions
+    # Occasions (distinct Sulocraft handmade assets)
     "occasions/birthday.jpg": _unsplash("photo-1513151233558-d860c5398176", 400, 300),
     "occasions/birthday-gifting-v2.png": _unsplash("photo-1513151233558-d860c5398176", 400, 300),
+    "occasions/justbecause-gifting.png": _unsplash("photo-1602773974733-b56200c8653f", 400, 300),
+    "occasions/just-because-gifting.png": _unsplash("photo-1602773974733-b56200c8653f", 400, 300),
     "occasions/anniversary.jpg": _unsplash("photo-1518199266791-5375a83190b7", 400, 300),
     "occasions/anniversary-gifting-v2.png": _unsplash("photo-1518199266791-5375a83190b7", 400, 300),
-    "occasions/valentine.jpg": _unsplash("photo-1518895949257-7621c3c786d7", 400, 300),
+    "occasions/babyshower.jpg": _unsplash("photo-1629019317873-3f603b269723", 400, 300),
+    "occasions/babyshower-gifting.png": _unsplash("photo-1629019317873-3f603b269723", 400, 300),
+    "occasions/baby-shower-hamper.png": _unsplash("photo-1629019317873-3f603b269723", 400, 300),
     "occasions/wedding.jpg": _unsplash("photo-1519741497674-611481863552", 400, 300),
     "occasions/wedding-gifting-v2.png": _unsplash("photo-1519741497674-611481863552", 400, 300),
-    "occasions/decor.jpg": _unsplash("photo-1513519245088-0e12902e5a38", 400, 300),
-    "occasions/diwali.jpg": _unsplash("photo-1605721911519-3dfeb3be25e7", 400, 300),
-    "occasions/mother.jpg": _unsplash("photo-1526047932273-341f2a7631f9", 400, 300),
-    "occasions/father.jpg": _unsplash("photo-1508873696983-2df5293cb325", 400, 300),
-    "occasions/rakhi.jpg": _unsplash("photo-1629853907869-7c4918e7e1c1", 400, 300),
-    "occasions/babyshower.jpg": _unsplash("photo-1515488042361-ee00e0ddd4e4", 400, 300),
-    "occasions/housewarming.jpg": _unsplash("photo-1583847268964-b28dc8f51f92", 400, 300),
-    "occasions/justbecause.jpg": _unsplash("photo-1549465220-1a8b9238cd48", 400, 300),
-    "occasions/christmas.jpg": _unsplash("photo-1543258103-a62bdc069871", 400, 300),
+    "occasions/valentine.jpg": _unsplash("photo-1646182504823-a02b768e28b5", 400, 300),
+    "occasions/valentine-gifting.png": _unsplash("photo-1646182504823-a02b768e28b5", 400, 300),
+    "occasions/valentine-couple-bunnies.png": _unsplash("photo-1646182504823-a02b768e28b5", 400, 300),
+    "occasions/decor.jpg": _unsplash("photo-1618574760337-2750f6251d20", 400, 300),
+    "occasions/decor-gifting.png": _unsplash("photo-1618574760337-2750f6251d20", 400, 300),
+    "occasions/decor-hanging-planter.png": _unsplash("photo-1618574760337-2750f6251d20", 400, 300),
+    "occasions/diwali.jpg": _unsplash("photo-1700170447159-9d2d0da133a5", 400, 300),
+    "occasions/diwali-gifting.png": _unsplash("photo-1700170447159-9d2d0da133a5", 400, 300),
+    "occasions/diwali-marigold-garland.png": _unsplash("photo-1700170447159-9d2d0da133a5", 400, 300),
+    "occasions/mother.jpg": _unsplash("photo-1700171394718-2457b1190444", 400, 300),
+    "occasions/mother-gifting.png": _unsplash("photo-1700171394718-2457b1190444", 400, 300),
+    "occasions/mothers-day-rose-bouquet.png": _unsplash("photo-1700171394718-2457b1190444", 400, 300),
+    "occasions/father.jpg": _unsplash("photo-1700170447159-9d2d0da133a5", 400, 300),
+    "occasions/father-gifting.png": _unsplash("photo-1700170447159-9d2d0da133a5", 400, 300),
+    "occasions/fathers-day-coaster-set.png": _unsplash("photo-1700170447159-9d2d0da133a5", 400, 300),
+    "occasions/rakhi.jpg": _unsplash("photo-1700170447159-9d2d0da133a5", 400, 300),
+    "occasions/rakhi-gifting.png": _unsplash("photo-1700170447159-9d2d0da133a5", 400, 300),
+    "occasions/rakhi-gift-potli.png": _unsplash("photo-1700170447159-9d2d0da133a5", 400, 300),
+    "occasions/housewarming.jpg": _unsplash("photo-1550376026-7375b92bb318", 400, 300),
+    "occasions/housewarming-gifting.png": _unsplash("photo-1550376026-7375b92bb318", 400, 300),
+    "occasions/housewarming-wall-hanging.png": _unsplash("photo-1550376026-7375b92bb318", 400, 300),
+    "occasions/justbecause.jpg": _unsplash("photo-1602773974733-b56200c8653f", 400, 300),
+    "occasions/christmas.jpg": _unsplash("photo-1608825154649-2e9bb4cd4211", 400, 300),
+    "occasions/christmas-gifting.png": _unsplash("photo-1608825154649-2e9bb4cd4211", 400, 300),
+    "occasions/christmas-toran.png": _unsplash("photo-1608825154649-2e9bb4cd4211", 400, 300),
 
     # Campaigns & Hero Artworks
     "campaigns/hero-brand-story.jpg": _unsplash("photo-1700171518313-5dd219beaaa6", 1200, 600),
@@ -113,6 +133,26 @@ MOCK_IMAGE_MAP: dict[str, str] = {
     "avatars/ananya-krishnan.jpg": "https://i.pravatar.cc/120?img=44",
     "avatars/ritu-agarwal.jpg": "https://i.pravatar.cc/120?img=41",
     "avatars/meera-pillai.jpg": "https://i.pravatar.cc/120?img=49",
+}
+
+# Local development serves the same approved occasion artwork that is uploaded
+# to R2 in production. Database object keys intentionally remain stable; these
+# aliases connect those keys to the checked-in local copies without redirecting
+# occasion cards to generic stock photography.
+LOCAL_IMAGE_ASSET_MAP: dict[str, str] = {
+    "occasions/birthday-gifting-v2.png": "occasions/birthday-gifting-v2.png",
+    "occasions/just-because-gifting.png": "occasions/justbecause-gifting.png",
+    "occasions/anniversary-gifting-v2.png": "occasions/anniversary-gifting-v2.png",
+    "occasions/baby-shower-hamper.png": "occasions/babyshower-gifting.png",
+    "occasions/wedding-gifting-v2.png": "occasions/wedding-gifting-v2.png",
+    "occasions/valentine-couple-bunnies.png": "occasions/valentine-gifting.png",
+    "occasions/decor-hanging-planter.png": "occasions/decor-gifting.png",
+    "occasions/diwali-marigold-garland.png": "occasions/diwali-gifting.png",
+    "occasions/mothers-day-rose-bouquet.png": "occasions/mother-gifting.png",
+    "occasions/fathers-day-coaster-set.png": "occasions/father-gifting.png",
+    "occasions/rakhi-gift-potli.png": "occasions/rakhi-gifting.png",
+    "occasions/housewarming-wall-hanging.png": "occasions/housewarming-gifting.png",
+    "occasions/christmas-toran.png": "occasions/christmas-gifting.png",
 }
 
 

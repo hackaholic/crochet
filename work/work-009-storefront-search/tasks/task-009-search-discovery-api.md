@@ -45,4 +45,4 @@ When the search overlay opens with no query, show useful trending search terms a
 
 ## Dependencies / handoff
 
-Codex frontend is implementing against the contract above. Gemini should read Work 009's README, tasks, decisions, this file, and `docs/api-catalogue.md`; mark the backend portion In Progress in this task and report schema/migration/test results here and in `docs/handoffs.md`.
+Codex frontend is implementing against the contract above. Gemini should read Work 009's README, tasks, decisions, coordination, this file, and `docs/api-catalogue.md`; mark the backend portion In Progress in this task and report schema/migration/test results here and in Work 009 notes/coordination. The global registry only links to this contract.

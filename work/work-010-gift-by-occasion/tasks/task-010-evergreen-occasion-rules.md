@@ -5,6 +5,8 @@
 
 ## Requirement
 
+> **Superseded on 2026-10-03 by Task 10.18 / DEC-010-010:** the owner now requires exactly five initial enabled occasions (Birthday, Just Because, Anniversary, Baby Shower, Wedding), and admin must be able to toggle every occasion. This file records the earlier implementation contract only; do not use it as the current behavior spec.
+
 Keep **Birthday**, **Anniversary**, **Wedding**, and **Baby Shower** visible all year. They are evergreen core occasions. Other occasions such as Valentine's Day, Diwali, Mother's Day, Father's Day, Christmas, Decor, and future campaigns remain admin-controlled and may be enabled, disabled, or scheduled.
 
 ## Backend requirements (Gemini)

@@ -166,24 +166,34 @@ OCCASIONS_DATA = [
         "description": "Celebrate birthdays with handcrafted joy and colorful surprises",
     },
     {
+        "id": "justbecause",
+        "name": "Just Because",
+        "icon": "🎁",
+        "image_key": "occasions/just-because-gifting.png",
+        "image_url": "occasions/just-because-gifting.png",
+        "display_order": 2,
+        "is_enabled": True,
+        "description": "Everyday smiles and unexpected handmade surprises",
+    },
+    {
         "id": "anniversary",
         "name": "Anniversary",
         "icon": "💍",
         "image_key": "occasions/anniversary-gifting-v2.png",
         "image_url": "occasions/anniversary-gifting-v2.png",
-        "display_order": 2,
+        "display_order": 3,
         "is_enabled": True,
         "description": "Timeless handcrafted keepsakes and romantic roses for your special milestone",
     },
     {
-        "id": "valentine",
-        "name": "Valentine's Day",
-        "icon": "❤️",
-        "image_key": "occasions/valentine.jpg",
-        "image_url": "occasions/valentine.jpg",
-        "display_order": 3,
+        "id": "babyshower",
+        "name": "Baby Shower",
+        "icon": "🍼",
+        "image_key": "occasions/baby-shower-hamper.png",
+        "image_url": "occasions/baby-shower-hamper.png",
+        "display_order": 4,
         "is_enabled": True,
-        "description": "Stitched with love, handcrafted hearts and bouquets for your loved one",
+        "description": "Soft, gentle crochet hampers and booties for new arrivals",
     },
     {
         "id": "wedding",
@@ -191,97 +201,87 @@ OCCASIONS_DATA = [
         "icon": "💐",
         "image_key": "occasions/wedding-gifting-v2.png",
         "image_url": "occasions/wedding-gifting-v2.png",
-        "display_order": 4,
+        "display_order": 5,
         "is_enabled": True,
         "description": "Delicate bridal bouquets and thoughtful artisanal wedding blessings",
+    },
+    # Preserved inactive occasions (available for admin activation when relevant)
+    {
+        "id": "valentine",
+        "name": "Valentine's Day",
+        "icon": "❤️",
+        "image_key": "occasions/valentine-couple-bunnies.png",
+        "image_url": "occasions/valentine-couple-bunnies.png",
+        "display_order": 6,
+        "is_enabled": False,
+        "description": "Stitched with love, handcrafted hearts and bouquets for your loved one",
     },
     {
         "id": "decor",
         "name": "Decor",
         "icon": "✨",
-        "image_key": "occasions/decor.jpg",
-        "image_url": "occasions/decor.jpg",
-        "display_order": 5,
-        "is_enabled": True,
+        "image_key": "occasions/decor-hanging-planter.png",
+        "image_url": "occasions/decor-hanging-planter.png",
+        "display_order": 7,
+        "is_enabled": False,
         "description": "Cozy handcrafted planters, wall hangings, and table accents",
     },
     {
         "id": "diwali",
         "name": "Diwali",
         "icon": "🪔",
-        "image_key": "occasions/diwali.jpg",
-        "image_url": "occasions/diwali.jpg",
-        "display_order": 6,
-        "is_enabled": True,
+        "image_key": "occasions/diwali-marigold-garland.png",
+        "image_url": "occasions/diwali-marigold-garland.png",
+        "display_order": 8,
+        "is_enabled": False,
         "description": "Bright festive marigold garlands, torans, and auspicious pooja creations",
     },
     {
         "id": "mother",
         "name": "Mother's Day",
         "icon": "🌷",
-        "image_key": "occasions/mother.jpg",
-        "image_url": "occasions/mother.jpg",
-        "display_order": 7,
-        "is_enabled": True,
+        "image_key": "occasions/mothers-day-rose-bouquet.png",
+        "image_url": "occasions/mothers-day-rose-bouquet.png",
+        "display_order": 9,
+        "is_enabled": False,
         "description": "Gentle floral bouquets and heartwarming gifts for mom",
     },
     {
         "id": "father",
         "name": "Father's Day",
         "icon": "👔",
-        "image_key": "occasions/father.jpg",
-        "image_url": "occasions/father.jpg",
-        "display_order": 8,
-        "is_enabled": True,
+        "image_key": "occasions/fathers-day-coaster-set.png",
+        "image_url": "occasions/fathers-day-coaster-set.png",
+        "display_order": 10,
+        "is_enabled": False,
         "description": "Thoughtful desk companions, coasters, and handmade keepsakes for dad",
     },
-    # Preserved inactive occasions (off-season / future admin activation)
     {
         "id": "rakhi",
         "name": "Rakhi",
         "icon": "🪡",
-        "image_key": "occasions/rakhi.jpg",
-        "image_url": "occasions/rakhi.jpg",
-        "display_order": 9,
+        "image_key": "occasions/rakhi-gift-potli.png",
+        "image_url": "occasions/rakhi-gift-potli.png",
+        "display_order": 11,
         "is_enabled": False,
         "description": "Handmade sacred thread keepsakes for brothers and sisters",
-    },
-    {
-        "id": "babyshower",
-        "name": "Baby Shower",
-        "icon": "🍼",
-        "image_key": "occasions/babyshower.jpg",
-        "image_url": "occasions/babyshower.jpg",
-        "display_order": 10,
-        "is_enabled": True,
-        "description": "Soft, gentle crochet hampers and booties for new arrivals",
     },
     {
         "id": "housewarming",
         "name": "Housewarming",
         "icon": "🏠",
-        "image_key": "occasions/housewarming.jpg",
-        "image_url": "occasions/housewarming.jpg",
-        "display_order": 11,
-        "is_enabled": False,
-        "description": "Warm artisanal accents for welcoming new beginnings",
-    },
-    {
-        "id": "justbecause",
-        "name": "Just Because",
-        "icon": "🎁",
-        "image_key": "occasions/justbecause.jpg",
-        "image_url": "occasions/justbecause.jpg",
+        "image_key": "occasions/housewarming-wall-hanging.png",
+        "image_url": "occasions/housewarming-wall-hanging.png",
         "display_order": 12,
         "is_enabled": False,
-        "description": "Everyday smiles and unexpected handmade surprises",
+        "description": "Warm artisanal accents for welcoming new beginnings",
     },
     {
         "id": "christmas",
         "name": "Christmas",
         "icon": "🎄",
-        "image_key": "occasions/christmas.jpg",
-        "image_url": "occasions/christmas.jpg",
+        "image_key": "occasions/christmas-toran.png",
+        "image_url": "occasions/christmas-toran.png",
         "display_order": 13,
         "is_enabled": False,
         "description": "Festive handmade crochet ornaments, stockings, and holiday cheer",
@@ -290,6 +290,7 @@ OCCASIONS_DATA = [
 
 PRODUCT_OCCASIONS_MAP = {
     "birthday": [3, 5, 6, 8, 2, 1, 22],
+    "justbecause": [12, 15, 5, 3],
     "anniversary": [1, 2, 4, 11, 12],
     "valentine": [1, 3, 4, 11, 12, 18],
     "wedding": [1, 2, 4, 12],
@@ -1445,23 +1446,14 @@ def seed_storefront_content(db: Session) -> None:
                 )
                 db.add(occ)
             else:
-                if occ.id in EVERGREEN_OCCASION_IDS:
-                    occ.is_enabled = True
-                    occ.starts_at = None
-                    occ.ends_at = None
-                    if occ.id in {"birthday", "anniversary", "wedding"}:
-                        if occ.image_key in ("occasions/birthday.jpg", "occasions/anniversary.jpg", "occasions/wedding.jpg", None, ""):
-                            occ.image_key = occ_data.get("image_key")
-                            occ._legacy_image_url = occ_data.get("image_url")
-                    elif occ.id == "babyshower" and not occ.image_key:
-                        occ.image_key = occ_data.get("image_key")
-                        occ._legacy_image_url = occ_data.get("image_url")
-                else:
-                    if not occ.name:
-                        occ.name = occ_data["name"]
-                    if not occ.image_key and not occ._legacy_image_url:
-                        occ.image_key = occ_data.get("image_key")
-                        occ._legacy_image_url = occ_data.get("image_url")
+                if not occ.name:
+                    occ.name = occ_data["name"]
+                if not occ.description:
+                    occ.description = occ_data.get("description")
+                # Upgrade legacy stock .jpg references to distinct Sulocraft handmade assets
+                if not occ.image_key or occ.image_key.endswith(".jpg"):
+                    occ.image_key = occ_data.get("image_key")
+                    occ._legacy_image_url = occ_data.get("image_url")
 
         # 6. Ensure ProductOccasion associations exist on existing databases:
         for occ_id, pids in PRODUCT_OCCASIONS_MAP.items():

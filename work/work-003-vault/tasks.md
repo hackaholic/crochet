@@ -28,3 +28,4 @@ None. Gemini's next task is 3.2; it has not been reported as started yet.
 
 - 3.5 Local key setup created an unreadable age-key file due to owner mapping. No encrypted files exist. Preserve it and repair owner permissions, or get explicit approval before replacing it.
 - 3.9 Local API startup fails while seeding a duplicate product/occasion association; Gemini owns the seed repair.
+- 3.10 The API is now healthy on the latest backend after an owner-requested direct `/opt/sulocraft` sync and Compose restart. The secure SOPS/age release is still blocked: runtime secret files were provisioned from the saved plaintext env for this manual deployment, and `/opt/sulocraft/current` still points at the prior release. Details are in `notes.md` and the Task 3.3 contract.

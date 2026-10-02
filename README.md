@@ -7,11 +7,11 @@ Frontend deployment instructions are in [docs/cloudflare-deployment.md](docs/clo
 ## Start here
 
 - Read [the project plan](docs/plan.md) for the current direction.
-- Choose work from [the task list](docs/TODO.md).
+- Choose work from [the active work index](work/INDEX.md); `docs/TODO.md` is a legacy/backlog view.
 - Check [pending items](docs/pending.md) before making assumptions.
 - Use [the pricing strategy](docs/pricing.md) before setting or changing product prices.
-- Use [the API contract](docs/api-contract.md) and [handoffs](docs/handoffs.md) to coordinate frontend and backend work.
-- Check [coordination status](docs/coordination-status.md) before beginning cross-team API work.
+- Use [the API contract](docs/api-contract.md) and the selected work folder's `coordination.md` plus task contract to coordinate frontend and backend work.
+- Use the global [handoff registry](docs/handoffs.md) only to find work-local contracts; it does not duplicate task state.
 - Follow [the collaboration guide](docs/collaboration.md) when working with other agents.
 
 ## Run locally

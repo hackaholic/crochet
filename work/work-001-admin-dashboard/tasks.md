@@ -18,7 +18,7 @@
 - [x] 1.2 Integrate the supplied admin layout/navigation into the existing `/admin` route without replacing it with a new design.
 - [x] 1.3 Wire the implemented dashboard, orders/order detail, finance, and returns screens to typed API service calls; retain loading/empty states and remove prototype records from runtime rendering.
 - [x] 1.4 Keep the admin route behind an administrator access check with sign-in, loading, and API error states.
-- [x] 1.5 Gemini reports the dashboard metrics, sales/finance, attention/search, order filters, and return/refund backend contracts implemented; see the dated backend completion handoff in `docs/handoffs.md` (126 backend tests reported there).
+- [x] 1.5 Gemini reports the dashboard metrics, sales/finance, attention/search, order filters, and return/refund backend contracts implemented; see the [archived completion handoff](../../docs/archive/handoffs-history.md) (126 backend tests reported there).
 
 ## Blocked
 
