@@ -238,7 +238,9 @@ def _to_product_list_item(p: Product) -> ProductListItem:
     collections_summary = [
         CollectionSummary(id=col.id, name=col.name, slug=col.slug) for col in p.collections
     ]
-    tag_names = [t.name for t in p.tags]
+    occ_ids = [occ.id for occ in p.occasions]
+    occ_names = [occ.name for occ in p.occasions]
+    tag_names = list(dict.fromkeys([t.name for t in p.tags] + occ_ids + occ_names))
 
     # Find starting price from variants or fallback
     primary_variant = p.variants[0] if p.variants else None
@@ -270,6 +272,7 @@ def _to_product_list_item(p: Product) -> ProductListItem:
         collections=collections_summary,
         badge=p.badge,
         tags=tag_names,
+        occasions=occ_ids,
         description=p.short_description or p.description,
         customizable=p.customizable,
         in_stock=in_stock,
@@ -536,10 +539,25 @@ def list_products(
             )
         )
 
-    # Tag / Occasion filter
-    target_tag = tag or occasion
-    if target_tag:
-        query = query.filter(Product.tags.any(Tag.name.ilike(target_tag)))
+    # Occasion filter (queries product_occasions associations with fallback to tags)
+    if occasion:
+        target_occ = occasion.lower().strip()
+        query = query.filter(
+            or_(
+                Product.occasions.any(
+                    or_(
+                        Occasion.id.ilike(target_occ),
+                        Occasion.name.ilike(target_occ),
+                    )
+                ),
+                Product.tags.any(Tag.name.ilike(target_occ)),
+            )
+        )
+
+    # Tag filter
+    if tag:
+        query = query.filter(Product.tags.any(Tag.name.ilike(tag.strip())))
+
 
     # Color filter
     if color:
@@ -691,7 +709,9 @@ def get_product_detail(
     collections_summary = [
         CollectionSummary(id=col.id, name=col.name, slug=col.slug) for col in product.collections
     ]
-    tag_names = [t.name for t in product.tags]
+    occ_ids = [occ.id for occ in product.occasions]
+    occ_names = [occ.name for occ in product.occasions]
+    tag_names = list(dict.fromkeys([t.name for t in product.tags] + occ_ids + occ_names))
 
     image_urls = [img.url for img in product.images]
     if not image_urls and product.primary_image:
@@ -760,6 +780,7 @@ def get_product_detail(
         categories=categories_summary,
         collections=collections_summary,
         tags=tag_names,
+        occasions=occ_ids,
         images=image_urls,
         image_urls=image_urls,
         gallery=gallery,
@@ -788,8 +809,16 @@ def get_product_detail(
 
 @router.get("/occasions", response_model=list[OccasionOut])
 def get_occasions(db: Session = Depends(get_db)) -> list[OccasionOut]:
-    """Retrieve curated gift occasions."""
-    return db.query(Occasion).all()
+    """Retrieve curated gift occasions: active seasonal occasions first, then evergreen occasions."""
+    all_occasions = (
+        db.query(Occasion)
+        .order_by(Occasion.display_order.asc(), Occasion.id.asc())
+        .all()
+    )
+    seasonal = [o for o in all_occasions if not o.is_evergreen and o.is_enabled and o.is_in_season()]
+    evergreen = [o for o in all_occasions if o.is_evergreen]
+    return seasonal + evergreen
+
 
 
 @router.get("/reviews", response_model=list[ReviewOut])

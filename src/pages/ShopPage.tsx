@@ -4,7 +4,7 @@ import ProductCard from '../components/ProductCard';
 import { FilterIcon, XIcon, ChevronDownIcon } from '../components/Icons';
 import type { Product } from '../data/products';
 import { useCatalogue } from '../components/CatalogueProvider';
-import { buildCategoryFilterOptions, buildCollectionFilterOptions, buildPriceFilterOptions, productMatchesCategory, sortShopProducts } from '../lib/shopFilters';
+import { buildCategoryFilterOptions, buildCollectionFilterOptions, buildPriceFilterOptions, productMatchesCategory, productMatchesOccasion, sortShopProducts } from '../lib/shopFilters';
 
 interface ShopPageProps {
   onAddToCart: (product: Product) => void;
@@ -68,7 +68,7 @@ export default function ShopPage({ onAddToCart, onToggleWishlist, wishlist, onPr
   const [selectedPriceRange, setSelectedPriceRange] = useState<number | null>(null);
   const [selectedOccasions, setSelectedOccasions] = useState<string[]>(() => {
     const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
-    const collection = params.get('collection');
+    const collection = params.get('occasion') ?? params.get('collection');
     if (collection) return [collection];
     const path = typeof window !== 'undefined' ? window.location.pathname.replace(/\/+$/, '') : '';
     if (path.startsWith('/collections/')) {
@@ -86,6 +86,7 @@ export default function ShopPage({ onAddToCart, onToggleWishlist, wishlist, onPr
     const params = new URLSearchParams(location.search);
     const category = params.get('category');
     const collection = params.get('collection');
+    const occasion = params.get('occasion');
     const cleanPath = location.pathname.replace(/\/+$/, '');
 
     if (category) {
@@ -99,13 +100,13 @@ export default function ShopPage({ onAddToCart, onToggleWishlist, wishlist, onPr
       }
     }
 
-    if (collection) {
-      setSelectedOccasions([collection]);
+    if (occasion || collection) {
+      setSelectedOccasions([occasion ?? collection!]);
     } else if (cleanPath.startsWith('/collections/')) {
       const slug = cleanPath.replace(/^\/collections\//, '');
       if (slug) setSelectedOccasions([slug]);
     } else if (cleanPath === '/shop') {
-      if (!collection) {
+      if (!collection && !occasion) {
         setSelectedOccasions([]);
       }
     }
@@ -119,9 +120,7 @@ export default function ShopPage({ onAddToCart, onToggleWishlist, wishlist, onPr
       const option = categoryFilters.find(item => item.category.slug === slug);
       return option ? productMatchesCategory(p, option) : false;
     })) return false;
-    if (selectedOccasions.length > 0 && !selectedOccasions.some(slug =>
-      p.collections?.some(collection => collection.slug === slug)
-    )) return false;
+    if (selectedOccasions.length > 0 && !selectedOccasions.some(slug => productMatchesOccasion(p, slug))) return false;
     if (selectedPriceRange !== null) {
       const r = priceRanges[selectedPriceRange];
       if (p.price < r.min || p.price > r.max) return false;
@@ -264,7 +263,7 @@ export default function ShopPage({ onAddToCart, onToggleWishlist, wishlist, onPr
             ))}
             {selectedOccasions.map(slug => (
               <span key={slug} className="flex items-center gap-1.5 px-3 py-1 bg-[#F2C4CE] text-[#C4622D] rounded-full text-xs font-medium">
-                {collections.find(collection => collection.slug === slug)?.name ?? slug}
+                {collections.find(collection => collection.slug === slug)?.name ?? slug.replace(/[-_]+/g, ' ').replace(/\b\w/g, letter => letter.toUpperCase())}
                 <button onClick={() => setSelectedOccasions(previous => previous.filter(value => value !== slug))}><XIcon size={12} /></button>
               </span>
             ))}

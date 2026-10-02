@@ -4,11 +4,9 @@ build/
 .cache/
 .env*
 !.env.example
-!.env.production
 !**/.env.example
 *.preprod*
 .env.preprod*
-!/.env.preprod
 .vite/
 .wrangler/
 vite.config.*.timestamp-*
@@ -19,6 +17,13 @@ logs/
 .claude-replay.*
 .tmp-*
 /.figma/design-context/
+
+# Keep decryption keys and plaintext secret material out of Git.
+/secrets/*
+!/secrets/README.md
+!/secrets/*.sops.yaml
+**/age/keys.txt
+*.agekey
 
 # Platform-managed agentplat state, not project source. In the
 # client-initiated single-repo workspace layout (make's `Path: "."` spec) the

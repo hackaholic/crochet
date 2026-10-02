@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "frontend_high_critical": [],
+  "backend_high_critical": [],
+  "total_blocking": 0,
+  "active_exceptions": [
+    "CVE-2024-XXXXX"
+  ]
+}

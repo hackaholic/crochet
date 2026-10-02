@@ -1,12 +1,19 @@
 """Catalogue database models conforming to the E-commerce Multi-Agent Specification."""
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+try:
+    from zoneinfo import ZoneInfo
+    IST = ZoneInfo("Asia/Kolkata")
+except Exception:
+    IST = timezone(timedelta(hours=5, minutes=30))
+
 from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, JSON, String, Table, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
 from app.core.images import build_image_url
 from app.db.base import Base
+
 
 # Association table for Many-to-Many relationship between Products and Tags
 product_tags = Table(
@@ -143,6 +150,22 @@ class ProductCollection(Base):
 product_collections = ProductCollection.__table__
 
 
+class ProductOccasion(Base):
+    """Association model between Products and Curated Occasions."""
+
+    __tablename__ = "product_occasions"
+
+    product_id = Column(Integer, ForeignKey("products.id", ondelete="CASCADE"), primary_key=True)
+    occasion_id = Column(String(50), ForeignKey("occasions.id", ondelete="CASCADE"), primary_key=True)
+    display_order = Column(Integer, default=0, nullable=False)
+
+    product = relationship("Product", back_populates="product_occasions", overlaps="occasions,products")
+    occasion = relationship("Occasion", back_populates="product_associations", overlaps="occasions,products")
+
+
+product_occasions = ProductOccasion.__table__
+
+
 class Tag(Base):
     """Cross-cutting discovery tags (e.g. romantic, birthday, diwali, handmade)."""
 
@@ -202,6 +225,20 @@ class Product(Base):
         secondary="product_collections",
         back_populates="products",
         overlaps="product_collections,collection,product_associations,product",
+    )
+    product_occasions = relationship(
+        "ProductOccasion",
+        back_populates="product",
+        cascade="all, delete-orphan",
+        order_by="ProductOccasion.display_order",
+        overlaps="occasions,products",
+    )
+    occasions = relationship(
+        "Occasion",
+        secondary="product_occasions",
+        back_populates="products",
+        order_by="ProductOccasion.display_order",
+        overlaps="product_occasions,occasion,product_associations,product",
     )
     tags = relationship("Tag", secondary=product_tags, back_populates="products")
     variants = relationship("ProductVariant", back_populates="product", cascade="all, delete-orphan")
@@ -278,6 +315,9 @@ class Review(Base):
     product = relationship("Product", back_populates="reviews")
 
 
+EVERGREEN_OCCASION_IDS = frozenset({"birthday", "anniversary", "wedding", "babyshower"})
+
+
 class Occasion(Base):
     """Curated occasions for gift navigation (e.g. Birthday, Wedding, Diwali)."""
 
@@ -286,4 +326,77 @@ class Occasion(Base):
     id = Column(String(50), primary_key=True, index=True)
     name = Column(String(100), nullable=False)
     icon = Column(String(20), nullable=True)
-    image_url = Column(String(500), nullable=True)
+    image_key = Column(String(255), nullable=True)
+    _legacy_image_url = Column("image_url", String(500), nullable=True)
+    description = Column(Text, nullable=True)
+    display_order = Column(Integer, default=0, nullable=False)
+    is_enabled = Column(Boolean, default=True, nullable=False)
+    starts_at = Column(DateTime, nullable=True)
+    ends_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+    product_associations = relationship(
+        "ProductOccasion",
+        back_populates="occasion",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by="ProductOccasion.display_order",
+        overlaps="products,occasions",
+    )
+    products = relationship(
+        "Product",
+        secondary="product_occasions",
+        back_populates="occasions",
+        order_by="ProductOccasion.display_order",
+        overlaps="product_associations,product,product_occasions,occasion",
+    )
+
+    @property
+    def is_evergreen(self) -> bool:
+        """Core evergreen occasions remain visible year-round and ignore seasonal schedules."""
+        return self.id in EVERGREEN_OCCASION_IDS
+
+    @property
+    def image_url(self) -> str | None:
+        """Resolve public CDN image URL from image_key or legacy image_url."""
+        if self.image_key:
+            return build_image_url(self.image_key)
+        return self._legacy_image_url
+
+    @image_url.setter
+    def image_url(self, value: str | None) -> None:
+        self._legacy_image_url = value
+        if value and not value.startswith("http"):
+            self.image_key = value
+
+    def is_in_season(self, current_time: datetime | None = None) -> bool:
+        """Evaluate whether this occasion's schedule window includes current time in Asia/Kolkata."""
+        if self.is_evergreen:
+            return True
+
+        if not self.is_enabled:
+            return False
+
+        if self.starts_at is None and self.ends_at is None:
+            return True
+
+        now_ist = current_time or datetime.now(IST)
+        if now_ist.tzinfo is None:
+            now_ist = now_ist.replace(tzinfo=IST)
+
+        if self.starts_at is not None:
+            s = self.starts_at
+            if s.tzinfo is None:
+                s = s.replace(tzinfo=IST)
+            if now_ist < s:
+                return False
+
+        if self.ends_at is not None:
+            e = self.ends_at
+            if e.tzinfo is None:
+                e = e.replace(tzinfo=IST)
+            if now_ist > e:
+                return False
+
+        return True

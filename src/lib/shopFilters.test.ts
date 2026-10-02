@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Product } from '../data/products';
 import type { Category, Collection } from './api/catalogue';
-import { buildCategoryFilterOptions, buildCollectionFilterOptions, buildPriceFilterOptions, productMatchesCategory, sortShopProducts } from './shopFilters';
+import { buildCategoryFilterOptions, buildCollectionFilterOptions, buildPriceFilterOptions, productMatchesCategory, productMatchesOccasion, sortShopProducts } from './shopFilters';
 
 const products: Product[] = [
   { id: 1, name: 'Rose Bouquet', price: 899, rating: 5, reviews: 2, image: '/rose.webp', category: 'Bouquets', primaryCategory: { name: 'Bouquets', slug: 'bouquets' }, categories: [{ name: 'Bouquets', slug: 'bouquets' }], collections: [{ name: 'Birthday Gifts', slug: 'birthday-gifts' }] },
@@ -46,5 +46,13 @@ describe('shop filter options', () => {
   it('moves products carrying the backend-managed New badge to the front', () => {
     const newest = { ...products[1], badge: 'New' };
     expect(sortShopProducts([products[0], newest], 'Newest').map(product => product.id)).toEqual([2, 1]);
+  });
+
+  it('matches occasion IDs against normalized backend tags and collection associations', () => {
+    const bunny = { ...products[1], tags: ['soft toy', 'Valentine Day'] };
+
+    expect(productMatchesOccasion(bunny, 'valentine-day')).toBe(true);
+    expect(productMatchesOccasion(products[0], 'birthday-gifts')).toBe(true);
+    expect(productMatchesOccasion(products[0], 'diwali')).toBe(false);
   });
 });

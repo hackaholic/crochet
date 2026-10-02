@@ -12,6 +12,7 @@ from app.core.config import settings
 from app.db.base import Base
 from app.db.session import SessionLocal, engine
 from app.models.catalogue import (
+    EVERGREEN_OCCASION_IDS,
     Category,
     Collection,
     Occasion,
@@ -19,6 +20,7 @@ from app.models.catalogue import (
     ProductCategory,
     ProductCollection,
     ProductImage,
+    ProductOccasion,
     ProductVariant,
     Review,
     Tag,
@@ -149,20 +151,156 @@ COLLECTIONS_DATA = [
     {"name": "Custom Gifts", "slug": "custom-gifts", "collection_type": "EVERGREEN", "display_order": 13, "description": "Bespoke commissions crafted to order by Anupama and the Sulocraft team"},
     {"name": "Best Sellers", "slug": "bestsellers", "collection_type": "MERCHANDISING", "display_order": 14, "description": "Sulocraft's most cherished and highly requested handcrafted creations"},
     {"name": "New Arrivals", "slug": "new-arrivals", "collection_type": "MERCHANDISING", "display_order": 15, "description": "Fresh designs and newly released artisanal pieces from our studio"},
+    {"name": "Tiny Friends Amigurumi", "slug": "amigurumi", "collection_type": "EVERGREEN", "display_order": 16, "description": "Hand-stitched amigurumi animals, plush companions, and playful keepsakes"},
 ]
 
 OCCASIONS_DATA = [
-    {"id": "birthday", "name": "Birthday", "icon": "🎂", "image_url": "occasions/birthday.jpg"},
-    {"id": "anniversary", "name": "Anniversary", "icon": "💍", "image_url": "occasions/anniversary.jpg"},
-    {"id": "valentine", "name": "Valentine's Day", "icon": "❤️", "image_url": "occasions/valentine.jpg"},
-    {"id": "wedding", "name": "Wedding", "icon": "💐", "image_url": "occasions/wedding.jpg"},
-    {"id": "babyshower", "name": "Baby Shower", "icon": "🍼", "image_url": "occasions/babyshower.jpg"},
-    {"id": "housewarming", "name": "Housewarming", "icon": "🏠", "image_url": "occasions/housewarming.jpg"},
-    {"id": "rakhi", "name": "Rakhi", "icon": "🪡", "image_url": "occasions/rakhi.jpg"},
-    {"id": "diwali", "name": "Diwali", "icon": "🪔", "image_url": "occasions/diwali.jpg"},
-    {"id": "mother", "name": "Mother's Day", "icon": "🌷", "image_url": "occasions/mother.jpg"},
-    {"id": "justbecause", "name": "Just Because", "icon": "🎁", "image_url": "occasions/justbecause.jpg"},
+    {
+        "id": "birthday",
+        "name": "Birthday",
+        "icon": "🎂",
+        "image_key": "occasions/birthday-gifting-v2.png",
+        "image_url": "occasions/birthday-gifting-v2.png",
+        "display_order": 1,
+        "is_enabled": True,
+        "description": "Celebrate birthdays with handcrafted joy and colorful surprises",
+    },
+    {
+        "id": "anniversary",
+        "name": "Anniversary",
+        "icon": "💍",
+        "image_key": "occasions/anniversary-gifting-v2.png",
+        "image_url": "occasions/anniversary-gifting-v2.png",
+        "display_order": 2,
+        "is_enabled": True,
+        "description": "Timeless handcrafted keepsakes and romantic roses for your special milestone",
+    },
+    {
+        "id": "valentine",
+        "name": "Valentine's Day",
+        "icon": "❤️",
+        "image_key": "occasions/valentine.jpg",
+        "image_url": "occasions/valentine.jpg",
+        "display_order": 3,
+        "is_enabled": True,
+        "description": "Stitched with love, handcrafted hearts and bouquets for your loved one",
+    },
+    {
+        "id": "wedding",
+        "name": "Wedding",
+        "icon": "💐",
+        "image_key": "occasions/wedding-gifting-v2.png",
+        "image_url": "occasions/wedding-gifting-v2.png",
+        "display_order": 4,
+        "is_enabled": True,
+        "description": "Delicate bridal bouquets and thoughtful artisanal wedding blessings",
+    },
+    {
+        "id": "decor",
+        "name": "Decor",
+        "icon": "✨",
+        "image_key": "occasions/decor.jpg",
+        "image_url": "occasions/decor.jpg",
+        "display_order": 5,
+        "is_enabled": True,
+        "description": "Cozy handcrafted planters, wall hangings, and table accents",
+    },
+    {
+        "id": "diwali",
+        "name": "Diwali",
+        "icon": "🪔",
+        "image_key": "occasions/diwali.jpg",
+        "image_url": "occasions/diwali.jpg",
+        "display_order": 6,
+        "is_enabled": True,
+        "description": "Bright festive marigold garlands, torans, and auspicious pooja creations",
+    },
+    {
+        "id": "mother",
+        "name": "Mother's Day",
+        "icon": "🌷",
+        "image_key": "occasions/mother.jpg",
+        "image_url": "occasions/mother.jpg",
+        "display_order": 7,
+        "is_enabled": True,
+        "description": "Gentle floral bouquets and heartwarming gifts for mom",
+    },
+    {
+        "id": "father",
+        "name": "Father's Day",
+        "icon": "👔",
+        "image_key": "occasions/father.jpg",
+        "image_url": "occasions/father.jpg",
+        "display_order": 8,
+        "is_enabled": True,
+        "description": "Thoughtful desk companions, coasters, and handmade keepsakes for dad",
+    },
+    # Preserved inactive occasions (off-season / future admin activation)
+    {
+        "id": "rakhi",
+        "name": "Rakhi",
+        "icon": "🪡",
+        "image_key": "occasions/rakhi.jpg",
+        "image_url": "occasions/rakhi.jpg",
+        "display_order": 9,
+        "is_enabled": False,
+        "description": "Handmade sacred thread keepsakes for brothers and sisters",
+    },
+    {
+        "id": "babyshower",
+        "name": "Baby Shower",
+        "icon": "🍼",
+        "image_key": "occasions/babyshower.jpg",
+        "image_url": "occasions/babyshower.jpg",
+        "display_order": 10,
+        "is_enabled": True,
+        "description": "Soft, gentle crochet hampers and booties for new arrivals",
+    },
+    {
+        "id": "housewarming",
+        "name": "Housewarming",
+        "icon": "🏠",
+        "image_key": "occasions/housewarming.jpg",
+        "image_url": "occasions/housewarming.jpg",
+        "display_order": 11,
+        "is_enabled": False,
+        "description": "Warm artisanal accents for welcoming new beginnings",
+    },
+    {
+        "id": "justbecause",
+        "name": "Just Because",
+        "icon": "🎁",
+        "image_key": "occasions/justbecause.jpg",
+        "image_url": "occasions/justbecause.jpg",
+        "display_order": 12,
+        "is_enabled": False,
+        "description": "Everyday smiles and unexpected handmade surprises",
+    },
+    {
+        "id": "christmas",
+        "name": "Christmas",
+        "icon": "🎄",
+        "image_key": "occasions/christmas.jpg",
+        "image_url": "occasions/christmas.jpg",
+        "display_order": 13,
+        "is_enabled": False,
+        "description": "Festive handmade crochet ornaments, stockings, and holiday cheer",
+    },
 ]
+
+PRODUCT_OCCASIONS_MAP = {
+    "birthday": [3, 5, 6, 8, 2, 1, 22],
+    "anniversary": [1, 2, 4, 11, 12],
+    "valentine": [1, 3, 4, 11, 12, 18],
+    "wedding": [1, 2, 4, 12],
+    "decor": [9, 10, 15, 18, 7],
+    "diwali": [7, 13, 14, 23],
+    "mother": [2, 1, 8, 24],
+    "father": [15, 5, 8],
+    "babyshower": [17, 19, 16, 3],
+    "rakhi": [3, 6],
+}
+
 
 # -----------------------------------------------------------------------------
 # 16 Controlled Launch Products (Matching docs/product-media.md)
@@ -219,7 +357,7 @@ PRODUCTS_DATA = [
         "images": ["products/heart-bear/primary.png", "products/heart-bear/gallery-01.png"],
         "primary_category_slug": "toys",
         "secondary_category_slugs": ["teddy-bear"],
-        "collection_slugs": ["bestsellers", "baby-shower-gifts", "gifts-for-kids", "gifts"],
+        "collection_slugs": ["amigurumi", "bestsellers", "baby-shower-gifts", "gifts-for-kids", "gifts"],
         "badge": "Bestseller",
         "tags": ["romantic", "valentine", "birthday", "amigurumi", "baby"],
         "description": "An adorable teddy bear clutching a bright red heart. Stitched with hypoallergenic cotton yarn, perfect for babies and keepsakes.",
@@ -259,7 +397,7 @@ PRODUCTS_DATA = [
         "images": ["products/mini-panda-amigurumi/primary.png"],
         "primary_category_slug": "animals",
         "secondary_category_slugs": ["mini-amigurumi"],
-        "collection_slugs": ["gifts-for-kids", "birthday-gifts", "gifts"],
+        "collection_slugs": ["amigurumi", "gifts-for-kids", "birthday-gifts", "gifts"],
         "badge": "Handmade",
         "tags": ["baby", "birthday", "amigurumi", "panda"],
         "description": "Palm-sized panda bear amigurumi holding a green bamboo shoot. Cute, durable, and handcrafted with tight detailed stitching.",
@@ -279,7 +417,7 @@ PRODUCTS_DATA = [
         "images": ["products/crochet-bunny/owner-pink-bunny.png", "products/crochet-bunny/gallery-01-owner-collage.png"],
         "primary_category_slug": "bunny",
         "secondary_category_slugs": ["toys"],
-        "collection_slugs": ["newborn-gifts", "gifts-for-kids", "gifts"],
+        "collection_slugs": ["amigurumi", "newborn-gifts", "gifts-for-kids", "gifts"],
         "tags": ["baby", "birthday", "amigurumi", "bunny"],
         "description": "Classic flopping-ear crochet rabbit toy crafted from soft pastel cotton yarn. Gentle on sensitive infant skin.",
         "customizable": False,
@@ -596,7 +734,7 @@ PRODUCTS_DATA = [
         "images": ["products/octopus-amigurami-set/primary.png"],
         "primary_category_slug": "octopus",
         "secondary_category_slugs": ["mini-amigurumi"],
-        "collection_slugs": ["gifts-for-kids", "birthday-gifts", "gifts"],
+        "collection_slugs": ["amigurumi", "gifts-for-kids", "birthday-gifts", "gifts"],
         "badge": "Duo",
         "tags": ["octopus", "amigurumi", "kids", "baby", "handmade"],
         "description": "Playful pair of tactile spiral-tentacled octopus amigurumi companions crafted from soothing premium cotton yarn.",
@@ -873,13 +1011,32 @@ def _seed_taxonomy_and_products(db: Session) -> None:
                 id=occ_data["id"],
                 name=occ_data["name"],
                 icon=occ_data["icon"],
-                image_url=occ_data["image_url"],
+                image_key=occ_data.get("image_key"),
+                _legacy_image_url=occ_data.get("image_url"),
+                description=occ_data.get("description"),
+                display_order=occ_data.get("display_order", 0),
+                is_enabled=occ_data.get("is_enabled", True),
             )
             db.add(occ)
         else:
-            occ.name = occ_data["name"]
-            occ.icon = occ_data["icon"]
-            occ.image_url = occ_data["image_url"]
+            if occ.id in EVERGREEN_OCCASION_IDS:
+                occ.is_enabled = True
+                occ.starts_at = None
+                occ.ends_at = None
+                if occ.id in {"birthday", "anniversary", "wedding"}:
+                    if occ.image_key in ("occasions/birthday.jpg", "occasions/anniversary.jpg", "occasions/wedding.jpg", None, ""):
+                        occ.image_key = occ_data.get("image_key")
+                        occ._legacy_image_url = occ_data.get("image_url")
+                elif occ.id == "babyshower" and not occ.image_key:
+                    occ.image_key = occ_data.get("image_key")
+                    occ._legacy_image_url = occ_data.get("image_url")
+            else:
+                if not occ.name:
+                    occ.name = occ_data["name"]
+                if not occ.image_key and not occ._legacy_image_url:
+                    occ.image_key = occ_data.get("image_key")
+                    occ._legacy_image_url = occ_data.get("image_url")
+
 
     # 4. Seed Tags
     tag_map: dict[str, Tag] = {}
@@ -1013,6 +1170,20 @@ def _seed_taxonomy_and_products(db: Session) -> None:
             rev.author_name = r["name"]
             rev.text = r["text"]
 
+    # 6. Seed Product Occasions
+    for occ_id, pids in PRODUCT_OCCASIONS_MAP.items():
+        for order_idx, pid in enumerate(pids):
+            prod = db.query(Product).filter_by(id=pid).first()
+            if prod:
+                assoc = db.query(ProductOccasion).filter_by(product_id=pid, occasion_id=occ_id).first()
+                pending = any(
+                    isinstance(obj, ProductOccasion) and obj.product_id == pid and obj.occasion_id == occ_id
+                    for obj in db.new
+                )
+                if not assoc and not pending:
+                    db.add(ProductOccasion(product_id=pid, occasion_id=occ_id, display_order=order_idx))
+    db.flush()
+
 
 def seed_storefront_content(db: Session) -> None:
     """Seed BrandSettings, rich hero campaigns, and controlled homepage sections."""
@@ -1122,6 +1293,25 @@ def seed_storefront_content(db: Session) -> None:
                 "item_limit": 4,
             },
             {
+                "section_type": "product_collection",
+                "title": "Tiny Friends, Big Smiles 🐾",
+                "eyebrow": "Handmade Companions",
+                "description": "Each little creature is stitched with personality and charm",
+                "collection_slug": "amigurumi",
+                "display_order": 3,
+                "is_enabled": True,
+                "item_limit": 4,
+            },
+            {
+                "section_type": "occasion_grid",
+                "title": "Gift by Occasion",
+                "eyebrow": "Browse by Moment",
+                "description": "Celebrate milestones, festivals, and memories with handcrafted warmth",
+                "display_order": 4,
+                "is_enabled": True,
+                "item_limit": 6,
+            },
+            {
                 "section_type": "promo_banner",
                 "title": "Gift Handcrafted Warmth This Season",
                 "description": "Every stitch carries intention. Order early for personalized bouquets and festive keepsakes.",
@@ -1129,14 +1319,14 @@ def seed_storefront_content(db: Session) -> None:
                 "image_alt": "Handcrafted crochet gifts and bouquets",
                 "cta_text": "Explore Gift Guide",
                 "cta_url": "/shop?collection=gifts",
-                "display_order": 3,
+                "display_order": 5,
                 "is_enabled": True,
             },
             {
                 "section_type": "review_section",
                 "title": "Loved by Over 500+ Happy Customers",
                 "eyebrow": "Customer Stories",
-                "display_order": 4,
+                "display_order": 6,
                 "is_enabled": True,
                 "item_limit": 3,
             },
@@ -1149,20 +1339,144 @@ def seed_storefront_content(db: Session) -> None:
                 "image_position": "left",
                 "cta_text": "Our Story",
                 "cta_url": "/about",
-                "display_order": 5,
+                "display_order": 7,
                 "is_enabled": True,
             },
         ]
         for s in sections_data:
             db.add(HomepageSection(**s))
     else:
-        # Repair existing development rows pointing to outdated/missing image keys
+        # 1. Ensure Amigurumi section exists and has correct metadata and display_order 3
+        ami_section = db.query(HomepageSection).filter(
+            (HomepageSection.collection_slug == "amigurumi")
+            | (HomepageSection.title.ilike("%Tiny Friends, Big Smiles%"))
+        ).first()
+
+        if not ami_section:
+            ami_section = HomepageSection(
+                section_type="product_collection",
+                title="Tiny Friends, Big Smiles 🐾",
+                eyebrow="Handmade Companions",
+                description="Each little creature is stitched with personality and charm",
+                collection_slug="amigurumi",
+                display_order=3,
+                is_enabled=True,
+                item_limit=4,
+            )
+            db.add(ami_section)
+        else:
+            ami_section.section_type = "product_collection"
+            ami_section.title = "Tiny Friends, Big Smiles 🐾"
+            ami_section.eyebrow = "Handmade Companions"
+            ami_section.description = "Each little creature is stitched with personality and charm"
+            ami_section.collection_slug = "amigurumi"
+            ami_section.display_order = 3
+            ami_section.is_enabled = True
+            ami_section.item_limit = 4
+
+        # 2. Ensure Occasion Grid section exists and has display_order 4 and item_limit 12
+        occ_section = db.query(HomepageSection).filter(
+            HomepageSection.section_type == "occasion_grid"
+        ).first()
+
+        if not occ_section:
+            occ_section = HomepageSection(
+                section_type="occasion_grid",
+                title="Gift by Occasion",
+                eyebrow="Browse by Moment",
+                description="Celebrate milestones, festivals, and memories with handcrafted warmth",
+                display_order=4,
+                is_enabled=True,
+                item_limit=12,
+            )
+            db.add(occ_section)
+        else:
+            occ_section.title = "Gift by Occasion"
+            occ_section.eyebrow = "Browse by Moment"
+            occ_section.description = "Celebrate milestones, festivals, and memories with handcrafted warmth"
+            occ_section.display_order = 4
+            occ_section.is_enabled = True
+            occ_section.item_limit = 12
+
+        # 3. Ensure the 4 creature companion products are linked to amigurumi collection
+        ami_col = db.query(Collection).filter_by(slug="amigurumi").first()
+        if ami_col:
+            creature_slugs = ["heart-bear", "mini-panda-amigurumi", "crochet-bunny", "octopus-amigurami-set"]
+            creature_products = db.query(Product).filter(Product.slug.in_(creature_slugs)).all()
+            for idx, prod in enumerate(creature_products):
+                exists_assoc = db.query(ProductCollection).filter_by(
+                    product_id=prod.id,
+                    collection_id=ami_col.id,
+                ).first()
+                if not exists_assoc:
+                    db.add(ProductCollection(
+                        product_id=prod.id,
+                        collection_id=ami_col.id,
+                        display_order=idx,
+                    ))
+
+        # 4. Adjust display orders and repair media for existing sections
         existing_sections = db.query(HomepageSection).all()
         for s in existing_sections:
-            if s.section_type == "promo_banner" and (s.image_url == "campaigns/promo-gift-warmth.jpg" or not s.image_url):
-                s.image_url = "sections/gift-handcrafted-warmth.png"
-            elif s.section_type == "image_text" and (s.image_url == "sections/artisan-story.jpg" or not s.image_url):
-                s.image_url = "about/anupama-sharma.png"
+            if s.section_type == "promo_banner":
+                s.display_order = 5
+                if s.image_url == "campaigns/promo-gift-warmth.jpg" or not s.image_url:
+                    s.image_url = "sections/gift-handcrafted-warmth.png"
+            elif s.section_type == "review_section":
+                s.display_order = 6
+            elif s.section_type == "image_text":
+                s.display_order = 7
+                if s.image_url == "sections/artisan-story.jpg" or not s.image_url:
+                    s.image_url = "about/anupama-sharma.png"
+
+        # 5. Safe repair for Occasion table on existing databases:
+        for occ_data in OCCASIONS_DATA:
+            occ = db.query(Occasion).filter_by(id=occ_data["id"]).first()
+            if not occ:
+                occ = Occasion(
+                    id=occ_data["id"],
+                    name=occ_data["name"],
+                    icon=occ_data["icon"],
+                    image_key=occ_data.get("image_key"),
+                    _legacy_image_url=occ_data.get("image_url"),
+                    description=occ_data.get("description"),
+                    display_order=occ_data.get("display_order", 0),
+                    is_enabled=occ_data.get("is_enabled", True),
+                )
+                db.add(occ)
+            else:
+                if occ.id in EVERGREEN_OCCASION_IDS:
+                    occ.is_enabled = True
+                    occ.starts_at = None
+                    occ.ends_at = None
+                    if occ.id in {"birthday", "anniversary", "wedding"}:
+                        if occ.image_key in ("occasions/birthday.jpg", "occasions/anniversary.jpg", "occasions/wedding.jpg", None, ""):
+                            occ.image_key = occ_data.get("image_key")
+                            occ._legacy_image_url = occ_data.get("image_url")
+                    elif occ.id == "babyshower" and not occ.image_key:
+                        occ.image_key = occ_data.get("image_key")
+                        occ._legacy_image_url = occ_data.get("image_url")
+                else:
+                    if not occ.name:
+                        occ.name = occ_data["name"]
+                    if not occ.image_key and not occ._legacy_image_url:
+                        occ.image_key = occ_data.get("image_key")
+                        occ._legacy_image_url = occ_data.get("image_url")
+
+        # 6. Ensure ProductOccasion associations exist on existing databases:
+        for occ_id, pids in PRODUCT_OCCASIONS_MAP.items():
+            for order_idx, pid in enumerate(pids):
+                prod = db.query(Product).filter_by(id=pid).first()
+                if prod:
+                    assoc = db.query(ProductOccasion).filter_by(product_id=pid, occasion_id=occ_id).first()
+                    pending = any(
+                        isinstance(obj, ProductOccasion) and obj.product_id == pid and obj.occasion_id == occ_id
+                        for obj in db.new
+                    )
+                    if not assoc and not pending:
+                        db.add(ProductOccasion(product_id=pid, occasion_id=occ_id, display_order=order_idx))
+
+        db.flush()
 
     db.commit()
 
@@ -1173,6 +1487,7 @@ def reseed_catalogue(db: Session) -> None:
     db.query(ProductVariant).delete()
     db.execute(product_categories.delete())
     db.execute(product_collections.delete())
+    db.execute(product_occasions.delete())
     db.execute(product_tags.delete())
     db.query(Review).delete()
     db.query(Product).delete()
@@ -1180,6 +1495,7 @@ def reseed_catalogue(db: Session) -> None:
     db.query(Occasion).delete()
     db.query(Category).delete()
     db.query(Tag).delete()
+
     db.query(HomepageCampaign).delete()
     db.query(HomepageSection).delete()
     db.commit()

@@ -53,9 +53,6 @@ export default function CartPage({ items, onUpdateQty, onRemove, onWishlist, onC
                         <h3 className="font-semibold text-[#2C1810] leading-snug cursor-pointer hover:text-[#C4622D] transition-colors" style={{ fontFamily: 'var(--font-serif)' }} onClick={() => onNavigate('product')}>
                           {product.name}
                         </h3>
-                        {product.customizable && (
-                          <p className="text-xs text-[#8B6B4A] mt-1">Color: Blush Pink · Gift wrapped</p>
-                        )}
                       </div>
                       <div className="text-right shrink-0">
                         <p className="font-bold text-[#2C1810]">₹{product.price * quantity}</p>

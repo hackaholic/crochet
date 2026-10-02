@@ -470,3 +470,334 @@ class AdminAnalyticsOut(BaseModel):
     low_stock_items: list[AdminLowStockItem] = Field(default_factory=list, alias="lowStockItems")
     recent_orders: list[AdminOrderDetailOut] = Field(default_factory=list, alias="recentOrders")
     top_selling_products: list[AdminTopSellingProduct] = Field(default_factory=list, alias="topSellingProducts")
+
+
+class AdminSendWelcomeRequest(BaseModel):
+    """Payload to dispatch a welcome email with optional custom note."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    email: str = Field(..., description="Customer recipient email address")
+    name: str | None = Field(default=None, description="Customer name for personalized greeting")
+    custom_message: str | None = Field(
+        default=None,
+        alias="customMessage",
+        description="Custom greeting or note from the founder/team",
+    )
+
+
+# -----------------------------------------------------------------------------
+# Figma Admin Dashboard Expansion Schemas
+# -----------------------------------------------------------------------------
+
+
+class AdminDashboardComparison(BaseModel):
+    """Period-over-period comparison metrics."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    previous_total_sales: int = Field(alias="previousTotalSales")
+    previous_total_sales_paise: int = Field(alias="previousTotalSalesPaise")
+    previous_order_count: int = Field(alias="previousOrderCount")
+    sales_growth_percent: float | None = Field(default=None, alias="salesGrowthPercent")
+    order_growth_percent: float | None = Field(default=None, alias="orderGrowthPercent")
+
+
+class AdminDashboardSummaryOut(BaseModel):
+    """Comprehensive dashboard summary metrics for admin."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    effective_range: dict[str, str] = Field(alias="effectiveRange")
+    total_sales: int = Field(alias="totalSales")
+    total_sales_paise: int = Field(alias="totalSalesPaise")
+    net_revenue: int = Field(alias="netRevenue")
+    net_revenue_paise: int = Field(alias="netRevenuePaise")
+    order_count: int = Field(alias="orderCount")
+    average_order_value: float = Field(alias="averageOrderValue")
+    average_order_value_paise: int = Field(alias="averageOrderValuePaise")
+    comparison: AdminDashboardComparison | None = None
+    status_counts: dict[str, int] = Field(alias="statusCounts")
+    recent_orders: list[AdminOrderDetailOut] = Field(default_factory=list, alias="recentOrders")
+    inventory_alerts: dict[str, Any] = Field(alias="inventoryAlerts")
+    attention_count: int = Field(alias="attentionCount")
+
+
+class AdminSalesBucket(BaseModel):
+    """Sales bucket for dashboard chart series."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    date: str
+    timestamp: str
+    sales: int
+    sales_paise: int = Field(alias="salesPaise")
+    order_count: int = Field(alias="orderCount")
+
+
+class AdminSalesSeriesOut(BaseModel):
+    """Sales trend response."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    interval: str
+    effective_range: dict[str, str] = Field(alias="effectiveRange")
+    buckets: list[AdminSalesBucket]
+
+
+class AdminFinanceSummaryOut(BaseModel):
+    """Detailed financial breakdown and reconciliation."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    effective_range: dict[str, str] = Field(alias="effectiveRange")
+    gross_sales: int = Field(alias="grossSales")
+    gross_sales_paise: int = Field(alias="grossSalesPaise")
+    discounts: int
+    discounts_paise: int = Field(alias="discountsPaise")
+    shipping_collected: int = Field(alias="shippingCollected")
+    shipping_collected_paise: int = Field(alias="shippingCollectedPaise")
+    stored_tax: int = Field(alias="storedTax")
+    stored_tax_paise: int = Field(alias="storedTaxPaise")
+    refunds: int
+    refunds_paise: int = Field(alias="refundsPaise")
+    gateway_fees: int | None = Field(default=None, alias="gatewayFees")
+    gateway_fees_available: bool = Field(default=False, alias="gatewayFeesAvailable")
+    adjustments: int = 0
+    adjustments_paise: int = Field(default=0, alias="adjustmentsPaise")
+    net_revenue: int = Field(alias="netRevenue")
+    net_revenue_paise: int = Field(alias="netRevenuePaise")
+    taxable_sales: int = Field(alias="taxableSales")
+    taxable_sales_paise: int = Field(alias="taxableSalesPaise")
+    order_count: int = Field(alias="orderCount")
+    refund_count: int = Field(alias="refundCount")
+
+
+class AdminFinanceSalesBucket(BaseModel):
+    """Finance trend bucket."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    date: str
+    timestamp: str
+    gross_sales: int = Field(alias="grossSales")
+    discounts: int
+    refunds: int
+    net_revenue: int = Field(alias="netRevenue")
+    order_count: int = Field(alias="orderCount")
+
+
+class AdminFinanceSeriesOut(BaseModel):
+    """Finance trend response."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    interval: str
+    effective_range: dict[str, str] = Field(alias="effectiveRange")
+    buckets: list[AdminFinanceSalesBucket]
+
+
+class AdminAttentionItem(BaseModel):
+    """Actionable alert item requiring admin intervention."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    severity: str  # CRITICAL, HIGH, WARNING, INFO
+    rule: str
+    title: str
+    message: str
+    order_number: str | None = Field(default=None, alias="orderNumber")
+    order_id: int | None = Field(default=None, alias="orderId")
+    variant_id: int | None = Field(default=None, alias="variantId")
+    product_id: int | None = Field(default=None, alias="productId")
+    created_at: datetime | None = Field(default=None, alias="createdAt")
+    action_url: str | None = Field(default=None, alias="actionUrl")
+
+
+class AdminAttentionListOut(BaseModel):
+    """Paginated list of action-needed attention items."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    items: list[AdminAttentionItem]
+    total: int
+    page: int
+    page_size: int = Field(alias="pageSize")
+
+
+class AdminSearchResultItem(BaseModel):
+    """Item returned from global admin search."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    kind: str  # 'order' | 'product' | 'customer' | 'variant'
+    id: str
+    title: str
+    subtitle: str | None = None
+    badge: str | None = None
+    url: str
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class AdminGlobalSearchOut(BaseModel):
+    """Global admin search result."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    query: str
+    total: int
+    items: list[AdminSearchResultItem]
+    page: int
+    page_size: int = Field(alias="pageSize")
+
+
+# -----------------------------------------------------------------------------
+# Returns & Refunds Schemas
+# -----------------------------------------------------------------------------
+
+
+class AdminReturnItemIn(BaseModel):
+    """Item to return within a return request."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    order_item_id: int = Field(alias="orderItemId")
+    quantity: int = Field(default=1, ge=1)
+    reason: str | None = None
+
+
+class AdminReturnCreateIn(BaseModel):
+    """Payload to create a return request."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    order_number: str = Field(alias="orderNumber")
+    reason: str = Field(..., description="e.g. DEFECTIVE, WRONG_ITEM, NOT_AS_DESCRIBED, SIZE_FIT, OTHER")
+    reason_details: str | None = Field(default=None, alias="reasonDetails")
+    items: list[AdminReturnItemIn] = Field(default_factory=list)
+    admin_notes: str | None = Field(default=None, alias="adminNotes")
+
+
+class AdminReturnStatusUpdateIn(BaseModel):
+    """Payload to transition return request status."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    status: str = Field(..., description="APPROVED, REJECTED, ITEMS_RECEIVED, CANCELLED")
+    note: str | None = Field(default=None, description="Optional audit note")
+
+
+class AdminReturnRefundIn(BaseModel):
+    """Payload to execute refund on a return request."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    amount: int | None = Field(default=None, ge=1, description="Partial refund amount in rupees, or null for full return amount")
+    note: str | None = Field(default=None, description="Audit note recorded in history")
+
+
+class AdminReturnItemOut(BaseModel):
+    """Item inside return response."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    order_item_id: int = Field(alias="orderItemId")
+    product_name: str = Field(alias="productName")
+    sku: str
+    quantity: int
+    unit_price: int = Field(alias="unitPrice")
+    line_total: int = Field(alias="lineTotal")
+
+
+class AdminReturnDetailOut(BaseModel):
+    """Full detail of a return and refund request."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: int
+    return_number: str = Field(alias="returnNumber")
+    order_id: int = Field(alias="orderId")
+    order_number: str = Field(alias="orderNumber")
+    customer_name: str = Field(alias="customerName")
+    customer_email: str | None = Field(default=None, alias="customerEmail")
+    customer_phone: str = Field(alias="customerPhone")
+    status: str
+    reason: str
+    reason_details: str | None = Field(default=None, alias="reasonDetails")
+    items: list[AdminReturnItemOut] = Field(default_factory=list)
+    refund_amount: int = Field(alias="refundAmount")
+    refund_amount_paise: int = Field(alias="refundAmountPaise")
+    refund_status: str = Field(alias="refundStatus")
+    admin_notes: str | None = Field(default=None, alias="adminNotes")
+    history: list[dict[str, Any]] = Field(default_factory=list)
+    created_at: datetime = Field(alias="createdAt")
+    updated_at: datetime = Field(alias="updatedAt")
+
+
+class AdminReturnListOut(BaseModel):
+    """Paginated list of return requests."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    items: list[AdminReturnDetailOut]
+    total: int
+    page: int
+    page_size: int = Field(alias="pageSize")
+
+
+class AdminOccasionIn(BaseModel):
+    """Payload to create a curated gift occasion."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str = Field(..., description="Unique slug identifier (e.g. 'birthday', 'valentine')")
+    name: str = Field(..., description="Display title for the occasion")
+    icon: str | None = Field(default=None, description="Optional icon identifier or emoji")
+    image_key: str | None = Field(default=None, alias="imageKey", description="Internal asset key, e.g. occasions/birthday.jpg")
+    image_url: str | None = Field(default=None, alias="imageUrl", description="Public image URL override")
+    description: str | None = Field(default=None, description="Optional editorial description")
+    display_order: int = Field(default=0, alias="displayOrder", description="Sort order ascending")
+    is_enabled: bool = Field(default=True, alias="isEnabled", description="Whether active on storefront")
+    starts_at: datetime | None = Field(default=None, alias="startsAt", description="Active start datetime (Asia/Kolkata)")
+    ends_at: datetime | None = Field(default=None, alias="endsAt", description="Active end datetime (Asia/Kolkata)")
+    product_ids: list[int] = Field(default_factory=list, alias="productIds", description="Associated product IDs")
+
+
+class AdminOccasionUpdateIn(BaseModel):
+    """Payload to update a curated gift occasion."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    name: str | None = None
+    icon: str | None = None
+    image_key: str | None = Field(default=None, alias="imageKey")
+    image_url: str | None = Field(default=None, alias="imageUrl")
+    description: str | None = None
+    display_order: int | None = Field(default=None, alias="displayOrder")
+    is_enabled: bool | None = Field(default=None, alias="isEnabled")
+    starts_at: datetime | None = Field(default=None, alias="startsAt")
+    ends_at: datetime | None = Field(default=None, alias="endsAt")
+    product_ids: list[int] | None = Field(default=None, alias="productIds")
+
+
+class AdminOccasionOut(BaseModel):
+    """Detailed occasion representation for admin management."""
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    id: str
+    name: str
+    icon: str | None = None
+    image_key: str | None = Field(default=None, alias="imageKey", serialization_alias="imageKey")
+    image_url: str | None = Field(default=None, alias="imageUrl", serialization_alias="imageUrl")
+    description: str | None = None
+    display_order: int = Field(default=0, alias="displayOrder", serialization_alias="displayOrder")
+    is_enabled: bool = Field(default=True, alias="isEnabled", serialization_alias="isEnabled")
+    is_evergreen: bool = Field(default=False, alias="isEvergreen", serialization_alias="isEvergreen")
+    starts_at: datetime | None = Field(default=None, alias="startsAt", serialization_alias="startsAt")
+    ends_at: datetime | None = Field(default=None, alias="endsAt", serialization_alias="endsAt")
+    product_count: int = Field(default=0, alias="productCount", serialization_alias="productCount")
+    product_ids: list[int] = Field(default_factory=list, alias="productIds", serialization_alias="productIds")
+    created_at: datetime | None = Field(default=None, alias="createdAt", serialization_alias="createdAt")
+    updated_at: datetime | None = Field(default=None, alias="updatedAt", serialization_alias="updatedAt")

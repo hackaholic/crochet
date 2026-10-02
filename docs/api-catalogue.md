@@ -29,6 +29,8 @@ All endpoints conform to Section 2, 8, 10, 13, and 18 of the [Multi-Agent Implem
 | `GET` | `/collections` | Active gift and merchandising collections with product counts |
 | `GET` | `/products` | Filterable, searchable, and sortable product catalogue |
 | `GET` | `/products/search?q={query}` | Keyword search across product name, description, tags, and categories |
+| `GET` | `/products/search/suggestions` | Database-derived trending search terms and products for an empty search overlay |
+| `POST` | `/products/search/events` | Privacy-filtered aggregate signal for searches completed by customers |
 | `GET` | `/products/{slug_or_id}` | Full product detail with variants, SKUs, gallery, and reviews |
 | `GET` | `/occasions` | Curated gift occasions for navigation and filters |
 | `GET` | `/reviews` | Testimonials & customer reviews for homepage and storefront |
@@ -309,3 +311,23 @@ Full-text keyword search across product names, descriptions, tags, and category 
 **Query Parameters:**
 * `q` (string, required): Search query string.
 * `limit` (integer, optional, default: `20`): Maximum results to return.
+
+### `GET /products/search/suggestions`
+Returns backend-ranked suggestions for an empty search overlay. Rankings must come from persisted recent search activity and non-cancelled order-line activity. Do not use review counts or static frontend data as a trend proxy.
+
+**Query Parameters:**
+* `keyword_limit` (integer, optional, default: `6`, maximum: `10`)
+* `product_limit` (integer, optional, default: `4`, maximum: `8`)
+
+**Response:**
+```json
+{
+  "trending_keywords": [{ "term": "crochet flowers" }],
+  "trending_products": []
+}
+```
+
+The keyword objects and product entries are sourced only from backend data; products use the same public catalogue shape as `/products/search`. Return empty arrays when activity is insufficient. The frontend then shows neutral search guidance. Keyword event persistence, normalization, privacy thresholds, and retention are specified in [Work 009 Task 9.8](../work/work-009-storefront-search/tasks/task-009-search-discovery-api.md).
+
+### `POST /products/search/events`
+Records an aggregate signal for a completed, debounced customer search so future suggestions can be ranked from actual usage. Request body: `{ "query": "crochet flowers" }`. This event is anonymous, best-effort from the frontend, privacy-filtered, and must not affect the product search response. See the Task 9.8 contract for validation and retention requirements.

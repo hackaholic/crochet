@@ -9,11 +9,13 @@ from app.models.catalogue import (
     ProductCategory,
     ProductCollection,
     ProductImage,
+    ProductOccasion,
     ProductVariant,
     Review,
     Tag,
     product_categories,
     product_collections,
+    product_occasions,
     product_tags,
 )
 from app.models.order import (
@@ -24,6 +26,9 @@ from app.models.order import (
     OrderStatusHistory,
     PaymentMethod,
     PaymentStatus,
+    RefundStatus,
+    ReturnRequest,
+    ReturnStatus,
 )
 from app.models.account import Wishlist, WishlistItem
 from app.models.notification import NotificationLog
@@ -57,7 +62,11 @@ __all__ = [
     "ProductCategory",
     "ProductCollection",
     "ProductImage",
+    "ProductOccasion",
     "ProductVariant",
+    "RefundStatus",
+    "ReturnRequest",
+    "ReturnStatus",
     "Review",
     "Tag",
     "User",
@@ -67,5 +76,6 @@ __all__ = [
     "WishlistItem",
     "product_categories",
     "product_collections",
+    "product_occasions",
     "product_tags",
 ]

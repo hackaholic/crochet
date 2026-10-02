@@ -2,23 +2,34 @@
 
 import re
 from typing import Any
+from datetime import datetime, timedelta, timezone
+import secrets
 import uuid
-from datetime import datetime, timezone
+try:
+    from zoneinfo import ZoneInfo
+    IST = ZoneInfo("Asia/Kolkata")
+except Exception:
+    IST = timezone(timedelta(hours=5, minutes=30))
+
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile, status
+import sqlalchemy as sa
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from app.api.v1.auth import get_current_admin
 from app.db.session import get_db
-from app.services.notification import dispatch_order_status_background
+from app.services.notification import dispatch_order_status_background, dispatch_welcome_background
+from app.services.payment.factory import get_payment_provider
 from app.services.storage import get_storage_provider
 from app.models.catalogue import (
     Category,
     Collection,
+    Occasion,
     Product,
     ProductCategory,
     ProductCollection,
     ProductImage,
+    ProductOccasion,
     ProductVariant,
     Review,
     Tag,
@@ -29,7 +40,11 @@ from app.models.order import (
     OrderStatus,
     OrderStatusHistory,
     PaymentStatus,
+    RefundStatus,
+    ReturnRequest,
+    ReturnStatus,
 )
+from app.models.payment import Payment, PaymentRecordStatus
 from app.models.promotion import Coupon
 from app.models.storefront import BrandSettings, HomepageCampaign, HomepageSection
 from app.models.user import User
@@ -46,6 +61,8 @@ from app.schemas.storefront import (
 
 from app.schemas.admin import (
     AdminAnalyticsOut,
+    AdminAttentionItem,
+    AdminAttentionListOut,
     AdminCategoryCreate,
     AdminCategoryOut,
     AdminCategoryUpdate,
@@ -53,8 +70,17 @@ from app.schemas.admin import (
     AdminCollectionCreate,
     AdminCollectionOut,
     AdminCollectionUpdate,
+    AdminDashboardComparison,
+    AdminDashboardSummaryOut,
+    AdminFinanceSalesBucket,
+    AdminFinanceSeriesOut,
+    AdminFinanceSummaryOut,
+    AdminGlobalSearchOut,
     AdminInventoryAdjustRequest,
     AdminLowStockItem,
+    AdminOccasionIn,
+    AdminOccasionOut,
+    AdminOccasionUpdateIn,
     AdminOrderDetailOut,
     AdminOrderItemOut,
     AdminOrderListOut,
@@ -63,6 +89,17 @@ from app.schemas.admin import (
     AdminProductListOut,
     AdminProductOut,
     AdminProductUpdate,
+    AdminReturnCreateIn,
+    AdminReturnDetailOut,
+    AdminReturnItemIn,
+    AdminReturnItemOut,
+    AdminReturnListOut,
+    AdminReturnRefundIn,
+    AdminReturnStatusUpdateIn,
+    AdminSalesBucket,
+    AdminSalesSeriesOut,
+    AdminSearchResultItem,
+    AdminSendWelcomeRequest,
     AdminTopSellingProduct,
     AdminVariantCreate,
     AdminVariantOut,
@@ -257,6 +294,80 @@ def _order_to_admin_detail(order: Order) -> AdminOrderDetailOut:
         statusHistory=history_out,
         createdAt=order.created_at,
         updatedAt=order.updated_at,
+    )
+
+
+def _parse_ist_date_range(
+    from_str: str | None,
+    to_str: str | None,
+    default_days: int = 30,
+) -> tuple[datetime, datetime, str, str]:
+    """Parse calendar date strings in Asia/Kolkata (IST) and return UTC boundaries with effective IST dates."""
+    now_ist = datetime.now(IST)
+    if to_str:
+        try:
+            to_clean = to_str.strip().split("T")[0]
+            to_d = datetime.strptime(to_clean, "%Y-%m-%d").date()
+        except ValueError:
+            to_d = now_ist.date()
+    else:
+        to_d = now_ist.date()
+
+    if from_str:
+        try:
+            from_clean = from_str.strip().split("T")[0]
+            from_d = datetime.strptime(from_clean, "%Y-%m-%d").date()
+        except ValueError:
+            from_d = to_d - timedelta(days=default_days)
+    else:
+        from_d = to_d - timedelta(days=default_days)
+
+    if from_d > to_d:
+        from_d, to_d = to_d, from_d
+
+    from_ist_dt = datetime(from_d.year, from_d.month, from_d.day, 0, 0, 0, tzinfo=IST)
+    to_ist_dt = datetime(to_d.year, to_d.month, to_d.day, 23, 59, 59, 999999, tzinfo=IST)
+
+    from_utc = from_ist_dt.astimezone(timezone.utc).replace(tzinfo=None)
+    to_utc = to_ist_dt.astimezone(timezone.utc).replace(tzinfo=None)
+
+    return from_utc, to_utc, from_d.isoformat(), to_d.isoformat()
+
+
+def _return_to_admin_out(r: ReturnRequest) -> AdminReturnDetailOut:
+    """Convert ReturnRequest ORM to AdminReturnDetailOut."""
+    items = []
+    for it in (r.items_json or []):
+        items.append(
+            AdminReturnItemOut(
+                orderItemId=it.get("order_item_id") or it.get("orderItemId") or 0,
+                productName=it.get("product_name") or it.get("productName") or "Product",
+                sku=it.get("sku") or "",
+                quantity=it.get("quantity") or 1,
+                unitPrice=it.get("unit_price") or it.get("unitPrice") or 0,
+                lineTotal=it.get("line_total") or it.get("lineTotal") or 0,
+            )
+        )
+    order = r.order
+    return AdminReturnDetailOut(
+        id=r.id,
+        returnNumber=r.return_number,
+        orderId=r.order_id,
+        orderNumber=order.order_number if order else "",
+        customerName=order.customer_name if order else "Customer",
+        customerEmail=order.customer_email if order else None,
+        customerPhone=order.customer_phone if order else "",
+        status=r.status,
+        reason=r.reason,
+        reasonDetails=r.reason_details,
+        items=items,
+        refundAmount=r.refund_amount,
+        refundAmountPaise=r.refund_amount_paise or (r.refund_amount * 100),
+        refundStatus=r.refund_status,
+        adminNotes=r.admin_notes,
+        history=r.history_json or [],
+        createdAt=r.created_at or datetime.now(timezone.utc),
+        updatedAt=r.updated_at or datetime.now(timezone.utc),
     )
 
 
@@ -956,12 +1067,23 @@ def assign_collection_products(
 def list_admin_orders(
     status: str | None = Query(default=None, description="Filter by OrderStatus"),
     payment_status: str | None = Query(default=None, alias="paymentStatus", description="Filter by PaymentStatus"),
+    from_date: str | None = Query(default=None, alias="from", description="Filter from date (YYYY-MM-DD)"),
+    to_date: str | None = Query(default=None, alias="to", description="Filter to date (YYYY-MM-DD)"),
+    country: str | None = Query(default=None, description="Filter by shipping country"),
+    min_total: int | None = Query(default=None, alias="minTotal", ge=0, description="Minimum order total in rupees"),
+    max_total: int | None = Query(default=None, alias="maxTotal", ge=0, description="Maximum order total in rupees"),
+    sku: str | None = Query(default=None, description="Filter orders containing variant SKU"),
+    sort_by: str = Query(
+        default="created_at_desc",
+        alias="sortBy",
+        description="Sort by: created_at_desc, created_at_asc, total_desc, total_asc, order_number_asc, order_number_desc",
+    ),
     q: str | None = Query(default=None, description="Search by orderNumber, customer name, email, or phone"),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100, alias="pageSize"),
     db: Session = Depends(get_db),
 ) -> AdminOrderListOut:
-    """List all orders across customers with status filters and search."""
+    """List all orders across customers with date, status, country, price, SKU filters, and sorting."""
     query = (
         db.query(Order)
         .options(
@@ -976,6 +1098,27 @@ def list_admin_orders(
     if payment_status:
         query = query.filter(Order.payment_status == payment_status)
 
+    if from_date or to_date:
+        from_utc, to_utc, _, _ = _parse_ist_date_range(from_date, to_date)
+        if from_date:
+            query = query.filter(Order.created_at >= from_utc)
+        if to_date:
+            query = query.filter(Order.created_at <= to_utc)
+
+    if min_total is not None:
+        query = query.filter(Order.total_amount >= min_total)
+
+    if max_total is not None:
+        query = query.filter(Order.total_amount <= max_total)
+
+    if country:
+        query = query.filter(
+            func.lower(func.coalesce(sa.cast(Order.shipping_address_json, sa.String), "")).contains(country.lower())
+        )
+
+    if sku:
+        query = query.filter(Order.items.any(OrderItem.sku.ilike(f"%{sku.strip()}%")))
+
     if q:
         search_fmt = f"%{q.strip()}%"
         query = query.filter(
@@ -985,10 +1128,23 @@ def list_admin_orders(
             | (Order.customer_email.ilike(search_fmt))
         )
 
+    # Sorting
+    if sort_by == "created_at_asc":
+        query = query.order_by(Order.created_at.asc())
+    elif sort_by == "total_desc":
+        query = query.order_by(Order.total_amount.desc())
+    elif sort_by == "total_asc":
+        query = query.order_by(Order.total_amount.asc())
+    elif sort_by == "order_number_asc":
+        query = query.order_by(Order.order_number.asc())
+    elif sort_by == "order_number_desc":
+        query = query.order_by(Order.order_number.desc())
+    else:
+        query = query.order_by(Order.created_at.desc())
+
     total = query.distinct().count()
     orders = (
         query.distinct()
-        .order_by(Order.created_at.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
         .all()
@@ -1206,6 +1362,974 @@ def get_admin_analytics(
         recentOrders=[_order_to_admin_detail(o) for o in recent_orders],
         topSellingProducts=top_selling_products,
     )
+
+
+# -----------------------------------------------------------------------------
+# Dashboard Analytics & Sales Series
+# -----------------------------------------------------------------------------
+
+
+def _compute_attention_count(db: Session) -> int:
+    """Return count of actionable items requiring admin attention."""
+    now_utc = datetime.now(timezone.utc).replace(tzinfo=None)
+    cutoff_48h = now_utc - timedelta(hours=48)
+    cutoff_24h = now_utc - timedelta(hours=24)
+
+    unshipped = (
+        db.query(Order)
+        .filter(
+            Order.status.in_([OrderStatus.CONFIRMED.value, OrderStatus.PROCESSING.value, OrderStatus.READY_TO_SHIP.value]),
+            Order.created_at <= cutoff_48h,
+        )
+        .count()
+    )
+    stale_pay = (
+        db.query(Order)
+        .filter(Order.status == OrderStatus.PENDING_PAYMENT.value, Order.created_at <= cutoff_24h)
+        .count()
+    )
+    pending_returns = (
+        db.query(ReturnRequest)
+        .filter(ReturnRequest.status == ReturnStatus.REQUESTED.value)
+        .count()
+    )
+    low_stock = (
+        db.query(ProductVariant)
+        .filter(ProductVariant.stock_quantity <= 2, ProductVariant.status == "ACTIVE")
+        .count()
+    )
+    return unshipped + stale_pay + pending_returns + low_stock
+
+
+def _gather_attention_items(db: Session) -> list[AdminAttentionItem]:
+    """Gather and prioritize all actionable attention items from real data."""
+    now_utc = datetime.now(timezone.utc).replace(tzinfo=None)
+    cutoff_48h = now_utc - timedelta(hours=48)
+    cutoff_24h = now_utc - timedelta(hours=24)
+    items: list[AdminAttentionItem] = []
+
+    # 1. Unshipped orders > 48h
+    unshipped = (
+        db.query(Order)
+        .filter(
+            Order.status.in_([OrderStatus.CONFIRMED.value, OrderStatus.PROCESSING.value, OrderStatus.READY_TO_SHIP.value]),
+            Order.created_at <= cutoff_48h,
+        )
+        .order_by(Order.created_at.asc())
+        .all()
+    )
+    for o in unshipped:
+        hours = int((now_utc - o.created_at).total_seconds() // 3600)
+        items.append(
+            AdminAttentionItem(
+                id=f"att_unshipped_{o.id}",
+                severity="HIGH",
+                rule="unshipped_over_48h",
+                title=f"Order {o.order_number} unshipped for {hours}h",
+                message=f"Order placed by {o.customer_name} is awaiting fulfillment/shipping.",
+                orderNumber=o.order_number,
+                orderId=o.id,
+                createdAt=o.created_at,
+                actionUrl=f"/admin/orders/{o.order_number}",
+            )
+        )
+
+    # 2. Stale pending payments > 24h
+    stale_pay = (
+        db.query(Order)
+        .filter(Order.status == OrderStatus.PENDING_PAYMENT.value, Order.created_at <= cutoff_24h)
+        .order_by(Order.created_at.asc())
+        .all()
+    )
+    for o in stale_pay:
+        items.append(
+            AdminAttentionItem(
+                id=f"att_pending_pay_{o.id}",
+                severity="WARNING",
+                rule="stale_pending_payment",
+                title=f"Pending payment on order {o.order_number}",
+                message=f"Order payment has remained pending for over 24 hours.",
+                orderNumber=o.order_number,
+                orderId=o.id,
+                createdAt=o.created_at,
+                actionUrl=f"/admin/orders/{o.order_number}",
+            )
+        )
+
+    # 3. Pending return reviews
+    pending_returns = (
+        db.query(ReturnRequest)
+        .options(joinedload(ReturnRequest.order))
+        .filter(ReturnRequest.status == ReturnStatus.REQUESTED.value)
+        .order_by(ReturnRequest.created_at.asc())
+        .all()
+    )
+    for r in pending_returns:
+        items.append(
+            AdminAttentionItem(
+                id=f"att_return_{r.id}",
+                severity="HIGH",
+                rule="pending_return_review",
+                title=f"Return request {r.return_number} awaiting review",
+                message=f"Customer requested return for '{r.reason}'. Review and decide action.",
+                orderNumber=r.order.order_number if r.order else None,
+                orderId=r.order_id,
+                createdAt=r.created_at,
+                actionUrl=f"/admin/returns/{r.return_number}",
+            )
+        )
+
+    # 4. Critical low stock
+    critical_stock = (
+        db.query(ProductVariant)
+        .options(joinedload(ProductVariant.product))
+        .filter(ProductVariant.stock_quantity <= 2, ProductVariant.status == "ACTIVE")
+        .order_by(ProductVariant.stock_quantity.asc())
+        .all()
+    )
+    for v in critical_stock:
+        sev = "CRITICAL" if v.stock_quantity == 0 else "WARNING"
+        items.append(
+            AdminAttentionItem(
+                id=f"att_stock_{v.id}",
+                severity=sev,
+                rule="critical_low_stock",
+                title=f"Low stock: {v.sku} ({v.stock_quantity} left)",
+                message=f"Product '{v.product.name if v.product else 'Product'}' variant '{v.name}' has low inventory.",
+                variantId=v.id,
+                productId=v.product_id,
+                createdAt=v.updated_at,
+                actionUrl=f"/admin/products/{v.product_id}",
+            )
+        )
+
+    return items
+
+
+def _build_sales_buckets(
+    eff_from: str,
+    eff_to: str,
+    interval: str,
+    orders: list[Order],
+) -> list[AdminSalesBucket]:
+    """Generate calendar buckets in IST with zero-filled gaps."""
+    from_d = datetime.strptime(eff_from, "%Y-%m-%d").date()
+    to_d = datetime.strptime(eff_to, "%Y-%m-%d").date()
+
+    orders_by_date: dict[str, list[Order]] = {}
+    for o in orders:
+        if o.created_at:
+            o_ist = o.created_at.replace(tzinfo=timezone.utc).astimezone(IST)
+            key = o_ist.date().isoformat()
+            orders_by_date.setdefault(key, []).append(o)
+
+    buckets: list[AdminSalesBucket] = []
+
+    if interval == "monthly":
+        curr = datetime(from_d.year, from_d.month, 1).date()
+        while curr <= to_d:
+            key_prefix = curr.strftime("%Y-%m")
+            matching_orders = [
+                o for d_str, o_list in orders_by_date.items() if d_str.startswith(key_prefix) for o in o_list
+            ]
+            sales = sum(o.total_amount for o in matching_orders)
+            ts = datetime(curr.year, curr.month, 1, 0, 0, 0, tzinfo=IST).isoformat()
+            buckets.append(
+                AdminSalesBucket(
+                    date=key_prefix,
+                    timestamp=ts,
+                    sales=sales,
+                    salesPaise=sales * 100,
+                    orderCount=len(matching_orders),
+                )
+            )
+            if curr.month == 12:
+                curr = datetime(curr.year + 1, 1, 1).date()
+            else:
+                curr = datetime(curr.year, curr.month + 1, 1).date()
+    elif interval == "weekly":
+        curr = from_d
+        while curr <= to_d:
+            week_end = min(curr + timedelta(days=6), to_d)
+            matching_orders = []
+            d_walk = curr
+            while d_walk <= week_end:
+                matching_orders.extend(orders_by_date.get(d_walk.isoformat(), []))
+                d_walk += timedelta(days=1)
+            sales = sum(o.total_amount for o in matching_orders)
+            ts = datetime(curr.year, curr.month, curr.day, 0, 0, 0, tzinfo=IST).isoformat()
+            buckets.append(
+                AdminSalesBucket(
+                    date=curr.isoformat(),
+                    timestamp=ts,
+                    sales=sales,
+                    salesPaise=sales * 100,
+                    orderCount=len(matching_orders),
+                )
+            )
+            curr += timedelta(days=7)
+    else:  # daily
+        curr = from_d
+        while curr <= to_d:
+            matching_orders = orders_by_date.get(curr.isoformat(), [])
+            sales = sum(o.total_amount for o in matching_orders)
+            ts = datetime(curr.year, curr.month, curr.day, 0, 0, 0, tzinfo=IST).isoformat()
+            buckets.append(
+                AdminSalesBucket(
+                    date=curr.isoformat(),
+                    timestamp=ts,
+                    sales=sales,
+                    salesPaise=sales * 100,
+                    orderCount=len(matching_orders),
+                )
+            )
+            curr += timedelta(days=1)
+
+    return buckets
+
+
+def _build_finance_buckets(
+    eff_from: str,
+    eff_to: str,
+    interval: str,
+    orders: list[Order],
+    returns: list[ReturnRequest],
+) -> list[AdminFinanceSalesBucket]:
+    """Generate finance buckets in IST reconciling to summary totals."""
+    from_d = datetime.strptime(eff_from, "%Y-%m-%d").date()
+    to_d = datetime.strptime(eff_to, "%Y-%m-%d").date()
+
+    orders_by_date: dict[str, list[Order]] = {}
+    for o in orders:
+        if o.created_at:
+            o_ist = o.created_at.replace(tzinfo=timezone.utc).astimezone(IST)
+            key = o_ist.date().isoformat()
+            orders_by_date.setdefault(key, []).append(o)
+
+    returns_by_date: dict[str, list[ReturnRequest]] = {}
+    for r in returns:
+        dt = r.updated_at or r.created_at
+        if dt:
+            r_ist = dt.replace(tzinfo=timezone.utc).astimezone(IST)
+            key = r_ist.date().isoformat()
+            returns_by_date.setdefault(key, []).append(r)
+
+    buckets: list[AdminFinanceSalesBucket] = []
+
+    curr = from_d
+    step_days = 7 if interval == "weekly" else 1
+
+    while curr <= to_d:
+        if interval == "monthly":
+            key_prefix = curr.strftime("%Y-%m")
+            b_orders = [o for d_str, o_list in orders_by_date.items() if d_str.startswith(key_prefix) for o in o_list]
+            b_returns = [r for d_str, r_list in returns_by_date.items() if d_str.startswith(key_prefix) for r in r_list]
+            ts = datetime(curr.year, curr.month, 1, 0, 0, 0, tzinfo=IST).isoformat()
+            label = key_prefix
+        else:
+            end_step = min(curr + timedelta(days=step_days - 1), to_d)
+            b_orders = []
+            b_returns = []
+            d_walk = curr
+            while d_walk <= end_step:
+                b_orders.extend(orders_by_date.get(d_walk.isoformat(), []))
+                b_returns.extend(returns_by_date.get(d_walk.isoformat(), []))
+                d_walk += timedelta(days=1)
+            ts = datetime(curr.year, curr.month, curr.day, 0, 0, 0, tzinfo=IST).isoformat()
+            label = curr.isoformat()
+
+        gross = sum(o.subtotal + o.discount_amount for o in b_orders)
+        discounts = sum(o.discount_amount for o in b_orders)
+        refunds = sum(r.refund_amount for r in b_returns)
+        shipping = sum(o.shipping_fee for o in b_orders)
+        tax = sum(o.tax_amount for o in b_orders)
+        net = gross - discounts + shipping + tax - refunds
+
+        buckets.append(
+            AdminFinanceSalesBucket(
+                date=label,
+                timestamp=ts,
+                grossSales=gross,
+                discounts=discounts,
+                refunds=refunds,
+                netRevenue=net,
+                orderCount=len(b_orders),
+            )
+        )
+
+        if interval == "monthly":
+            if curr.month == 12:
+                curr = datetime(curr.year + 1, 1, 1).date()
+            else:
+                curr = datetime(curr.year, curr.month + 1, 1).date()
+        else:
+            curr += timedelta(days=step_days)
+
+    return buckets
+
+
+@router.get("/dashboard/summary", response_model=AdminDashboardSummaryOut)
+def get_admin_dashboard_summary(
+    from_date: str | None = Query(default=None, alias="from", description="Start date (YYYY-MM-DD)"),
+    to_date: str | None = Query(default=None, alias="to", description="End date (YYYY-MM-DD)"),
+    compare_from: str | None = Query(default=None, alias="compareFrom", description="Comparison start date"),
+    compare_to: str | None = Query(default=None, alias="compareTo", description="Comparison end date"),
+    db: Session = Depends(get_db),
+) -> AdminDashboardSummaryOut:
+    """Aggregate business KPIs, net revenue, status counts, recent orders, and stock alerts."""
+    from_utc, to_utc, eff_from, eff_to = _parse_ist_date_range(from_date, to_date)
+
+    orders_query = (
+        db.query(Order)
+        .filter(Order.created_at >= from_utc, Order.created_at <= to_utc)
+    )
+
+    all_orders = orders_query.all()
+    order_count = len(all_orders)
+
+    eligible_orders = [o for o in all_orders if o.status != OrderStatus.CANCELLED.value]
+    total_sales = sum(o.total_amount for o in eligible_orders)
+
+    refunds_sum = (
+        db.query(func.coalesce(func.sum(ReturnRequest.refund_amount), 0))
+        .filter(
+            ReturnRequest.refund_status == RefundStatus.COMPLETED.value,
+            ReturnRequest.updated_at >= from_utc,
+            ReturnRequest.updated_at <= to_utc,
+        )
+        .scalar()
+        or 0
+    )
+
+    net_revenue = max(0, total_sales - int(refunds_sum))
+    aov = round(total_sales / order_count, 2) if order_count > 0 else 0.0
+
+    status_counts = {st.value: 0 for st in OrderStatus}
+    for o in all_orders:
+        if o.status in status_counts:
+            status_counts[o.status] += 1
+
+    comparison = None
+    if compare_from and compare_to:
+        comp_from_utc, comp_to_utc, _, _ = _parse_ist_date_range(compare_from, compare_to)
+        prev_orders = (
+            db.query(Order)
+            .filter(Order.created_at >= comp_from_utc, Order.created_at <= comp_to_utc)
+            .all()
+        )
+        prev_count = len(prev_orders)
+        prev_sales = sum(o.total_amount for o in prev_orders if o.status != OrderStatus.CANCELLED.value)
+
+        sales_growth = round(((total_sales - prev_sales) / prev_sales) * 100, 2) if prev_sales > 0 else None
+        order_growth = round(((order_count - prev_count) / prev_count) * 100, 2) if prev_count > 0 else None
+
+        comparison = AdminDashboardComparison(
+            previousTotalSales=prev_sales,
+            previousTotalSalesPaise=prev_sales * 100,
+            previousOrderCount=prev_count,
+            salesGrowthPercent=sales_growth,
+            orderGrowthPercent=order_growth,
+        )
+
+    recent_orders = (
+        orders_query
+        .options(joinedload(Order.items), joinedload(Order.status_history))
+        .order_by(Order.created_at.desc())
+        .limit(10)
+        .all()
+    )
+
+    low_stock_variants = (
+        db.query(ProductVariant)
+        .options(joinedload(ProductVariant.product))
+        .filter(ProductVariant.stock_quantity <= 5, ProductVariant.status == "ACTIVE")
+        .all()
+    )
+    low_stock_items = [
+        AdminLowStockItem(
+            variantId=v.id,
+            productId=v.product_id,
+            productName=v.product.name if v.product else "Unknown Product",
+            sku=v.sku,
+            variantName=v.name,
+            stockQuantity=v.stock_quantity,
+        )
+        for v in low_stock_variants
+    ]
+
+    attention_count = _compute_attention_count(db)
+
+    return AdminDashboardSummaryOut(
+        effectiveRange={"from": eff_from, "to": eff_to},
+        totalSales=total_sales,
+        totalSalesPaise=total_sales * 100,
+        netRevenue=net_revenue,
+        netRevenuePaise=net_revenue * 100,
+        orderCount=order_count,
+        averageOrderValue=aov,
+        averageOrderValuePaise=int(aov * 100),
+        comparison=comparison,
+        statusCounts=status_counts,
+        recentOrders=[_order_to_admin_detail(o) for o in recent_orders],
+        inventoryAlerts={
+            "lowStockCount": len(low_stock_items),
+            "lowStockItems": low_stock_items,
+        },
+        attentionCount=attention_count,
+    )
+
+
+@router.get("/dashboard/sales", response_model=AdminSalesSeriesOut)
+def get_admin_dashboard_sales(
+    from_date: str | None = Query(default=None, alias="from", description="Start date (YYYY-MM-DD)"),
+    to_date: str | None = Query(default=None, alias="to", description="End date (YYYY-MM-DD)"),
+    interval: str = Query(default="daily", pattern="^(daily|weekly|monthly)$"),
+    db: Session = Depends(get_db),
+) -> AdminSalesSeriesOut:
+    """Return ordered sales time series buckets with zero-filled gaps in Asia/Kolkata timezone."""
+    from_utc, to_utc, eff_from, eff_to = _parse_ist_date_range(from_date, to_date)
+    orders = (
+        db.query(Order)
+        .filter(
+            Order.created_at >= from_utc,
+            Order.created_at <= to_utc,
+            Order.status != OrderStatus.CANCELLED.value,
+        )
+        .order_by(Order.created_at.asc())
+        .all()
+    )
+
+    buckets = _build_sales_buckets(eff_from, eff_to, interval, orders)
+    return AdminSalesSeriesOut(
+        interval=interval,
+        effectiveRange={"from": eff_from, "to": eff_to},
+        buckets=buckets,
+    )
+
+
+@router.get("/dashboard/attention", response_model=AdminAttentionListOut)
+def get_admin_attention(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100, alias="pageSize"),
+    db: Session = Depends(get_db),
+) -> AdminAttentionListOut:
+    """Retrieve actionable items requiring administrator intervention."""
+    items = _gather_attention_items(db)
+    total = len(items)
+    paged = items[(page - 1) * page_size : page * page_size]
+    return AdminAttentionListOut(items=paged, total=total, page=page, pageSize=page_size)
+
+
+# -----------------------------------------------------------------------------
+# Finance Summary & Breakdown
+# -----------------------------------------------------------------------------
+
+
+@router.get("/finance/summary", response_model=AdminFinanceSummaryOut)
+def get_admin_finance_summary(
+    from_date: str | None = Query(default=None, alias="from", description="Start date (YYYY-MM-DD)"),
+    to_date: str | None = Query(default=None, alias="to", description="End date (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+) -> AdminFinanceSummaryOut:
+    """Financial accounting summary reconciling gross sales, discounts, shipping, stored tax, and refunds."""
+    from_utc, to_utc, eff_from, eff_to = _parse_ist_date_range(from_date, to_date)
+
+    orders = (
+        db.query(Order)
+        .filter(Order.created_at >= from_utc, Order.created_at <= to_utc, Order.status != OrderStatus.CANCELLED.value)
+        .all()
+    )
+
+    gross_sales = sum(o.subtotal + o.discount_amount for o in orders)
+    discounts = sum(o.discount_amount for o in orders)
+    shipping_collected = sum(o.shipping_fee for o in orders)
+    stored_tax = sum(o.tax_amount for o in orders)
+
+    completed_returns = (
+        db.query(ReturnRequest)
+        .filter(
+            ReturnRequest.refund_status == RefundStatus.COMPLETED.value,
+            ReturnRequest.updated_at >= from_utc,
+            ReturnRequest.updated_at <= to_utc,
+        )
+        .all()
+    )
+    refunds = sum(r.refund_amount for r in completed_returns)
+    refund_count = len(completed_returns)
+
+    net_revenue = gross_sales - discounts + shipping_collected + stored_tax - refunds
+    taxable_sales = gross_sales - discounts
+
+    return AdminFinanceSummaryOut(
+        effectiveRange={"from": eff_from, "to": eff_to},
+        grossSales=gross_sales,
+        grossSalesPaise=gross_sales * 100,
+        discounts=discounts,
+        discountsPaise=discounts * 100,
+        shippingCollected=shipping_collected,
+        shippingCollectedPaise=shipping_collected * 100,
+        storedTax=stored_tax,
+        storedTaxPaise=stored_tax * 100,
+        refunds=refunds,
+        refundsPaise=refunds * 100,
+        gatewayFees=None,
+        gatewayFeesAvailable=False,
+        adjustments=0,
+        adjustmentsPaise=0,
+        netRevenue=net_revenue,
+        netRevenuePaise=net_revenue * 100,
+        taxableSales=taxable_sales,
+        taxableSalesPaise=taxable_sales * 100,
+        orderCount=len(orders),
+        refundCount=refund_count,
+    )
+
+
+@router.get("/finance/sales", response_model=AdminFinanceSeriesOut)
+def get_admin_finance_sales(
+    from_date: str | None = Query(default=None, alias="from", description="Start date (YYYY-MM-DD)"),
+    to_date: str | None = Query(default=None, alias="to", description="End date (YYYY-MM-DD)"),
+    interval: str = Query(default="daily", pattern="^(daily|weekly|monthly)$"),
+    db: Session = Depends(get_db),
+) -> AdminFinanceSeriesOut:
+    """Finance trend series reconciling with summary."""
+    from_utc, to_utc, eff_from, eff_to = _parse_ist_date_range(from_date, to_date)
+    orders = (
+        db.query(Order)
+        .filter(
+            Order.created_at >= from_utc,
+            Order.created_at <= to_utc,
+            Order.status != OrderStatus.CANCELLED.value,
+        )
+        .order_by(Order.created_at.asc())
+        .all()
+    )
+    returns = (
+        db.query(ReturnRequest)
+        .filter(
+            ReturnRequest.refund_status == RefundStatus.COMPLETED.value,
+            ReturnRequest.updated_at >= from_utc,
+            ReturnRequest.updated_at <= to_utc,
+        )
+        .all()
+    )
+
+    buckets = _build_finance_buckets(eff_from, eff_to, interval, orders, returns)
+    return AdminFinanceSeriesOut(
+        interval=interval,
+        effectiveRange={"from": eff_from, "to": eff_to},
+        buckets=buckets,
+    )
+
+
+# -----------------------------------------------------------------------------
+# Global Admin Search
+# -----------------------------------------------------------------------------
+
+
+@router.get("/search", response_model=AdminGlobalSearchOut)
+def admin_global_search(
+    q: str = Query(..., min_length=1, description="Search term for order, product, variant, or customer"),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100, alias="pageSize"),
+    db: Session = Depends(get_db),
+) -> AdminGlobalSearchOut:
+    """Global admin search across orders, products, variants, and customers."""
+    term = f"%{q.strip()}%"
+    results: list[AdminSearchResultItem] = []
+
+    # 1. Orders
+    orders = (
+        db.query(Order)
+        .filter(
+            (Order.order_number.ilike(term))
+            | (Order.customer_name.ilike(term))
+            | (Order.customer_email.ilike(term))
+            | (Order.customer_phone.ilike(term))
+        )
+        .limit(20)
+        .all()
+    )
+    for o in orders:
+        results.append(
+            AdminSearchResultItem(
+                kind="order",
+                id=str(o.id),
+                title=f"Order {o.order_number}",
+                subtitle=f"{o.customer_name} • ₹{o.total_amount} • {o.status}",
+                badge=o.status,
+                url=f"/admin/orders/{o.order_number}",
+                metadata={"orderNumber": o.order_number, "totalAmount": o.total_amount, "phone": o.customer_phone},
+            )
+        )
+
+    # 2. Products
+    products = (
+        db.query(Product)
+        .filter((Product.name.ilike(term)) | (Product.slug.ilike(term)) | (Product.brand.ilike(term)))
+        .limit(20)
+        .all()
+    )
+    for p in products:
+        results.append(
+            AdminSearchResultItem(
+                kind="product",
+                id=str(p.id),
+                title=p.name,
+                subtitle=f"{p.brand or 'Sulocraft'} • {p.status}",
+                badge=p.badge or p.status,
+                url=f"/admin/products/{p.id}",
+                metadata={"slug": p.slug, "primaryImage": p.primary_image},
+            )
+        )
+
+    # 3. Variants
+    variants = (
+        db.query(ProductVariant)
+        .options(joinedload(ProductVariant.product))
+        .filter((ProductVariant.sku.ilike(term)) | (ProductVariant.name.ilike(term)))
+        .limit(20)
+        .all()
+    )
+    for v in variants:
+        results.append(
+            AdminSearchResultItem(
+                kind="variant",
+                id=str(v.id),
+                title=f"SKU: {v.sku}",
+                subtitle=f"{v.product.name if v.product else ''} - {v.name} • Stock: {v.stock_quantity}",
+                badge=f"₹{v.price}",
+                url=f"/admin/products/{v.product_id}",
+                metadata={"sku": v.sku, "productId": v.product_id, "stockQuantity": v.stock_quantity},
+            )
+        )
+
+    # 4. Customers
+    users = (
+        db.query(User)
+        .filter(
+            (User.name.ilike(term))
+            | (User.email.ilike(term))
+            | (User.phone.ilike(term))
+        )
+        .limit(20)
+        .all()
+    )
+    for u in users:
+        results.append(
+            AdminSearchResultItem(
+                kind="customer",
+                id=str(u.id),
+                title=u.name or "Customer",
+                subtitle=f"{u.email or ''} • {u.phone or ''}",
+                badge=u.role,
+                url=f"/admin/customers/{u.id}",
+                metadata={"email": u.email, "phone": u.phone},
+            )
+        )
+
+    total = len(results)
+    paged = results[(page - 1) * page_size : page * page_size]
+    return AdminGlobalSearchOut(query=q, total=total, items=paged, page=page, pageSize=page_size)
+
+
+# -----------------------------------------------------------------------------
+# Returns & Refunds Administration
+# -----------------------------------------------------------------------------
+
+
+@router.get("/returns", response_model=AdminReturnListOut)
+def list_admin_returns(
+    status: str | None = Query(default=None, description="Filter by ReturnStatus"),
+    order_number: str | None = Query(default=None, alias="orderNumber", description="Filter by order number"),
+    order_num_alt: str | None = Query(default=None, alias="order_number", include_in_schema=False),
+    from_date: str | None = Query(default=None, alias="from", description="Filter from date"),
+    to_date: str | None = Query(default=None, alias="to", description="Filter to date"),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100, alias="pageSize"),
+    db: Session = Depends(get_db),
+) -> AdminReturnListOut:
+    """List return requests with status, order, and date filters."""
+    query = db.query(ReturnRequest).options(joinedload(ReturnRequest.order))
+
+    if status:
+        query = query.filter(ReturnRequest.status == status)
+
+    target_order_num = order_number or order_num_alt
+    if target_order_num:
+        query = query.filter(ReturnRequest.order.has(Order.order_number.ilike(f"%{target_order_num.strip()}%")))
+
+    if from_date or to_date:
+        from_utc, to_utc, _, _ = _parse_ist_date_range(from_date, to_date)
+        if from_date:
+            query = query.filter(ReturnRequest.created_at >= from_utc)
+        if to_date:
+            query = query.filter(ReturnRequest.created_at <= to_utc)
+
+    total = query.count()
+    returns = (
+        query.order_by(ReturnRequest.created_at.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+
+    return AdminReturnListOut(
+        items=[_return_to_admin_out(r) for r in returns],
+        total=total,
+        page=page,
+        pageSize=page_size,
+    )
+
+
+@router.get("/returns/{return_id_or_number}", response_model=AdminReturnDetailOut)
+def get_admin_return(
+    return_id_or_number: str,
+    db: Session = Depends(get_db),
+) -> AdminReturnDetailOut:
+    """Retrieve full details of a specific return request."""
+    ret = (
+        db.query(ReturnRequest)
+        .options(joinedload(ReturnRequest.order))
+        .filter(
+            (ReturnRequest.return_number == return_id_or_number)
+            | (ReturnRequest.id == int(return_id_or_number) if return_id_or_number.isdigit() else False)
+        )
+        .first()
+    )
+    if not ret:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Return request not found")
+    return _return_to_admin_out(ret)
+
+
+@router.post("/returns", response_model=AdminReturnDetailOut, status_code=status.HTTP_201_CREATED)
+def create_admin_return(
+    payload: AdminReturnCreateIn,
+    db: Session = Depends(get_db),
+) -> AdminReturnDetailOut:
+    """Create a return request for an order."""
+    order = (
+        db.query(Order)
+        .options(joinedload(Order.items))
+        .filter(Order.order_number == payload.order_number)
+        .first()
+    )
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Order '{payload.order_number}' not found")
+
+    items_to_return = []
+    total_refund = 0
+    order_items_by_id = {item.id: item for item in order.items}
+
+    if payload.items:
+        for it in payload.items:
+            order_item = order_items_by_id.get(it.order_item_id)
+            if not order_item:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Order item ID {it.order_item_id} does not belong to order {order.order_number}",
+                )
+            qty = min(it.quantity, order_item.quantity)
+            line_tot = order_item.unit_price * qty
+            items_to_return.append({
+                "order_item_id": order_item.id,
+                "product_name": order_item.product_name,
+                "sku": order_item.sku,
+                "quantity": qty,
+                "unit_price": order_item.unit_price,
+                "line_total": line_tot,
+            })
+            total_refund += line_tot
+    else:
+        for order_item in order.items:
+            items_to_return.append({
+                "order_item_id": order_item.id,
+                "product_name": order_item.product_name,
+                "sku": order_item.sku,
+                "quantity": order_item.quantity,
+                "unit_price": order_item.unit_price,
+                "line_total": order_item.line_total,
+            })
+            total_refund += order_item.line_total
+
+    return_num = f"RET-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{secrets.token_hex(3).upper()}"
+    new_return = ReturnRequest(
+        return_number=return_num,
+        order_id=order.id,
+        user_id=order.user_id,
+        status=ReturnStatus.REQUESTED.value,
+        reason=payload.reason,
+        reason_details=payload.reason_details,
+        items_json=items_to_return,
+        refund_amount=total_refund,
+        refund_amount_paise=total_refund * 100,
+        refund_status=RefundStatus.PENDING.value,
+        admin_notes=payload.admin_notes,
+        history_json=[{
+            "status": ReturnStatus.REQUESTED.value,
+            "actor": "admin",
+            "note": f"Return created for order {order.order_number} (reason: {payload.reason})",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }],
+    )
+    db.add(new_return)
+    db.commit()
+    db.refresh(new_return)
+    return _return_to_admin_out(new_return)
+
+
+@router.patch("/returns/{return_id_or_number}/status", response_model=AdminReturnDetailOut)
+def update_admin_return_status(
+    return_id_or_number: str,
+    payload: AdminReturnStatusUpdateIn,
+    db: Session = Depends(get_db),
+) -> AdminReturnDetailOut:
+    """Transition return request lifecycle status (APPROVED, REJECTED, ITEMS_RECEIVED, CANCELLED)."""
+    ret = (
+        db.query(ReturnRequest)
+        .options(joinedload(ReturnRequest.order))
+        .filter(
+            (ReturnRequest.return_number == return_id_or_number)
+            | (ReturnRequest.id == int(return_id_or_number) if return_id_or_number.isdigit() else False)
+        )
+        .first()
+    )
+    if not ret:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Return request not found")
+
+    allowed_statuses = {
+        ReturnStatus.APPROVED.value,
+        ReturnStatus.REJECTED.value,
+        ReturnStatus.ITEMS_RECEIVED.value,
+        ReturnStatus.CANCELLED.value,
+    }
+    if payload.status not in allowed_statuses:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid target status '{payload.status}'. Allowed: {', '.join(sorted(allowed_statuses))}",
+        )
+
+    prev_status = ret.status
+    ret.status = payload.status
+    ret.updated_at = datetime.now(timezone.utc)
+
+    history = list(ret.history_json or [])
+    history.append({
+        "status": payload.status,
+        "actor": "admin",
+        "note": payload.note or f"Return status updated from {prev_status} to {payload.status}",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    })
+    ret.history_json = history
+
+    db.commit()
+    db.refresh(ret)
+    return _return_to_admin_out(ret)
+
+
+@router.post("/returns/{return_id_or_number}/refund", response_model=AdminReturnDetailOut)
+def process_return_refund(
+    return_id_or_number: str,
+    payload: AdminReturnRefundIn,
+    db: Session = Depends(get_db),
+) -> AdminReturnDetailOut:
+    """Execute refund through payment provider and update return & order states upon confirmation."""
+    ret = (
+        db.query(ReturnRequest)
+        .options(joinedload(ReturnRequest.order).joinedload(Order.payments))
+        .filter(
+            (ReturnRequest.return_number == return_id_or_number)
+            | (ReturnRequest.id == int(return_id_or_number) if return_id_or_number.isdigit() else False)
+        )
+        .first()
+    )
+    if not ret:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Return request not found")
+
+    if ret.refund_status == RefundStatus.COMPLETED.value:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Refund has already been completed for this return")
+
+    if ret.status not in (ReturnStatus.APPROVED.value, ReturnStatus.ITEMS_RECEIVED.value):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot refund return in status '{ret.status}'. Must be APPROVED or ITEMS_RECEIVED.",
+        )
+
+    refund_amt = payload.amount or ret.refund_amount
+    if refund_amt <= 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Refund amount must be greater than zero")
+
+    order = ret.order
+    successful_payment = next((p for p in order.payments if p.status in ("SUCCESS", "PAID")), None)
+    provider_name = successful_payment.provider if successful_payment else "mock"
+    provider = get_payment_provider(provider_name)
+
+    dummy_payment = successful_payment or Payment(
+        order_id=order.id,
+        provider=provider_name,
+        amount=refund_amt,
+        amount_paise=refund_amt * 100,
+        status="SUCCESS",
+    )
+    res = provider.refund_payment(dummy_payment, refund_amt, payload.note or ret.reason)
+    if not res.get("success"):
+        ret.refund_status = RefundStatus.FAILED.value
+        db.commit()
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Payment provider rejected the refund")
+
+    # Record confirmed refund payment record
+    refund_payment = Payment(
+        order_id=order.id,
+        provider=provider_name,
+        provider_payment_id=res.get("refund_id"),
+        amount=-refund_amt,
+        amount_paise=-refund_amt * 100,
+        currency="INR",
+        status=PaymentRecordStatus.REFUNDED.value,
+        payment_method_detail=f"Refund: {res.get('refund_id')}",
+    )
+    db.add(refund_payment)
+
+    ret.refund_amount = refund_amt
+    ret.refund_amount_paise = refund_amt * 100
+    ret.refund_status = RefundStatus.COMPLETED.value
+    ret.status = ReturnStatus.REFUNDED.value
+    ret.updated_at = datetime.now(timezone.utc)
+
+    history = list(ret.history_json or [])
+    history.append({
+        "status": ReturnStatus.REFUNDED.value,
+        "actor": "admin",
+        "note": f"Refund of ₹{refund_amt} completed successfully (Ref: {res.get('refund_id')}). {payload.note or ''}".strip(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    })
+    ret.history_json = history
+
+    total_refunded = (
+        db.query(func.coalesce(func.sum(ReturnRequest.refund_amount), 0))
+        .filter(
+            ReturnRequest.order_id == order.id,
+            ReturnRequest.refund_status == RefundStatus.COMPLETED.value,
+        )
+        .scalar()
+        or 0
+    )
+
+    if total_refunded >= order.total_amount:
+        order.payment_status = PaymentStatus.REFUNDED.value
+        order.status = OrderStatus.REFUNDED.value
+        db.add(
+            OrderStatusHistory(
+                order_id=order.id,
+                status=OrderStatus.REFUNDED.value,
+                note=f"Order fully refunded via return {ret.return_number}",
+                timestamp=datetime.now(timezone.utc),
+            )
+        )
+
+    db.commit()
+    db.refresh(ret)
+    return _return_to_admin_out(ret)
 
 
 # -----------------------------------------------------------------------------
@@ -1600,7 +2724,7 @@ def create_admin_homepage_section(
     admin_user: User = Depends(get_current_admin),
 ) -> AdminHomepageSectionOut:
     """Create a new controlled homepage section."""
-    allowed_types = {"category_grid", "product_collection", "promo_banner", "review_section", "image_text"}
+    allowed_types = {"category_grid", "product_collection", "promo_banner", "review_section", "image_text", "occasion_grid"}
     if payload.section_type not in allowed_types:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -1656,7 +2780,7 @@ def update_admin_homepage_section(
     if not section:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Section not found")
 
-    allowed_types = {"category_grid", "product_collection", "promo_banner", "review_section", "image_text"}
+    allowed_types = {"category_grid", "product_collection", "promo_banner", "review_section", "image_text", "occasion_grid"}
     if payload.section_type is not None:
         if payload.section_type not in allowed_types:
             raise HTTPException(
@@ -1718,5 +2842,251 @@ def delete_admin_homepage_section(
     return {"status": "ok", "message": "Section deleted successfully", "id": section_id}
 
 
+@router.post("/customers/send-welcome")
+def admin_send_welcome_email(
+    payload: AdminSendWelcomeRequest,
+    background_tasks: BackgroundTasks,
+    admin_user: User = Depends(get_current_admin),
+) -> dict[str, str]:
+    """Admin endpoint to dispatch a branded welcome email to any customer.
+
+    Supports an optional custom note/message from the founder.
+    """
+    background_tasks.add_task(
+        dispatch_welcome_background,
+        to_email=payload.email,
+        customer_name=payload.name,
+        custom_message=payload.custom_message,
+    )
+    return {
+        "status": "queued",
+        "message": f"Welcome email queued for {payload.email}",
+        "recipient": payload.email,
+    }
 
 
+# ============================================================================
+# Admin Occasion Management Endpoints
+# ============================================================================
+
+def _build_admin_occasion_out(occasion: Occasion, db: Session) -> AdminOccasionOut:
+    product_ids = [
+        po.product_id
+        for po in db.query(ProductOccasion)
+        .filter(ProductOccasion.occasion_id == occasion.id)
+        .order_by(ProductOccasion.display_order.asc(), ProductOccasion.product_id.asc())
+        .all()
+    ]
+    return AdminOccasionOut(
+        id=occasion.id,
+        name=occasion.name,
+        icon=occasion.icon,
+        image_key=occasion.image_key,
+        image_url=occasion.image_url,
+        description=occasion.description,
+        display_order=occasion.display_order,
+        is_enabled=occasion.is_enabled,
+        is_evergreen=occasion.is_evergreen,
+        starts_at=occasion.starts_at,
+        ends_at=occasion.ends_at,
+        product_count=len(product_ids),
+        product_ids=product_ids,
+        created_at=occasion.created_at,
+        updated_at=occasion.updated_at,
+    )
+
+
+@router.get("/occasions", response_model=list[AdminOccasionOut])
+def list_admin_occasions(
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> list[AdminOccasionOut]:
+    """List all curated occasions with product associations and display order."""
+    occasions = db.query(Occasion).order_by(Occasion.display_order.asc(), Occasion.id.asc()).all()
+    return [_build_admin_occasion_out(occ, db) for occ in occasions]
+
+
+@router.post("/occasions", response_model=AdminOccasionOut, status_code=status.HTTP_201_CREATED)
+def create_admin_occasion(
+    payload: AdminOccasionIn,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> AdminOccasionOut:
+    """Create a new curated occasion with optional product associations."""
+    slug = re.sub(r"[^a-z0-9_-]", "", payload.id.lower().strip())
+    if not slug:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Occasion ID must be a valid alphanumeric slug",
+        )
+
+    existing = db.query(Occasion).filter(Occasion.id == slug).first()
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Occasion with id '{slug}' already exists",
+        )
+
+    # Distinct artwork validation
+    target_key = (payload.image_key or "").strip()
+    if target_key:
+        duplicate = db.query(Occasion).filter(Occasion.image_key == target_key).first()
+        if duplicate:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Image key '{target_key}' is already assigned to occasion '{duplicate.id}'. Please provide distinct artwork for each occasion.",
+            )
+
+    target_url = (payload.image_url or "").strip()
+    if target_url:
+        duplicate_url = db.query(Occasion).filter(Occasion._legacy_image_url == target_url).first()
+        if duplicate_url:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Image URL '{target_url}' is already assigned to occasion '{duplicate_url.id}'. Please provide distinct artwork for each occasion.",
+            )
+
+    occasion = Occasion(
+        id=slug,
+        name=payload.name,
+        icon=payload.icon,
+        image_key=payload.image_key,
+        _legacy_image_url=payload.image_url,
+        description=payload.description,
+        display_order=payload.display_order,
+        is_enabled=payload.is_enabled,
+        starts_at=payload.starts_at,
+        ends_at=payload.ends_at,
+    )
+    db.add(occasion)
+    db.flush()
+
+    if payload.product_ids:
+        existing_pids = {p[0] for p in db.query(Product.id).filter(Product.id.in_(payload.product_ids)).all()}
+        for order_idx, pid in enumerate(payload.product_ids):
+            if pid in existing_pids:
+                db.add(ProductOccasion(product_id=pid, occasion_id=slug, display_order=order_idx))
+
+    db.commit()
+    db.refresh(occasion)
+    return _build_admin_occasion_out(occasion, db)
+
+
+@router.get("/occasions/{occasion_id}", response_model=AdminOccasionOut)
+def get_admin_occasion(
+    occasion_id: str,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> AdminOccasionOut:
+    """Get details of a single curated occasion."""
+    occasion = db.query(Occasion).filter(Occasion.id == occasion_id).first()
+    if not occasion:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Occasion not found")
+    return _build_admin_occasion_out(occasion, db)
+
+
+@router.put("/occasions/{occasion_id}", response_model=AdminOccasionOut)
+@router.patch("/occasions/{occasion_id}", response_model=AdminOccasionOut)
+def update_admin_occasion(
+    occasion_id: str,
+    payload: AdminOccasionUpdateIn,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> AdminOccasionOut:
+    """Update occasion metadata, distinct image, active dates, or product associations."""
+    occasion = db.query(Occasion).filter(Occasion.id == occasion_id).first()
+    if not occasion:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Occasion not found")
+
+    if occasion.is_evergreen:
+        if payload.is_enabled is not None and not payload.is_enabled:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Evergreen occasions cannot be disabled. They remain active year-round.",
+            )
+        if ("starts_at" in payload.model_fields_set and payload.starts_at is not None) or (
+            "ends_at" in payload.model_fields_set and payload.ends_at is not None
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Evergreen occasions cannot have seasonal schedule dates. They remain active year-round.",
+            )
+
+    if payload.image_key is not None and payload.image_key != occasion.image_key:
+        target_key = payload.image_key.strip()
+        if target_key:
+            duplicate = (
+                db.query(Occasion)
+                .filter(Occasion.image_key == target_key, Occasion.id != occasion_id)
+                .first()
+            )
+            if duplicate:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Image key '{target_key}' is already assigned to occasion '{duplicate.id}'. Please provide distinct artwork for each occasion.",
+                )
+        occasion.image_key = payload.image_key
+
+    if payload.image_url is not None and payload.image_url != occasion._legacy_image_url:
+        target_url = payload.image_url.strip()
+        if target_url:
+            duplicate_url = (
+                db.query(Occasion)
+                .filter(Occasion._legacy_image_url == target_url, Occasion.id != occasion_id)
+                .first()
+            )
+            if duplicate_url:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Image URL '{target_url}' is already assigned to occasion '{duplicate_url.id}'. Please provide distinct artwork for each occasion.",
+                )
+        occasion._legacy_image_url = payload.image_url
+
+    if payload.name is not None:
+        occasion.name = payload.name
+    if payload.icon is not None:
+        occasion.icon = payload.icon
+    if payload.description is not None:
+        occasion.description = payload.description
+    if payload.display_order is not None:
+        occasion.display_order = payload.display_order
+    if payload.is_enabled is not None:
+        occasion.is_enabled = payload.is_enabled
+    if "starts_at" in payload.model_fields_set:
+        occasion.starts_at = payload.starts_at
+    if "ends_at" in payload.model_fields_set:
+        occasion.ends_at = payload.ends_at
+
+    if payload.product_ids is not None:
+        db.query(ProductOccasion).filter(ProductOccasion.occasion_id == occasion_id).delete(synchronize_session=False)
+        existing_pids = {p[0] for p in db.query(Product.id).filter(Product.id.in_(payload.product_ids)).all()}
+        for order_idx, pid in enumerate(payload.product_ids):
+            if pid in existing_pids:
+                db.add(ProductOccasion(product_id=pid, occasion_id=occasion_id, display_order=order_idx))
+
+    occasion.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(occasion)
+    return _build_admin_occasion_out(occasion, db)
+
+
+@router.delete("/occasions/{occasion_id}")
+def delete_admin_occasion(
+    occasion_id: str,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> dict[str, str]:
+    """Delete an occasion and its associations."""
+    occasion = db.query(Occasion).filter(Occasion.id == occasion_id).first()
+    if not occasion:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Occasion not found")
+
+    if occasion.is_evergreen:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Evergreen occasions cannot be deleted.",
+        )
+
+    db.delete(occasion)
+    db.commit()
+    return {"status": "ok", "message": f"Occasion '{occasion_id}' deleted successfully"}

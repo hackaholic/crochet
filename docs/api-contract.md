@@ -58,6 +58,14 @@ Returns the published catalogue. Supports optional `category`, `occasion`, `cust
 
 Returns the complete product, including gallery images, material details, dimensions, processing time, care instructions, configurable options, and related-product slugs.
 
+#### Product options and color selection
+
+- The storefront must not display generic or hardcoded color swatches.
+- Product option controls may be shown only when the product response includes the actual supported options/variants for that product; each option must map to a sellable variant and be available for purchase.
+- Color selection remains off until Sulocraft can fulfill color-specific variants. When enabled, Gemini should expose the real color options and variant availability from the catalogue API, and Codex will render those values using the reusable product-option template.
+- Do not infer customer-selectable colors from image colors, product tags, or `customizable: true`.
+- Cart lines must render the selected variant/personalization returned by the API. Never invent default details such as a color or gift-wrap choice.
+
 ### `GET /api/v1/categories`
 
 Returns collection metadata used by browse and navigation UI.
@@ -151,4 +159,3 @@ Cloudflare
 ### 5. Cloudflare CDN Caching Boundaries
 - **Dynamic Endpoints**: All customer-specific, authenticated, and transactional endpoints (`/api/v1/auth/*`, `/api/v1/cart/*`, `/api/v1/orders/*`, `/api/v1/addresses/*`, `/api/v1/account/*`, `/api/v1/admin/*`, `/api/v1/payments/*`) automatically return `Cache-Control: no-store, no-cache, must-revalidate, private` to prevent caching by Cloudflare Edge.
 - **Static Assets & Catalogue**: Public GET requests (`/api/v1/products`, `/api/v1/categories`) can be cached at the edge.
-

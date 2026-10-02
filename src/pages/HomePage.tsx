@@ -19,7 +19,7 @@ interface HomePageProps {
 }
 
 const processSteps = [
-  { icon: '🧶', step: 'Yarn', desc: 'Premium quality cotton and wool yarns in over 50 colours' },
+  { icon: '🧶', step: 'Yarn', desc: 'Yarns are chosen to suit each handmade design' },
   { icon: '✏️', step: 'Design', desc: 'Each pattern is sketched with intention and artistry' },
   { icon: '🪡', step: 'Hand Crocheting', desc: 'Stitched stitch by stitch by skilled artisans' },
   { icon: '✨', step: 'Finishing', desc: 'Every piece is inspected, trimmed and perfected' },
@@ -246,7 +246,7 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-14">
             {[
               { n: '01', icon: '💡', title: 'Share Your Idea', desc: 'Send us a photo, sketch or description of what you have in mind' },
-              { n: '02', icon: '🪡', title: 'We Design It', desc: 'Our artisans craft a one-of-a-kind piece just for you, colour by colour' },
+              { n: '02', icon: '🪡', title: 'We Design It', desc: 'Our artisans plan each detail before bringing your idea to life' },
               { n: '03', icon: '📦', title: 'Handmade & Delivered', desc: 'Beautifully packaged and delivered to your doorstep with love' },
             ].map(({ n, icon, title, desc }) => (
               <div key={n} className="text-left bg-white/5 rounded-2xl p-6 border border-white/10 hover:border-[#F2C4CE]/30 transition-colors">
@@ -428,11 +428,10 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
                 Personalize Your<br />Crochet Gift
               </h2>
               <p className="text-[#8B6B4A] mb-8 leading-relaxed">
-                Make every piece uniquely theirs. Choose colors, add names, pick flower combinations — because the most meaningful gifts carry a little piece of you.
+                Share the occasion and the details that matter to you. We will confirm what is possible for each design before work begins.
               </p>
               <div className="grid grid-cols-2 gap-3 mb-8">
                 {[
-                  { icon: '🎨', label: 'Select Color', desc: '50+ yarn colors available' },
                   { icon: '✍️', label: 'Add Name', desc: 'Embroidered or attached tag' },
                   { icon: '🌸', label: 'Choose Flowers', desc: 'Mix and match varieties' },
                   { icon: '💝', label: 'Gift Wrapping', desc: 'Premium branded packaging' },
@@ -459,14 +458,6 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
                   alt="Customizable crochet"
                   className="w-full h-full object-cover"
                 />
-              </div>
-              <div className="absolute -bottom-4 -left-4 bg-white rounded-2xl p-5 shadow-xl border border-[#EDE4D0]">
-                <p className="text-xs text-[#8B6B4A] mb-2">Color Palette</p>
-                <div className="flex gap-2">
-                  {['#F2C4CE','#C4622D','#8FAF8C','#C5B9D6','#EDE4D0','#2C1810'].map(color => (
-                    <div key={color} className="w-7 h-7 rounded-full border-2 border-white shadow-sm cursor-pointer hover:scale-110 transition-transform" style={{ background: color }} />
-                  ))}
-                </div>
               </div>
             </div>
           </div>

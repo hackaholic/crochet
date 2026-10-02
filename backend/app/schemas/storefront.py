@@ -126,6 +126,7 @@ class ProductCollectionSectionOut(BaseHomepageSectionOut):
     type: Literal["product_collection"] = "product_collection"
     title: str
     eyebrow: str | None = None
+    description: str | None = None
     collection_slug: str = Field(..., serialization_alias="collectionSlug", alias="collectionSlug")
     products: list[ProductListItem] = Field(default_factory=list)
 
@@ -177,10 +178,39 @@ class ImageTextSectionOut(BaseHomepageSectionOut):
         return build_image_url(v) if v else v
 
 
+class OccasionSummary(BaseModel):
+    """Occasion item representation for storefront navigation."""
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    id: str
+    name: str
+    icon: str | None = None
+    image_url: str | None = Field(default=None, serialization_alias="imageUrl", alias="imageUrl")
+    display_order: int = Field(default=0, serialization_alias="displayOrder", alias="displayOrder")
+    description: str | None = None
+
+    @field_validator("image_url", mode="after")
+    @classmethod
+    def resolve_image_url(cls, v: str | None) -> str | None:
+        return build_image_url(v) if v else v
+
+
+class OccasionGridSectionOut(BaseHomepageSectionOut):
+    """Controlled occasion card grid section template."""
+
+    type: Literal["occasion_grid"] = "occasion_grid"
+    title: str
+    eyebrow: str | None = None
+    description: str | None = None
+    occasions: list[OccasionSummary] = Field(default_factory=list)
+
+
 HomepageSectionOut = Annotated[
     Union[
         CategoryGridSectionOut,
         ProductCollectionSectionOut,
+        OccasionGridSectionOut,
         PromoBannerSectionOut,
         ReviewSectionOut,
         ImageTextSectionOut,

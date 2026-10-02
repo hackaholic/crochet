@@ -23,6 +23,17 @@ function setSchema(id: string, value?: object) {
   document.head.appendChild(script);
 }
 
+function setLink(rel: string, attributes: Record<string, string>) {
+  const selector = `link[rel="${rel}"]${attributes.hreflang ? `[hreflang="${attributes.hreflang}"]` : ''}`;
+  let element = document.head.querySelector<HTMLLinkElement>(selector);
+  if (!element) {
+    element = document.createElement('link');
+    element.rel = rel;
+    document.head.appendChild(element);
+  }
+  Object.entries(attributes).forEach(([name, value]) => element!.setAttribute(name, value));
+}
+
 function applyMetadata(metadata: SeoMetadata, product?: Product | null) {
   const canonicalUrl = new URL(metadata.canonicalPath, window.location.origin).toString();
   document.title = metadata.title;
@@ -42,25 +53,116 @@ function applyMetadata(metadata: SeoMetadata, product?: Product | null) {
   } else {
     removeMeta('meta[property="og:image"]'); removeMeta('meta[property="og:image:alt"]'); removeMeta('meta[name="twitter:image"]');
   }
-  let canonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
-  if (!canonical) { canonical = document.createElement('link'); canonical.rel = 'canonical'; document.head.appendChild(canonical); }
-  canonical.href = canonicalUrl;
+
+  setLink('canonical', { href: canonicalUrl });
+  setLink('alternate', { hreflang: 'en-IN', href: canonicalUrl });
+  setLink('alternate', { hreflang: 'x-default', href: canonicalUrl });
 
   setSchema('sulocraft-breadcrumb-schema', metadata.breadcrumbs.length ? {
     '@context': 'https://schema.org', '@type': 'BreadcrumbList',
     itemListElement: metadata.breadcrumbs.map((item, index) => ({ '@type': 'ListItem', position: index + 1, name: item.name, item: new URL(item.path, window.location.origin).toString() })),
   } : undefined);
+
+  const freeThreshold = metadata.shippingInfo?.freeShippingThreshold ?? 999;
+  const standardFee = metadata.shippingInfo?.standardFee ?? 100;
+  const returnDays = metadata.returnPolicy?.returnWindowDays ?? 7;
+
   setSchema('sulocraft-product-schema', product ? {
-    '@context': 'https://schema.org', '@type': 'Product', name: product.name,
-    description: product.description, image: product.images ?? [product.image], sku: String(product.id),
-    category: product.category, brand: { '@type': 'Brand', name: 'Sulocraft' },
-    aggregateRating: product.reviews > 0 ? { '@type': 'AggregateRating', ratingValue: product.rating, reviewCount: product.reviews } : undefined,
-    offers: { '@type': 'Offer', priceCurrency: 'INR', price: product.price, availability: product.inStock === false ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock', url: canonicalUrl },
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.description,
+    image: product.images ?? [product.image],
+    sku: String(product.id),
+    category: product.category,
+    brand: { '@type': 'Brand', name: 'Sulocraft' },
+    itemCondition: 'https://schema.org/NewCondition',
+    aggregateRating: product.reviews > 0 ? {
+      '@type': 'AggregateRating',
+      ratingValue: product.rating,
+      reviewCount: product.reviews,
+    } : undefined,
+    offers: {
+      '@type': 'Offer',
+      priceCurrency: 'INR',
+      price: product.price,
+      priceValidUntil: '2027-12-31',
+      itemCondition: 'https://schema.org/NewCondition',
+      availability: product.inStock === false ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+      url: canonicalUrl,
+      hasMerchantReturnPolicy: {
+        '@type': 'MerchantReturnPolicy',
+        applicableCountry: 'IN',
+        returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+        merchantReturnDays: returnDays,
+        returnMethod: 'https://schema.org/ReturnByMail',
+        returnFees: 'https://schema.org/FreeReturn',
+      },
+      shippingDetails: {
+        '@type': 'OfferShippingDetails',
+        shippingRate: {
+          '@type': 'MonetaryAmount',
+          value: product.price >= freeThreshold ? 0 : standardFee,
+          currency: 'INR',
+        },
+        shippingDestination: {
+          '@type': 'DefinedRegion',
+          addressCountry: 'IN',
+        },
+        deliveryTime: {
+          '@type': 'ShippingDeliveryTime',
+          handlingTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 2, unitCode: 'd' },
+          transitTime: { '@type': 'QuantitativeValue', minValue: 3, maxValue: 5, unitCode: 'd' },
+        },
+      },
+    },
   } : undefined);
-  setSchema('sulocraft-site-schema', metadata.pageType === 'website' ? {
-    '@context': 'https://schema.org', '@graph': [
-      { '@type': 'Organization', '@id': `${window.location.origin}/#organization`, name: 'Sulocraft', url: window.location.origin },
-      { '@type': 'WebSite', '@id': `${window.location.origin}/#website`, name: 'Sulocraft', url: window.location.origin, publisher: { '@id': `${window.location.origin}/#organization` } },
+
+  setSchema('sulocraft-faq-schema', metadata.faqs?.length ? {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: metadata.faqs.map(faq => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer,
+      },
+    })),
+  } : undefined);
+
+  setSchema('sulocraft-site-schema', metadata.pageType === 'website' && !metadata.robots.includes('noindex') ? {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Organization',
+        '@id': `${window.location.origin}/#organization`,
+        name: 'Sulocraft',
+        url: window.location.origin,
+        logo: 'https://images.sulocraft.com/brand/logo.png',
+        founder: {
+          '@type': 'Person',
+          name: 'Anupama Sharma',
+        },
+        foundingDate: '2026',
+        sameAs: [
+          'https://instagram.com/sulocraft',
+          'https://facebook.com/sulocraft',
+          'https://pinterest.com/sulocraft',
+        ],
+      },
+      {
+        '@type': 'WebSite',
+        '@id': `${window.location.origin}/#website`,
+        name: 'Sulocraft',
+        url: window.location.origin,
+        publisher: { '@id': `${window.location.origin}/#organization` },
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: `${window.location.origin}/shop?q={search_term_string}`,
+          'query-input': 'required name=search_term_string',
+        },
+      },
     ],
   } : undefined);
 }
@@ -69,8 +171,8 @@ export default function SeoManager({ page, pathname, product }: { page: AppPage;
   useEffect(() => {
     const controller = new AbortController();
     const fallback: SeoMetadata = {
-      title: product?.name ? `${product.name} | Sulocraft` : document.title,
-      description: product?.description ?? document.querySelector<HTMLMetaElement>('meta[name="description"]')?.content ?? '',
+      title: page === 'admin' ? 'Sulocraft Admin | Store management' : product?.name ? `${product.name} | Sulocraft` : document.title,
+      description: page === 'admin' ? 'Private Sulocraft store administration.' : product?.description ?? document.querySelector<HTMLMetaElement>('meta[name="description"]')?.content ?? '',
       canonicalPath: pathname,
       robots: PRIVATE_PAGES.has(page) ? 'noindex,nofollow' : 'index,follow',
       imageUrl: product?.images?.[0] ?? product?.image,

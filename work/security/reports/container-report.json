@@ -1,0 +1,252 @@
+{
+  "SchemaVersion": 2,
+  "Trivy": {
+    "Version": "0.75.0"
+  },
+  "ReportID": "01a0fe07-50b9-7740-a851-4fa3b75ee564",
+  "CreatedAt": "2026-10-02T19:11:27.417477291Z",
+  "ArtifactID": "sha256:23f6920b3513a193b9333d80964c0e328fe841ae1beb28d484f026e400261b32",
+  "ArtifactName": "/src",
+  "ArtifactType": "repository",
+  "Metadata": {
+    "RepoURL": "git@github.com:hackaholic/crochet.git",
+    "Branch": "dev",
+    "Commit": "664aa718379ff7f63b5407cf41b149963b13272a",
+    "CommitMsg": "Record category image deployment",
+    "Author": "Anu \u003cjuniourkawasakicool@gmail.com\u003e",
+    "Committer": "Anu \u003cjuniourkawasakicool@gmail.com\u003e"
+  },
+  "Results": [
+    {
+      "Target": "backend/.venv/lib/python3.12/site-packages/boto3/data/cloudformation/2010-05-15/resources-1.json",
+      "Class": "config",
+      "Type": "cloudformation",
+      "MisconfSummary": {
+        "Successes": 7,
+        "Failures": 0
+      }
+    },
+    {
+      "Target": "backend/.venv/lib/python3.12/site-packages/boto3/data/cloudwatch/2010-08-01/resources-1.json",
+      "Class": "config",
+      "Type": "cloudformation",
+      "MisconfSummary": {
+        "Successes": 7,
+        "Failures": 0
+      }
+    },
+    {
+      "Target": "backend/.venv/lib/python3.12/site-packages/boto3/data/dynamodb/2012-08-10/resources-1.json",
+      "Class": "config",
+      "Type": "cloudformation",
+      "MisconfSummary": {
+        "Successes": 7,
+        "Failures": 0
+      }
+    },
+    {
+      "Target": "backend/.venv/lib/python3.12/site-packages/boto3/data/ec2/2014-10-01/resources-1.json",
+      "Class": "config",
+      "Type": "cloudformation",
+      "MisconfSummary": {
+        "Successes": 7,
+        "Failures": 0
+      }
+    },
+    {
+      "Target": "backend/.venv/lib/python3.12/site-packages/boto3/data/ec2/2015-03-01/resources-1.json",
+      "Class": "config",
+      "Type": "cloudformation",
+      "MisconfSummary": {
+        "Successes": 7,
+        "Failures": 0
+      }
+    },
+    {
+      "Target": "backend/.venv/lib/python3.12/site-packages/boto3/data/ec2/2015-04-15/resources-1.json",
+      "Class": "config",
+      "Type": "cloudformation",
+      "MisconfSummary": {
+        "Successes": 7,
+        "Failures": 0
+      }
+    },
+    {
+      "Target": "backend/.venv/lib/python3.12/site-packages/boto3/data/ec2/2015-10-01/resources-1.json",
+      "Class": "config",
+      "Type": "cloudformation",
+      "MisconfSummary": {
+        "Successes": 7,
+        "Failures": 0
+      }
+    },
+    {
+      "Target": "backend/.venv/lib/python3.12/site-packages/boto3/data/ec2/2016-04-01/resources-1.json",
+      "Class": "config",
+      "Type": "cloudformation",
+      "MisconfSummary": {
+        "Successes": 7,
+        "Failures": 0
+      }
+    },
+    {
+      "Target": "backend/.venv/lib/python3.12/site-packages/boto3/data/ec2/2016-09-15/resources-1.json",
+      "Class": "config",
+      "Type": "cloudformation",
+      "MisconfSummary": {
+        "Successes": 7,
+        "Failures": 0
+      }
+    },
+    {
+      "Target": "backend/.venv/lib/python3.12/site-packages/boto3/data/ec2/2016-11-15/resources-1.json",
+      "Class": "config",
+      "Type": "cloudformation",
+      "MisconfSummary": {
+        "Successes": 7,
+        "Failures": 0
+      }
+    },
+    {
+      "Target": "backend/.venv/lib/python3.12/site-packages/boto3/data/glacier/2012-06-01/resources-1.json",
+      "Class": "config",
+      "Type": "cloudformation",
+      "MisconfSummary": {
+        "Successes": 7,
+        "Failures": 0
+      }
+    },
+    {
+      "Target": "backend/.venv/lib/python3.12/site-packages/boto3/data/iam/2010-05-08/resources-1.json",
+      "Class": "config",
+      "Type": "cloudformation",
+      "MisconfSummary": {
+        "Successes": 7,
+        "Failures": 0
+      }
+    },
+    {
+      "Target": "backend/.venv/lib/python3.12/site-packages/boto3/data/s3/2006-03-01/resources-1.json",
+      "Class": "config",
+      "Type": "cloudformation",
+      "MisconfSummary": {
+        "Successes": 7,
+        "Failures": 0
+      }
+    },
+    {
+      "Target": "backend/.venv/lib/python3.12/site-packages/boto3/data/sns/2010-03-31/resources-1.json",
+      "Class": "config",
+      "Type": "cloudformation",
+      "MisconfSummary": {
+        "Successes": 7,
+        "Failures": 0
+      }
+    },
+    {
+      "Target": "backend/.venv/lib/python3.12/site-packages/boto3/data/sqs/2012-11-05/resources-1.json",
+      "Class": "config",
+      "Type": "cloudformation",
+      "MisconfSummary": {
+        "Successes": 7,
+        "Failures": 0
+      }
+    },
+    {
+      "Target": "backend/Dockerfile",
+      "Class": "config",
+      "Type": "dockerfile",
+      "MisconfSummary": {
+        "Successes": 19,
+        "Failures": 1
+      },
+      "Misconfigurations": [
+        {
+          "Type": "Dockerfile Security Check",
+          "ID": "DS-0002",
+          "Title": "Image user should not be 'root'",
+          "Description": "Running containers with 'root' user can lead to a container escape situation. It is a best practice to run containers as non-root users, which can be done by adding a 'USER' statement to the Dockerfile.",
+          "Message": "Specify at least 1 USER command in Dockerfile with non-root user as argument",
+          "Namespace": "builtin.dockerfile.DS002",
+          "Query": "data.builtin.dockerfile.DS002.deny",
+          "Resolution": "Add 'USER \u003cnon root user name\u003e' line to the Dockerfile",
+          "Severity": "HIGH",
+          "PrimaryURL": "https://avd.aquasec.com/misconfig/ds-0002",
+          "References": [
+            "https://docs.docker.com/develop/develop-images/dockerfile_best-practices/",
+            "https://avd.aquasec.com/misconfig/ds-0002"
+          ],
+          "Status": "FAIL",
+          "CauseMetadata": {
+            "Provider": "Dockerfile",
+            "Service": "general"
+          }
+        }
+      ]
+    },
+    {
+      "Target": "docker/api.Dockerfile",
+      "Class": "config",
+      "Type": "dockerfile",
+      "MisconfSummary": {
+        "Successes": 19,
+        "Failures": 1
+      },
+      "Misconfigurations": [
+        {
+          "Type": "Dockerfile Security Check",
+          "ID": "DS-0002",
+          "Title": "Image user should not be 'root'",
+          "Description": "Running containers with 'root' user can lead to a container escape situation. It is a best practice to run containers as non-root users, which can be done by adding a 'USER' statement to the Dockerfile.",
+          "Message": "Specify at least 1 USER command in Dockerfile with non-root user as argument",
+          "Namespace": "builtin.dockerfile.DS002",
+          "Query": "data.builtin.dockerfile.DS002.deny",
+          "Resolution": "Add 'USER \u003cnon root user name\u003e' line to the Dockerfile",
+          "Severity": "HIGH",
+          "PrimaryURL": "https://avd.aquasec.com/misconfig/ds-0002",
+          "References": [
+            "https://docs.docker.com/develop/develop-images/dockerfile_best-practices/",
+            "https://avd.aquasec.com/misconfig/ds-0002"
+          ],
+          "Status": "FAIL",
+          "CauseMetadata": {
+            "Provider": "Dockerfile",
+            "Service": "general"
+          }
+        }
+      ]
+    },
+    {
+      "Target": "docker/frontend.Dockerfile",
+      "Class": "config",
+      "Type": "dockerfile",
+      "MisconfSummary": {
+        "Successes": 19,
+        "Failures": 1
+      },
+      "Misconfigurations": [
+        {
+          "Type": "Dockerfile Security Check",
+          "ID": "DS-0002",
+          "Title": "Image user should not be 'root'",
+          "Description": "Running containers with 'root' user can lead to a container escape situation. It is a best practice to run containers as non-root users, which can be done by adding a 'USER' statement to the Dockerfile.",
+          "Message": "Specify at least 1 USER command in Dockerfile with non-root user as argument",
+          "Namespace": "builtin.dockerfile.DS002",
+          "Query": "data.builtin.dockerfile.DS002.deny",
+          "Resolution": "Add 'USER \u003cnon root user name\u003e' line to the Dockerfile",
+          "Severity": "HIGH",
+          "PrimaryURL": "https://avd.aquasec.com/misconfig/ds-0002",
+          "References": [
+            "https://docs.docker.com/develop/develop-images/dockerfile_best-practices/",
+            "https://avd.aquasec.com/misconfig/ds-0002"
+          ],
+          "Status": "FAIL",
+          "CauseMetadata": {
+            "Provider": "Dockerfile",
+            "Service": "general"
+          }
+        }
+      ]
+    }
+  ]
+}

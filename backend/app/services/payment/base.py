@@ -32,3 +32,7 @@ class BasePaymentProvider(ABC):
     def verify_webhook(self, payload: bytes, signature: str) -> bool:
         """Verify gateway webhook payload authenticity."""
         pass
+
+    def refund_payment(self, payment: Payment, amount: int, reason: str | None = None) -> dict[str, Any]:
+        """Process refund with the payment provider."""
+        raise NotImplementedError

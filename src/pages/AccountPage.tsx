@@ -6,7 +6,7 @@ import { LoadingState } from '../components/StorefrontState';
 type AddressDraft = { name: string; phone: string; line1: string; city: string; state: string; postalCode: string };
 const emptyAddress: AddressDraft = { name: '', phone: '', line1: '', city: '', state: '', postalCode: '' };
 
-export default function AccountPage({ onSignIn }: { onSignIn: () => void }) {
+export default function AccountPage({ onSignIn, onLogout }: { onSignIn: () => void; onLogout: () => Promise<void> }) {
   const [overview, setOverview] = useState<AccountOverviewOut | null>(null);
   const [addresses, setAddresses] = useState<AddressOut[]>([]);
   const [orders, setOrders] = useState<OrderOut[]>([]);
@@ -17,6 +17,8 @@ export default function AccountPage({ onSignIn }: { onSignIn: () => void }) {
   const [address, setAddress] = useState<AddressDraft>(emptyAddress);
   const [addressMessage, setAddressMessage] = useState('');
   const [savingAddress, setSavingAddress] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [logoutMessage, setLogoutMessage] = useState('');
 
   useEffect(() => {
     Promise.all([accountProfileApi.overview(), accountApi.addresses(), accountApi.orders()])
@@ -59,13 +61,28 @@ export default function AccountPage({ onSignIn }: { onSignIn: () => void }) {
     finally { setSavingAddress(false); }
   };
 
+  const signOut = async () => {
+    setLoggingOut(true);
+    setLogoutMessage('');
+    try { await onLogout(); }
+    catch { setLogoutMessage('We could not sign you out. Please try again.'); setLoggingOut(false); }
+  };
+
   if (state === 'loading') return <div className="min-h-screen bg-[#FAF7F2] pt-28"><LoadingState label="Loading your account…" /></div>;
   if (state === 'signedOut') return null;
   if (state === 'error') return <div className="min-h-screen bg-[#FAF7F2] px-4 pt-36 text-center text-[#8B6B4A]">We could not load your account right now.</div>;
 
   return <main className="min-h-screen bg-[#FAF7F2] pt-28"><div className="mx-auto max-w-5xl px-4 py-10">
     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#C4622D]">Sulocraft account</p>
-    <h1 className="mt-2 text-4xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>Welcome back{overview?.profile.name ? `, ${overview.profile.name}` : ''}</h1>
+    <div className="flex flex-wrap items-center justify-between gap-4">
+      <h1 className="mt-2 text-4xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>Welcome back{overview?.profile.name ? `, ${overview.profile.name}` : ''}</h1>
+      <div className="flex flex-col items-end gap-2">
+        <button type="button" onClick={signOut} disabled={loggingOut} className="rounded-full border border-[#C4622D] px-5 py-2.5 text-sm font-semibold text-[#C4622D] transition-colors hover:bg-[#C4622D] hover:text-white disabled:cursor-wait disabled:opacity-60">
+          {loggingOut ? 'Signing out…' : 'Sign out'}
+        </button>
+        {logoutMessage && <p className="text-sm text-red-700" role="alert">{logoutMessage}</p>}
+      </div>
+    </div>
     <section className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Account overview">
       <Metric label="Orders" value={overview?.totalOrders ?? 0} /><Metric label="Active orders" value={overview?.activeOrders ?? 0} /><Metric label="Saved addresses" value={overview?.savedAddresses ?? 0} /><Metric label="Wishlist items" value={overview?.wishlistItemsCount ?? 0} />
     </section>

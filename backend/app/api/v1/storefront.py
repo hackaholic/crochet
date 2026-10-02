@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.api.v1.catalogue import _to_product_list_item
 from app.db.session import get_db
-from app.models.catalogue import Category, Collection, Product, Review, Tag
+from app.models.catalogue import Category, Collection, Occasion, Product, Review, Tag
 from app.models.storefront import BrandSettings, HomepageCampaign, HomepageSection
 from app.schemas.storefront import (
     BrandSettingsOut,
@@ -15,6 +15,8 @@ from app.schemas.storefront import (
     CategorySummary,
     HomepageCampaignOut,
     ImageTextSectionOut,
+    OccasionGridSectionOut,
+    OccasionSummary,
     ProductCollectionSectionOut,
     PromoBannerSectionOut,
     ReviewSectionOut,
@@ -127,9 +129,54 @@ def _resolve_homepage_section(db: Session, section: HomepageSection):
             enabled=section.is_enabled,
             title=section.title,
             eyebrow=section.eyebrow,
+            description=section.description,
             collection_slug=section.collection_slug or "bestsellers",
             products=items,
         )
+
+    elif sec_type == "occasion_grid":
+        limit = section.item_limit or 50
+        all_occasions = (
+            db.query(Occasion)
+            .order_by(Occasion.display_order.asc(), Occasion.id.asc())
+            .all()
+        )
+        # Seasonal occasions: enabled, currently in season, distinct image
+        seasonal_occasions = [
+            o for o in all_occasions
+            if not o.is_evergreen and o.is_enabled and o.is_in_season() and (o.image_url or o.image_key)
+        ]
+        # Evergreen occasions: core year-round occasions with distinct image
+        evergreen_occasions = [
+            o for o in all_occasions
+            if o.is_evergreen and (o.image_url or o.image_key)
+        ]
+        qualifying_occasions = (seasonal_occasions + evergreen_occasions)[:limit]
+
+        if not qualifying_occasions:
+            return None
+
+        items = [
+            OccasionSummary(
+                id=o.id,
+                name=o.name,
+                icon=o.icon,
+                image_url=o.image_url,
+                display_order=o.display_order,
+                description=o.description,
+            )
+            for o in qualifying_occasions
+        ]
+        return OccasionGridSectionOut(
+            id=section.id,
+            order=section.display_order,
+            enabled=section.is_enabled,
+            title=section.title,
+            eyebrow=section.eyebrow,
+            description=section.description,
+            occasions=items,
+        )
+
 
     elif sec_type == "promo_banner":
         return PromoBannerSectionOut(

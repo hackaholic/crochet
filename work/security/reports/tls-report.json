@@ -1,0 +1,19 @@
+{
+  "host": "dev.sulocraft.com",
+  "port": 443,
+  "scanned_at": "2026-10-02T19:13:43.394566+00:00",
+  "tls_versions": {},
+  "certificate": {
+    "expires_at": "2026-12-30T14:18:22+00:00",
+    "days_until_expiry": 88
+  },
+  "cipher": {},
+  "status": "PASS",
+  "negotiated_protocol": "TLSv1.3",
+  "negotiated_cipher": [
+    "TLS_AES_256_GCM_SHA384",
+    "TLSv1.3",
+    256
+  ],
+  "findings": []
+}

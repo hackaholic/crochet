@@ -16,6 +16,7 @@ const catalogue = vi.hoisted(() => ({
       primaryCategory: { name: 'Bouquets', slug: 'bouquets' },
       categories: [{ name: 'Bouquets', slug: 'bouquets' }],
       collections: [{ name: 'Birthday Gifts', slug: 'birthday-gifts' }],
+      tags: ['birthday'],
       customizable: true,
     },
   ],
@@ -43,6 +44,7 @@ vi.mock('../components/CatalogueProvider', () => ({ useCatalogue: () => catalogu
 
 afterEach(() => {
   cleanup();
+  catalogue.products.splice(1);
   window.history.replaceState({}, '', '/');
 });
 
@@ -71,5 +73,30 @@ describe('ShopPage filters', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Birthday Gifts, 1 products' }));
     expect(screen.getByRole('button', { name: 'Birthday Gifts, 1 products' })).toBeVisible();
     expect(screen.queryByRole('button', { name: /Gifts for Him/ })).not.toBeInTheDocument();
+  });
+
+  it('uses database-provided product tags for homepage occasion links', () => {
+    catalogue.products.push({
+      id: 2,
+      name: 'Crochet Bunny',
+      slug: 'crochet-bunny',
+      price: 499,
+      rating: 5,
+      reviews: 0,
+      image: '/bunny.webp',
+      category: 'Amigurumi',
+      primaryCategory: { name: 'Amigurumi', slug: 'amigurumi' },
+      categories: [{ name: 'Amigurumi', slug: 'amigurumi' }],
+      collections: [],
+      tags: ['birthday', 'valentine'],
+      customizable: false,
+    });
+    window.history.replaceState({}, '', '/shop?occasion=valentine');
+
+    render(<ShopPage wishlist={[]} onAddToCart={vi.fn()} onToggleWishlist={vi.fn()} onProductClick={vi.fn()} />);
+
+    expect(screen.getByText('1 handmade creations')).toBeInTheDocument();
+    expect(screen.getByText('Crochet Bunny')).toBeInTheDocument();
+    expect(screen.queryByText('Rose Bouquet')).not.toBeInTheDocument();
   });
 });

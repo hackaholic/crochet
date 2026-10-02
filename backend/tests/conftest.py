@@ -25,6 +25,7 @@ from app.models import (
     Product,
     ProductImage,
     ProductVariant,
+    ReturnRequest,
     Review,
     User,
     UserIdentity,
@@ -53,6 +54,7 @@ def clean_transactional_data():
         db.query(NotificationLog).delete()
         db.query(Payment).delete()
         db.query(OrderItem).delete()
+        db.query(ReturnRequest).delete()
         db.query(OrderStatusHistory).delete()
         db.query(Order).delete()
         db.query(Address).delete()

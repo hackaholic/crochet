@@ -1,6 +1,6 @@
 """Payment provider factory and registry."""
 
-import os
+from app.core.config import config_value, settings
 from app.services.payment.base import BasePaymentProvider
 from app.services.payment.mock import MockPaymentProvider
 from app.services.payment.razorpay import RazorpayPaymentProvider
@@ -18,14 +18,14 @@ def get_payment_provider(provider_name: str | None = None) -> BasePaymentProvide
     otherwise 'mock'. Mock provider is forbidden when APP_ENV=production (fail-closed).
     """
     if not provider_name:
-        provider_name = os.getenv("PAYMENT_PROVIDER", "").lower()
+        provider_name = (config_value("PAYMENT_PROVIDER", "") or "").lower()
 
     if not provider_name:
-        has_razorpay = bool(os.getenv("RAZORPAY_KEY_ID"))
+        has_razorpay = bool(settings.razorpay_key_id)
         provider_name = "razorpay" if has_razorpay else "mock"
 
     # Fail closed: mock payment is not allowed in production
-    if provider_name == "mock" and os.getenv("APP_ENV", "development") == "production":
+    if provider_name == "mock" and settings.app_env == "production":
         raise RuntimeError(
             "PAYMENT_PROVIDER=mock is not allowed in production (APP_ENV=production). "
             "Set PAYMENT_PROVIDER=razorpay and configure RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET."

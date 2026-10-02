@@ -94,7 +94,7 @@ def test_email_service_send_magic_link_redaction(db_session: Session, mock_email
     assert len(mock_email.sent_emails) >= 1
     sent = mock_email.sent_emails[-1]
     assert sent["to"] == recipient
-    assert sent["from"] == settings.email_from_orders
+    assert sent["from"] == settings.email_from_welcome
     assert raw_token in sent["html"]
     assert raw_token in sent["text"]
 
@@ -304,3 +304,64 @@ def test_resend_production_fail_closed_validation():
         settings.email_provider = orig_provider
         settings.resend_api_key = orig_key
         settings.email_from_orders = orig_sender
+
+
+def test_render_welcome_email():
+    """Verify render_welcome_email generates rich HTML and plain text with and without custom note."""
+    from app.services.notification.templates import render_welcome_email
+
+    # 1. Default greeting
+    html, text = render_welcome_email(customer_name="Pooja", storefront_url="https://sulocraft.com")
+    assert "We're so glad you're here, Pooja!" in html
+    assert "Pooja!" in text
+    assert "SULOCRAFT" in html
+    assert "100% Handcrafted" in html
+    assert "Anupama Sharma" in html
+    assert "https://sulocraft.com/shop" in html
+    assert "welcome@sulocraft.com" in html
+
+    # 2. Custom welcome message from founder
+    custom_msg = "Thank you for joining our launch party! Enjoy 10% off your first order."
+    html_custom, text_custom = render_welcome_email(
+        customer_name="Rohan",
+        custom_message=custom_msg,
+        storefront_url="https://sulocraft.com",
+    )
+    assert "We're so glad you're here, Rohan!" in html_custom
+    assert custom_msg in html_custom
+    assert custom_msg in text_custom
+
+
+def test_send_welcome_email_service(db_session: Session, mock_email: MockEmailProvider):
+    """Verify EmailService.send_welcome_email dispatches from welcome@sulocraft.com and logs to DB."""
+    recipient = "newcustomer@example.com"
+    custom_note = "A special welcome to our handcrafted crochet world."
+
+    success, err = EmailService.send_welcome_email(
+        db=db_session,
+        to_email=recipient,
+        customer_name="Aarohi",
+        custom_message=custom_note,
+    )
+
+    assert success is True
+    assert err is None
+
+    # Check mock email capture
+    assert len(mock_email.sent_emails) >= 1
+    sent = mock_email.sent_emails[-1]
+    assert sent["to"] == recipient
+    assert sent["from"] == settings.email_from_welcome
+    assert "Aarohi" in sent["html"]
+    assert custom_note in sent["html"]
+
+    # Check DB notification log
+    log = (
+        db_session.query(NotificationLog)
+        .filter(NotificationLog.recipient == recipient, NotificationLog.event_type == "WELCOME_EMAIL")
+        .first()
+    )
+    assert log is not None
+    assert log.status in ("SENT", "MOCK")
+    assert log.channel == "EMAIL"
+    assert "welcome" in log.subject.lower()

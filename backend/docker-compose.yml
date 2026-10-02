@@ -9,7 +9,7 @@ services:
     environment:
       APP_ENV: ${APP_ENV:-production}
       PROJECT_NAME: Sulocraft
-      DATABASE_URL: postgresql://${POSTGRES_USER:-sulocraft}:${POSTGRES_PASSWORD:-sulocraft_secure_pw}@postgres:5432/${POSTGRES_DB:-sulocraft}
+      DATABASE_URL_FILE: /run/secrets/database_url
       FRONTEND_URL: ${FRONTEND_URL:-https://sulocraft.com}
       ADDITIONAL_CORS_ORIGINS: ${ADDITIONAL_CORS_ORIGINS:-}
       PUBLIC_API_URL: ${PUBLIC_API_URL:-https://api.sulocraft.com}
@@ -17,33 +17,53 @@ services:
       COOKIE_SECURE: ${COOKIE_SECURE:-true}
       R2_ENDPOINT: ${R2_ENDPOINT:-}
       R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
+      R2_ACCESS_KEY_ID_FILE: ${R2_ACCESS_KEY_ID_FILE:-}
       R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
+      R2_SECRET_ACCESS_KEY_FILE: ${R2_SECRET_ACCESS_KEY_FILE:-}
       R2_PUBLIC_BUCKET: ${R2_PUBLIC_BUCKET:-sulocraft-products}
       R2_PRIVATE_BACKUP_BUCKET: ${R2_PRIVATE_BACKUP_BUCKET:-sulocraft-backups}
       R2_PUBLIC_BASE_URL: ${R2_PUBLIC_BASE_URL:-https://images.sulocraft.com}
       IMAGE_BASE_URL: ${IMAGE_BASE_URL:-https://images.sulocraft.com}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_CLIENT_SECRET_FILE: ${GOOGLE_CLIENT_SECRET_FILE:-}
       FACEBOOK_APP_ID: ${FACEBOOK_APP_ID:-}
       FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET:-}
+      FACEBOOK_APP_SECRET_FILE: ${FACEBOOK_APP_SECRET_FILE:-}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-anupama@sulocraft.com}
       ADMIN_NAME: ${ADMIN_NAME:-Anupama Sharma}
       SMS_PROVIDER: ${SMS_PROVIDER:-mock}
       FAST2SMS_API_KEY: ${FAST2SMS_API_KEY:-}
+      FAST2SMS_API_KEY_FILE: ${FAST2SMS_API_KEY_FILE:-}
       FAST2SMS_ROUTE: ${FAST2SMS_ROUTE:-dlt}
       TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_ACCOUNT_SID_FILE: ${TWILIO_ACCOUNT_SID_FILE:-}
       TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_AUTH_TOKEN_FILE: ${TWILIO_AUTH_TOKEN_FILE:-}
       TWILIO_FROM_PHONE: ${TWILIO_FROM_PHONE:-}
       EMAIL_PROVIDER: ${EMAIL_PROVIDER:-mock}
+      EMAIL_FROM_WELCOME: ${EMAIL_FROM_WELCOME:-Sulocraft <welcome@sulocraft.com>}
       EMAIL_FROM_ORDERS: ${EMAIL_FROM_ORDERS:-Sulocraft <orders@sulocraft.com>}
       EMAIL_FROM_SUPPORT: ${EMAIL_FROM_SUPPORT:-Sulocraft Support <support@sulocraft.com>}
       EMAIL_FROM_HELLO: ${EMAIL_FROM_HELLO:-Sulocraft <hello@sulocraft.com>}
       EMAIL_FROM: ${EMAIL_FROM:-Sulocraft <orders@sulocraft.com>}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_USER_FILE: ${SMTP_USER_FILE:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_PASSWORD_FILE: ${SMTP_PASSWORD_FILE:-}
+      SMTP_TLS: ${SMTP_TLS:-true}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_API_KEY_FILE: ${RESEND_API_KEY_FILE:-}
       PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-mock}
       RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
       RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
+      RAZORPAY_KEY_SECRET_FILE: ${RAZORPAY_KEY_SECRET_FILE:-}
       RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-}
+      RAZORPAY_WEBHOOK_SECRET_FILE: ${RAZORPAY_WEBHOOK_SECRET_FILE:-}
+    secrets:
+      - database_url
     depends_on:
       postgres:
         condition: service_healthy
@@ -58,13 +78,17 @@ services:
     image: postgres:17-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-sulocraft}
-      POSTGRES_USER: ${POSTGRES_USER:-sulocraft}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sulocraft_secure_pw}
+      POSTGRES_DB_FILE: /run/secrets/postgres_db
+      POSTGRES_USER_FILE: /run/secrets/postgres_user
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_db
+      - postgres_user
+      - postgres_password
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sulocraft} -d ${POSTGRES_DB:-sulocraft}"]
+      test: ["CMD-SHELL", "pg_isready -U $$(cat /run/secrets/postgres_user 2>/dev/null || echo $$POSTGRES_USER) -d $$(cat /run/secrets/postgres_db 2>/dev/null || echo $$POSTGRES_DB)"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -85,6 +109,16 @@ services:
     depends_on:
       api:
         condition: service_healthy
+
+secrets:
+  postgres_db:
+    file: ${POSTGRES_DB_FILE:-/run/sulocraft/postgres/postgres_db}
+  postgres_user:
+    file: ${POSTGRES_USER_FILE:-/run/sulocraft/postgres/postgres_user}
+  postgres_password:
+    file: ${POSTGRES_PASSWORD_FILE:-/run/sulocraft/postgres/postgres_password}
+  database_url:
+    file: ${DATABASE_URL_FILE:-/run/sulocraft/backend/database_url}
 
 volumes:
   postgres_data:

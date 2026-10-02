@@ -1,0 +1,13 @@
+# Work 009 notes
+
+- Before this work, the search overlay read `products` from `useCatalogue()` and filtered them locally by name, category, and tags; it made no request while typing.
+- `CatalogueProvider` still loads products once with `GET /api/v1/products?limit=100` for other storefront uses.
+- Backend route: `GET /api/v1/products/search` in `backend/app/api/v1/catalogue.py`; it queries active database products by name, description, tags, and category name, with configurable `limit` (default 20, maximum 50).
+- `docs/api-catalogue.md` documents the endpoint. The new typed `searchProducts` helper now calls it and maps results through the shared catalogue product mapper.
+- Implemented the typed API client and live overlay flow in `src/lib/api/catalogue.ts` and `src/components/SearchOverlay.tsx`; added regression coverage in `src/lib/api/catalogue.test.ts` and `src/components/SearchOverlay.test.tsx`.
+- Removed the hardcoded trending and Unsplash collection suggestions. Search now displays neutral guidance until a customer types.
+- New requirement 9.8: provide useful empty-state trending keywords and products. Because no trustworthy search-term analytics exists yet and catalogue `best_selling` is a review-count proxy, frontend must consume a new backend suggestions endpoint; do not mislabel existing proxies as trends. Gemini handoff contract is being added.
+- Work 9.8 frontend now calls `GET /products/search/suggestions?keyword_limit=6&product_limit=4`, records successful debounced searches best-effort through `POST /products/search/events`, and renders API keyword chips/products with loading, retry, and no-data states. API contract and privacy/ranking requirements are in `tasks/task-009-search-discovery-api.md`.
+- Verification on 2026-10-03: all 54 frontend tests pass; `tsc --noEmit` and `npm run build` pass (56 prerendered routes). Local frontend/API/DB Docker stack rebuilt and healthy. Browser verified existing typeahead still returns the DB-backed Sunflower Bouquet. New suggestions endpoint currently returns HTTP 404, confirming Gemini backend work remains; no push/deploy performed. Desktop-width visual check remains pending.
+- Verification: full frontend suite passed (50 tests); `tsc --noEmit` and `npm run build` passed. Rebuilt the local Docker frontend and confirmed `Sunflower` returns `Sunflower Bouquet` from `http://localhost:8000/api/v1/products/search` and renders in the mobile-width browser at `http://localhost:8080/`.
+- Desktop-width visual verification remains; a separate Chrome browser was unavailable in this session, and the in-app browser viewport is mobile-width. No push/deploy occurred.

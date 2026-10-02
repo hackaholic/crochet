@@ -65,6 +65,13 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [navigateTo]);
 
+  const signOut = useCallback(async () => {
+    await authApi.logout();
+    setUser(null);
+    await Promise.all([refreshCart(), refreshWishlist()]);
+    navigate('home');
+  }, [navigate, refreshCart, refreshWishlist]);
+
   const addToCart = useCallback((product: Product, quantity = 1) => {
     void addCartItem(product, quantity);
     setCartOpen(true);
@@ -98,7 +105,7 @@ export default function App() {
       <a href="#main-content" className="sr-only fixed left-4 top-4 z-100 rounded-full bg-[#2C1810] px-5 py-3 text-sm font-semibold text-white focus:not-sr-only">
         Skip to content
       </a>
-      <Header
+      {page !== 'admin' && <Header
         currentPage={page}
         onNavigate={navigate}
         cartCount={cartCount}
@@ -106,9 +113,9 @@ export default function App() {
         onSearchOpen={() => setSearchOpen(true)}
         onCartOpen={() => setCartOpen(true)}
         onAccountOpen={() => user ? navigate('account') : openAuth()}
-      />
+      />}
 
-      <main id="main-content" tabIndex={-1}>
+      <main id="main-content" tabIndex={-1} className={page === 'admin' ? 'min-h-screen' : undefined}>
         {catalogueLoading && ['home', 'shop', 'product', 'wishlist'].includes(page) ? (
           <div className="min-h-screen bg-[#FAF7F2] pt-28"><LoadingState label="Loading the collection…" /></div>
         ) : catalogueError && ['home', 'shop', 'product', 'wishlist'].includes(page) ? (
@@ -172,8 +179,8 @@ export default function App() {
             onNavigate={navigate}
           />
         )}
-        {page === 'account' && <AccountPage key={user?.id ?? 'guest'} onSignIn={openAuth} />}
-        {page === 'admin' && <AdminPage onSignIn={openAuth} />}
+        {page === 'account' && <AccountPage key={user?.id ?? 'guest'} onSignIn={openAuth} onLogout={signOut} />}
+        {page === 'admin' && <AdminPage key={user?.id ?? 'guest'} onSignIn={openAuth} onExitAdmin={() => navigate('home')} />}
         {page === 'about' && (
           <AboutPage onNavigate={navigate} />
         )}
@@ -187,10 +194,10 @@ export default function App() {
       </main>
 
       {/* Show footer on all pages except checkout */}
-      {page !== 'checkout' && <Footer onNavigate={navigate} />}
+      {page !== 'checkout' && page !== 'admin' && <Footer onNavigate={navigate} />}
 
       {/* Cart Drawer */}
-      <CartDrawer
+      {page !== 'admin' && <CartDrawer
         open={cartOpen}
         onClose={() => setCartOpen(false)}
         items={cart}
@@ -198,14 +205,14 @@ export default function App() {
         onRemove={removeFromCart}
         onWishlist={toggleWishlist}
         onCheckout={handleCheckout}
-      />
+      />}
 
       {/* Search Overlay */}
-      <SearchOverlay
+      {page !== 'admin' && <SearchOverlay
         open={searchOpen}
         onClose={() => setSearchOpen(false)}
         onProductClick={handleProductClick}
-      />
+      />}
       <AuthModal open={authOpen} initialError={authError} onClose={() => { setAuthOpen(false); setAuthError(''); }} onSignedIn={signedInUser => { setUser(signedInUser); setAuthError(''); void refreshCart(); void refreshWishlist(); }} />
     </div>
   );

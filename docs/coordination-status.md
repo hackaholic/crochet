@@ -2,6 +2,132 @@
 
 This file records the current cross-team integration gate. Update it when a handoff becomes usable or becomes blocked.
 
+## 2026-10-03 — Work 010: Seasonal Gift by Occasion
+
+Status: Completed and approved by owner; local integration, tests, and automated API verification verified 100%
+
+The dedicated task source is [Work 010](../work/work-010-gift-by-occasion/README.md). Gemini completed backend evergreen rules, seasonal-first ordering, and distinct artwork image keys (`-v2.png`). Codex integrated the admin occasion-control screen and homepage grid rendering. Automated verification suite (`scripts/verify_api.py` under Work 011) executed against local Docker (`http://localhost:8000`) and confirmed all 20 checks pass. Full test suites pass (162 backend tests, 59 frontend tests). Owner review completed and approved.
+
+## 2026-10-03 — Work 009 Task 9.8: Search discovery suggestions
+
+Status: Codex frontend contract integration in progress; Gemini backend task ready
+
+Codex added the typed suggestions client and empty-search renderer. Gemini owns `GET /api/v1/products/search/suggestions` and anonymous, privacy-filtered aggregate search-event tracking at `POST /api/v1/products/search/events`; requirements and response shape are in [the task contract](../work/work-009-storefront-search/tasks/task-009-search-discovery-api.md). The local suggestions endpoint currently returns 404; the existing database-backed typed search still works. The owner has authorized publishing the current project state so it can be pulled on another machine; this does not mark Search Discovery complete. Keep the missing Gemini endpoints as a pending backend task.
+
+## 2026-10-02 — Work 003: SOPS/age vault
+
+Status: Gemini can start task 3.1 and 3.2–3.4 in [`work/work-003-vault/tasks.md`](../work/work-003-vault/tasks.md); key provisioning/encryption and local acceptance remain blocked/pending.
+
+- The owner clarified the desired key flow: encrypt with public age recipients; decrypt with the corresponding private key. Keep local preprod config convenient and ignored.
+- All agents must read `work/INDEX.md`, then only the selected work folder's README, tasks, decisions, and relevant files. Update the same task status before handing work across agents.
+- Follow the original prompt’s least-privilege requirement: encrypted backend, PostgreSQL, and backup groups; decrypt only what each service needs under `/run/sulocraft/` on the VPS. Do not leave one shared decrypted production `.env` for every container.
+- Codex completed the variable-name/env/Compose/deploy-path audit, `<SETTING>_FILE` loader and focused tests, and the secret inventory docs.
+- Gemini can remove Compose fallback credentials, wire service-scoped Compose secret files, implement local preprod decrypt and VPS deploy/bootstrap handling, and add dummy-secret tests without waiting for real recipients.
+- The VPS age key is provisioned and verified (`root:root`, file mode `0600`, directory mode `0700`). Its public recipient is recorded in Work 003 notes; Gemini still needs to automate safe bootstrap and key rotation. Local developer-key permissions remain unresolved.
+- Local API verification is currently blocked by a duplicate product/occasion seed association. Do not deploy until the full Docker app is healthy and owner approves the local result.
+
+## 2026-10-02 — Figma admin dashboard backend expansion
+
+Status: Gemini backend complete (126/126 tests reported); Codex is integrating the owner-provided admin design locally
+
+Frontend owner: Codex / ChatGPT
+Backend owner: Gemini
+
+### What is ready
+
+- **Database & Migrations**:
+  - Added `ReturnRequest` model (`return_requests` table) with Alembic migration `7a1e2f3d4c5b_add_return_requests.py`.
+  - Added `ReturnStatus` (`REQUESTED`, `APPROVED`, `ITEMS_RECEIVED`, `INSPECTED`, `REFUNDED`, `REJECTED`, `CANCELLED`) and `RefundStatus` (`NONE`, `PENDING`, `COMPLETED`, `FAILED`).
+  - Added `refund_payment` to `BasePaymentProvider`, `MockPaymentProvider`, and `RazorpayPaymentProvider`.
+- **Dashboard & Finance APIs**:
+  - `GET /api/v1/admin/dashboard/summary?from=&to=&compareFrom=&compareTo=`: Aggregates real orders, bounded recent orders (10), inventory alerts, action count, and optional comparison.
+  - `GET /api/v1/admin/dashboard/sales?from=&to=&interval=daily|weekly|monthly`: Date-bucketed sales series in `Asia/Kolkata` timezone with zero-filled gaps for recorded sales.
+  - `GET /api/v1/admin/finance/summary?from=&to=`: Gross sales, discounts, shipping, stored tax, refunds, net revenue, with explicit `gatewayFeesAvailable: False` (no fabricated zeroes or statutory inferences).
+  - `GET /api/v1/admin/finance/sales?from=&to=&interval=`: Reconciled financial trend buckets.
+  - `GET /api/v1/admin/dashboard/attention?page=&pageSize=`: Actionable items (unshipped orders, pending returns, low stock).
+  - `GET /api/v1/admin/search?q=&page=&pageSize=`: Bounded search over orders, customers, and catalog products/SKUs.
+  - `GET/POST /api/v1/admin/returns`, `GET/PATCH /returns/{id}/status`, `POST /returns/{id}/refund`: Persisted return requests and payment-provider backed refund executions.
+  - `GET /api/v1/admin/orders`: Extended with filters (`from`, `to`, `paymentStatus`, `country`, `minTotal`, `maxTotal`, `sku`, `sortBy`).
+- **Contracts & Tests**:
+  - `docs/api-admin.md` updated with TypeScript contracts and endpoint documentation.
+  - `docs/openapi.yaml` regenerated with full OpenAPI 3.1.0 specifications for all new endpoints.
+  - Pytest suite: **126/126 passed** (including 8 comprehensive integration tests in `backend/tests/test_admin_dashboard.py`).
+
+## 2026-10-02 — Seasonal Gift by Occasion configuration
+
+Status: Gemini backend complete; ready for frontend review (134/134 backend tests passing, 48/48 frontend tests passing, verified on local Docker stack)
+
+Frontend owner: Codex / ChatGPT
+Backend owner: Gemini
+
+### What is delivered
+
+1. **Database & Migrations**:
+   - Alembic migration `8b2c3d4e5f6a_add_occasion_admin_and_product_occasions.py`:
+     - Added `image_key`, `description`, `display_order`, `is_enabled`, `starts_at`, `ends_at`, `created_at`, `updated_at` to `occasions`.
+     - Created `product_occasions` association table with `(product_id, occasion_id)` primary key and cascading foreign keys.
+2. **Distinct Artwork & Image Guard**:
+   - Resolved 12 distinct photo IDs in `backend/app/core/images.py` across all occasions. No two occasions share artwork.
+   - Admin CRUD strictly prevents assigning an `image_key` or `image_url` that is already in use by another occasion (HTTP 400).
+3. **Seasonal Scheduling & Storefront Resolution**:
+   - Seasonal windows evaluated against `Asia/Kolkata` timezone in `is_in_season()`.
+   - Storefront `occasion_grid` resolver in `backend/app/api/v1/storefront.py` returns only enabled and in-season occasions (initial 8 active: Birthday, Anniversary, Valentine's Day, Wedding, Decor, Diwali, Mother's Day, Father's Day).
+   - Rakhi and off-season occasions (Baby Shower, Housewarming, Just Because) preserved in database with `is_enabled=False`.
+   - Section omitted completely (avoiding empty headings) when no occasions qualify.
+4. **Many-to-Many Product Associations & Frontend Filtering**:
+   - Seeded `PRODUCT_OCCASIONS_MAP` linking products to multiple occasions without duplicating SKU or product rows.
+   - `GET /api/v1/products?occasion=<id>` filters by `product_occasions` associations (with fallback to tags).
+   - `ProductListItem` and `ProductDetail` now return `occasions: list[str]` and enriched `tags` matching occasion slugs/names for client-side filtering on `/shop?occasion=<id>`.
+5. **Idempotent Seed & Safe DB Repair**:
+   - Startup seed repair updates existing database rows idempotently without duplicate primary key collisions.
+   - Configured off-season `christmas` occasion with `is_enabled=False` and distinct image asset.
+6. **Admin CRUD Endpoints & Contracts**:
+   - `GET /api/v1/admin/occasions`, `POST /api/v1/admin/occasions`, `GET /api/v1/admin/occasions/{id}`, `PUT/PATCH /api/v1/admin/occasions/{id}`, `DELETE /api/v1/admin/occasions/{id}`.
+   - `docs/api-admin.md` updated with TypeScript contracts (`AdminOccasionIn`, `AdminOccasionUpdateIn`, `AdminOccasionOut`) and Section 4 endpoint table entries.
+   - `src/lib/api/admin.ts` provides typed client methods; `src/lib/api/catalogue.ts` provides `getOccasions()`.
+7. **Verification & Tests**:
+   - Full test suite: **134/134 passed** in `backend/tests/` (including 8 tests in `backend/tests/test_occasions_admin.py`).
+   - Frontend test suite: **48/48 passed** (5 node + 43 vitest).
+   - Live Docker stack: `docker-api-1` and `docker-frontend-1` verified healthy, returning 8 distinct occasions with HTTP 307 image routes, with product associations verified live.
+
+
+-## 2026-10-02 — Restore database-driven Amigurumi home feature
+-
+-Status: Frontend templates and occasion-tag filtering are ready locally; waiting for Gemini's occasion-grid API/database update and corrected Amigurumi membership
+-
+-- Local Docker frontend, API, and PostgreSQL stack is rebuilt and healthy.
+-- Current `GET /api/v1/storefront/home` returns `Most Loved Creations` at order 2, `Tiny Friends, Big Smiles 🐾` at order 3, and `Gift Handcrafted Warmth This Season` at order 4. Amigurumi image URLs are distinct, but two selected products are not creature/soft-toy companions and need collection correction.
+-- The local API still has no `occasion_grid` section. Browser inspection of `http://localhost:8080` confirms that the Tiny Friends row currently includes a heart planter and a flower bouquet, and the Gift by Occasion grid is absent.
+-- Frontend now has reusable product and occasion-grid templates, deduplicates repeated product/occasion images, and accepts `/shop?occasion=<database-tag-or-collection-slug>` using backend-provided tags/associations. Frontend typecheck passes; all 38 Vitest tests pass under the bundled Node 24 runtime. The Docker frontend has been rebuilt locally.
+-- Gemini handoff is in `/docs/handoffs.md`: correct Amigurumi collection membership, add the occasion-grid API/seed/admin support, and use DB tags/collection relations for multiple browse contexts. No duplicate catalogue rows or hardcoded frontend product membership.
+-- The expected section order is `Tiny Friends, Big Smiles` → `Gift by Occasion` → `Gift Handcrafted Warmth This Season`. User wants to review the integrated local frontend/API/database result before any push. Do not push or deploy until the owner confirms satisfaction.
++## 2026-10-02 — Restore database-driven Amigurumi and Occasion home feature
++
++Status: Ready for integration / Complete on backend & dev
++
++Frontend owner: Codex / ChatGPT
++Backend owner: Gemini
++
++### What is ready
++
++- **Section Resolution & Ordering**:
++  - Order 1: `category_grid` ("Shop by Category")
++  - Order 2: `product_collection` ("Most Loved Creations", `bestsellers`)
++  - Order 3: `product_collection` ("Tiny Friends, Big Smiles 🐾", `amigurumi`, 4 companion creature products)
++  - Order 4: `occasion_grid` ("Gift by Occasion", 6 occasions with unique valid image URLs)
++  - Order 5: `promo_banner` ("Gift Handcrafted Warmth This Season")
++  - Order 6: `review_section` ("Loved by Over 500+ Happy Customers")
++  - Order 7: `image_text` ("Handmade with Love, Thread by Thread")
++- **Amigurumi Collection Membership**:
++  - Corrected `amigurumi` collection membership strictly to the 4 creature companion listings: `octopus-amigurami-set`, `heart-bear`, `mini-panda-amigurumi`, and `crochet-bunny`. Planter and flower bouquet excluded.
++- **Occasion Grid API & Admin Support**:
++  - Schemas `OccasionGridSectionOut`, `OccasionSummary` added. Admin allow-list updated.
++  - Safe database repair and startup seeding tested on existing databases.
++- **Automated Tests**:
++  - Backend pytest suite: **118/118 passed**.
++- **Live Local Stack**:
++  - Rebuilt and running in `docker-api-1`. Verified `GET /api/v1/storefront/home` returns all 7 sections with 200/307 media assets.
+
 ## 2026-10-02 — Downloads/sulocraft Catalogue Expansion (24 products total) gate
 
 Status: Ready for integration / Complete on backend & dev

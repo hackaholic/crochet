@@ -22,7 +22,7 @@ from app.schemas.auth import (
     GoogleAuthRequest,
     UserOut,
 )
-from app.services.notification.service import dispatch_magic_link_background
+from app.services.notification.service import dispatch_magic_link_background, dispatch_welcome_background
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -284,6 +284,7 @@ def start_email_login(
 def verify_email_magic_link(
     token: str | None = None,
     returnTo: str | None = None,
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     guest_cart_token: str | None = Cookie(default=None),
     x_cart_token: str | None = Header(default=None),
     db: Session = Depends(get_db),
@@ -323,7 +324,9 @@ def verify_email_magic_link(
         .first()
     )
 
+    is_new_user = False
     if not user:
+        is_new_user = True
         name_prefix = email.split("@")[0].replace(".", " ").replace("_", " ").title()
         user = User(
             email=email,
@@ -368,6 +371,10 @@ def verify_email_magic_link(
     except Exception:
         db.rollback()
         return RedirectResponse(url=fallback_redirect, status_code=status.HTTP_303_SEE_OTHER)
+
+    # Dispatch welcome email to new user in background
+    if is_new_user and background_tasks:
+        background_tasks.add_task(dispatch_welcome_background, user.email, user.name)
 
     # Auto-merge guest cart if token present
     active_cart_token = guest_cart_token or x_cart_token
@@ -504,6 +511,7 @@ def _verify_facebook_token(
 def google_auth(
     payload: GoogleAuthRequest,
     response: Response,
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     guest_cart_token: str | None = Cookie(default=None),
     x_cart_token: str | None = Header(default=None),
     db: Session = Depends(get_db),
@@ -532,6 +540,7 @@ def google_auth(
         .first()
     )
 
+    is_new_user = False
     if identity:
         user = identity.user
         user.last_login_at = now
@@ -549,6 +558,7 @@ def google_auth(
             db.add(new_id)
         else:
             # 3. Create fresh User and Identity
+            is_new_user = True
             user = User(
                 name=name,
                 email=email,
@@ -572,6 +582,10 @@ def google_auth(
     db.add(session)
     db.commit()
     db.refresh(user)
+
+    # Dispatch welcome email to new user in background
+    if is_new_user and background_tasks and user.email:
+        background_tasks.add_task(dispatch_welcome_background, user.email, user.name)
 
     # Set HttpOnly, SameSite=Lax session cookie
     response.set_cookie(
@@ -599,6 +613,7 @@ def google_auth(
 def facebook_auth(
     payload: FacebookAuthRequest,
     response: Response,
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     guest_cart_token: str | None = Cookie(default=None),
     x_cart_token: str | None = Header(default=None),
     db: Session = Depends(get_db),
@@ -621,6 +636,7 @@ def facebook_auth(
         .first()
     )
 
+    is_new_user = False
     if identity:
         user = identity.user
         user.last_login_at = now
@@ -643,6 +659,7 @@ def facebook_auth(
             db.add(new_id)
         else:
             # 3. Create fresh User and Identity
+            is_new_user = True
             user = User(
                 name=name or "Facebook User",
                 email=email,
@@ -666,6 +683,10 @@ def facebook_auth(
     db.add(session)
     db.commit()
     db.refresh(user)
+
+    # Dispatch welcome email to new user in background
+    if is_new_user and background_tasks and user.email:
+        background_tasks.add_task(dispatch_welcome_background, user.email, user.name)
 
     # Set HttpOnly, SameSite=Lax session cookie
     response.set_cookie(

@@ -68,6 +68,21 @@ export function productMatchesCategory(product: Product, option: CategoryFilterO
   return option.matchingSlugs.some(slug => slugs.has(slug));
 }
 
+function slugify(value: string): string {
+  return value.trim().toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
+
+/** Match occasion IDs/slugs against backend-provided collection associations, tags, and occasions. */
+export function productMatchesOccasion(product: Product, occasion: string): boolean {
+  const target = slugify(occasion);
+  if (!target) return false;
+  return Boolean(
+    product.collections?.some(collection => slugify(collection.slug) === target || slugify(collection.name) === target)
+    || product.tags?.some(tag => slugify(tag) === target)
+    || product.occasions?.some(occ => slugify(occ) === target)
+  );
+}
+
 export function sortShopProducts(products: Product[], sortBy: string): Product[] {
   return [...products].sort((a, b) => {
     if (sortBy === 'Newest') return Number(b.badge === 'New') - Number(a.badge === 'New');

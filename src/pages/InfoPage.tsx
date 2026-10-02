@@ -17,7 +17,7 @@ const pageContent: Record<Exclude<InfoPageKind, 'notFound'>, { eyebrow: string; 
     intro: 'Questions about a product, a custom order, or an existing purchase? Send us a note and our small team will get back to you with care.',
     sections: [
       { title: 'Order support', body: 'Please include your order number and the email or phone number used at checkout, so we can find the right details quickly.' },
-      { title: 'Custom creations', body: 'Tell us what you have in mind, including colours, occasion, preferred size, and when you need it. We will confirm feasibility and a tailored quote before work begins.' },
+      { title: 'Custom creations', body: 'Tell us what you have in mind, including the occasion, preferred size, and when you need it. We will confirm feasibility and a tailored quote before work begins.' },
       { title: 'Response time', body: 'We aim to respond within two working days. During festival seasons and custom-order peaks, a little extra time may be needed.' },
     ],
   },

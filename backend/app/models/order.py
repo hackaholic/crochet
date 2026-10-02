@@ -48,6 +48,22 @@ class PaymentMethod(str, enum.Enum):
     NETBANKING = "NETBANKING"
 
 
+class ReturnStatus(str, enum.Enum):
+    REQUESTED = "REQUESTED"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    ITEMS_RECEIVED = "ITEMS_RECEIVED"
+    REFUNDED = "REFUNDED"
+    CANCELLED = "CANCELLED"
+
+
+class RefundStatus(str, enum.Enum):
+    PENDING = "PENDING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    NOT_APPLICABLE = "NOT_APPLICABLE"
+
+
 class Address(Base):
     """Customer delivery address conforming to Section 26 of Specification."""
 
@@ -117,6 +133,12 @@ class Order(Base):
         order_by="OrderStatusHistory.id.asc()",
     )
     payments = relationship("Payment", back_populates="order", cascade="all, delete-orphan")
+    returns = relationship(
+        "ReturnRequest",
+        back_populates="order",
+        cascade="all, delete-orphan",
+        order_by="ReturnRequest.id.desc()",
+    )
 
 
 class OrderItem(Base):
@@ -157,3 +179,32 @@ class OrderStatusHistory(Base):
     timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     order = relationship("Order", back_populates="status_history")
+
+
+class ReturnRequest(Base):
+    """Persisted customer return and refund request record."""
+
+    __tablename__ = "return_requests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    return_number = Column(String(50), unique=True, index=True, nullable=False)
+    order_id = Column(Integer, ForeignKey("orders.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+
+    status = Column(String(50), default=ReturnStatus.REQUESTED.value, index=True, nullable=False)
+    reason = Column(String(100), nullable=False)
+    reason_details = Column(Text, nullable=True)
+    items_json = Column(JSON().with_variant(JSONB, "postgresql"), default=list)
+
+    refund_amount = Column(Integer, default=0, nullable=False)  # Rupees
+    refund_amount_paise = Column(Integer, default=0, nullable=False)  # Paise
+    refund_status = Column(String(50), default=RefundStatus.PENDING.value, index=True, nullable=False)
+
+    admin_notes = Column(Text, nullable=True)
+    history_json = Column(JSON().with_variant(JSONB, "postgresql"), default=list)
+
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+    order = relationship("Order", back_populates="returns")
+    user = relationship("User")

@@ -139,17 +139,45 @@ class CollectionOut(BaseModel):
 class OccasionOut(BaseModel):
     """Curated occasions for gift navigation."""
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     id: str
     name: str
     icon: str | None = None
-    image_url: str | None = None
+    image_url: str | None = Field(default=None, serialization_alias="imageUrl", alias="imageUrl")
+    imageUrl: str | None = None
+    description: str | None = None
+    display_order: int = Field(default=0, serialization_alias="displayOrder", alias="displayOrder")
+    displayOrder: int = 0
 
-    @field_validator("image_url", mode="after")
+    @model_validator(mode="before")
     @classmethod
-    def resolve_image_url(cls, v: str | None) -> str | None:
-        return build_image_url(v) if v else None
+    def resolve_fields(cls, data: Any) -> Any:
+        if hasattr(data, "__dict__"):
+            raw_img = getattr(data, "image_key", None) or getattr(data, "_legacy_image_url", None)
+            url = build_image_url(raw_img) if raw_img else None
+            order = getattr(data, "display_order", 0)
+            return {
+                "id": getattr(data, "id"),
+                "name": getattr(data, "name"),
+                "icon": getattr(data, "icon", None),
+                "image_url": url,
+                "imageUrl": url,
+                "description": getattr(data, "description", None),
+                "display_order": order,
+                "displayOrder": order,
+            }
+        elif isinstance(data, dict):
+            raw_img = data.get("image_key") or data.get("image_url") or data.get("imageUrl")
+            url = build_image_url(raw_img) if raw_img else None
+            data["image_url"] = url
+            data["imageUrl"] = url
+            order = data.get("display_order", data.get("displayOrder", 0))
+            data["display_order"] = order
+            data["displayOrder"] = order
+            return data
+        return data
+
 
 
 class ReviewOut(BaseModel):
@@ -260,6 +288,7 @@ class ProductListItem(BaseModel):
     collections: list[CollectionSummary] = []
     badge: str | None = None
     tags: list[str] = []
+    occasions: list[str] = Field(default_factory=list, serialization_alias="occasions")
     description: str | None = None
     customizable: bool = False
     in_stock: bool = Field(default=True, serialization_alias="inStock")
@@ -291,6 +320,7 @@ class ProductDetail(BaseModel):
     categories: list[CategorySummary] = []
     collections: list[CollectionSummary] = []
     tags: list[str] = []
+    occasions: list[str] = Field(default_factory=list, serialization_alias="occasions")
     images: list[str] = []
     image_urls: list[str] = Field(default_factory=list, serialization_alias="imageUrls")
     gallery: list[ProductImageOut] = []

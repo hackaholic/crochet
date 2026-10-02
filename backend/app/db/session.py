@@ -6,9 +6,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.db.base import Base
+from app.core.config import settings
 
 # Default to SQLite for local development/testing without docker, or PostgreSQL in docker
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./crochet.db")
+DATABASE_URL = settings.database_url
 
 # SQLAlchemy 2.0 with psycopg v3 accepts postgresql+psycopg:// or postgresql://
 if DATABASE_URL.startswith("postgresql://") and "+psycopg" not in DATABASE_URL:

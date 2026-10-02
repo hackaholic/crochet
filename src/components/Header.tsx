@@ -172,6 +172,12 @@ export default function Header({ currentPage, onNavigate, cartCount, wishlistCou
             >
               Cart {cartCount > 0 && `(${cartCount})`}
             </button>
+            <button
+              onClick={() => { onAccountOpen(); setMobileOpen(false); }}
+              className="block w-full text-left py-3 text-sm font-medium text-[#5C3D2E] hover:text-[#C4622D] transition-colors"
+            >
+              Account
+            </button>
           </div>
         )}
       </header>

@@ -43,3 +43,13 @@ class MockPaymentProvider(BasePaymentProvider):
     def verify_webhook(self, payload: bytes, signature: str) -> bool:
         """Verify mock webhook signature."""
         return signature == "valid_mock_signature" or signature.startswith("mock_")
+
+    def refund_payment(self, payment: Payment, amount: int, reason: str | None = None) -> dict[str, Any]:
+        """Simulate refund in mock gateway."""
+        refund_id = f"mock_rfnd_{secrets.token_hex(8)}"
+        return {
+            "success": True,
+            "refund_id": refund_id,
+            "amount": amount,
+            "status": "COMPLETED",
+        }

@@ -43,6 +43,8 @@ export function prerender() {
     metaTags += `\n    <meta name="description" content="${escapeHtml(route.description)}">`;
     metaTags += `\n    <meta name="robots" content="index,follow">`;
     metaTags += `\n    <link rel="canonical" href="${escapeHtml(canonicalUrl)}">`;
+    metaTags += `\n    <link rel="alternate" hreflang="en-IN" href="${escapeHtml(canonicalUrl)}">`;
+    metaTags += `\n    <link rel="alternate" hreflang="x-default" href="${escapeHtml(canonicalUrl)}">`;
     metaTags += `\n    <meta property="og:title" content="${escapeHtml(route.title)}">`;
     metaTags += `\n    <meta property="og:description" content="${escapeHtml(route.description)}">`;
     metaTags += `\n    <meta property="og:type" content="${escapeHtml(route.pageType)}">`;
@@ -87,12 +89,40 @@ export function prerender() {
         sku: route.sku || `SULO-${route.heading.toUpperCase().replace(/[^A-Z0-9]+/g, '-')}`,
         brand: { '@type': 'Brand', name: 'Sulocraft' },
         category: route.category || 'Crochet',
+        itemCondition: 'https://schema.org/NewCondition',
         offers: {
           '@type': 'Offer',
           priceCurrency: route.currency || 'INR',
           price: route.price,
+          priceValidUntil: '2027-12-31',
+          itemCondition: 'https://schema.org/NewCondition',
           availability: route.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
           url: canonicalUrl,
+          hasMerchantReturnPolicy: {
+            '@type': 'MerchantReturnPolicy',
+            applicableCountry: 'IN',
+            returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+            merchantReturnDays: 7,
+            returnMethod: 'https://schema.org/ReturnByMail',
+            returnFees: 'https://schema.org/FreeReturn',
+          },
+          shippingDetails: {
+            '@type': 'OfferShippingDetails',
+            shippingRate: {
+              '@type': 'MonetaryAmount',
+              value: route.price >= 999 ? 0 : 100,
+              currency: 'INR',
+            },
+            shippingDestination: {
+              '@type': 'DefinedRegion',
+              addressCountry: 'IN',
+            },
+            deliveryTime: {
+              '@type': 'ShippingDeliveryTime',
+              handlingTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 2, unitCode: 'd' },
+              transitTime: { '@type': 'QuantitativeValue', minValue: 3, maxValue: 5, unitCode: 'd' },
+            },
+          },
         },
       };
       if (route.rating && route.reviews > 0) {
@@ -103,6 +133,39 @@ export function prerender() {
         };
       }
       schemas += `\n    <script type="application/ld+json" id="sulocraft-product-schema">${JSON.stringify(productData).replace(/</g, '\\u003c')}</script>`;
+
+      // Product FAQPage Schema
+      const faqData = {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: [
+          {
+            '@type': 'Question',
+            name: `How do I care for and clean ${route.heading}?`,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: `Gently spot clean ${route.heading} with a damp cloth and mild soap. Reshape gently while slightly damp and lay flat to dry in shade.`,
+            },
+          },
+          {
+            '@type': 'Question',
+            name: `What materials are used in ${route.heading}?`,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: `Crafted from 100% hypoallergenic milk cotton yarn and durable, color-fast stitching designed to last forever.`,
+            },
+          },
+          {
+            '@type': 'Question',
+            name: 'What is the return policy for this item?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'Sulocraft offers a 7-day hassle-free return window for any damaged or defective items with full replacement or refund.',
+            },
+          },
+        ],
+      };
+      schemas += `\n    <script type="application/ld+json" id="sulocraft-faq-schema">${JSON.stringify(faqData).replace(/</g, '\\u003c')}</script>`;
     }
 
     // Organization & WebSite Schema
@@ -115,8 +178,17 @@ export function prerender() {
             '@id': `${BASE_URL}/#organization`,
             name: 'Sulocraft',
             url: BASE_URL,
-            logo: `${BASE_URL}/images/logo.png`,
-            sameAs: ['https://www.instagram.com/sulocraft'],
+            logo: `https://images.sulocraft.com/brand/logo.png`,
+            founder: {
+              '@type': 'Person',
+              name: 'Anupama Sharma',
+            },
+            foundingDate: '2026',
+            sameAs: [
+              'https://instagram.com/sulocraft',
+              'https://facebook.com/sulocraft',
+              'https://pinterest.com/sulocraft',
+            ],
           },
           {
             '@type': 'WebSite',
@@ -124,6 +196,11 @@ export function prerender() {
             name: 'Sulocraft',
             url: BASE_URL,
             publisher: { '@id': `${BASE_URL}/#organization` },
+            potentialAction: {
+              '@type': 'SearchAction',
+              target: `${BASE_URL}/shop?q={search_term_string}`,
+              'query-input': 'required name=search_term_string',
+            },
           },
         ],
       };

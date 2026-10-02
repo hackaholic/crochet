@@ -24,19 +24,24 @@ interface StorefrontHomeResponse {
 type HomepageSection =
   | CategoryGridSection
   | ProductCollectionSection
+  | OccasionGridSection
   | PromoBannerSection
   | ReviewSection
   | ImageTextSection;
 
 interface BaseSection { id: number; order: number; enabled: boolean; }
 interface CategoryGridSection extends BaseSection { type: 'category_grid'; title: string; eyebrow?: string | null; categories: CategorySummary[]; }
-interface ProductCollectionSection extends BaseSection { type: 'product_collection'; title: string; eyebrow?: string | null; collectionSlug: string; products: ProductSummary[]; }
+interface ProductCollectionSection extends BaseSection { type: 'product_collection'; title: string; eyebrow?: string | null; description?: string | null; collectionSlug: string; products: ProductSummary[]; }
+interface OccasionGridSection extends BaseSection { type: 'occasion_grid'; title: string; eyebrow?: string | null; description?: string | null; occasions: OccasionSummary[]; }
+interface OccasionSummary { id: string; name: string; icon?: string | null; imageUrl?: string | null; }
 interface PromoBannerSection extends BaseSection { type: 'promo_banner'; title: string; description?: string | null; imageUrl?: string | null; imageAlt?: string | null; ctaText?: string | null; ctaUrl?: string | null; }
 interface ReviewSection extends BaseSection { type: 'review_section'; title: string; reviews: ReviewSummary[]; }
 interface ImageTextSection extends BaseSection { type: 'image_text'; title: string; description: string; imageUrl: string; imageAlt: string; imagePosition: 'left' | 'right'; ctaText?: string | null; ctaUrl?: string | null; }
 ```
 
-The backend must never return HTML, CSS, JSX, Tailwind classes, arbitrary component trees, or executable presentation data. Product configuration stores references such as `collection_slug`; FastAPI resolves current product/category/review records before returning the response.
+The backend must never return HTML, CSS, JSX, Tailwind classes, arbitrary component trees, or executable presentation data. Product configuration stores references such as `collection_slug`; FastAPI resolves current product/category/review records before returning the response. Product collection rows must return distinct products with distinct primary image URLs; the frontend also filters repeated IDs and image URLs as a defensive guard.
+
+`occasion_grid.occasions` is dynamically resolved from admin-managed occasion records, never from a frontend list. Birthday, Anniversary, Wedding, and Baby Shower are core evergreen occasions and remain visible year-round. Other occasions (including Valentine's Day, Decor, Diwali, Mother's Day, Father's Day, Christmas, and future campaigns) are admin-managed and may be enabled, disabled, or scheduled in the `Asia/Kolkata` timezone. Keep stable existing IDs (`birthday`, `anniversary`, `wedding`, `babyshower`) so existing product associations and links continue to work; do not create a duplicate Baby Shower record. Return active, enabled seasonal occasions first, then evergreen occasions; preserve admin display order within each group. This way an enabled occasion leads the grid without frontend sorting. Do not display Rakhi. If no seasonal occasions are active, retain the four evergreen cards; omit the occasion section only if there are no eligible records at all. Give every configured occasion distinct, bright artwork and reject/review duplicate image keys. Product-to-occasion membership is database-managed (one product can belong to multiple occasions), and `/shop?occasion=<id>` filters using those backend associations or tags.
 
 ### Image-origin configuration
 
@@ -47,7 +52,7 @@ Persist stable relative object keys in content records, for example `products/he
 
 The frontend always renders the absolute URL returned by the API. Changing the image origin must require only an environment change and an API restart; it must not require React edits or bulk replacement of database rows. Admin APIs may accept an existing absolute external URL when explicitly needed, but Sulocraft-managed assets should use object keys.
 
-Gemini owns section persistence, scheduling, ordering, enable/disable behavior, admin CRUD, seed data, the `/storefront/home` endpoint, and OpenAPI updates. Codex owns the strict section registry and the five approved templates. Unknown section types are ignored safely.
+Gemini owns section persistence, scheduling, ordering, enable/disable behavior, admin CRUD, seed data, the `/storefront/home` endpoint, and OpenAPI updates. Codex owns the strict section registry and approved templates, including reusable `occasion_grid` and `product_collection` renderers. Unknown section types are ignored safely.
 
 Returns public brand settings and currently active homepage campaigns. No authentication is required.
 
@@ -99,20 +104,28 @@ The previous keys `campaigns/promo-gift-warmth.jpg` and `sections/artisan-story.
 | `PUT` | `/api/v1/admin/storefront/campaigns/{id}` | Update existing campaign attributes, priority, image, or active flag. |
 | `DELETE` | `/api/v1/admin/storefront/campaigns/{id}` | Remove a homepage campaign. |
 | `GET` | `/api/v1/admin/storefront/sections` | List all configured homepage sections ordered by `display_order`. |
-| `POST` | `/api/v1/admin/storefront/sections` | Create a new controlled homepage section (`category_grid`, `product_collection`, `promo_banner`, `review_section`, `image_text`). |
+| `POST` | `/api/v1/admin/storefront/sections` | Create a new controlled homepage section (`category_grid`, `product_collection`, `occasion_grid`, `promo_banner`, `review_section`, `image_text`). |
 | `GET` | `/api/v1/admin/storefront/sections/{id}` | Retrieve details for a single homepage section. |
 | `PUT` | `/api/v1/admin/storefront/sections/{id}` | Update attributes, visibility, ordering, or schedule of a section. |
 | `DELETE` | `/api/v1/admin/storefront/sections/{id}` | Remove a homepage section. |
+| `GET` | `/api/v1/admin/occasions` | List configured occasions, including hidden and scheduled records. |
+| `POST` | `/api/v1/admin/occasions` | Create an occasion with name, stable ID, image key, display order, visibility, schedule, and product associations. |
+| `PUT` | `/api/v1/admin/occasions/{id}` | Edit occasion details, image, visibility, display order, schedule, and associated product IDs/tags. |
+| `DELETE` | `/api/v1/admin/occasions/{id}` | Remove an unused occasion configuration; preserve historical order/product data. Prefer hiding when referenced. |
+
+Occasion records require `id`, `name`, `image_key`, `display_order`, and `is_enabled`, with optional `starts_at` and `ends_at`. A product may be associated with multiple occasions. Date windows use `Asia/Kolkata`; start/end are inclusive. Seasonal occasions are filtered by the admin enable flag and active date window. Evergreen occasions ignore those seasonal controls in public resolution and reject attempts to disable, delete, or schedule them. Admin occasion responses expose `isEvergreen` so the interface can display “Always on” without repeating the backend's business rule. Admin can save a future occasion while it is disabled, then enable it manually for the season or schedule its active dates; explicitly sending `null` for a schedule date clears that date, while omitting the property leaves it unchanged. Existing occasion rows must be safely migrated/updated so Anniversary/Wedding artwork is replaced, Birthday artwork refreshed, Baby Shower enabled year-round, and Rakhi hidden.
 
 ## Backend implementation notes (Gemini)
 
 - Database-backed `BrandSettings`, `HomepageCampaign`, and `HomepageSection` models with Alembic migrations `a85462db2fec_add_storefront_models.py` and `f5399f52930d_add_homepage_sections.py`.
-- Seeded five editable local campaigns (Brand Story, Festive Gifting, New Arrivals, Home Décor, Custom Creations) and five editable homepage sections:
+- Seeded five editable local campaigns (Brand Story, Festive Gifting, New Arrivals, Home Décor, Custom Creations) and editable homepage sections:
   1. `category_grid`: "Shop by Category" (eyebrow: "Browse by Collection", dynamically resolves root categories)
   2. `product_collection`: "Most Loved Creations" (eyebrow: "Customer Favourites", dynamically resolves `collection_slug="bestsellers"`)
-  3. `promo_banner`: "Gift Handcrafted Warmth This Season" (with artisanal CTA `/shop?category=Gifts`)
-  4. `review_section`: "Loved by Over 500+ Happy Customers" (dynamically resolves verified customer testimonials)
-  5. `image_text`: "Handmade with Love, Thread by Thread" (artisanal story highlight with CTA `/about`)
+  3. `product_collection`: "Tiny Friends, Big Smiles 🐾" (eyebrow: "Handmade Companions", collection resolved from existing tagged Amigurumi products)
+  4. `occasion_grid`: "Gift by Occasion" (dynamically resolves admin-enabled, currently scheduled occasion records/images in display order)
+  5. `promo_banner`: "Gift Handcrafted Warmth This Season" (with artisanal CTA `/shop?category=Gifts`)
+  6. `review_section`: "Loved by Over 500+ Happy Customers" (dynamically resolves verified customer testimonials)
+  7. `image_text`: "Handmade with Love, Thread by Thread" (artisanal story highlight with CTA `/about`)
 - Public endpoints:
   - `GET /api/v1/storefront/home`: returns `brand`, `hero` (and `heroCampaigns`), and `sections` with resolved catalogue/review items.
   - `GET /api/v1/storefront`: backwards-compatibility alias returning `brand` and `heroCampaigns`.

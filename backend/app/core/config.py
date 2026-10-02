@@ -2,7 +2,34 @@
 
 import os
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import List
+
+
+def config_value(name: str, default: str | None = None) -> str | None:
+    """Read a setting from its *_FILE mount first, then from its environment variable.
+
+    File-backed values have precedence. If a configured file cannot be read, fail
+    closed instead of silently using a possibly stale environment value. Error
+    messages name the setting but never include its contents or path.
+    """
+    file_path = os.getenv(f"{name}_FILE")
+    if file_path and file_path.strip():
+        try:
+            return Path(file_path.strip()).read_text(encoding="utf-8").rstrip("\r\n")
+        except OSError:
+            raise RuntimeError(f"Unable to read configured secret file for {name}") from None
+
+    secret_name = name.lower()
+    for candidate_dir in ("/run/secrets/backend", "/run/secrets"):
+        candidate_path = Path(candidate_dir) / secret_name
+        if candidate_path.is_file():
+            try:
+                return candidate_path.read_text(encoding="utf-8").rstrip("\r\n")
+            except OSError:
+                raise RuntimeError(f"Unable to read secret file for {name}") from None
+
+    return os.getenv(name, default)
 
 
 @dataclass
@@ -11,7 +38,7 @@ class Settings:
 
     app_env: str = os.getenv("APP_ENV", "development")
     project_name: str = os.getenv("PROJECT_NAME", "Sulocraft")
-    database_url: str = os.getenv("DATABASE_URL", "sqlite:///./crochet.db")
+    database_url: str = config_value("DATABASE_URL", "sqlite:///./crochet.db") or "sqlite:///./crochet.db"
 
     # Frontend & CORS
     frontend_url: str = os.getenv(
@@ -38,8 +65,8 @@ class Settings:
 
     # Cloudflare R2 Object Storage
     r2_endpoint: str | None = os.getenv("R2_ENDPOINT")
-    r2_access_key_id: str | None = os.getenv("R2_ACCESS_KEY_ID")
-    r2_secret_access_key: str | None = os.getenv("R2_SECRET_ACCESS_KEY")
+    r2_access_key_id: str | None = config_value("R2_ACCESS_KEY_ID")
+    r2_secret_access_key: str | None = config_value("R2_SECRET_ACCESS_KEY")
     r2_public_bucket: str = os.getenv("R2_PUBLIC_BUCKET", "sulocraft-products")
     r2_private_backup_bucket: str = os.getenv("R2_PRIVATE_BACKUP_BUCKET", "sulocraft-backups")
     r2_public_base_url: str = os.getenv("R2_PUBLIC_BASE_URL", "https://images.sulocraft.com")
@@ -54,7 +81,8 @@ class Settings:
 
     # Auth Providers
     google_client_id: str | None = os.getenv("GOOGLE_CLIENT_ID")
-    google_client_secret: str | None = os.getenv("GOOGLE_CLIENT_SECRET")
+    google_client_secret: str | None = config_value("GOOGLE_CLIENT_SECRET")
+    facebook_app_secret: str | None = config_value("FACEBOOK_APP_SECRET")
     facebook_app_id: str | None = os.getenv("FACEBOOK_APP_ID")
     # Administrator Bootstrap (Configurable for Anupama / Production)
     admin_email: str = os.getenv("ADMIN_EMAIL", "anupama@sulocraft.com")
@@ -62,10 +90,10 @@ class Settings:
 
     # SMS Notifications (Fast2SMS / Twilio / Mock for Order Updates)
     sms_provider: str = os.getenv("SMS_PROVIDER", "mock")
-    fast2sms_api_key: str | None = os.getenv("FAST2SMS_API_KEY")
+    fast2sms_api_key: str | None = config_value("FAST2SMS_API_KEY")
     fast2sms_route: str = os.getenv("FAST2SMS_ROUTE", "dlt")
-    twilio_account_sid: str | None = os.getenv("TWILIO_ACCOUNT_SID")
-    twilio_auth_token: str | None = os.getenv("TWILIO_AUTH_TOKEN")
+    twilio_account_sid: str | None = config_value("TWILIO_ACCOUNT_SID")
+    twilio_auth_token: str | None = config_value("TWILIO_AUTH_TOKEN")
     twilio_from_phone: str | None = os.getenv("TWILIO_FROM_PHONE")
 
     # Email Notifications (SMTP / Resend / Mock)
@@ -73,16 +101,20 @@ class Settings:
     email_from_orders: str = os.getenv("EMAIL_FROM_ORDERS", "Sulocraft <orders@sulocraft.com>")
     email_from_support: str = os.getenv("EMAIL_FROM_SUPPORT", "Sulocraft Support <support@sulocraft.com>")
     email_from_hello: str = os.getenv("EMAIL_FROM_HELLO", "Sulocraft <hello@sulocraft.com>")
+    email_from_welcome: str = os.getenv("EMAIL_FROM_WELCOME", "Sulocraft <welcome@sulocraft.com>")
     email_from: str = os.getenv("EMAIL_FROM", os.getenv("EMAIL_FROM_ORDERS", "Sulocraft <orders@sulocraft.com>"))
     smtp_host: str = os.getenv("SMTP_HOST", "smtp.gmail.com")
     smtp_port: int = int(os.getenv("SMTP_PORT", "587"))
-    smtp_user: str | None = os.getenv("SMTP_USER")
-    smtp_password: str | None = os.getenv("SMTP_PASSWORD")
+    smtp_user: str | None = config_value("SMTP_USER")
+    smtp_password: str | None = config_value("SMTP_PASSWORD")
     smtp_tls: bool = os.getenv("SMTP_TLS", "true").lower() in ("true", "1", "yes")
-    resend_api_key: str | None = os.getenv("RESEND_API_KEY")
+    resend_api_key: str | None = config_value("RESEND_API_KEY")
 
     # Payment Provider
     payment_provider: str = os.getenv("PAYMENT_PROVIDER", "mock")
+    razorpay_key_id: str | None = os.getenv("RAZORPAY_KEY_ID")
+    razorpay_key_secret: str | None = config_value("RAZORPAY_KEY_SECRET")
+    razorpay_webhook_secret: str | None = config_value("RAZORPAY_WEBHOOK_SECRET")
 
     @property
     def cors_origins(self) -> list[str]:

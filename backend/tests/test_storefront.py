@@ -239,7 +239,7 @@ def test_admin_storefront_unauthorized_forbidden():
 
 
 def test_get_storefront_home_returns_brand_hero_and_resolved_sections():
-    """Verify GET /api/v1/storefront/home returns brand, hero, and all 5 resolved sections."""
+    """Verify GET /api/v1/storefront/home returns brand, hero, and all 7 resolved sections."""
     response = client.get("/api/v1/storefront/home")
     assert response.status_code == 200
     data = response.json()
@@ -254,11 +254,12 @@ def test_get_storefront_home_returns_brand_hero_and_resolved_sections():
 
     assert "sections" in data
     sections = data["sections"]
-    assert len(sections) >= 5
+    assert len(sections) >= 7
 
     section_types = [s["type"] for s in sections]
     assert "category_grid" in section_types
     assert "product_collection" in section_types
+    assert "occasion_grid" in section_types
     assert "promo_banner" in section_types
     assert "review_section" in section_types
     assert "image_text" in section_types
@@ -275,22 +276,45 @@ def test_get_storefront_home_returns_brand_hero_and_resolved_sections():
     assert "slug" in cat0
     assert "imageUrl" in cat0
 
-    # 2. Product Collection verification
-    pc = next(s for s in sections if s["type"] == "product_collection")
-    assert pc["order"] == 2
-    assert pc["enabled"] is True
-    assert pc["title"] == "Most Loved Creations"
-    assert pc["collectionSlug"] == "bestsellers"
-    assert len(pc["products"]) > 0
-    prod0 = pc["products"][0]
+    # 2. Product Collection (Bestsellers) verification
+    pc_best = next(s for s in sections if s["type"] == "product_collection" and s.get("collectionSlug") == "bestsellers")
+    assert pc_best["order"] == 2
+    assert pc_best["enabled"] is True
+    assert pc_best["title"] == "Most Loved Creations"
+    assert pc_best["collectionSlug"] == "bestsellers"
+    assert len(pc_best["products"]) > 0
+    prod0 = pc_best["products"][0]
     assert "id" in prod0
     assert "name" in prod0
     assert "price" in prod0
     assert "rating" in prod0
 
-    # 3. Promo Banner verification
+    # 3. Product Collection (Amigurumi - Tiny Friends, Big Smiles) verification
+    pc_ami = next(s for s in sections if s["type"] == "product_collection" and s.get("collectionSlug") == "amigurumi")
+    assert pc_ami["order"] == 3
+    assert pc_ami["enabled"] is True
+    assert pc_ami["title"] == "Tiny Friends, Big Smiles 🐾"
+    assert pc_ami["eyebrow"] == "Handmade Companions"
+    assert pc_ami["description"] == "Each little creature is stitched with personality and charm"
+    assert len(pc_ami["products"]) == 4
+
+    # 4. Occasion Grid verification (Gift by Occasion)
+    og = next(s for s in sections if s["type"] == "occasion_grid")
+    assert og["order"] == 4
+    assert og["enabled"] is True
+    assert og["title"] == "Gift by Occasion"
+    assert og["eyebrow"] == "Browse by Moment"
+    assert len(og["occasions"]) > 0
+    occ0 = og["occasions"][0]
+    assert "id" in occ0
+    assert "name" in occ0
+    assert "icon" in occ0
+    assert "imageUrl" in occ0
+    assert occ0["imageUrl"].startswith("http")
+
+    # 5. Promo Banner verification (immediately following Occasion Grid)
     pb = next(s for s in sections if s["type"] == "promo_banner")
-    assert pb["order"] == 3
+    assert pb["order"] == 5
     assert pb["enabled"] is True
     assert pb["title"] == "Gift Handcrafted Warmth This Season"
     assert "imageUrl" in pb
@@ -298,9 +322,9 @@ def test_get_storefront_home_returns_brand_hero_and_resolved_sections():
     assert "ctaText" in pb
     assert "ctaUrl" in pb
 
-    # 4. Review Section verification
+    # 6. Review Section verification
     rs = next(s for s in sections if s["type"] == "review_section")
-    assert rs["order"] == 4
+    assert rs["order"] == 6
     assert rs["enabled"] is True
     assert len(rs["reviews"]) > 0
     rev0 = rs["reviews"][0]
@@ -308,9 +332,9 @@ def test_get_storefront_home_returns_brand_hero_and_resolved_sections():
     assert "rating" in rev0
     assert "text" in rev0
 
-    # 5. Image Text verification
+    # 7. Image Text verification
     it = next(s for s in sections if s["type"] == "image_text")
-    assert it["order"] == 5
+    assert it["order"] == 7
     assert it["enabled"] is True
     assert it["title"] == "Handmade with Love, Thread by Thread"
     assert "description" in it
@@ -517,3 +541,128 @@ def test_static_image_redirect_resolver():
     assert "location" in fallback_res.headers
 
 
+def test_amigurumi_homepage_collection_section():
+    """Verify 'Tiny Friends, Big Smiles 🐾' section order, visibility, 4 distinct products, and distinct images."""
+    response = client.get("/api/v1/storefront/home")
+    assert response.status_code == 200
+    data = response.json()
+    sections = data["sections"]
+
+    ami_sec = next((s for s in sections if s.get("collectionSlug") == "amigurumi"), None)
+    assert ami_sec is not None, "Amigurumi product_collection section must be present in /storefront/home"
+
+    # Verify attributes
+    assert ami_sec["type"] == "product_collection"
+    assert ami_sec["order"] == 3
+    assert ami_sec["enabled"] is True
+    assert ami_sec["title"] == "Tiny Friends, Big Smiles 🐾"
+    assert ami_sec["eyebrow"] == "Handmade Companions"
+    assert ami_sec["description"] == "Each little creature is stitched with personality and charm"
+
+    # Verify order relative to occasion_grid and promo_banner
+    occ_sec = next((s for s in sections if s["type"] == "occasion_grid"), None)
+    assert occ_sec is not None
+    assert occ_sec["order"] == 4
+
+    promo_sec = next((s for s in sections if s["type"] == "promo_banner"), None)
+    assert promo_sec is not None
+    assert promo_sec["order"] == 5
+    assert ami_sec["order"] < occ_sec["order"] < promo_sec["order"]
+
+    # Verify exactly 4 distinct published products
+    products = ami_sec["products"]
+    assert len(products) == 4, f"Expected 4 Amigurumi products, got {len(products)}"
+
+    prod_ids = [p["id"] for p in products]
+    assert len(set(prod_ids)) == 4, f"Product IDs must be distinct: {prod_ids}"
+
+    prod_slugs = [p["slug"] for p in products]
+    assert len(set(prod_slugs)) == 4, f"Product slugs must be distinct: {prod_slugs}"
+
+    # Verify strictly creature companions (no planters or flower bouquets)
+    expected_slugs = {"heart-bear", "mini-panda-amigurumi", "crochet-bunny", "octopus-amigurami-set"}
+    assert set(prod_slugs) == expected_slugs, f"Expected creature slugs {expected_slugs}, got {set(prod_slugs)}"
+    assert "crochet-heart-planter" not in prod_slugs
+    assert "amigurumi-flower-bouquet" not in prod_slugs
+
+    # Verify distinct non-repeating image URLs
+    image_urls = [p["image"] for p in products]
+    assert len(set(image_urls)) == 4, f"Image URLs must be distinct and non-repeating: {image_urls}"
+    for img in image_urls:
+        assert img.startswith("http"), f"Image URL must be absolute: {img}"
+        assert not img.endswith("missing"), f"Image URL must not be a missing placeholder: {img}"
+
+
+def test_amigurumi_section_safe_repair_on_existing_db():
+    """Verify seed_storefront_content safely creates or repairs the Amigurumi and Occasion sections on an existing database."""
+    from app.models.storefront import HomepageSection
+    from app.db.seed import seed_storefront_content
+
+    with SessionLocal() as db:
+        # Check that it exists and re-running seed preserves order 3
+        seed_storefront_content(db)
+
+        ami = db.query(HomepageSection).filter(HomepageSection.collection_slug == "amigurumi").first()
+        assert ami is not None
+        assert ami.display_order == 3
+        assert ami.title == "Tiny Friends, Big Smiles 🐾"
+        assert ami.eyebrow == "Handmade Companions"
+        assert ami.description == "Each little creature is stitched with personality and charm"
+        assert ami.is_enabled is True
+
+        # Delete it to simulate a legacy DB missing the section
+        db.delete(ami)
+        db.commit()
+
+        # Re-run seed_storefront_content; it must re-insert it
+        seed_storefront_content(db)
+
+        ami_repaired = db.query(HomepageSection).filter(HomepageSection.collection_slug == "amigurumi").first()
+        assert ami_repaired is not None
+        assert ami_repaired.display_order == 3
+        assert ami_repaired.is_enabled is True
+        assert ami_repaired.title == "Tiny Friends, Big Smiles 🐾"
+
+        # Subsequent sections must have display_order 4, 5, 6, 7
+        occ = db.query(HomepageSection).filter(HomepageSection.section_type == "occasion_grid").first()
+        assert occ is not None
+        assert occ.display_order == 4
+
+        pb = db.query(HomepageSection).filter(HomepageSection.section_type == "promo_banner").first()
+        assert pb.display_order == 5
+
+        rs = db.query(HomepageSection).filter(HomepageSection.section_type == "review_section").first()
+        assert rs.display_order == 6
+
+        it = db.query(HomepageSection).filter(HomepageSection.section_type == "image_text").first()
+        assert it.display_order == 7
+
+
+def test_occasion_grid_homepage_section():
+    """Verify 'Gift by Occasion' section attributes, ordering, items, and distinct image URLs."""
+    response = client.get("/api/v1/storefront/home")
+    assert response.status_code == 200
+    data = response.json()
+    sections = data["sections"]
+
+    occ_sec = next((s for s in sections if s["type"] == "occasion_grid"), None)
+    assert occ_sec is not None, "occasion_grid section must be present in /storefront/home"
+
+    assert occ_sec["order"] == 4
+    assert occ_sec["enabled"] is True
+    assert occ_sec["title"] == "Gift by Occasion"
+    assert occ_sec["eyebrow"] == "Browse by Moment"
+    assert occ_sec["description"] == "Celebrate milestones, festivals, and memories with handcrafted warmth"
+
+    occasions = occ_sec["occasions"]
+    assert len(occasions) == 9, "Occasion grid returns all 9 active initial occasions (4 evergreen + 5 seasonal)"
+
+    # Verify occasions have distinct IDs and distinct valid images
+    occ_ids = [o["id"] for o in occasions]
+    assert len(set(occ_ids)) == len(occ_ids)
+    assert "rakhi" not in occ_ids, "Rakhi must be hidden from occasion grid"
+
+    image_urls = [o["imageUrl"] for o in occasions]
+    assert len(set(image_urls)) == len(image_urls), f"Occasion images must be unique and non-repeating: {image_urls}"
+    for url in image_urls:
+        assert url.startswith("http"), f"Occasion image must be an absolute URL: {url}"

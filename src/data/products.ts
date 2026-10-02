@@ -14,6 +14,7 @@ export interface Product {
   collections?: TaxonomyReference[];
   badge?: string;
   tags?: string[];
+  occasions?: string[];
   description?: string;
   customizable?: boolean;
   inStock?: boolean;

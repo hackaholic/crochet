@@ -1,0 +1,214 @@
+name: Automated Security Release Gate
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+  workflow_dispatch:
+
+concurrency:
+  group: sulocraft-security-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  security-secrets:
+    name: Secrets & Config Architecture
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks Secret Scanner
+        run: |
+          chmod +x scripts/security/scan-secrets.sh
+          ./scripts/security/scan-secrets.sh
+
+      - name: Run Configuration & Architecture Audit
+        run: |
+          chmod +x scripts/security/scan-config.sh
+          ./scripts/security/scan-config.sh
+
+      - name: Upload Secret Audit Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: secrets-and-config-reports
+          path: |
+            work/security/reports/secrets-report.json
+            work/security/reports/config-audit.json
+          retention-days: 14
+
+  security-sast:
+    name: SAST Code Analysis (Semgrep)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Static Application Security Testing (SAST)
+        run: |
+          chmod +x scripts/security/scan-sast.sh
+          ./scripts/security/scan-sast.sh
+
+      - name: Upload SAST Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sast-report
+          path: work/security/reports/sast-report.json
+          retention-days: 14
+
+  security-frontend-deps:
+    name: Frontend Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Audit Frontend Dependencies
+        run: |
+          pnpm audit --audit-level=high
+
+  security-backend-deps:
+    name: Backend Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv and pip-audit
+        run: |
+          python -m pip install --upgrade pip pip-audit uv
+
+      - name: Audit Backend Dependencies
+        run: |
+          chmod +x scripts/security/scan-dependencies.sh
+          ./scripts/security/scan-dependencies.sh
+
+      - name: Upload Dependency Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-report
+          path: work/security/reports/dependencies-report.json
+          retention-days: 14
+
+  security-container:
+    name: Container & Infrastructure Security (Trivy)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Container & Infrastructure Scan
+        run: |
+          chmod +x scripts/security/scan-container.sh
+          ./scripts/security/scan-container.sh
+
+      - name: Upload Container Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: container-report
+          path: work/security/reports/container-report.json
+          retention-days: 14
+
+  security-tests:
+    name: Authorization & Business Logic Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: python -m pip install uv
+
+      - name: Install backend dependencies
+        run: uv sync --extra dev --frozen
+
+      - name: Run Broken Access Control & Business Logic Test Suite
+        run: |
+          uv run pytest \
+            tests/test_security_authorization.py \
+            tests/test_security_business_logic.py \
+            tests/test_config_secrets.py \
+            -v
+
+  security-gate:
+    name: Master Security Release Gate
+    needs:
+      - security-secrets
+      - security-sast
+      - security-frontend-deps
+      - security-backend-deps
+      - security-container
+      - security-tests
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Evaluate Release Gate Status
+        run: |
+          SECRETS_STATUS="${{ needs.security-secrets.result }}"
+          SAST_STATUS="${{ needs.security-sast.result }}"
+          FE_DEPS_STATUS="${{ needs.security-frontend-deps.result }}"
+          BE_DEPS_STATUS="${{ needs.security-backend-deps.result }}"
+          CONTAINER_STATUS="${{ needs.security-container.result }}"
+          TESTS_STATUS="${{ needs.security-tests.result }}"
+
+          echo "## Sulocraft Automated Security Release Gate Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Security Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :---: |" >> $GITHUB_STEP_SUMMARY
+          echo "| Secrets & Config Architecture | $SECRETS_STATUS |" >> $GITHUB_STEP_SUMMARY
+          echo "| SAST Static Code Analysis | $SAST_STATUS |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend Dependency Audit | $FE_DEPS_STATUS |" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend Dependency Audit | $BE_DEPS_STATUS |" >> $GITHUB_STEP_SUMMARY
+          echo "| Container & Infrastructure Scan | $CONTAINER_STATUS |" >> $GITHUB_STEP_SUMMARY
+          echo "| Authorization & Business Logic Tests | $TESTS_STATUS |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$SECRETS_STATUS" = "success" ] && \
+             [ "$SAST_STATUS" = "success" ] && \
+             [ "$FE_DEPS_STATUS" = "success" ] && \
+             [ "$BE_DEPS_STATUS" = "success" ] && \
+             [ "$CONTAINER_STATUS" = "success" ] && \
+             [ "$TESTS_STATUS" = "success" ]; then
+              echo "### ✅ Release Gate Status: **ELIGIBLE FOR PRODUCTION**" >> $GITHUB_STEP_SUMMARY
+              echo "All Level 1 & Level 2 automated security checks passed with 0 blocking findings." >> $GITHUB_STEP_SUMMARY
+              exit 0
+          else
+              echo "### ❌ Release Gate Status: **RELEASE BLOCKED**" >> $GITHUB_STEP_SUMMARY
+              echo "One or more security checks failed. Release gating policy prohibits deployment until resolved." >> $GITHUB_STEP_SUMMARY
+              exit 1
+          fi

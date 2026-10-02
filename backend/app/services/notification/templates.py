@@ -313,6 +313,156 @@ If you didn't request this link, you can safely ignore this email — your accou
     return html, text
 
 
+def render_welcome_email(
+    customer_name: str | None = None,
+    custom_message: str | None = None,
+    storefront_url: str | None = None,
+) -> tuple[str, str]:
+    """Generate rich branded HTML and plain-text welcome email for new customers.
+
+    Supports custom message notes or falls back to an artisanal founder welcome.
+
+    Returns:
+        tuple[str, str]: (html_body, text_body)
+    """
+    display_name = customer_name.strip() if customer_name and customer_name.strip() else "Friend"
+    base_url = (storefront_url or "https://sulocraft.com").rstrip("/")
+    shop_url = f"{base_url}/shop"
+
+    custom_note_html = ""
+    custom_note_text = ""
+    if custom_message and custom_message.strip():
+        clean_note = custom_message.strip()
+        custom_note_html = f"""
+        <div style="background-color: #FAF4EB; border-left: 4px solid #C4622D; padding: 18px 20px; border-radius: 8px; margin: 24px 0;">
+            <p style="margin: 0; font-size: 15px; color: #5C3D2E; font-style: italic; line-height: 1.6;">
+                "{clean_note}"
+            </p>
+        </div>
+        """
+        custom_note_text = f"\nA note from our studio:\n\"{clean_note}\"\n"
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Sulocraft</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #FAF7F2; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #FAF7F2; padding: 36px 16px;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="100%" style="max-width: 600px; background-color: #FFFFFF; border-radius: 20px; overflow: hidden; border: 1px solid #EDE4D0; box-shadow: 0 4px 20px rgba(44, 24, 16, 0.05);">
+                    <!-- Header -->
+                    <tr>
+                        <td style="background-color: #832729; padding: 36px 32px 32px; text-align: center;">
+                            <div style="font-size: 32px; margin-bottom: 6px;">🧶</div>
+                            <h1 style="margin: 0; color: #FFFFFF; font-size: 28px; font-weight: 700; letter-spacing: 1.5px; font-family: Georgia, serif;">SULOCRAFT</h1>
+                            <p style="margin: 8px 0 0; color: #F5DCD7; font-size: 14px; letter-spacing: 0.5px;">Handcrafted with Love, Thread by Thread</p>
+                        </td>
+                    </tr>
+
+                    <!-- Body -->
+                    <tr>
+                        <td style="padding: 36px 36px 28px;">
+                            <span style="display: inline-block; background-color: #FAF0E6; color: #C4622D; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; padding: 5px 12px; border-radius: 20px; margin-bottom: 14px;">
+                                Welcome to our community
+                            </span>
+                            <h2 style="margin: 0 0 16px; color: #2C1810; font-size: 22px; font-weight: 700; line-height: 1.3;">
+                                We're so glad you're here, {display_name}!
+                            </h2>
+                            <p style="margin: 0 0 16px; color: #5C3D2E; font-size: 15px; line-height: 1.65;">
+                                Welcome to Sulocraft! Every single piece in our store is born from soft skeins of yarn, a single hook, and countless hours of patient craftsmanship. We create heirloom-quality crochet designed to bring warmth, smile, and timeless joy to your everyday life.
+                            </p>
+
+                            {custom_note_html}
+
+                            <!-- Values / Pillars Box -->
+                            <div style="background-color: #FAF7F2; border-radius: 12px; padding: 22px; margin: 28px 0 28px; border: 1px solid #EDE4D0;">
+                                <h3 style="margin: 0 0 16px; color: #2C1810; font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;">
+                                    The Sulocraft Promise
+                                </h3>
+                                <table width="100%" cellspacing="0" cellpadding="0">
+                                    <tr>
+                                        <td style="padding: 6px 0; font-size: 14px; color: #5C3D2E; vertical-align: top; width: 28px;">✨</td>
+                                        <td style="padding: 6px 0; font-size: 14px; color: #5C3D2E; line-height: 1.5;">
+                                            <strong>100% Handcrafted:</strong> Never mass-produced or machine-replicated.
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 6px 0; font-size: 14px; color: #5C3D2E; vertical-align: top; width: 28px;">🌿</td>
+                                        <td style="padding: 6px 0; font-size: 14px; color: #5C3D2E; line-height: 1.5;">
+                                            <strong>Gentle & Safe:</strong> Made with premium, soft, baby-safe natural yarns.
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 6px 0; font-size: 14px; color: #5C3D2E; vertical-align: top; width: 28px;">💝</td>
+                                        <td style="padding: 6px 0; font-size: 14px; color: #5C3D2E; line-height: 1.5;">
+                                            <strong>Everlasting Keepsakes:</strong> Bouquets that never wilt and toys built to be cherished forever.
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                            <!-- CTA Button -->
+                            <div style="text-align: center; margin: 32px 0 24px;">
+                                <a href="{shop_url}" style="background-color: #C4622D; color: #FFFFFF; text-decoration: none; padding: 15px 38px; border-radius: 50px; font-weight: 700; font-size: 15px; display: inline-block; letter-spacing: 0.4px; box-shadow: 0 4px 12px rgba(196, 98, 45, 0.25);">
+                                    Explore the Handmade Collection &rarr;
+                                </a>
+                            </div>
+
+                            <!-- Founder Signoff -->
+                            <div style="margin-top: 36px; padding-top: 24px; border-top: 1px solid #EDE4D0;">
+                                <p style="margin: 0; color: #8B6B4A; font-size: 14px;">With love and warmth,</p>
+                                <p style="margin: 4px 0 0; color: #2C1810; font-size: 16px; font-weight: 700; font-family: Georgia, serif;">Anupama Sharma</p>
+                                <p style="margin: 2px 0 0; color: #8B6B4A; font-size: 12px;">Founder & Head Artisan, Sulocraft</p>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #FAF7F2; padding: 24px 36px; text-align: center; border-top: 1px solid #EDE4D0;">
+                            <p style="margin: 0 0 8px; font-size: 13px; color: #8B6B4A;">
+                                Have questions or looking for a custom piece? Just reply to this email or write to <a href="mailto:welcome@sulocraft.com" style="color: #C4622D; text-decoration: none; font-weight: 600;">welcome@sulocraft.com</a>.
+                            </p>
+                            <p style="margin: 0; font-size: 12px; color: #A89582;">
+                                &copy; 2026 Sulocraft · <a href="{base_url}" style="color: #C4622D; text-decoration: none;">sulocraft.com</a>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+"""
+
+    text = f"""Welcome to Sulocraft, {display_name}!
+
+Every single creation at Sulocraft is hand-stitched with patience, care, and organic yarns by our dedicated artisans. We believe every home and loved one deserves the warmth of authentic handcrafted art.
+{custom_note_text}
+The Sulocraft Promise:
+- 100% Handcrafted: Never mass-produced.
+- Gentle & Safe: Made with premium, soft, baby-safe natural yarns.
+- Everlasting Keepsakes: Bouquets that never wilt and toys built to be cherished forever.
+
+Explore our collection:
+{shop_url}
+
+With love and warmth,
+Anupama Sharma
+Founder & Head Artisan, Sulocraft
+
+Questions or custom requests? Reply to this email or reach us at welcome@sulocraft.com.
+© 2026 Sulocraft · sulocraft.com
+"""
+
+    return html, text
+
+
 def render_payment_confirmation_email(order_data: dict, payment_data: dict) -> tuple[str, str]:
     """Generate HTML and plain text for payment receipt/confirmation."""
     order_number = order_data.get("orderNumber", "")

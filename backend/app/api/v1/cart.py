@@ -67,9 +67,13 @@ def _get_or_create_cart(
             .first()
         )
         if cart:
-            if user and not cart.user_id:
+            # Prevent IDOR: if cart is claimed by a specific user, reject unauthorized access
+            if cart.user_id is not None and (not user or cart.user_id != user.id):
+                cart = None
+            elif user and not cart.user_id:
                 cart.user_id = user.id
                 db.commit()
+        if cart:
             return cart, token
 
     if not create_if_missing:

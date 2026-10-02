@@ -1,0 +1,10 @@
+# Semgrep ignore configuration for Sulocraft
+node_modules/
+.venv/
+dist/
+build/
+work/
+backend/tests/
+src/**/*.test.tsx
+src/**/*.test.ts
+scripts/*.test.*

@@ -31,6 +31,12 @@ def test_seo_resolve_home():
         assert data["pageType"] == "website"
         assert data["imageUrl"] is not None
         assert data["breadcrumbs"] == []
+        assert len(data["faqs"]) >= 2
+        assert "handmade" in data["faqs"][0]["question"].lower() or "sulocraft" in data["faqs"][0]["question"].lower()
+        assert data["shippingInfo"] is not None
+        assert data["shippingInfo"]["freeShippingThreshold"] == 999
+        assert data["returnPolicy"] is not None
+        assert data["returnPolicy"]["returnWindowDays"] == 7
 
 
 def test_seo_resolve_static_pages():
@@ -133,6 +139,14 @@ def test_seo_resolve_product():
     assert "Toys" in crumb_names
     assert "Heart Bear" in crumb_names
 
+    # Check rich snippet extensions
+    assert len(data["faqs"]) >= 2
+    assert any("clean" in f["question"].lower() or "care" in f["question"].lower() for f in data["faqs"])
+    assert data["shippingInfo"] is not None
+    assert data["shippingInfo"]["freeShippingThreshold"] == 999
+    assert data["returnPolicy"] is not None
+    assert data["returnPolicy"]["returnWindowDays"] == 7
+
 
 def test_seo_resolve_private_routes_return_noindex():
     """Verify all private customer and admin routes return noindex,nofollow."""
@@ -177,7 +191,7 @@ def test_seo_resolve_missing_and_invalid_routes():
 
 
 def test_sitemap_xml_endpoints():
-    """Verify /sitemap.xml and /api/v1/seo/sitemap.xml generate valid sitemaps with all active entities."""
+    """Verify /sitemap.xml and /api/v1/seo/sitemap.xml generate valid sitemaps with all active entities and images."""
     for url in ("/sitemap.xml", "/api/v1/seo/sitemap.xml"):
         res = client.get(url)
         assert res.status_code == 200
@@ -190,6 +204,10 @@ def test_sitemap_xml_endpoints():
 
         locs = [elem.text for elem in root.findall(".//{http://www.sitemaps.org/schemas/sitemap/0.9}loc")]
         assert len(locs) >= 20
+
+        # Check image sitemap tags
+        img_locs = [elem.text for elem in root.findall(".//{http://www.google.com/schemas/sitemap-image/1.1}loc")]
+        assert len(img_locs) >= 10, f"Expected image tags in sitemap, got {len(img_locs)}"
 
         # Check static pages
         assert any(l.endswith(".com/") for l in locs)

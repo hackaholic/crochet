@@ -1,0 +1,25 @@
+# Sulocraft Gitleaks Configuration
+title = "Sulocraft Secret Detection Policy"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Reviewed allowlist for test fixtures, example files, documentation, and ignored local preprod files"
+paths = [
+    '''(^|/)\.env\.example$''',
+    '''(^|/)backend/\.env\.example$''',
+    '''(^|/)\.env\.preprod.*''',
+    '''(^|/)backend/\.env\.preprod.*''',
+    '''(^|/)backend/tests/.*''',
+    '''(^|/)work/security/.*''',
+    '''(^|/)docs/.*''',
+    '''(^|/)\.git/.*''',
+]
+regexes = [
+    '''dummy_[a-zA-Z0-9_-]+''',
+    '''test-[a-zA-Z0-9_-]+''',
+    '''example_[a-zA-Z0-9_-]+''',
+    '''sulocraft_secure_pw''',
+    '''AGE-SECRET-KEY-1[A-Z0-9]{58}''',
+]

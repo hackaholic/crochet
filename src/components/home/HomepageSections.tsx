@@ -2,6 +2,7 @@ import type { Product } from '../../data/products';
 import type { HomepageSection } from '../../lib/api/storefront';
 import CategoryGrid from './CategoryGrid';
 import ImageTextSection from './ImageTextSection';
+import OccasionGrid from './OccasionGrid';
 import ProductGrid from './ProductGrid';
 import PromoBanner from './PromoBanner';
 import ReviewSection from './ReviewSection';
@@ -21,6 +22,7 @@ export default function HomepageSections(props: HomepageSectionsProps) {
     switch (section.type) {
       case 'category_grid': return <CategoryGrid key={section.id} section={section} onNavigate={props.onNavigate} />;
       case 'product_collection': return <ProductGrid key={section.id} section={section} wishlist={props.wishlist} onAddToCart={props.onAddToCart} onToggleWishlist={props.onToggleWishlist} onProductClick={props.onProductClick} />;
+      case 'occasion_grid': return <OccasionGrid key={section.id} section={section} onNavigate={props.onNavigate} />;
       case 'promo_banner': return <PromoBanner key={section.id} section={section} onNavigate={props.onNavigate} />;
       case 'review_section': return <ReviewSection key={section.id} section={section} />;
       case 'image_text': return <ImageTextSection key={section.id} section={section} onNavigate={props.onNavigate} />;

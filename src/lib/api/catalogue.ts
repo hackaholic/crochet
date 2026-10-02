@@ -21,6 +21,7 @@ export interface CatalogueProduct {
   collections?: TaxonomyReference[];
   badge?: string | null;
   tags?: string[];
+  occasions?: string[];
   description?: string | null;
   customizable?: boolean;
   inStock?: boolean;
@@ -76,6 +77,7 @@ function toProduct(product: CatalogueProduct): Product {
     collections: product.collections ?? [],
     badge: product.badge ?? undefined,
     tags: product.tags ?? [],
+    occasions: product.occasions ?? [],
     description: product.description ?? undefined,
     customizable: product.customizable ?? false,
     inStock: product.inStock ?? product.inventoryStatus !== 'OUT_OF_STOCK',
@@ -88,6 +90,70 @@ export async function getProducts(signal?: AbortSignal): Promise<Product[]> {
   const payload: unknown = await response.json();
   if (!Array.isArray(payload)) throw new Error('Catalogue response has an unexpected shape');
   return payload.map(item => toProduct(item as CatalogueProduct));
+}
+
+export interface ProductSearchOptions {
+  limit?: number;
+  signal?: AbortSignal;
+}
+
+/** Search the active database catalogue for products matching a query. */
+export async function searchProducts(query: string, options: ProductSearchOptions = {}): Promise<Product[]> {
+  const normalizedQuery = query.trim();
+  if (!normalizedQuery) return [];
+
+  const params = new URLSearchParams({
+    q: normalizedQuery,
+    limit: String(options.limit ?? 6),
+  });
+  const response = await fetch(apiUrl(`/products/search?${params.toString()}`), {
+    signal: options.signal,
+  });
+  if (!response.ok) throw new Error(`Product search failed (${response.status})`);
+  const payload: unknown = await response.json();
+  if (!Array.isArray(payload)) throw new Error('Product search response has an unexpected shape');
+  return payload.map(item => toProduct(item as CatalogueProduct));
+}
+
+export interface SearchSuggestionKeyword {
+  term: string;
+}
+
+export interface SearchSuggestions {
+  trending_keywords: SearchSuggestionKeyword[];
+  trending_products: Product[];
+}
+
+/** Fetch backend-ranked search discovery content for the empty search overlay. */
+export async function getSearchSuggestions(signal?: AbortSignal): Promise<SearchSuggestions> {
+  const response = await fetch(apiUrl('/products/search/suggestions?keyword_limit=6&product_limit=4'), { signal });
+  if (!response.ok) throw new Error(`Search suggestions request failed (${response.status})`);
+  const payload: unknown = await response.json();
+  if (!payload || typeof payload !== 'object') throw new Error('Search suggestions response has an unexpected shape');
+
+  const body = payload as { trending_keywords?: unknown; trending_products?: unknown };
+  if (!Array.isArray(body.trending_keywords) || !Array.isArray(body.trending_products)) {
+    throw new Error('Search suggestions response has an unexpected shape');
+  }
+  const keywords = body.trending_keywords.filter((item): item is SearchSuggestionKeyword => (
+    Boolean(item) && typeof item === 'object' && typeof (item as SearchSuggestionKeyword).term === 'string'
+  ));
+  return {
+    trending_keywords: keywords,
+    trending_products: body.trending_products.map(item => toProduct(item as CatalogueProduct)),
+  };
+}
+
+/** Record a completed query for anonymous aggregate trends; callers must not await this. */
+export async function recordSearchQuery(query: string): Promise<void> {
+  const normalizedQuery = query.trim();
+  if (!normalizedQuery) return;
+  const response = await fetch(apiUrl('/products/search/events'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: normalizedQuery }),
+  });
+  if (!response.ok) throw new Error(`Search event request failed (${response.status})`);
 }
 
 async function getJsonList<T>(path: string, signal?: AbortSignal): Promise<T[]> {
@@ -108,4 +174,17 @@ export function getCollections(signal?: AbortSignal): Promise<Collection[]> {
 
 export function flattenCategories(categories: Category[]): Category[] {
   return categories.flatMap(category => [category, ...flattenCategories(category.children ?? [])]);
+}
+
+export interface Occasion {
+  id: string;
+  name: string;
+  icon?: string | null;
+  imageUrl?: string | null;
+  description?: string | null;
+  displayOrder?: number;
+}
+
+export function getOccasions(signal?: AbortSignal): Promise<Occasion[]> {
+  return getJsonList<Occasion>('/occasions', signal);
 }

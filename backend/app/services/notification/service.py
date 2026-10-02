@@ -20,6 +20,7 @@ from app.services.notification.templates import (
     render_order_status_sms,
     render_payment_confirmation_email,
     render_refund_notification_email,
+    render_welcome_email,
 )
 
 logger = logging.getLogger("sulocraft.notifications")
@@ -99,7 +100,7 @@ class EmailService:
             subject=subject,
             html_content=html_body,
             text_content=text_body,
-            from_email=settings.email_from_orders,
+            from_email=settings.email_from_welcome,
         )
 
         provider_name = settings.email_provider or "mock"
@@ -122,6 +123,56 @@ class EmailService:
             db.commit()
         except Exception as e:
             logger.error("Failed to persist magic link notification log: %s", e)
+            db.rollback()
+
+        return success, err
+
+    @staticmethod
+    def send_welcome_email(
+        db: Session,
+        to_email: str,
+        customer_name: str | None = None,
+        custom_message: str | None = None,
+    ) -> tuple[bool, str | None]:
+        """Send a branded welcome email to a new or existing customer.
+
+        Uses welcome@sulocraft.com and records an audit log.
+        """
+        html_body, text_body = render_welcome_email(
+            customer_name=customer_name,
+            custom_message=custom_message,
+            storefront_url=settings.frontend_url,
+        )
+        subject = "Welcome to Sulocraft 🧶 Handcrafted with Love"
+        email_provider = get_email_provider()
+        success, err = email_provider.send_email(
+            to_email=to_email,
+            subject=subject,
+            html_content=html_body,
+            text_content=text_body,
+            from_email=settings.email_from_welcome,
+        )
+
+        provider_name = settings.email_provider or "mock"
+        status = "SENT" if success else "FAILED"
+        if provider_name.lower() == "mock":
+            status = "MOCK"
+
+        log_entry = NotificationLog(
+            channel="EMAIL",
+            recipient=to_email,
+            event_type="WELCOME_EMAIL",
+            status=status,
+            provider=provider_name,
+            subject=subject,
+            body=f"Welcome email sent to {to_email}" + (f": {custom_message}" if custom_message else ""),
+            error_message=err,
+        )
+        try:
+            db.add(log_entry)
+            db.commit()
+        except Exception as e:
+            logger.error("Failed to persist welcome notification log: %s", e)
             db.rollback()
 
         return success, err
@@ -585,6 +636,18 @@ class NotificationService:
         """Delegate magic link delivery to EmailService."""
         return EmailService.send_magic_link(db, to_email, magic_link, expires_minutes)
 
+    @staticmethod
+    def send_welcome(
+        db: Session,
+        to_email: str,
+        customer_name: str | None = None,
+        custom_message: str | None = None,
+    ) -> tuple[bool, str | None]:
+        """Delegate welcome email delivery to EmailService."""
+        return EmailService.send_welcome_email(
+            db, to_email=to_email, customer_name=customer_name, custom_message=custom_message
+        )
+
 
 # -----------------------------------------------------------------------------
 # Background Task Runners (Decoupled execution with independent DB sessions)
@@ -646,3 +709,18 @@ def dispatch_refund_background(
         order = db.query(Order).filter(Order.id == order_id).first()
         if order:
             EmailService.send_refund_notification(db, order, refund_amount=refund_amount, reason=reason)
+
+
+def dispatch_welcome_background(
+    to_email: str,
+    customer_name: str | None = None,
+    custom_message: str | None = None,
+) -> None:
+    """Send branded welcome email in FastAPI background task."""
+    with SessionLocal() as db:
+        EmailService.send_welcome_email(
+            db,
+            to_email=to_email,
+            customer_name=customer_name,
+            custom_message=custom_message,
+        )

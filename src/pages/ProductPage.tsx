@@ -15,8 +15,6 @@ interface ProductPageProps {
   onNavigate: (page: 'home' | 'shop' | 'product' | 'cart' | 'wishlist' | 'checkout' | 'about') => void;
 }
 
-const colors = ['#F2C4CE', '#C4622D', '#8FAF8C', '#C5B9D6', '#EDE4D0', '#2C1810', '#F5E0D3', '#8B6B4A'];
-
 const infoSections = [
   {
     title: 'Handmade Details',
@@ -51,7 +49,6 @@ export default function ProductPage({ product: initialProduct, onAddToCart, onTo
   const images = product.images || [product.image, product.image, product.image, product.image];
 
   const [activeImg, setActiveImg] = useState(0);
-  const [selectedColor, setSelectedColor] = useState(colors[0]);
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
@@ -175,25 +172,6 @@ export default function ProductPage({ product: initialProduct, onAddToCart, onTo
             <p className="text-[#5C3D2E] leading-relaxed mb-8">
               {product.description || 'A beautiful handcrafted crochet creation made with premium cotton yarn. Each piece is stitched by hand with care, bringing warmth and artistry to your home or loved ones.'}
             </p>
-
-            {/* Color selection */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-3">
-                <label className="text-sm font-semibold text-[#2C1810]">Flower Color</label>
-                <span className="text-xs text-[#8B6B4A]">50+ options available</span>
-              </div>
-              <div className="flex gap-2.5 flex-wrap">
-                {colors.map(color => (
-                  <button
-                    key={color}
-                    onClick={() => setSelectedColor(color)}
-                    className="w-9 h-9 rounded-full border-2 shadow-sm transition-all hover:scale-110"
-                    style={{ background: color, borderColor: selectedColor === color ? '#2C1810' : 'transparent', outline: selectedColor === color ? '2px solid #2C1810' : 'none', outlineOffset: '2px' }}
-                    aria-label={`Color ${color}`}
-                  />
-                ))}
-              </div>
-            </div>
 
             {/* Quantity */}
             <div className="mb-6">

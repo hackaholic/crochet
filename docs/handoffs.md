@@ -1,6 +1,275 @@
 # Cross-team handoffs
 
-Use this file whenever frontend or backend work becomes ready for the other side. Newest handoff goes first.
+Use this file whenever frontend or backend work becomes ready for the other side. Newest handoff goes first. Every active handoff identifies its `work/` folder and task IDs and links the subtask contract file. Before acting, Gemini reads `work/INDEX.md`, that work folder's `README.md`, `tasks.md`, `decisions.md`, and the linked contract, then only relevant code/files. Mark that subtask In Progress, update its status and notes, and report acceptance results/blockers before handing back; do not copy unrelated history into the work folder.
+
+## 2026-10-03 — Work 010 evergreen occasion visibility and admin rules
+
+From: Codex
+To: Gemini
+Status: Ready for Gemini; Codex frontend/asset work is in progress
+
+The owner clarified that Birthday, Anniversary, Wedding, and Baby Shower stay visible all year. Other occasions come and go under admin enable/disable or schedules. Please implement the backend portion of [Work 010 Task 10.9](../work/work-010-gift-by-occasion/tasks/task-010-evergreen-occasion-rules.md): idempotently repair seed data, ensure storefront inclusion regardless of seasonal dates, reject attempts to hide/delete/schedule evergreen records, and expose the backend-derived `isEvergreen` field in the admin response. Keep seasonal occasions configurable. Preserve the existing Baby Shower ID `babyshower`; do not create a duplicate ID. Public grid ordering requirement: enabled and in-season seasonal occasions lead the grid (respecting `displayOrder` within that group), followed by evergreen occasions in their configured order. A newly enabled seasonal occasion should therefore lead its respective seasonal group position. Support clearing a seasonal schedule by explicitly setting its start/end date to null. Codex uploaded distinct artwork to R2 at `occasions/birthday-gifting-v2.png`, `occasions/anniversary-gifting-v2.png`, and `occasions/wedding-gifting-v2.png`; update these three database image references without overwriting admin copy, display order, or product associations. Enable Baby Shower year-round. Do not overwrite other admin content or product associations in existing DBs. Report migrations, tests, and acceptance results in Work 010 notes and this handoff.
+
+## 2026-10-03 — Work 009 search discovery suggestions
+
+From: Codex
+To: Gemini
+Status: Backend task pending; frontend is implementing against the API contract
+
+Please take the backend portion of [Work 009 Task 9.8](../work/work-009-storefront-search/tasks/task-009-search-discovery-api.md). This is the concrete gap uncovered after typeahead: the empty search overlay should show truly trending search terms and products, and there is no reliable search telemetry or product trend endpoint today. Read the linked task contract and the Work 009 README/tasks/decisions, then implement the API, persistence/privacy behavior, tests, OpenAPI, and documentation described there. Do not use review-count ranking or placeholder data as a trend signal. Keep Codex's frontend integration contract stable or coordinate any necessary schema change in this handoff before changing it.
+
+## 2026-10-02 — Seasonal Gift by Occasion admin configuration and distinct artwork complete
+
+From: Gemini
+To: Codex / Owner
+Status: Complete; 134/134 backend tests passing; 48/48 frontend tests passing; verified in local Docker stack
+
+Gemini has completed the backend implementation for seasonal Gift by Occasion configuration and distinct artwork:
+
+### What was delivered
+
+1. **Database & Migration**:
+   - Alembic migration `8b2c3d4e5f6a_add_occasion_admin_and_product_occasions.py`:
+     - Added `image_key`, `description`, `display_order`, `is_enabled`, `starts_at`, `ends_at`, `created_at`, `updated_at` to `occasions`.
+     - Created `product_occasions` association table with cascading foreign keys to `products.id` and `occasions.id`.
+2. **Distinct Artwork Asset Resolution & Guard**:
+   - Resolved 12 distinct photo IDs in `backend/app/core/images.py` across all occasions. No two occasions reuse artwork.
+   - Initial 8 active occasions (Birthday, Anniversary, Valentine's Day, Wedding, Decor, Diwali, Mother's Day, Father's Day) each have distinct, bright, high-resolution artisanal imagery.
+   - Admin CRUD strictly rejects assigning duplicate `image_key` or `image_url` across occasions with HTTP 400.
+3. **Seasonal Schedule & Asia/Kolkata Boundaries**:
+   - Added `Occasion.is_in_season(current_time)` strictly evaluating schedule windows against `Asia/Kolkata` timezone.
+   - Storefront `occasion_grid` section resolver in `backend/app/api/v1/storefront.py` returns only enabled and in-season occasions up to section `item_limit`.
+   - Rakhi and off-season occasions (Baby Shower, Housewarming, Just Because) are preserved in database with `is_enabled=False`.
+   - When no occasions qualify, the section is completely omitted from the homepage response (avoiding an empty section heading).
+4. **Many-to-Many Product Associations & Frontend Filter Alignment**:
+   - Products are linked to multiple occasions via `product_occasions` without duplicating SKU rows or product records.
+   - `GET /api/v1/products?occasion=<id>` filters by `Product.occasions` (with fallback to tags), returning canonical product objects.
+   - `ProductListItem` and `ProductDetail` responses now explicitly serialize `occasions: list[str]` and enrich `tags` with associated occasion IDs and names, guaranteeing that client-side filtering on `/shop?occasion=<id>` via `productMatchesOccasion(p, occasion)` faithfully resolves all database associations.
+5. **Admin CRUD Endpoints & Contracts (`/api/v1/admin/occasions`)**:
+   - `GET /api/v1/admin/occasions`: Lists all occasions with product IDs, product counts, and display order.
+   - `POST /api/v1/admin/occasions`: Creates occasions with slug ID, distinct image key, schedule, and product associations.
+   - `GET /api/v1/admin/occasions/{id}`: Detailed single occasion view.
+   - `PUT/PATCH /api/v1/admin/occasions/{id}`: Updates occasion metadata, visibility, schedule, and product associations.
+   - `DELETE /api/v1/admin/occasions/{id}`: Deletes an occasion and cascades association deletion.
+   - `docs/api-admin.md` updated with full TypeScript contracts (`AdminOccasionIn`, `AdminOccasionUpdateIn`, `AdminOccasionOut`) and Section 4 endpoint table entries.
+   - `src/lib/api/admin.ts` provides typed client functions (`getAdminOccasions`, `createAdminOccasion`, `getAdminOccasion`, `updateAdminOccasion`, `deleteAdminOccasion`).
+   - `src/lib/api/catalogue.ts` provides `getOccasions()` and `Occasion` interface.
+6. **Safe DB Repair & Idempotent Seeding**:
+   - `seed_storefront_content` and `seed_catalogue` in `backend/app/db/seed.py` are fully idempotent. Re-running startup seed on existing databases safely updates rows without primary key collisions.
+   - Off-season Christmas occasion configured in `OCCASIONS_DATA` with approved asset `occasions/christmas.jpg` and `is_enabled=False`.
+7. **Automated Testing & Contracts**:
+   - `backend/tests/test_occasions_admin.py`: 8 comprehensive integration tests covering CRUD, image guard, timezone boundaries, hidden Rakhi, omission when empty, multi-occasion product associations, and seed idempotence.
+   - Backend test suite: **134/134 passed** (`pytest backend/tests/`).
+   - Frontend test suite: **48/48 passed** (`npm test`: 5 node + 43 vitest).
+   - Regenerated `docs/openapi.yaml` with 87 endpoints.
+8. **Live Local Docker Stack Verification**:
+   - `docker-api-1` and `docker-frontend-1` rebuilt and verified running healthy.
+   - `curl http://localhost:8000/api/v1/storefront/home`: returns `occasion_grid` with the 8 active occasions, distinct image URLs, and no Rakhi.
+   - `curl http://localhost:8000/api/v1/products?occasion=wedding`: returns associated products (Forever Rose Bouquet, Tulip Bouquet, Couple Bunny Set, Mini Rose Box) with populated `occasions` and `tags`.
+   - `curl http://localhost:8000/api/v1/admin/occasions`: returns complete occasion list with admin authorization.
+   - All 8 occasion images return HTTP 307 redirects to high-resolution artisanal mock images.
+
+How to verify:
+- `curl -s http://localhost:8000/api/v1/storefront/home | jq '.sections[] | select(.type=="occasion_grid")'`
+- `curl -s "http://localhost:8000/api/v1/products?occasion=wedding" | jq '[.[] | {name: .name, occasions: .occasions}]'`
+- `backend/.venv/bin/pytest backend/tests/test_occasions_admin.py -v` (8 passed)
+- `backend/.venv/bin/pytest backend/tests/ -q` (134 passed)
+- `npm test` (48 passed)
+
+
+## 2026-10-02 — SOPS/age secret handling and VPS deployment
+
+From: Codex
+To: Gemini
+Status: Work 003 is in progress; app-side config foundation is done; vault and deployment automation remain pending
+
+Authoritative task list and decisions: [`work/work-003-vault/README.md`](../work/work-003-vault/README.md), [`tasks.md`](../work/work-003-vault/tasks.md), and [`decisions.md`](../work/work-003-vault/decisions.md). Read [`docs/secrets.md`](secrets.md) for the inventory and safety requirements. Use actual setting names from backend config and Compose files. Never inspect, print, copy into Git, or send values from ignored environment files.
+
+The intended encryption model is SOPS + age: public recipient encrypts; matching private key decrypts. Local development keeps a convenient ignored preprod config, while the VPS decrypts encrypted service groups into `/run/sulocraft/`. Do not materialize a shared production `.env` for every container.
+
+### Gemini scope summary
+
+The checklist below is a scope summary only. The authoritative task statuses and next task are in [`work/work-003-vault/tasks.md`](../work/work-003-vault/tasks.md). Each delegated vault subtask has its own pickup-ready contract: [3.1 Compose secret interfaces](../work/work-003-vault/tasks/task-001-compose-secrets.md), [3.2 local preprod decrypt helper](../work/work-003-vault/tasks/task-002-local-preprod-decrypt.md), [3.3 VPS deployment](../work/work-003-vault/tasks/task-003-vps-deploy.md), [3.4 vault tests](../work/work-003-vault/tasks/task-004-vault-tests.md), [3.6 safe VPS key bootstrap](../work/work-003-vault/tasks/task-005-vps-key-bootstrap.md), and [3.7 guarded key rotation](../work/work-003-vault/tasks/task-006-age-key-rotation.md). Gemini should take only the next explicitly assigned task and leave the others Pending.
+
+1. Remove insecure fallback database credentials from `backend/docker-compose.yml`; keep secrets out of Compose source.
+2. Integrate service-scoped Docker secret files: PostgreSQL receives only DB credentials, API receives backend credentials and its DB connection, and backup tooling receives only backup credentials.
+3. Add SOPS groups for backend, PostgreSQL, and backups, plus `.sops.yaml` creation rules once public recipients are provisioned. Use dummy values for tests; never invent or commit production secrets.
+4. Add a local dev-secret command that decrypts only preprod groups needed by local Docker, while retaining mock email/payment and local DB support.
+5. Add `scripts/bootstrap-secrets.sh`; update `backend/scripts/deploy_vps.sh` to require tools/key/groups, decrypt into `/run/sulocraft/` with `umask 077` and restrictive permissions, clean up safely, then run Compose and health checks. Preserve backup-before-migration and release rollback behavior.
+6. Ensure ignored plaintext preprod files are never uploaded by rsync and never enter Docker build contexts or images. Preserve the root public Vite env behavior for Cloudflare.
+7. Document exact local/dev setup, VPS key permissions, adding/removing recipients, rotation, backup/recovery, and rollback in `docs/secrets.md`.
+8. Review auth storage: magic-link tokens are already random and hashed, but session tokens are stored in plaintext in DB rows. Do not invent `SESSION_SECRET`; propose/test a hash-at-rest migration only if it fits this work.
+9. Add meaningful tests for missing groups, invalid/missing age keys, permission checks, redacted errors, generated runtime file permissions, and health success/failure. Use temporary keys and dummy values only.
+10. Run the full backend suite and local Docker verification; record exact results here. Do not deploy or rotate live credentials until local acceptance and owner review.
+
+### Codex setup tasks
+
+1. Audit current environment variable names and ensure examples contain no values — done.
+2. Add generic `<SETTING>_FILE` config support and tests — done.
+3. Record secret inventory, threat boundary, and operational responsibilities in `docs/secrets.md` — done; verification pending.
+4. Provision developer and VPS age keypairs and collect only public recipients — blocked on correcting local key setup/owner approval; VPS has no key yet.
+5. Add the public recipient rules and encrypt the allowed dev groups only after recipient review — pending.
+6. Run local Compose against dev-encrypted secrets and verify localhost API/UI — blocked by API duplicate-seed startup failure and key setup.
+
+Do not deploy to the VPS or rotate/revoke any live credential in this task. First deliver a locally testable, fail-closed deployment flow; production activation waits for the owner to provision age keys and review the migration plan.
+
+## 2026-10-02 — Figma admin dashboard backend complete
+
+From: Gemini
+To: Codex
+Status: Complete and ready for frontend integration; 126/126 backend tests passing
+
+Gemini has implemented all requested backend contracts for the Figma Admin Dashboard, adhering strictly to `docs/api-admin.md` and using only real persisted data.
+
+### What was delivered
+
+1. **Database & Migrations**:
+   - Alembic migration `7a1e2f3d4c5b_add_return_requests.py` adding `return_requests` table with foreign key to orders, audit history JSON, reason enum, item quantities, and refund status.
+   - Added `refund_payment` method to the payment provider abstraction (`BasePaymentProvider`, `MockPaymentProvider`, `RazorpayPaymentProvider`).
+2. **Endpoints Implemented**:
+   - `GET /api/v1/admin/dashboard/summary`: Real order/payment aggregations, bounded recent orders (10), inventory alerts, action required count, and date-range comparisons.
+   - `GET /api/v1/admin/dashboard/sales`: Sales buckets (daily/weekly/monthly) with calendar-day boundaries in `Asia/Kolkata` time and zero-filled gaps for sales periods.
+   - `GET /api/v1/admin/finance/summary` & `GET /api/v1/admin/finance/sales`: Gross sales, discounts, shipping, stored tax, refunds, net revenue, with explicit `gatewayFeesAvailable: False` flag (no fabricated data).
+   - `GET /api/v1/admin/dashboard/attention`: Actionable items (unshipped orders, pending returns, low stock).
+   - `GET /api/v1/admin/search`: Paginated global search matching order number, customer name/email, product title, and variant SKU.
+   - Returns workflow: `GET /api/v1/admin/returns`, `GET /returns/{id}`, `POST /returns`, `PATCH /returns/{id}/status`, `POST /returns/{id}/refund`.
+   - Extended `GET /api/v1/admin/orders`: Filter by `from`, `to`, `paymentStatus`, `country`, `minTotal`, `maxTotal`, `sku`, and `sortBy`.
+3. **Documentation & Contracts**:
+   - `docs/api-admin.md` updated with full TypeScript interfaces.
+   - `docs/openapi.yaml` regenerated with full OpenAPI 3.1.0 specifications.
+4. **Testing**:
+   - Integration test suite `backend/tests/test_admin_dashboard.py` covers RBAC, summary arithmetic, sales bucketing, finance breakdown, order filtering, attention conditions, search, and the return/refund workflow.
+   - Total test suite: **126/126 passed**.
+
+## 2026-10-02 — Admin dashboard API expansion for Figma-generated admin UI
+
+From: Codex
+To: Gemini
+Status: Superseded by Gemini's completed backend handoff above (126/126 backend tests reported)
+
+The owner supplied Figma's `admin.zip` and the full Admin Dashboard specification (attachment: `Design AND implement a complete Admin Dashboard...`). This original backend request is fulfilled by Gemini's completed handoff above. Codex is integrating the supplied visual structure into the existing React/Vite admin route and using persisted API data only. Treat all exported sample data as prototype-only; do not copy it into the database or runtime UI.
+
+### Existing backend to preserve and extend
+
+- `GET /api/v1/admin/analytics` currently returns all-time order/customer/product totals, low-stock items, recent orders, and top sellers.
+- `GET /api/v1/admin/orders`, `GET /api/v1/admin/orders/{orderNumber}`, and `PATCH /api/v1/admin/orders/{orderNumber}/status` already provide paginated orders, details/status history, and controlled status updates.
+- Product/variant CRUD and inventory adjustments already exist.
+- Missing today: date-range analytics, finance breakdown/trends, returns/refund persistence/workflow, attention queue, full order filters/sort, and unified admin search. There is no Return or Shipment model. Order tax is a stored snapshot; no tax computation may be added to React.
+
+### Backend implementation tasks
+
+1. **Dashboard metrics and sales series**
+   - Add typed, RBAC-protected endpoints `GET /api/v1/admin/dashboard/summary?from=&to=&compareFrom=&compareTo=` and `GET /api/v1/admin/dashboard/sales?from=&to=&interval=daily|weekly|monthly`.
+   - Summary should include total sales/revenue, net revenue when knowable, order count, AOV, refunds/returns when tracked, prior-period comparison, status counts, recent orders (bounded to 5–10), inventory alerts, and actionable attention items.
+   - Aggregate from persisted orders, payments, inventory, and status history only. Use Asia/Kolkata date boundaries consistently. Revenue arithmetic must be documented and tested; do not treat every confirmed order as paid or calculate tax in the frontend.
+2. **Finance**
+   - Add `GET /api/v1/admin/finance/summary?from=&to=` and `GET /api/v1/admin/finance/sales?from=&to=&interval=` with gross product sales, discounts, shipping collected, stored tax/GST, refunds, gateway fees, adjustments, net revenue, taxable sales, and order/refund counts where source data exists.
+   - Persist any new refund/payment-fee/accounting data needed before returning it. Return `null`/an explicit availability marker for values the system does not record; never fabricate zeroes or infer statutory tax. React only displays backend values.
+3. **Orders and attention**
+   - Preserve current endpoints and backward-compatible response aliases. Add server-side date, payment/shipping/order status, country, value-range, SKU, sort, and bounded pagination filters to order listing as available from persisted data.
+   - Add a typed attention endpoint/summary based on explicit persisted conditions/status age, with a documented/configurable threshold. Include severity and order reference. Do not invent shipment events; until a courier feed exists, show only recorded tracking and status-history data.
+   - Add a paginated global admin search endpoint for order number, customer name/email/phone, SKU, and product.
+4. **Returns and refunds**
+   - Design and migrate a persisted return/refund workflow (separate from the order's main status and payment status), audit timeline/actor, requested reason/items, review status, and refund amount/status.
+   - Provide paginated/filterable `GET /api/v1/admin/returns` and order detail relationships. Add safe status-transition endpoints only for states supported by the domain; never mark money refunded unless a persisted successful refund/payment-provider result confirms it. Keep provider refund execution behind the existing payment abstraction.
+5. **Contracts, validation, and security**
+   - Update Pydantic schemas, `docs/api-admin.md`, and generated OpenAPI. All admin endpoints require existing admin RBAC and session credentials; validate date ranges and page bounds; avoid returning unnecessary customer PII.
+   - Add API tests for date boundaries/comparisons, pagination/filtering, real aggregate arithmetic, missing accounting inputs, attention conditions, return/refund transitions, RBAC, and no mock/demo records. Run the full backend suite and report migration + passing count here.
+
+Coordinate any disagreements on the endpoint shapes in `/docs/api-admin.md` before large implementation changes. Codex will adapt the Figma dashboard components to these real response contracts, keeping demo data isolated in the service layer and visibly disabled outside local preview. Local Docker integration and browser verification gate all push/deploy work.
+
+## 2026-10-02 — Gift by Occasion: seasonal admin configuration and distinct artwork
+
+From: Codex
+To: Gemini
+Status: Backend work required; occasion-grid frontend renderer and tag-driven shop filter already support API-provided records
+
+Anupama reviewed the current Gift by Occasion data and reported that Anniversary, Wedding, and Rakhi cards reuse the same-looking artwork. She also wants Rakhi removed from the visible grid and occasion cards/products managed around upcoming seasons from admin.
+
+The current local keys are `occasions/anniversary.jpg`, `occasions/wedding.jpg`, and `occasions/rakhi.jpg`. Their file hashes differ, but the owner says the actual pictures look the same; verify the imagery visually rather than treating distinct URLs or hashes as proof of distinct artwork.
+
+### Initial occasion catalogue (not an always-visible list)
+
+Configure these occasions as records the admin can activate when relevant. Do **not** keep all occasion cards visible all year. Each record needs its own clear, colorful, high-quality image:
+
+1. Birthday
+2. Anniversary
+3. Valentine's Day
+4. Wedding
+5. Decor
+6. Diwali
+7. Mother's Day
+8. Father's Day
+
+Do not display Rakhi. Preserve its record only if useful for historical product data; mark it inactive/hidden instead of deleting product history. Existing Baby Shower, Housewarming, Just Because, Christmas, and future occasions may be configured for later use, but stay off the storefront until Anupama enables or schedules them.
+
+### Required admin and data behavior
+
+- Make occasions fully manageable from the admin API/UI: create, edit, set visible/hidden, order, image, and optional active-from/active-until dates. Use safe migrations and seed repair for the existing database; do not rely only on empty-database seeding. The admin must be able to prepare future occasions while keeping them hidden.
+- The public `occasion_grid` should return only occasions explicitly enabled by admin and whose optional schedule includes the current date in the Sulocraft business timezone (`Asia/Kolkata`). A Christmas occasion outside its active window must not appear just because its record exists. Admin should be able to enable it for the season or schedule it to appear/disappear automatically without a frontend release. If no occasions are enabled and in season, render no occasion cards (and avoid an empty section heading).
+- Let admin associate existing product records with multiple occasions using database tags/associations. The same bunny or gift can appear in Birthday, Valentine's Day, and other appropriate filters; never duplicate product rows/SKUs. Reuse `GET /api/v1/products?occasion=<occasion-id>` or document a compatible canonical filter. Ensure the existing frontend link `/shop?occasion=<id>` resolves to those DB associations.
+- Avoid a fixed occasion count in the homepage resolver. Return all currently active, scheduled occasions ordered by admin `display_order` (with a reasonable configurable maximum only if required for performance).
+- Replace the repeated/dull Anniversary and Wedding art; do not show Rakhi. Provide distinct, bright, on-brand art for every configured occasion. Don't satisfy uniqueness with different URLs or hashes alone; inspect the actual pictures and make the scene/composition clearly different and relevant to each occasion. Persist stable R2 object keys; verify each public image URL loads and visually matches its occasion. Add validation/regression coverage to prevent multiple occasion cards from reusing the same image key.
+- Add API/admin regression tests for CRUD/validation, schedule boundaries and timezone, hidden Rakhi, ordering, distinct images, and multi-occasion product associations/filtering. Update OpenAPI and this handoff with passing test counts and local verification.
+- Fix repeat-start seed behavior before local integration: after the latest migration, the API currently exits during startup with a unique-constraint violation on `product_occasions` because `seed_storefront_content` inserts existing product/occasion pairs again. Make seed repair idempotent and preserve admin-authored associations; add a test that runs the seed twice against an already populated database.
+
+Codex has already implemented the reusable OccasionGrid renderer, duplicate-image guard, and frontend tag/collection filter for `?occasion=`. After backend completion, rebuild API/DB/frontend in Docker and verify that only enabled/in-season occasions appear, their images are distinct and relevant, and their links show the correctly associated products in the local browser. Do not push or deploy until Anupama reviews the local result.
+
+## 2026-10-02 — Restore Amigurumi and Gift by Occasion homepage sections
+
+From: Gemini
+To: Codex / Owner
+Status: Complete; 118 backend tests passing; verified in local Docker stack
+
+Completed backend changes:
+- **Amigurumi Collection Row (`Tiny Friends, Big Smiles 🐾`)**:
+  - Created evergreen collection `amigurumi` (slug: `amigurumi`, display_order: 16).
+  - Assigned collection `amigurumi` strictly to the 4 companion creature/soft-toy products: `octopus-amigurami-set` (ID: 22), `heart-bear` (ID: 3), `mini-panda-amigurumi` (ID: 5), and `crochet-bunny` (ID: 6).
+  - Explicitly excluded `crochet-heart-planter` and `amigurumi-flower-bouquet`.
+  - Preserved single catalogue records, distinct SKUs, and unique primary image URLs without duplicating SKUs.
+- **Gift by Occasion Section (`occasion_grid`)**:
+  - Added `OccasionSummary` and `OccasionGridSectionOut` schemas in `backend/app/schemas/storefront.py` and included in `HomepageSectionOut` union.
+  - Allowed `occasion_grid` section type in admin CRUD endpoints in `backend/app/api/v1/admin.py`.
+  - Implemented `occasion_grid` section resolution in `_resolve_homepage_section` in `backend/app/api/v1/storefront.py`, querying active `Occasion` database rows with non-empty image URLs.
+  - Added `occasion_grid` at display_order 4 titled **“Gift by Occasion”**, eyebrow **“Browse by Moment”**, description **“Celebrate milestones, festivals, and memories with handcrafted warmth”**.
+  - Section ordering preserved:
+    1. `category_grid` ("Shop by Category")
+    2. `product_collection` ("Most Loved Creations", `collectionSlug: "bestsellers"`)
+    3. `product_collection` ("Tiny Friends, Big Smiles 🐾", `collectionSlug: "amigurumi"`)
+    4. `occasion_grid` ("Gift by Occasion")
+    5. `promo_banner` ("Gift Handcrafted Warmth This Season")
+    6. `review_section` ("Loved by Over 500+ Happy Customers")
+    7. `image_text` ("Handmade with Love, Thread by Thread")
+- **Safe Existing DB Repair**:
+  - Updated `seed_storefront_content` in `backend/app/db/seed.py` so that existing databases automatically re-order subsequent sections, guarantee `occasion_grid` at order 4, and link the 4 creature products to `amigurumi`.
+- **Automated Tests**:
+  - Full backend test suite passing: **118 passed** (`pytest backend/tests/`).
+  - Added `test_occasion_grid_homepage_section` and updated `test_get_storefront_home_returns_brand_hero_and_resolved_sections`, `test_amigurumi_homepage_collection_section`, and `test_amigurumi_section_safe_repair_on_existing_db` in `backend/tests/test_storefront.py`.
+- **Live Local Stack Verification**:
+  - Rebuilt `docker-api-1` and re-seeded database.
+  - Verified `curl -s http://localhost:8000/api/v1/storefront/home` returns 7 sections with 4 creature products and 6 occasions with HTTP 200/307 media URLs.
+
+How to verify:
+- `curl -s http://localhost:8000/api/v1/storefront/home | jq '.sections[] | {order: .order, type: .type, title: .title, products: [.products[]?.slug], occasions: [.occasions[]?.id]}'`
+- `backend/.venv/bin/pytest backend/tests/test_storefront.py -v` (15 passed)
+- `backend/.venv/bin/pytest backend/tests/` (118 passed)
+
+## 2026-10-02 — Branded welcome, order, and support email templates
+
+From: Gemini
+To: Codex / Owner
+Status: Complete; 118 backend tests passing; verified with mock provider
+
+Completed backend changes:
+- **Artisanal Welcome Email Engine**:
+  - Implemented `render_welcome_email(user_name, custom_note)` in `backend/app/services/notification/templates.py` generating responsive HTML and plain text with escaped user inputs and Sulocraft warm branding.
+  - Added `EmailService.send_welcome_email` and `dispatch_welcome_background` in `backend/app/services/notification/service.py`.
+  - Configurable sender selection (`EMAIL_SENDER_WELCOME` with fallback to verified `hello@sulocraft.com` or `welcome@sulocraft.com`).
+  - Added admin endpoint `POST /api/v1/admin/customers/send-welcome` in `backend/app/api/v1/admin.py` for sending custom welcome greetings.
+  - Wired into onboarding in `backend/app/api/v1/auth.py`.
+- **Testing & Safety**:
+  - Local/test delivery strictly uses Mock provider.
+  - Full suite passed: **118 passed** (`pytest backend/tests/`).
 
 ## 2026-10-02 — Sharper Amigurumi and Home & Decor category images
 

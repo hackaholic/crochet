@@ -11,6 +11,7 @@ from app.services.notification.service import (
     dispatch_order_status_background,
     dispatch_payment_confirmed_background,
     dispatch_refund_background,
+    dispatch_welcome_background,
 )
 
 __all__ = [
@@ -24,6 +25,7 @@ __all__ = [
     "dispatch_order_status_background",
     "dispatch_payment_confirmed_background",
     "dispatch_refund_background",
+    "dispatch_welcome_background",
     "get_email_provider",
     "get_sms_provider",
 ]
