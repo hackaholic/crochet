@@ -2,7 +2,7 @@
 
 **Owner:** Codex
 
-**Status:** In Progress
+**Status:** Completed
 
 ## Objective
 
@@ -15,9 +15,9 @@ The frontend shell loads, but its catalogue request goes to `dev.sulocraft.com/a
 ## Work
 
 - [x] Deploy current backend source into `/opt/sulocraft` and restart the existing Compose project using the saved preproduction environment.
-- [ ] Track the public-only `.env.preprod` settings so Cloudflare can build the dev API URL into its bundle.
-- [ ] Run the frontend build locally and verify the bundle references `api-dev.sulocraft.com`.
-- [ ] Push the verified change to `dev`; confirm the live page renders catalogue products.
+- [x] Track the public-only `.env.preprod` settings so Cloudflare can build the dev API URL into its bundle.
+- [x] Run the frontend build locally and verify the bundle references `api-dev.sulocraft.com`.
+- [x] Push commit `b9fc743` to `dev`; confirm the live page renders catalogue products.
 
 ## Acceptance
 

@@ -4,7 +4,7 @@
 
 **Scope:** Cloudflare DNS entries (`api.`, `dev.`, `images.`, email routes), Resend domain verification, GitHub Actions automated deployment workflow, and Cloudflare Pages dev site binding with Cloudflare Access protection.
 
-**Current state:** In Progress. The dev VPS backend has been synced to `/opt/sulocraft` and Compose is healthy. The dev storefront bundle was missing its API URL because the public-only root `.env.preprod` file was ignored by Git.
+**Current state:** In Progress. The dev VPS backend is healthy, and the dev storefront now calls the dev API and renders products. Remaining work is listed in `tasks.md`.
 
 **Dependencies:** Work 003 SOPS/age vault; `docs/email-architecture.md`; VPS SSH access.
 
