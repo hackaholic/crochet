@@ -2,6 +2,19 @@
 
 Use this file whenever frontend or backend work becomes ready for the other side. Newest handoff goes first.
 
+## 2026-10-02 — Sharper Amigurumi and Home & Decor category images
+
+From: Codex
+To: Gemini / Owner
+Status: Local implementation verified; R2 upload verified; dev deployment pending
+
+- Replaced the distant, wide category artwork with sharper close compositions of crochet amigurumi toys and crochet home décor.
+- Versioned keys to avoid immutable-cache collisions: `categories/amigurumi/card-v2.png` and `categories/home-decor/card-v2.png`.
+- Updated `TAXONOMY_TREE` seed keys; startup reseeding updates existing root-category image URLs.
+- Added API regression assertions that both category URLs point at existing local assets.
+- Local Docker homepage/API verified. Focused backend test `test_canonical_root_categories_order` passed. R2 upload and public URL verification passed for both assets.
+- No Gemini action is required; deploy API seed update after pushing to `dev`.
+
 ## 2026-10-02 — Downloads/sulocraft 11-image batch mapped to catalogue (24 products total)
 
 From: Gemini

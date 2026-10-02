@@ -72,6 +72,16 @@ def test_canonical_root_categories_order():
         assert roots[i]["parentId"] is None
         assert len(roots[i]["children"]) > 0
 
+    expected_category_images = {
+        "amigurumi": "categories/amigurumi/card-v2.png",
+        "home-decor": "categories/home-decor/card-v2.png",
+    }
+    for category in roots:
+        if category["slug"] in expected_category_images:
+            image_key = expected_category_images[category["slug"]]
+            assert category["imageUrl"].endswith(image_key)
+            assert (LOCAL_IMAGE_DIR / image_key).is_file()
+
 
 def test_category_descendant_product_count():
     """Verify category tree counts include direct and descendant product associations."""

@@ -194,7 +194,7 @@ Public category output uses camelCase consistently:
   "name": "Amigurumi",
   "slug": "amigurumi",
   "description": "Hand-stitched crochet figures and keepsakes.",
-  "imageUrl": "https://images.sulocraft.com/categories/amigurumi/card.webp",
+  "imageUrl": "https://images.sulocraft.com/categories/amigurumi/card-v2.png",
   "parentId": null,
   "displayOrder": 2,
   "isActive": true,
@@ -254,8 +254,8 @@ Deletion must be blocked while products or children depend on a record unless an
 Store relative managed-media keys and resolve them through `IMAGE_BASE_URL`:
 
 ```text
-categories/<category-slug>/card.webp
-collections/<collection-slug>/card.webp
+categories/<category-slug>/card.png
+collections/<collection-slug>/card.png
 ```
 
 The frontend renders `imageUrl` exactly as returned and never constructs R2 paths.

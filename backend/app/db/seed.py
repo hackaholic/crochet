@@ -68,7 +68,7 @@ TAXONOMY_TREE = [
         "name": "Amigurumi",
         "slug": "amigurumi",
         "description": "Hand-stitched plush toys, animals, and miniature keepsakes",
-        "image_key": "categories/amigurumi/card.png",
+        "image_key": "categories/amigurumi/card-v2.png",
         "children": [
             {"name": "Bunny", "slug": "bunny"},
             {"name": "Rabbit", "slug": "rabbit"},
@@ -100,7 +100,7 @@ TAXONOMY_TREE = [
         "name": "Home & Decor",
         "slug": "home-decor",
         "description": "Crochet wall hangings, planters, coasters, and festive decor",
-        "image_key": "categories/home-decor/card.png",
+        "image_key": "categories/home-decor/card-v2.png",
         "children": [
             {"name": "Doilies", "slug": "doilies"},
             {"name": "Table Runners", "slug": "table-runners"},

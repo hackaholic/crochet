@@ -45,6 +45,15 @@ Every listed file is a distinct generated asset under `public/images/`. Do not r
 
 Production upload target for each file is the same object key beneath `https://images.sulocraft.com/`.
 
+## Category card artwork
+
+Category cards use versioned object keys so replacing an image does not leave browser or CDN caches serving stale pixels. Keep the category database `image_key`, local asset, and R2 key aligned.
+
+| Category slug | Local asset / R2 key | SHA-256 |
+| --- | --- | --- |
+| `amigurumi` | `categories/amigurumi/card-v2.png` | `07c7c90f5fce0975824b9a5b37c2535af619313ad3e63c3530a3608be8453276` |
+| `home-decor` | `categories/home-decor/card-v2.png` | `b92a89d6af21ca5304caa772b0873423009c3099cdcbb159997daf3f58ba980c` |
+
 ## Approved secondary gallery images
 
 | Product slug | Gallery object key | Purpose |
