@@ -2,7 +2,7 @@
 
 ## In Progress
 
-None.
+- [ ] 6.5 Codex: Ensure the Cloudflare dev storefront bundle uses the dev API URL per [task-005-dev-frontend-api-url.md](tasks/task-005-dev-frontend-api-url.md).
 
 ## Pending
 
@@ -15,3 +15,4 @@ None.
 
 - [x] Initial VPS deploy script created at `backend/scripts/deploy_vps.sh`.
 - [x] Email service implementation and branded templates completed in backend.
+- [x] 6.5.1 VPS backend sync and Compose restart completed; API and database are healthy.

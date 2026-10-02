@@ -52,7 +52,7 @@ Use a separate Worker for the shared development site. It must never deploy over
 4. In **Settings → Domains & Routes**, add the custom domain `dev.sulocraft.com` to `sulocraft-dev`.
 5. Protect `dev.sulocraft.com` with Cloudflare Access until launch testing is complete.
 
-The committed `.env.preprod` makes this a full-storefront build and points it to `https://api-dev.sulocraft.com/api/v1`. These are public Vite build settings, so no Cloudflare dashboard variable is required and no variable needs to be edited between deployments. Never add credentials or secrets to this file.
+The tracked root `.env.preprod` makes this a full-storefront build and points it to `https://api-dev.sulocraft.com/api/v1`. It contains public Vite build settings only, so no Cloudflare dashboard variable is required and no variable needs to be edited between deployments. Never add credentials or secrets to this file.
 
 Cloudflare Workers Builds supplies `WORKERS_CI_BRANCH` automatically. The repository build script maps `dev` to Vite's `preprod` mode and every other branch to `production`, so the same `pnpm build` command safely selects the correct committed environment file. `pnpm build:dev` and `pnpm build:production` remain available for explicit local verification.
 
