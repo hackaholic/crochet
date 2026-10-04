@@ -1,5 +1,6 @@
 import hashlib
 import importlib.util
+import json
 from pathlib import Path
 
 import pytest
@@ -177,3 +178,92 @@ def test_deployment_config_loader_reads_yaml(tmp_path):
 
     assert config["runtime_secrets_root"] == "/run/sulocraft"
     assert config["environments"] == {}
+
+
+def test_prod_promotion_fails_closed_when_prod_secrets_missing(tmp_path):
+    secrets = tmp_path / "secrets" / "encrypted"
+    secrets.mkdir(parents=True)
+    (secrets / "backend.enc.env").write_text("encrypted", encoding="utf-8")
+    (secrets / "postgres.enc.env").write_text("encrypted", encoding="utf-8")
+    config = {
+        "runtime_secrets_root": "/run/sulocraft",
+        "environments": {
+            "preprod": {
+                "host": "root@example.invalid",
+                "deploy_root": "/opt/sulocraft",
+                "encrypted_secrets_dir": "secrets/encrypted",
+                "app_env": "staging",
+                "frontend_url": "https://dev.sulocraft.com",
+                "public_api_url": "https://api-dev.sulocraft.com",
+                "gateway_network_name": "sulocraft-gateway",
+            },
+            "prod": {
+                "host": "root@example.invalid",
+                "deploy_root": "/opt/sulocraft",
+                "encrypted_secrets_dir": "secrets/encrypted/prod",
+                "app_env": "production",
+                "frontend_url": "https://sulocraft.com",
+                "public_api_url": "https://api.sulocraft.com",
+                "gateway_network_name": "sulocraft-gateway",
+            },
+        },
+    }
+    with pytest.raises(release.ReleaseError, match="[Ee]ncrypted secret group.*prod"):
+        release.resolve_environment("prod", config, repo_root=tmp_path)
+
+
+def test_prod_promotion_reuses_exact_same_image_and_manifest(tmp_path):
+    # Setup mock release directory
+    release_id = "test-release-001"
+    release_dir = tmp_path / ".deploy" / "releases" / release_id
+    release_dir.mkdir(parents=True)
+    artifact_tar = release_dir / "api-image.tar"
+    artifact_tar.write_bytes(b"mock immutable tar")
+    artifact_sha = hashlib.sha256(artifact_tar.read_bytes()).hexdigest()
+    manifest = {
+        "schema_version": 2,
+        "commit": "a" * 40,
+        "source_fingerprint": "b" * 40,
+        "release_id": release_id,
+        "image_ref": f"sulocraft-api:{release_id}",
+        "image_id": "sha256:" + "c" * 64,
+        "artifact": "api-image.tar",
+        "artifact_sha256": artifact_sha,
+    }
+    (release_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    # Setup prod secrets
+    prod_secrets = tmp_path / "secrets" / "encrypted" / "prod"
+    prod_secrets.mkdir(parents=True)
+    (prod_secrets / "backend.enc.env").write_text("prod backend enc", encoding="utf-8")
+    (prod_secrets / "postgres.enc.env").write_text("prod postgres enc", encoding="utf-8")
+
+    config = {
+        "runtime_secrets_root": "/run/sulocraft",
+        "environments": {
+            "prod": {
+                "host": "root@example.invalid",
+                "deploy_root": "/opt/sulocraft",
+                "encrypted_secrets_dir": "secrets/encrypted/prod",
+                "app_env": "production",
+                "frontend_url": "https://sulocraft.com",
+                "public_api_url": "https://api.sulocraft.com",
+                "gateway_network_name": "sulocraft-gateway",
+                "api_gateway_alias": "api-prod",
+            },
+        },
+    }
+
+    target = release.resolve_environment("prod", config, repo_root=tmp_path)
+    runtime_env = release.render_runtime_environment(
+        target,
+        image_ref=manifest["image_ref"],
+        destination=tmp_path / "runtime-prod.env",
+    )
+    env_content = runtime_env.read_text(encoding="utf-8")
+    assert f"API_IMAGE=sulocraft-api:{release_id}" in env_content
+    assert "TARGET_ENV=prod" in env_content
+    assert "APP_ENV=production" in env_content
+    assert "FRONTEND_URL=https://sulocraft.com" in env_content
+    assert "PUBLIC_API_URL=https://api.sulocraft.com" in env_content
+

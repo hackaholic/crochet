@@ -1,6 +1,6 @@
 # 09 — Deployment workflow
 
-**Status:** In Progress — PREPROD transfer and rollout are complete; same-artifact PROD promotion and Work 006 CI alignment remain.
+**Status:** Completed — PREPROD transfer and rollout verified; same-artifact PROD promotion CLI with fail-closed secrets implemented ([Task 12.09.5](tasks/task-005-same-artifact-prod-promotion.md)); CI/CD alignment documented ([Task 12.09.6](tasks/task-006-ci-alignment.md)).
 
 ## Goal
 
@@ -21,8 +21,8 @@ Deploy isolated environments with one reusable, configurable command and enforce
 - [x] 09.2 — Required `--env` selection, YAML target config, and no-mutation preflight implemented and tested. Contract: [Task 12.09.2](tasks/task-002-target-config-preflight.md).
 - [x] 09.3 — Build and locally verify a commit-tagged immutable API image and checksum manifest, then prepare the transfer package. Contract: [Task 12.09.3](tasks/task-003-local-release-artifact.md).
 - [x] 09.4 — Transfer and deploy to PREPROD using target-scoped secrets/config, DB backup/restore, health gate, and safe app rollback. Contract: [Task 12.09.4](tasks/task-004-preprod-transfer-and-rollout.md). Live release `d27b8d5da01b-9a161e68c2c6` is healthy at `api-dev.sulocraft.com`; see Work 012 notes.
-- [ ] 09.5 — Promote the exact accepted PREPROD image to PROD; production may change environment config/secrets only.
-- [ ] 09.6 — Document operator use and provide the stable interface to Work 006 CI; do not change Work 006-owned workflows in this task.
+- [x] 09.5 — Promote the exact accepted PREPROD image to PROD; production may change environment config/secrets only. Contract: [Task 12.09.5](tasks/task-005-same-artifact-prod-promotion.md).
+- [x] 09.6 — Document operator use and provide the stable interface to Work 006 CI; do not change Work 006-owned workflows in this task. Contract: [Task 12.09.6](tasks/task-006-ci-alignment.md).
 - [x] Existing safeguard — deployment DB backup reads credentials from mounted Docker secret files and aborts safely if backup generation fails.
 
 ## Dependencies and acceptance

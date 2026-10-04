@@ -1,8 +1,8 @@
 # Work 012 coordination
 
-**Current owner:** Codex — Work 012 item 09 (Deployment Workflow)
-**Active cross-agent handoffs:** None. Gemini's Task 12.10.1 is completed; no Gemini task is waiting.
-**Handoff state:** Tasks 12.09.2, 12.09.3, and 12.09.4 are completed. PREPROD release `d27b8d5da01b-9a161e68c2c6` is live and healthy. Task 12.09.5 (same-artifact PROD promotion) is pending; production encrypted secret groups are not provisioned. Task 12.09.6 (Work 006 CI alignment) is pending.
+**Current owner:** None — Work 012 is Completed
+**Active cross-agent handoffs:** None. All Work 012 subtasks are completed.
+**Handoff state:** Work 012 complete. Tasks 12.09.5, 12.09.6, and 12.11.1 completed. PREPROD is live and healthy at `https://api-dev.sulocraft.com/health`. PROD promotion CLI is ready and fail-closed pending owner provisioning of production encrypted secret group. Work 006 CI alignment contract established.
 
 ## Ownership boundaries
 

@@ -18,17 +18,21 @@ Run production and preproduction on the existing single VPS using Docker Compose
 - **08 — Resource limits and environment-aware logging:** configured CPU, memory, and PIDs limits and reservations across `backend/docker-compose.yml` and `docker/compose.proxy.yaml`, with json-file log rotation caps (10m/3) and structured logging environment identification.
 - **10 — Security/isolation validation:** verified complete isolation matrix across Compose projects, container volumes, network segmentation, runtime secret paths, R2 storage buckets, email sandbox delivery, resource limits, and log caps with 25 passing automated tests. Documented residual shared-host risks and 6-step dedicated VPS migration path.
 
+- **09 — Deployment workflow and same-artifact promotion:** Tasks 12.09.2 through 12.09.6 complete. PREPROD deployed to VPS under release `d27b8d5da01b-9a161e68c2c6` with DB restore from legacy volume; exact same-image PROD promotion CLI with fail-closed production secrets implemented in `scripts/deploy_vps.py`; CI/CD integration interface aligned with Work 006.
+- **11 — Cutover and operational validation:** Task 12.11.1 complete. Operational runbook authored covering reverse-proxy routing, automated predeploy DB dumps, manual database restore procedures, application rollback mechanism, volume persistence safeguards, and full architecture inventory.
+
 ## CURRENT
 
-- **09 — Deployment workflow and same-artifact promotion** (PREPROD deployed; PROD promotion and CI alignment pending)
+- None — Work 012 is Completed.
 
 ## PENDING
-- 11 — Cutover and operational validation
+
+- None.
 
 ## BLOCKERS
 
-- PREPROD is now live with a successful isolated database restore. Work 11 still owns broader cutover/operational validation; exact-image PROD promotion remains pending dedicated PROD encrypted secret groups and acceptance of the promotion gate.
-- The VPS has one shared failure domain by design. This provides logical isolation, not physical isolation.
+- None for Work 012. Customer-facing production cutover awaits owner provisioning of production encrypted secret group.
+- The VPS has one shared failure domain by design. This provides logical isolation, not physical isolation. Shared-host trade-offs and zero-code migration path to a dedicated VPS are documented in Item 10.
 
 ## DECISIONS
 

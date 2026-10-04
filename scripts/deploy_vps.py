@@ -296,6 +296,8 @@ def make_parser() -> argparse.ArgumentParser:
     parser.add_argument("--env", required=True, choices=SUPPORTED_ENVIRONMENTS, help="required target environment")
     parser.add_argument("--config", type=Path, default=REPO_ROOT / ".deploy" / "vps-config.yaml", help="non-secret YAML deployment config")
     parser.add_argument("--preflight", action="store_true", help="validate target/config/secrets and print a safe deployment plan")
+    parser.add_argument("--release-id", help="specific release ID to deploy or promote")
+    parser.add_argument("--promote", action="store_true", help="explicitly confirm same-artifact promotion to production")
     parser.add_argument("--verified-commit", help=argparse.SUPPRESS)
     parser.add_argument("--platform", default="linux/amd64", help=argparse.SUPPRESS)
     return parser
@@ -325,19 +327,53 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Image: {manifest['image_ref']} ({manifest['image_id']})")
             print(f"Archive SHA-256: {manifest['artifact_sha256']}")
             return 0
-        if args.env != "preprod":
-            raise ReleaseError("PROD promotion is not enabled until its encrypted secret groups and accepted PREPROD release are present")
-        commit = run(["git", "rev-parse", "HEAD"], cwd=REPO_ROOT)
-        runtime_env = render_runtime_environment(target, image_ref="pending", destination=REPO_ROOT / ".deploy" / f"runtime-{args.env}.env")
+        if args.env == "preprod":
+            commit = run(["git", "rev-parse", "HEAD"], cwd=REPO_ROOT)
+            runtime_env = render_runtime_environment(target, image_ref="pending", destination=REPO_ROOT / ".deploy" / f"runtime-{args.env}.env")
+            verify_local_backend(REPO_ROOT, target, runtime_env)
+            release_dir, manifest = prepare_release(
+                repo_root=REPO_ROOT,
+                verified_commit=commit,
+                platform=args.platform,
+            )
+            runtime_env = render_runtime_environment(target, image_ref=manifest["image_ref"], destination=runtime_env)
+            deploy_prepared_release(target, manifest["release_id"], manifest["image_ref"], runtime_env)
+            (REPO_ROOT / ".deploy" / "last-successful-preprod-release").write_text(manifest["release_id"] + "\n", encoding="utf-8")
+            print(f"PREPROD deployment complete: {manifest['release_id']}")
+            print(f"Image: {manifest['image_ref']}")
+            print(f"Archive SHA-256: {manifest['artifact_sha256']}")
+            return 0
+
+        # PROD promotion: promotes the exact immutable release already tested and accepted in PREPROD
+        release_id = args.release_id
+        if not release_id:
+            last_record = REPO_ROOT / ".deploy" / "last-successful-preprod-release"
+            if last_record.is_file():
+                release_id = last_record.read_text(encoding="utf-8").strip()
+            else:
+                releases_dir = REPO_ROOT / ".deploy" / "releases"
+                available = [d.name for d in releases_dir.iterdir() if d.is_dir() and (d / "manifest.json").is_file()] if releases_dir.is_dir() else []
+                if len(available) == 1:
+                    release_id = available[0]
+                elif len(available) > 1:
+                    raise ReleaseError(f"Multiple prepared releases found ({', '.join(available)}). Specify --release-id <id> to promote to PROD.")
+                else:
+                    raise ReleaseError("No prepared release found to promote to PROD. Deploy and verify in PREPROD first.")
+
+        release_dir = REPO_ROOT / ".deploy" / "releases" / release_id
+        manifest_path = release_dir / "manifest.json"
+        artifact_path = release_dir / "api-image.tar"
+        if not manifest_path.is_file() or not artifact_path.is_file():
+            raise ReleaseError(f"Incomplete release artifact for PROD promotion: {release_dir}")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        if manifest.get("artifact_sha256") != _sha256(artifact_path):
+            raise ReleaseError(f"Release artifact for PROD promotion failed SHA-256 integrity validation: {release_dir}")
+
+        runtime_env = render_runtime_environment(target, image_ref=manifest["image_ref"], destination=REPO_ROOT / ".deploy" / "runtime-prod.env")
         verify_local_backend(REPO_ROOT, target, runtime_env)
-        release_dir, manifest = prepare_release(
-            repo_root=REPO_ROOT,
-            verified_commit=commit,
-            platform=args.platform,
-        )
-        runtime_env = render_runtime_environment(target, image_ref=manifest["image_ref"], destination=runtime_env)
         deploy_prepared_release(target, manifest["release_id"], manifest["image_ref"], runtime_env)
-        print(f"PREPROD deployment complete: {manifest['release_id']}")
+        (REPO_ROOT / ".deploy" / "last-successful-prod-release").write_text(manifest["release_id"] + "\n", encoding="utf-8")
+        print(f"PROD promotion complete: {manifest['release_id']}")
         print(f"Image: {manifest['image_ref']}")
         print(f"Archive SHA-256: {manifest['artifact_sha256']}")
         return 0
