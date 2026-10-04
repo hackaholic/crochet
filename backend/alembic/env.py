@@ -10,7 +10,7 @@ backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if backend_dir not in sys.path:
     sys.path.insert(0, backend_dir)
 
-from app.core.config import settings
+from app.core.config import migration_database_url
 from app.db.base import Base
 import app.models  # noqa: F401 - Register all models on Base.metadata
 
@@ -24,10 +24,7 @@ target_metadata = Base.metadata
 
 def get_url() -> str:
     """Resolve database URL dynamically from environment or settings."""
-    url = os.getenv("DATABASE_URL") or settings.database_url
-    if url.startswith("postgresql://") and "+psycopg" not in url:
-        url = url.replace("postgresql://", "postgresql+psycopg://", 1)
-    return url
+    return migration_database_url()
 
 
 def run_migrations_offline() -> None:

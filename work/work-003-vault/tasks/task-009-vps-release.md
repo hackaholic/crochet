@@ -1,38 +1,11 @@
-# Task 3.10 — Owner review and encrypted VPS release deployment
+# Task 3.10 — VPS release scope moved to Work 012
 
-**Owner:** Owner + Codex
-**Status:** Blocked — the live API was manually updated using the saved plaintext preprod env, but the SOPS/age deployment contract in Task 3.3 remains incomplete.
+**Owner:** Codex
+**Status:** Moved — VPS deployment is a separate work item
+**Work item:** Work 003 (historical pointer)
 
-## Objective
+## Scope correction
 
-Review local verification results with the owner, push encrypted configuration changes to `dev`, execute the SOPS/age VPS deployment workflow, and verify that the API and frontend operate securely on `https://dev.sulocraft.com` without plaintext secrets in Git or container images.
+Work 003 owns the SOPS/age vault, encrypted secret groups, local decrypt behavior, and key safety. It does not own VPS deployment orchestration. VPS preflight, source selection, backups, migrations, health checks, rollback, and the one-command deploy flow are tracked in [Work 012 Task 12.1](../../vps-environment-isolation/09-deployment-workflow/tasks/task-001-one-command-promotion.md). Work 006 owns GitHub Actions trigger/CI configuration and will call the Work 012 command.
 
-## Context and contract
-
-Follow DEC-003-1 through DEC-003-3. The VPS must decrypt secrets into `/run/sulocraft/` on deploy, mount service-scoped files into containers, and verify container health before traffic cutover.
-
-## Scope
-
-- In scope:
-  - Run `backend/scripts/deploy_vps.sh` using encrypted secrets.
-  - Verify `/run/sulocraft` permissions (`0700` dir, `0600` files).
-  - Verify `https://dev.sulocraft.com/health` and live storefront.
-- Out of scope:
-  - Modifying production DNS.
-
-## Dependencies and relevant files
-
-- Depends on: Task 3.3 VPS deploy script, Task 3.4 tests, Task 3.9 local verification.
-- Inspect/edit:
-  - `backend/scripts/deploy_vps.sh`
-  - `docs/secrets.md`
-
-## Acceptance checks
-
-- [ ] Release deploys successfully on VPS without errors.
-- [ ] No plaintext `.env` files transferred over rsync or stored in release directory.
-- [ ] Service health check passes and containers run healthy.
-
-## Handoff back
-
-- Mark Work 003 completed in `work/INDEX.md` and `work/work-003-vault/tasks.md`.
+Do not implement deployment from this historical pointer; use the linked Work 012 contract.

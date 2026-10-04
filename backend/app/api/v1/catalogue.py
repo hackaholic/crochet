@@ -463,7 +463,7 @@ def get_collection_products(
         .distinct()
     )
 
-    total_count = query.count()
+    total_count = query.order_by(None).count()
     response.headers["X-Total-Count"] = str(total_count)
 
     products = query.offset(offset).limit(limit).all()

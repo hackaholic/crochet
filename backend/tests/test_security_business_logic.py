@@ -49,12 +49,14 @@ def test_authoritative_price_calculation_and_tampering_rejection():
     client, _ = _create_authenticated_client("9999922001")
 
     with SessionLocal() as db:
-        variant = db.query(ProductVariant).filter(ProductVariant.id == 1).first()
+        variant = db.query(ProductVariant).order_by(ProductVariant.id.asc()).first()
+        assert variant is not None
         authoritative_unit_price = variant.price
+        variant_id = variant.id
         assert authoritative_unit_price > 0
 
     # Add 2 items to cart
-    client.post("/api/v1/cart/items", json={"product_variant_id": 1, "quantity": 2})
+    client.post("/api/v1/cart/items", json={"product_variant_id": variant_id, "quantity": 2})
 
     # Customer attempts to forge subtotal, shippingFee, and totalAmount to ₹1 in order payload
     tampered_payload = {
@@ -113,7 +115,13 @@ def test_coupon_tampering_and_authoritative_discount():
         db.commit()
 
     # 1. Attempting invalid coupon code -> rejected with 400
-    client.post("/api/v1/cart/items", json={"product_variant_id": 1, "quantity": 1})
+    with SessionLocal() as db:
+        variant = db.query(ProductVariant).order_by(ProductVariant.id.asc()).first()
+        assert variant is not None
+        variant_id = variant.id
+        variant_price = variant.price
+
+    client.post("/api/v1/cart/items", json={"product_variant_id": variant_id, "quantity": 1})
     invalid_coupon_res = client.post(
         "/api/v1/orders",
         json={
@@ -131,7 +139,7 @@ def test_coupon_tampering_and_authoritative_discount():
     )
     assert invalid_coupon_res.status_code == 400
 
-    # 2. Applying valid coupon SEC10: Product 1 price is 2599. 10% is 259, capped by max_discount_amount=50.
+    # 2. Applying valid coupon SEC10: 10% off, capped by max_discount_amount=50.
     valid_coupon_res = client.post(
         "/api/v1/orders",
         json={
@@ -151,7 +159,8 @@ def test_coupon_tampering_and_authoritative_discount():
     assert valid_coupon_res.status_code == 201
     order = valid_coupon_res.json()
     assert order["discountAmount"] == 50, "Discount tampering succeeded!"
-    assert order["totalAmount"] == 2599 - 50  # 2549 >= 999 so shipping is 0
+    expected_shipping = 0 if (variant_price - 50) >= 999 else 99
+    assert order["totalAmount"] == variant_price - 50 + expected_shipping
 
 
 def test_inventory_integrity_out_of_stock_rejected():
@@ -159,12 +168,16 @@ def test_inventory_integrity_out_of_stock_rejected():
     client, _ = _create_authenticated_client("9999922003")
 
     with SessionLocal() as db:
-        variant = db.query(ProductVariant).filter(ProductVariant.id == 2).first()
+        variant = db.query(ProductVariant).order_by(ProductVariant.id.asc()).offset(1).first()
+        if not variant:
+            variant = db.query(ProductVariant).order_by(ProductVariant.id.asc()).first()
+        assert variant is not None
+        variant_id = variant.id
         variant.stock_quantity = 0
         db.commit()
 
     # Attempting to add out of stock item to cart -> 400
-    res = client.post("/api/v1/cart/items", json={"product_variant_id": 2, "quantity": 1})
+    res = client.post("/api/v1/cart/items", json={"product_variant_id": variant_id, "quantity": 1})
     assert res.status_code == 400
     assert "out of stock" in res.json()["detail"].lower()
 
@@ -173,16 +186,21 @@ def test_inventory_integrity_zero_and_negative_quantities_rejected():
     """Verify zero and negative quantities are strictly rejected."""
     client, _ = _create_authenticated_client("9999922004")
 
+    with SessionLocal() as db:
+        variant = db.query(ProductVariant).order_by(ProductVariant.id.asc()).first()
+        assert variant is not None
+        variant_id = variant.id
+
     # 1. Negative quantity in cart add -> 422 Unprocessable Entity
-    neg_res = client.post("/api/v1/cart/items", json={"product_variant_id": 1, "quantity": -3})
+    neg_res = client.post("/api/v1/cart/items", json={"product_variant_id": variant_id, "quantity": -3})
     assert neg_res.status_code == 422
 
     # 2. Zero quantity in cart add -> 422
-    zero_res = client.post("/api/v1/cart/items", json={"product_variant_id": 1, "quantity": 0})
+    zero_res = client.post("/api/v1/cart/items", json={"product_variant_id": variant_id, "quantity": 0})
     assert zero_res.status_code == 422
 
     # 3. Add legitimate item
-    valid_res = client.post("/api/v1/cart/items", json={"product_variant_id": 1, "quantity": 1})
+    valid_res = client.post("/api/v1/cart/items", json={"product_variant_id": variant_id, "quantity": 1})
     assert valid_res.status_code == 201
     cart_item_id = valid_res.json()["items"][0]["id"]
 

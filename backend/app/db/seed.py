@@ -1172,18 +1172,58 @@ def _seed_taxonomy_and_products(db: Session) -> None:
             rev.text = r["text"]
 
     # 6. Seed Product Occasions
+    seed_product_occasions(db)
+
+
+def seed_product_occasions(db: Session) -> None:
+    """Ensure product-occasion associations and ordering are idempotently seeded."""
     for occ_id, pids in PRODUCT_OCCASIONS_MAP.items():
-        for order_idx, pid in enumerate(pids):
+        occ = db.query(Occasion).filter_by(id=occ_id).first()
+        if not occ:
+            continue
+
+        # De-duplicate product IDs while preserving defined display order
+        seen_pids: set[int] = set()
+        ordered_unique_pids: list[int] = []
+        for pid in pids:
+            if pid not in seen_pids:
+                seen_pids.add(pid)
+                ordered_unique_pids.append(pid)
+
+        existing_assocs = {
+            po.product_id: po
+            for po in db.query(ProductOccasion).filter_by(occasion_id=occ_id).all()
+        }
+        pending_assocs = {
+            obj.product_id: obj
+            for obj in db.new
+            if isinstance(obj, ProductOccasion) and obj.occasion_id == occ_id
+        }
+
+        for order_idx, pid in enumerate(ordered_unique_pids):
             prod = db.query(Product).filter_by(id=pid).first()
-            if prod:
-                assoc = db.query(ProductOccasion).filter_by(product_id=pid, occasion_id=occ_id).first()
-                pending = any(
-                    isinstance(obj, ProductOccasion) and obj.product_id == pid and obj.occasion_id == occ_id
-                    for obj in db.new
+            if not prod:
+                continue
+
+            if pid in existing_assocs:
+                po = existing_assocs[pid]
+                if po.display_order != order_idx:
+                    po.display_order = order_idx
+            elif pid in pending_assocs:
+                po = pending_assocs[pid]
+                if po.display_order != order_idx:
+                    po.display_order = order_idx
+            else:
+                new_po = ProductOccasion(
+                    product_id=pid,
+                    occasion_id=occ_id,
+                    display_order=order_idx,
                 )
-                if not assoc and not pending:
-                    db.add(ProductOccasion(product_id=pid, occasion_id=occ_id, display_order=order_idx))
+                db.add(new_po)
+                pending_assocs[pid] = new_po
+
     db.flush()
+
 
 
 def seed_storefront_content(db: Session) -> None:
@@ -1456,19 +1496,7 @@ def seed_storefront_content(db: Session) -> None:
                     occ._legacy_image_url = occ_data.get("image_url")
 
         # 6. Ensure ProductOccasion associations exist on existing databases:
-        for occ_id, pids in PRODUCT_OCCASIONS_MAP.items():
-            for order_idx, pid in enumerate(pids):
-                prod = db.query(Product).filter_by(id=pid).first()
-                if prod:
-                    assoc = db.query(ProductOccasion).filter_by(product_id=pid, occasion_id=occ_id).first()
-                    pending = any(
-                        isinstance(obj, ProductOccasion) and obj.product_id == pid and obj.occasion_id == occ_id
-                        for obj in db.new
-                    )
-                    if not assoc and not pending:
-                        db.add(ProductOccasion(product_id=pid, occasion_id=occ_id, display_order=order_idx))
-
-        db.flush()
+        seed_product_occasions(db)
 
     db.commit()
 
@@ -1479,7 +1507,7 @@ def reseed_catalogue(db: Session) -> None:
     db.query(ProductVariant).delete()
     db.execute(product_categories.delete())
     db.execute(product_collections.delete())
-    db.execute(product_occasions.delete())
+    db.query(ProductOccasion).delete()
     db.execute(product_tags.delete())
     db.query(Review).delete()
     db.query(Product).delete()

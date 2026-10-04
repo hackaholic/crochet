@@ -81,9 +81,9 @@ def test_initial_occasions_seeded_with_distinct_artwork_and_hidden_rakhi():
 
         # Distinct Sulocraft artwork paths
         assert occ_map["birthday"].image_key == "occasions/birthday-gifting-v2.png"
-        assert occ_map["justbecause"].image_key == "occasions/justbecause-gifting.png"
+        assert occ_map["justbecause"].image_key == "occasions/just-because-gifting.png"
         assert occ_map["anniversary"].image_key == "occasions/anniversary-gifting-v2.png"
-        assert occ_map["babyshower"].image_key == "occasions/babyshower-gifting.png"
+        assert occ_map["babyshower"].image_key == "occasions/baby-shower-hamper.png"
         assert occ_map["wedding"].image_key == "occasions/wedding-gifting-v2.png"
 
         # Remaining 8 occasions must be disabled by default (DEC-010-010)
@@ -314,13 +314,93 @@ def test_multi_occasion_product_associations_and_filter():
 
 def test_seed_repair_idempotence():
     """Verify seed_storefront_content and seed_catalogue are fully idempotent when run repeatedly."""
-    from app.db.seed import seed_catalogue, seed_storefront_content
+    from app.db.seed import (
+        PRODUCT_OCCASIONS_MAP,
+        PRODUCTS_DATA,
+        reseed_catalogue,
+        seed_catalogue,
+        seed_product_occasions,
+        seed_storefront_content,
+    )
     with SessionLocal() as db:
         # Run multiple times to verify no unique constraint or primary key collisions occur
         seed_storefront_content(db)
         seed_storefront_content(db)
         seed_catalogue(db)
         seed_catalogue(db)
+
+        # Verify all product occasion associations and display order match PRODUCT_OCCASIONS_MAP
+        valid_pids = {p["id"] for p in PRODUCTS_DATA}
+        for occ_id, expected_pids in PRODUCT_OCCASIONS_MAP.items():
+            assocs = (
+                db.query(ProductOccasion)
+                .filter_by(occasion_id=occ_id)
+                .order_by(ProductOccasion.display_order.asc())
+                .all()
+            )
+            actual_pids = [a.product_id for a in assocs]
+            expected_filtered = [pid for pid in expected_pids if pid in valid_pids]
+            assert actual_pids == expected_filtered
+            for idx, a in enumerate(assocs):
+                assert a.display_order == idx
+
+        # Test updating an existing association's display_order: reseed repairs it idempotently
+        first_assoc = db.query(ProductOccasion).first()
+        assert first_assoc is not None
+        original_order = first_assoc.display_order
+        first_assoc.display_order = 999
+        db.commit()
+
+        seed_product_occasions(db)
+        db.commit()
+
+        db.refresh(first_assoc)
+        assert first_assoc.display_order == original_order
+
+        # Reseed catalogue clears and restores cleanly
+        reseed_catalogue(db)
+
+
+def test_fresh_database_seed_idempotency_isolated():
+    """Verify a clean, fresh database seeds successfully and repeated runs preserve associations."""
+    import tempfile
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from app.db.base import Base
+    import app.models  # noqa: F401
+    from app.db.seed import PRODUCT_OCCASIONS_MAP, PRODUCTS_DATA, seed_catalogue, seed_storefront_content
+
+    with tempfile.NamedTemporaryFile(suffix=".db") as tmp:
+        db_url = f"sqlite:///{tmp.name}"
+        test_engine = create_engine(db_url)
+        Base.metadata.create_all(bind=test_engine)
+        TestSession = sessionmaker(bind=test_engine, autoflush=False, autocommit=False)
+
+        # 1. Fresh database seed completes cleanly
+        with TestSession() as s:
+            seed_catalogue(s)
+
+        # 2. Repeated seed execution on fresh database succeeds idempotently
+        with TestSession() as s:
+            seed_catalogue(s)
+            seed_storefront_content(s)
+
+        # 3. Verify associations and ordering are preserved
+        with TestSession() as s:
+            valid_pids = {p["id"] for p in PRODUCTS_DATA}
+            for occ_id, expected_pids in PRODUCT_OCCASIONS_MAP.items():
+                assocs = (
+                    s.query(ProductOccasion)
+                    .filter_by(occasion_id=occ_id)
+                    .order_by(ProductOccasion.display_order.asc())
+                    .all()
+                )
+                actual_pids = [a.product_id for a in assocs]
+                expected_filtered = [pid for pid in expected_pids if pid in valid_pids]
+                assert actual_pids == expected_filtered
+                for idx, a in enumerate(assocs):
+                    assert a.display_order == idx
+
 
 
 def test_all_occasions_admin_toggleable_and_core_protected_from_deletion():

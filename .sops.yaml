@@ -1,0 +1,3 @@
+creation_rules:
+  - path_regex: ^secrets/encrypted/(backend|postgres|backup)\.enc\.env$
+    age: age1gw4em4sjz3td5zkw8t6fmkhzqtht9ksqt8fqdq0ejpp6m7j79ehq0zephg,age1tg0gun8qc9a9t0j92eg0uzhqt9axnptf3hchqz8cxl5aaqva3vsqdkvz0k

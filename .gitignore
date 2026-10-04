@@ -8,6 +8,7 @@ build/
 *.preprod*
 .env.preprod*
 !/.env.preprod
+/backend/.secrets/
 .vite/
 .wrangler/
 vite.config.*.timestamp-*
@@ -23,6 +24,9 @@ logs/
 /secrets/*
 !/secrets/README.md
 !/secrets/*.sops.yaml
+!/secrets/encrypted/
+/secrets/encrypted/*
+!/secrets/encrypted/*.enc.env
 **/age/keys.txt
 *.agekey
 

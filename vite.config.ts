@@ -14,6 +14,12 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5173,
     strictPort: true,
+    proxy: {
+      '/api/v1': {
+        target: process.env.VITE_LOCAL_API_PROXY_TARGET || 'http://localhost:8000',
+        changeOrigin: true,
+      },
+    },
   },
   preview: {
     host: '0.0.0.0',

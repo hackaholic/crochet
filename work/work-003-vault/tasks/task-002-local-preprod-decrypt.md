@@ -1,7 +1,7 @@
 # Task 3.2 — Local preprod secret decrypt helper
 
-**Owner:** Gemini  
-**Status:** Pending
+**Owner:** Codex
+**Status:** Completed
 
 ## Objective
 
@@ -26,11 +26,11 @@ Provide a simple local command that decrypts only the approved preprod secret gr
 
 ## Acceptance checks
 
-- [ ] One documented local command decrypts only the intended preprod groups and makes them available to local Docker.
-- [ ] Missing tools, key, or encrypted inputs fail safely with actionable messages and no secret values in output.
-- [ ] Plaintext outputs have owner-only permissions, are ignored by Git, and are excluded from Docker build contexts.
-- [ ] Tests use temporary keys and dummy values; relevant tests pass and results are recorded.
-- [ ] Local Docker API/frontend verification is performed when dependencies permit; otherwise record the exact blocker without marking dependent work complete.
+- [x] `scripts/decrypt_preprod_secrets.py` decrypts only backend/PostgreSQL groups into ignored service-specific files; the helper always rewrites the database URL to target the isolated local Compose database.
+- [x] The helper fails safely with actionable, redacted errors and does not pass the private key into an app container.
+- [x] Generated secret files use owner-only permissions and are excluded from Git and Docker contexts; `docker/compose.preprod.yaml` mounts service-scoped files.
+- [x] Three focused tests use a mocked Docker command and dummy values; all pass.
+- [x] After Gemini completed Task 3.11, repeat the local API/frontend check: local Compose reports API/PostgreSQL healthy and frontend running; `/health` and `/api/v1/storefront/home` respond, and the referenced owner-story image endpoint returns HTTP 200. The focused decrypt regression passes 3/3.
 
 ## Handoff back
 

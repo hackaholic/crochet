@@ -10,6 +10,16 @@ Browser → React/Vite frontend → FastAPI → PostgreSQL
 
 The frontend owns presentation and transient interface state. The API owns validated business data and the database owns persistent data. Payment providers, email, and shipping services will be called by the API when those integrations are chosen. The container exposes the storefront on host port 8080, while Vite continues to listen on port 5173 inside its container.
 
+## Environment parity and promotion
+
+All Sulocraft work follows the same three gated phases:
+
+1. **Local:** develop and run relevant tests, API checks, and browser verification. Do not deploy an unverified working tree.
+2. **Preprod:** deploy only after local verification passes, then exercise the deployed application and confirm stability.
+3. **Production:** promote only after preprod is stable and explicitly accepted, using the same tested revision/artifact.
+
+Preprod and production use the same application code/artifact, service architecture, deployment workflow, and security controls. Production promotion changes environment configuration and secrets only. Environment differences such as hosts, domains, runtime paths, and secret groups come from validated configuration, environment variables, or command-line inputs; they must not create preprod-only code paths or manual procedures. Missing production configuration fails closed and must never fall back to preprod credentials.
+
 ## Email boundary
 
 Incoming business email uses Cloudflare Email Routing to forward `hello@`, `support@`, and `orders@sulocraft.com` to the owner's private Gmail destination. Outgoing automated email uses the backend `EmailService` with Resend. Cloudflare forwarding is not a sending mailbox, and personal Gmail is never an application sender. See [email-architecture.md](email-architecture.md).

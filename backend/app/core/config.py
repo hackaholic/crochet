@@ -129,3 +129,11 @@ class Settings:
 
 
 settings = Settings()
+
+
+def migration_database_url() -> str:
+    """Return a normalized URL honoring the same file-backed secret as the API."""
+    url = config_value("DATABASE_URL") or settings.database_url
+    if url.startswith("postgresql://") and "+psycopg" not in url:
+        return url.replace("postgresql://", "postgresql+psycopg://", 1)
+    return url

@@ -3,7 +3,7 @@ import shutil
 import subprocess
 from pathlib import Path
 import yaml
-from app.core.config import config_value
+from app.core.config import config_value, migration_database_url
 
 
 def test_config_value_prefers_file_and_removes_final_newline(tmp_path, monkeypatch):
@@ -33,6 +33,16 @@ def test_config_value_fails_closed_without_disclosing_secret(tmp_path, monkeypat
         assert "must-not-be-used" not in str(exc)
     else:
         raise AssertionError("A configured but unreadable secret file must fail closed")
+
+
+def test_migrations_use_database_url_file_over_stale_environment(tmp_path, monkeypatch):
+    """Alembic must use file-backed credentials just like the API."""
+    secret_file = tmp_path / "database_url"
+    secret_file.write_text("postgresql://file_user:file_pass@db:5432/store", encoding="utf-8")
+    monkeypatch.setenv("DATABASE_URL", "postgresql://stale:stale@invalid.example/unused")
+    monkeypatch.setenv("DATABASE_URL_FILE", str(secret_file))
+
+    assert migration_database_url() == "postgresql+psycopg://file_user:file_pass@db:5432/store"
 
 
 def test_compose_secret_isolation_and_no_fallback_passwords():
@@ -194,5 +204,3 @@ def test_backup_script_dedicated_r2_credentials_precedence(tmp_path):
     )
     assert res.returncode == 0, f"Error: {res.stderr}"
     assert res.stdout.strip() == "dedicated-backup-key"
-
-

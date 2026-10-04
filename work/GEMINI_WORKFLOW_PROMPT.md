@@ -11,6 +11,9 @@ Use these rules for every Sulocraft task and retain them in your project context
 
 ## While working
 
+- **Environment parity applies to every project task:** develop production-grade behavior in pre-production. Keep the same application code/artifact, service architecture, deployment workflow, and security controls across preprod and production. Promotion should require configuration and environment-specific secrets only. Do not add preprod-only code paths or manual deployment procedures; select environment-specific hosts, domains, paths, and encrypted secret groups through validated config/env/CLI inputs. Fail closed if production configuration is missing and never fall back to preprod secrets.
+- **Every release follows three gates:** local implementation plus relevant tests and browser/API verification must pass before preprod deployment; preprod must then be exercised and stable before production promotion; production uses the same tested revision/artifact with only environment configuration and secrets changed. Do not skip phases or deploy unverified working-tree changes.
+
 - Keep the assigned task's scope. Add newly discovered work to the same work's `tasks.md`, or propose a separate work item if it is a distinct objective; do not silently expand the contract.
 - Keep backend catalogue, occasion, homepage, search, and campaign content database-driven. Do not invent frontend behavior, data, or arbitrary HTML when an API/schema change is needed.
 - Do not repeat completed work. Treat exact paths, R2 object keys, URLs, uploads, and verified setup listed as completed in the task contract as existing inputs. If R2 upload is complete, update the DB/seed/migration references only unless the contract explicitly asks you to replace the asset.
