@@ -6,7 +6,7 @@
 - **Backend Agent**: Gemini (FastAPI, SQLAlchemy, database, models, migrations, auth, OpenAPI contracts)
 - **Implementation & Orchestration**: Codex
 
-The master specification is [SPECIFICATION.md](SPECIFICATION.md). The canonical API contract is [/docs/openapi.yaml](openapi.yaml) and [api-catalogue.md](api-catalogue.md). The [global handoff registry](handoffs.md) links to work-local coordination and task contracts; it is not a second task database.
+The master specification is [SPECIFICATION.md](SPECIFICATION.md). The canonical API contract is [/docs/openapi.yaml](openapi.yaml) and [api-catalogue.md](api-catalogue.md). The [global handoff registry](handoffs.md) links to work-local coordination and task contracts; it is not a second task database. An interactive visual dashboard is available via [Workflow GUI](workflow-gui.md) (`http://localhost:8088`).
 
 Before changing a shared request, response, pricing unit, authentication assumption, or endpoint path, update the contract and note the change in [decisions.md](decisions.md). A completed backend endpoint must be documented with schema and examples before frontend integrates it.
 

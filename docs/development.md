@@ -9,6 +9,9 @@ Docker Compose defines the complete local stack in `docker/compose.yaml`.
 | `frontend` | React and Vite storefront | `http://localhost:8080` |
 | `api` | Python FastAPI backend | `http://localhost:8000` |
 | `db` | PostgreSQL persistent data store | `localhost:5432` |
+| `workflow-gui` | Agent coordination & task progress dashboard | `http://localhost:8088` |
+
+See [Workflow GUI Guide](workflow-gui.md) for navigation details and standalone run modes.
 
 Start a fresh environment with:
 

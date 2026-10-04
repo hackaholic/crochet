@@ -1,0 +1,16 @@
+services:
+  workflow-gui:
+    build:
+      context: ..
+      dockerfile: docker/workflow-gui.Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${WORKFLOW_GUI_PORT:-8088}:8088"
+    volumes:
+      - ../work:/app/work:ro
+      - ../scripts/workflow_gui.py:/app/scripts/workflow_gui.py:ro
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8088/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3

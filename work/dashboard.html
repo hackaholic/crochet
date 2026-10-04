@@ -1,0 +1,2983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sulocraft Workflow & Agent Coordination Dashboard</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    :root {
+      --background: #090d16;
+      --card: #111827;
+      --card-hover: #1f2937;
+      --border: #1f2937;
+      --foreground: #f3f4f6;
+      --muted-foreground: #9ca3af;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.1);
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(156, 163, 175, 0.3);
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="bg-[var(--background)] text-[var(--foreground)] min-h-screen antialiased flex flex-col">
+
+  <!-- Header Banner -->
+  <header class="bg-[var(--card)] border-b border-[var(--border)] sticky top-0 z-30 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 lg:px-8 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white shadow-inner">
+          🧶
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight text-[var(--foreground)] flex items-center gap-2">
+            Sulocraft Workflow & Coordination
+            <span class="text-xs font-normal px-2 py-0.5 rounded-full bg-blue-900/60 text-blue-300 border border-blue-700/50">Live</span>
+          </h1>
+          <p class="text-xs text-[var(--muted-foreground)]">Tracking 14 work items across Gemini, Codex & Owner</p>
+        </div>
+      </div>
+
+      <!-- Overall Progress Stat -->
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-3">
+          <div class="text-right">
+            <div class="text-xs font-medium text-[var(--muted-foreground)]">Overall Progress</div>
+            <div class="text-sm font-bold text-blue-400">66% (82/125 subtasks)</div>
+          </div>
+          <div class="w-24 bg-gray-800 rounded-full h-2.5 overflow-hidden border border-gray-700">
+            <div class="bg-blue-500 h-2.5 rounded-full transition-all duration-500" style="width: 66%;"></div>
+          </div>
+        </div>
+
+        <button onclick="location.reload()" title="Refresh live data" class="px-3 py-1.5 rounded-md bg-[var(--card-hover)] hover:bg-gray-700 text-xs font-medium border border-[var(--border)] transition flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+          Sync
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Metrics Bar -->
+  <div class="bg-[var(--card)]/50 border-b border-[var(--border)] py-2.5">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3 text-center">
+      <div class="p-2 rounded-lg bg-[var(--card)] border border-[var(--border)]">
+        <div class="text-xs text-[var(--muted-foreground)]">Total Items</div>
+        <div class="text-lg font-bold text-white">14</div>
+      </div>
+      <div class="p-2 rounded-lg bg-emerald-950/40 border border-emerald-800/40">
+        <div class="text-xs text-emerald-400">Completed</div>
+        <div class="text-lg font-bold text-emerald-300">4</div>
+      </div>
+      <div class="p-2 rounded-lg bg-blue-950/40 border border-blue-800/40">
+        <div class="text-xs text-blue-400">In Progress</div>
+        <div class="text-lg font-bold text-blue-300">6</div>
+      </div>
+      <div class="p-2 rounded-lg bg-amber-950/40 border border-amber-800/40">
+        <div class="text-xs text-amber-400">Pending</div>
+        <div class="text-lg font-bold text-amber-300">4</div>
+      </div>
+      <div class="p-2 rounded-lg bg-gray-900 border border-[var(--border)] col-span-2 sm:col-span-4 lg:col-span-1">
+        <div class="text-xs text-[var(--muted-foreground)]">Completed Subtasks</div>
+        <div class="text-lg font-bold text-gray-200">82 / 125</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 py-5 sm:px-6 lg:px-8 flex-1 flex flex-col w-full">
+    
+    <!-- Controls Toolbar (Search & Filter Pills) -->
+    <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 mb-5">
+      <!-- Filter Pills -->
+      <div class="flex items-center gap-1.5 flex-wrap">
+        <button onclick="setFilter('ALL')" id="filter-ALL" class="filter-btn px-3 py-1.5 rounded-full text-xs font-medium bg-blue-600 text-white transition shadow-sm">
+          All (14)
+        </button>
+        <button onclick="setFilter('IN_PROGRESS')" id="filter-IN_PROGRESS" class="filter-btn px-3 py-1.5 rounded-full text-xs font-medium bg-[var(--card)] hover:bg-[var(--card-hover)] text-[var(--muted-foreground)] border border-[var(--border)] transition">
+          In Progress (6)
+        </button>
+        <button onclick="setFilter('COMPLETED')" id="filter-COMPLETED" class="filter-btn px-3 py-1.5 rounded-full text-xs font-medium bg-[var(--card)] hover:bg-[var(--card-hover)] text-[var(--muted-foreground)] border border-[var(--border)] transition">
+          Completed (4)
+        </button>
+        <button onclick="setFilter('PENDING')" id="filter-PENDING" class="filter-btn px-3 py-1.5 rounded-full text-xs font-medium bg-[var(--card)] hover:bg-[var(--card-hover)] text-[var(--muted-foreground)] border border-[var(--border)] transition">
+          Pending (4)
+        </button>
+      </div>
+
+      <!-- Search Input -->
+      <div class="relative w-full md:w-72">
+        <input
+          type="text"
+          id="search-input"
+          oninput="handleSearch(this.value)"
+          placeholder="Search work, subtasks, agent..."
+          class="w-full bg-[var(--card)] border border-[var(--border)] rounded-lg px-3 py-1.5 pl-9 text-xs text-[var(--foreground)] placeholder-[var(--muted-foreground)] focus:outline-none focus:border-blue-500 transition"
+        />
+        <svg class="w-4 h-4 text-gray-500 absolute left-2.5 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+      </div>
+    </div>
+
+    <!-- 2-Column Responsive Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1 min-h-0">
+      
+      <!-- Left Column: Work Items List (5 cols) -->
+      <div class="lg:col-span-5 flex flex-col h-[750px] bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden shadow-sm">
+        <div class="px-4 py-3 border-b border-[var(--border)] bg-gray-900/40 flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Work Items</span>
+          <span id="items-count-badge" class="text-xs bg-gray-800 px-2 py-0.5 rounded text-gray-300">Showing 14</span>
+        </div>
+        <div id="work-items-list" class="flex-1 overflow-y-auto divide-y divide-[var(--border)] custom-scrollbar">
+          <!-- Dynamically populated by JS -->
+        </div>
+      </div>
+
+      <!-- Right Column: Detail Pane (7 cols) -->
+      <div class="lg:col-span-7 flex flex-col h-[750px] bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden shadow-sm">
+        <div id="detail-header" class="px-5 py-4 border-b border-[var(--border)] bg-gray-900/40 flex items-center justify-between">
+          <!-- Dynamically populated header -->
+        </div>
+        <div id="detail-body" class="flex-1 overflow-y-auto p-5 custom-scrollbar space-y-6">
+          <!-- Dynamically populated content -->
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Contract Modal -->
+  <div id="contract-modal" class="fixed inset-0 z-50 hidden bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="px-5 py-3.5 border-b border-[var(--border)] bg-gray-900/50 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-base">📄</span>
+          <h3 id="modal-title" class="text-sm font-bold text-white truncate max-w-md">Task Contract</h3>
+        </div>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-white p-1 rounded-md hover:bg-gray-800 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <div id="modal-body" class="p-5 overflow-y-auto space-y-4 custom-scrollbar text-xs text-gray-300">
+        <!-- Contract contents -->
+      </div>
+      <div class="px-5 py-3 border-t border-[var(--border)] bg-gray-900/30 flex justify-end">
+        <button onclick="closeModal()" class="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="border-t border-[var(--border)] py-3 text-center text-xs text-[var(--muted-foreground)]">
+    Sulocraft Multi-Agent Coordination • Last scanned: 2026-10-04 15:20:51 UTC
+  </footer>
+
+  <script>
+    const DATA = {
+  "generated_at": "2026-10-04 15:20:51 UTC",
+  "total_work_items": 14,
+  "completed_items": 4,
+  "in_progress_items": 6,
+  "pending_items": 4,
+  "blocked_items": 0,
+  "total_subtasks": 125,
+  "completed_subtasks": 82,
+  "overall_progress_percent": 66,
+  "items": [
+    {
+      "id": "work-001",
+      "number": 1,
+      "title": "Admin dashboard integration",
+      "status": "In Progress",
+      "folder_name": "work-001-admin-dashboard",
+      "relative_path": "work/work-001-admin-dashboard",
+      "goal": "**Objective:** Integrate the owner-provided Figma admin export into Sulocraft's existing `/admin` experience, preserving the supplied design while connecting real APIs.",
+      "current_owner": "",
+      "active_handoffs": "",
+      "handoff_state": "",
+      "subtasks": [
+        {
+          "id": "1-6-Verify-the-integrated-admin",
+          "title": "1.6 Verify the integrated admin in local Docker/browser, including API-backed data, error/empty/mutation states, and desktop/mobile rendering; record defects before marking the integration accepted.",
+          "completed": false,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "1-7-Replace-the-Products-placeho",
+          "title": "1.7 Replace the Products placeholder with a reusable catalogue screen using existing product/variant APIs; cover create/edit/list behavior with tests.",
+          "completed": false,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "1-8-Replace-the-Inventory-placeh",
+          "title": "1.8 Replace the Inventory placeholder using existing inventory/adjustment APIs; cover safe stock adjustments and feedback with tests.",
+          "completed": false,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "1-9-Define-the-minimum-useful-Cu",
+          "title": "1.9 Define the minimum useful Customers screen and audit existing customer APIs; write a Gemini contract before adding backend capability.",
+          "completed": false,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "1-10-Define-which-Settings-belon",
+          "title": "1.10 Define which Settings belong in V1 and audit existing admin APIs; write a separate Gemini contract before adding backend capability.",
+          "completed": false,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "1-12-Owner-reviews-the-locally-v",
+          "title": "1.12 Owner reviews the locally verified admin experience and decides whether any additional sections or visual changes are required; only then consider a dev push/deploy.",
+          "completed": false,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "1-1-Inspect-the-provided---home",
+          "title": "1.1 Inspect the provided `/home/anu/Downloads/admin.zip` export and current implementation. The source includes a `mockData.ts`; it is not present in the app runtime. The supplied shell, dashboard, orders, order detail, finance, returns, and placeholder page structure exists under `src/admin/`.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "1-2-Integrate-the-supplied-admin",
+          "title": "1.2 Integrate the supplied admin layout/navigation into the existing `/admin` route without replacing it with a new design.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "1-3-Wire-the-implemented-dashboa",
+          "title": "1.3 Wire the implemented dashboard, orders/order detail, finance, and returns screens to typed API service calls; retain loading/empty states and remove prototype records from runtime rendering.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "1-4-Keep-the-admin-route-behind",
+          "title": "1.4 Keep the admin route behind an administrator access check with sign-in, loading, and API error states.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "1-5-Gemini-reports-the-dashboard",
+          "title": "1.5 Gemini reports the dashboard metrics, sales/finance, attention/search, order filters, and return/refund backend contracts implemented; see the archived completion handoff (126 backend tests reported there).",
+          "completed": true,
+          "owner": "",
+          "contract_path": "docs/archive/handoffs-history.md",
+          "contract_title": "archived completion handoff"
+        },
+        {
+          "id": "1-11-Add-screen-level-UI-tests-f",
+          "title": "1.11 Add screen-level UI tests for the dashboard, order list/detail, finance, returns, and any newly implemented pages; run the suite in the supported Node/Docker environment. Current host Node cannot start Vitest, and the direct backend test attempt yielded no result.",
+          "completed": false,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        }
+      ],
+      "decisions": [],
+      "contracts": [
+        {
+          "path": "work/work-001-admin-dashboard/tasks/task-001-screen-audit.md",
+          "filename": "task-001-screen-audit.md",
+          "title": "Task 1.1 \u2014 Figma admin export audit and component inventory",
+          "owner": "Codex / ChatGPT",
+          "status": "Pending",
+          "objective": "Inspect the provided Figma admin export, existing components in `src/admin/`, and `/admin` routes to identify exact screens, typography, layout shells, and assets needed for integration without hardcoding dummy data.",
+          "scope_in": [
+            "Inventory existing components in `src/admin/` (`DashboardOverview`, `OrdersTable`, `FinanceView`, `ReturnsQueue`, etc.).",
+            "Remove extraneous Figma design tokens, demo mock arrays, or hardcoded values.",
+            "Identify exact screen mapping to current `/admin` routes."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Modifying backend endpoints or database models.",
+            "Redesigning the visual theme away from the owner's Figma export."
+          ],
+          "acceptance_checks": [
+            "- [ ] Clear inventory of active and placeholder admin views documented.",
+            "- [ ] No hardcoded business analytics or orders remain in UI component bodies.",
+            "- [ ] Screen shell aligns with existing `/admin` route structure."
+          ]
+        },
+        {
+          "path": "work/work-001-admin-dashboard/tasks/task-002-admin-layout-routes.md",
+          "filename": "task-002-admin-layout-routes.md",
+          "title": "Task 1.2 \u2014 Admin layout shell and route integration",
+          "owner": "Codex / ChatGPT",
+          "status": "Pending",
+          "objective": "Integrate the Figma admin layout shell (navigation sidebar, topbar with search/alerts, and responsive main canvas) into the existing `/admin` route without replacing it with an incompatible layout or breaking route authentication guards.",
+          "scope_in": [
+            "Responsive desktop/tablet sidebar and header.",
+            "Active navigation state indicator.",
+            "Integration with React Router navigation under `/admin`.",
+            "Admin sign-out and profile dropdown."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Re-implementing authentication session cookies."
+          ],
+          "acceptance_checks": [
+            "- [ ] `/admin` loads the integrated Figma layout with responsive sidebar and header.",
+            "- [ ] Navigation switches between views without full-page reloads.",
+            "- [ ] Unauthorized visitors redirect to login; authorized admins can navigate freely."
+          ]
+        },
+        {
+          "path": "work/work-001-admin-dashboard/tasks/task-003-api-integration.md",
+          "filename": "task-003-api-integration.md",
+          "title": "Task 1.3 \u2014 Admin API client integration and state management",
+          "owner": "Codex / ChatGPT",
+          "status": "Pending",
+          "objective": "Connect all admin views to real backend API endpoints using typed client methods in `src/lib/api/admin.ts`. Replace placeholder data with real persisted database data, and implement explicit loading, empty, and error states.",
+          "scope_in": [
+            "Connect dashboard metrics cards and sales charts to live APIs.",
+            "Wire up orders table with pagination, search, and status filters.",
+            "Connect finance breakdown cards and net revenue trends.",
+            "Implement return requests review and refund modal.",
+            "Connect occasion manager for holiday/seasonal scheduling.",
+            "Graceful handling of empty states, network latency, and HTTP errors."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Fabricating synthetic data or statutory tax deductions on the client side."
+          ],
+          "acceptance_checks": [
+            "- [ ] All views render real data returned from the backend.",
+            "- [ ] Dates and financial metrics display in `Asia/Kolkata` time and INR paise currency formatting (`\u20b9`).",
+            "- [ ] Refunds and status updates trigger API mutations and refresh views upon completion.",
+            "- [ ] Zero orders/returns render dedicated empty states rather than broken tables."
+          ]
+        },
+        {
+          "path": "work/work-001-admin-dashboard/tasks/task-004-ui-tests-verification.md",
+          "filename": "task-004-ui-tests-verification.md",
+          "title": "Task 1.4 \u2014 Admin UI automated tests and Docker verification",
+          "owner": "Codex / ChatGPT",
+          "status": "Pending",
+          "objective": "Add and update comprehensive frontend unit/integration tests for the integrated admin views, run the frontend test suite, and verify functionality in the live local Docker container stack at `http://localhost:8080/admin`.",
+          "scope_in": [
+            "Vitest test coverage for `AdminPage.test.tsx` and admin subcomponents.",
+            "Mock API tests for loading, empty, and error states.",
+            "End-to-end admin inspection on `http://localhost:8080/admin`."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Altering backend test suites."
+          ],
+          "acceptance_checks": [
+            "- [ ] `npm test` passes all tests with zero type errors (`pnpm typecheck`).",
+            "- [ ] Admin dashboard renders without console errors on `http://localhost:8080/admin`.",
+            "- [ ] Verification recorded in `notes.md` with screenshot/evidence before marking complete."
+          ]
+        }
+      ],
+      "total_subtasks": 12,
+      "completed_subtasks": 5,
+      "progress_percent": 42
+    },
+    {
+      "id": "work-002",
+      "number": 2,
+      "title": "Product gallery media",
+      "status": "Pending",
+      "folder_name": "work-002-product-gallery-media",
+      "relative_path": "work/work-002-product-gallery-media",
+      "goal": "**Objective:** Finish distinct, correctly mapped gallery images for Sulocraft's product catalogue.",
+      "current_owner": "",
+      "active_handoffs": "",
+      "handoff_state": "",
+      "subtasks": [
+        {
+          "id": "2-1-Audit-remaining-products-aga",
+          "title": "2.1 Audit remaining products against `docs/product-media.md` and existing local/R2 assets.",
+          "completed": false,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "2-2-Prepare-only-distinct--appro",
+          "title": "2.2 Prepare only distinct, approved alternate images; preserve primary product images.",
+          "completed": false,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "2-3-Coordinate-any-DB-API-media",
+          "title": "2.3 Coordinate any DB/API media-key updates with Gemini through a focused handoff.",
+          "completed": false,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "2-4-Rebuild-local-Docker-and-ver",
+          "title": "2.4 Rebuild local Docker and verify product cards and galleries at `http://localhost:8080`.",
+          "completed": false,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "Earlier-priority-gallery-seed-re",
+          "title": "Earlier priority gallery seed records exist for four products; re-verify coverage before treating this work as complete.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        }
+      ],
+      "decisions": [],
+      "contracts": [
+        {
+          "path": "work/work-002-product-gallery-media/tasks/task-001-media-audit.md",
+          "filename": "task-001-media-audit.md",
+          "title": "Task 2.1 \u2014 Product gallery media audit",
+          "owner": "Codex",
+          "status": "Pending",
+          "objective": "Audit all 16 catalogue products against `docs/product-media.md` and the existing Cloudflare R2 bucket inventory to identify which products have alternate view assets and which still need gallery images.",
+          "scope_in": [
+            "Check existing 4 priority products with approved galleries (`tulip-bouquet`, `sunflower-pot`, `lavender-bunch`, `strawberry-keychain`).",
+            "Catalog remaining 12 products needing alternate gallery images.",
+            "Cross-reference with assets available in Cloudflare R2."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Replacing primary product thumbnails."
+          ],
+          "acceptance_checks": [
+            "- [ ] Audit table completed listing each SKU, primary image key, and current gallery count.",
+            "- [ ] List of missing gallery assets identified and documented in `notes.md`."
+          ]
+        },
+        {
+          "path": "work/work-002-product-gallery-media/tasks/task-002-curate-alternate-views.md",
+          "filename": "task-002-curate-alternate-views.md",
+          "title": "Task 2.2 \u2014 Curate and upload approved alternate product views",
+          "owner": "Codex / Owner",
+          "status": "Pending",
+          "objective": "Curate distinct, aesthetically consistent alternate views for remaining products (focusing on stitching detail, hand-feel, scale, and gift presentation) and upload them to Cloudflare R2 under `products/gallery/`.",
+          "scope_in": [
+            "Curate 2\u20133 alternate views per product.",
+            "Name files consistently (e.g. `products/gallery/{slug}-alt-1.jpg`).",
+            "Verify public readability via `https://images.sulocraft.com/`."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Changing category or hero imagery."
+          ],
+          "acceptance_checks": [
+            "- [ ] Every curated image is uploaded to R2 and returns HTTP 200 via CDN URL.",
+            "- [ ] No image collisions or duplicate filenames."
+          ]
+        },
+        {
+          "path": "work/work-002-product-gallery-media/tasks/task-003-seed-api-updates.md",
+          "filename": "task-003-seed-api-updates.md",
+          "title": "Task 2.3 \u2014 Catalogue seed and API media-key updates",
+          "owner": "Gemini",
+          "status": "Pending",
+          "objective": "Update `backend/app/db/seed.py` and `backend/app/core/images.py` to associate the uploaded gallery keys with corresponding `ProductMedia` records in the database seed so that `GET /api/v1/products/{slug}` and storefront product pages return full image galleries.",
+          "scope_in": [
+            "Add gallery entries to product definitions in `backend/app/db/seed.py`.",
+            "Maintain seed idempotency (no duplicate entries on re-seed).",
+            "Add automated test assertions in `backend/tests/test_catalogue.py`."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Frontend carousel changes."
+          ],
+          "acceptance_checks": [
+            "- [ ] `GET /api/v1/products/{slug}` returns `media` array with primary and alternate views.",
+            "- [ ] Backend tests pass: `pytest backend/tests/test_catalogue.py`."
+          ]
+        },
+        {
+          "path": "work/work-002-product-gallery-media/tasks/task-004-local-docker-verification.md",
+          "filename": "task-004-local-docker-verification.md",
+          "title": "Task 2.4 \u2014 Local Docker storefront gallery verification",
+          "owner": "Codex / ChatGPT",
+          "status": "Pending",
+          "objective": "Rebuild and restart local Docker services, navigate to product detail pages at `http://localhost:8080/products/{slug}`, and verify that thumbnail selectors, swipe gestures, and high-resolution galleries render flawlessly across mobile and desktop viewports.",
+          "scope_in": [
+            "Verify gallery thumbnails switch main image on click and swipe.",
+            "Verify mobile touch gestures and responsive image sizes.",
+            "Verify image aspect ratio and placeholder blur transitions."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Backend modifications."
+          ],
+          "acceptance_checks": [
+            "- [ ] All 16 products display active gallery images without broken image icons.",
+            "- [ ] No layout shift or overflow on mobile (`390\u00d7844`).",
+            "- [ ] Record verification notes and browser screenshots before marking complete."
+          ]
+        }
+      ],
+      "total_subtasks": 5,
+      "completed_subtasks": 1,
+      "progress_percent": 20
+    },
+    {
+      "id": "work-003",
+      "number": 3,
+      "title": "SOPS/age secret vault",
+      "status": "Completed",
+      "folder_name": "work-003-vault",
+      "relative_path": "work/work-003-vault",
+      "goal": "**Objective:** Keep credentials out of Git, Docker images, and frontend bundles while making secure local decryption and service-scoped runtime secret materialization practical.",
+      "current_owner": "",
+      "active_handoffs": "",
+      "handoff_state": "",
+      "subtasks": [
+        {
+          "id": "3-13-Gemini--isolate-backend-tes",
+          "title": "3.13 Gemini: isolate backend tests from shared development databases; added fail-closed DB guards, dynamic entity cleanup in `backend/tests/conftest.py`, disposable test compose service `docker/compose.test.yaml`, and `backend/scripts/run_isolated_tests.sh`. Full suite (173/173 tests) passing with 0 failures and preprod DB protected.",
+          "completed": true,
+          "owner": " Gemini",
+          "contract_path": "work/work-003-vault/tasks/task-013-isolate-backend-test-database.md",
+          "contract_title": "isolate backend tests from shared development databases"
+        },
+        {
+          "id": "3-9-Codex---Gemini--rebuild-loca",
+          "title": "3.9 Codex + Gemini: rebuild local Docker and verify API/UI with dev secrets and verified seed idempotency.",
+          "completed": true,
+          "owner": " Codex + Gemini",
+          "contract_path": "work/work-003-vault/tasks/task-008-seed-repair-verification.md",
+          "contract_title": "rebuild local Docker and verify API/UI"
+        },
+        {
+          "id": "3-2-Codex--local-decrypt-helper",
+          "title": "3.2 Codex: local decrypt helper and Compose secret overlay integrated; focused decryption tests, local API health, storefront data, and image endpoint verified.",
+          "completed": true,
+          "owner": " Codex",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "3-1-Gemini--implement-Compose-se",
+          "title": "3.1 Gemini: implement Compose secret interfaces; implementation and 142 backend tests are recorded in `notes.md`.",
+          "completed": true,
+          "owner": " Gemini",
+          "contract_path": "work/work-003-vault/tasks/task-001-compose-secrets.md",
+          "contract_title": "Compose secret interfaces"
+        },
+        {
+          "id": "3-14-Gemini--make-vault-deployme",
+          "title": "3.14 Gemini: make vault deployment environment-configurable; added dynamic `scripts/decrypt_secrets.py`, `--env` and `--config` CLI options, strict fail-closed cross-env isolation, and updated bootstrap/deploy scripts.",
+          "completed": true,
+          "owner": " Gemini",
+          "contract_path": "work/work-003-vault/tasks/task-014-configurable-deployment-environments.md",
+          "contract_title": "make vault deployment environment-configurable"
+        },
+        {
+          "id": "3-11-Gemini--fix-idempotent-cata",
+          "title": "3.11 Gemini: fix idempotent catalogue seed associations; centralized `seed_product_occasions` helper, eliminated duplicate loops, and added isolated/repeated regression tests.",
+          "completed": true,
+          "owner": " Gemini",
+          "contract_path": "work/work-003-vault/tasks/task-011-seed-idempotency.md",
+          "contract_title": "idempotent catalogue seed associations"
+        },
+        {
+          "id": "3-3-Gemini--implement-VPS-secret",
+          "title": "3.3 Gemini: implement VPS secret bootstrap/deploy per task-003-vps-deploy.md; created `backend/scripts/bootstrap_secrets.sh` and updated `backend/scripts/deploy_vps.sh` for encrypted SOPS deployment.",
+          "completed": true,
+          "owner": " Gemini",
+          "contract_path": "work/work-003-vault/tasks/task-003-vps-deploy.md",
+          "contract_title": "task-003-vps-deploy.md"
+        },
+        {
+          "id": "3-4-Gemini--add-tests-per-task-0",
+          "title": "3.4 Gemini: add tests per task-004-vault-tests.md; 6 regression tests in `backend/tests/test_vault_deploy.py` (14/14 vault & secret tests pass).",
+          "completed": true,
+          "owner": " Gemini",
+          "contract_path": "work/work-003-vault/tasks/task-004-vault-tests.md",
+          "contract_title": "task-004-vault-tests.md"
+        },
+        {
+          "id": "3-6-Gemini--add-safe-VPS-key-boo",
+          "title": "3.6 Gemini: add safe VPS key bootstrap automation; created `backend/scripts/bootstrap_vps_key.sh` with fail-closed key refusal and ephemeral container execution.",
+          "completed": true,
+          "owner": " Gemini",
+          "contract_path": "work/work-003-vault/tasks/task-005-vps-key-bootstrap.md",
+          "contract_title": "safe VPS key bootstrap automation"
+        },
+        {
+          "id": "3-7-Gemini---Codex--add-guarded",
+          "title": "3.7 Gemini + Codex: add guarded key rotation automation; created `backend/scripts/rotate_vps_key.sh` supporting candidate key staging, promotion with active backup, and rollback.",
+          "completed": true,
+          "owner": " Gemini + Codex",
+          "contract_path": "work/work-003-vault/tasks/task-006-age-key-rotation.md",
+          "contract_title": "guarded key rotation automation"
+        },
+        {
+          "id": "3-8-Codex--configure-SOPS-recipi",
+          "title": "3.8 Codex: configure SOPS recipients and encrypt approved preprod secret groups in Task 3.8 contract.",
+          "completed": true,
+          "owner": " Codex",
+          "contract_path": "work/work-003-vault/tasks/task-007-sops-encryption.md",
+          "contract_title": "Task 3.8 contract"
+        },
+        {
+          "id": "3-12-Codex--fix-SOPS-dotenv-pars",
+          "title": "3.12 Codex: fix SOPS dotenv parsing, migration secret-file precedence, and rotation Docker fallback in Task 3.12 contract.",
+          "completed": true,
+          "owner": " Codex",
+          "contract_path": "work/work-003-vault/tasks/task-012-dotenv-runtime-integration.md",
+          "contract_title": "Task 3.12 contract"
+        },
+        {
+          "id": "Audit-actual-env-names--Compose",
+          "title": "Audit actual env names, Compose/deploy paths, and Git ignore rules.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "Add-generic---SETTING-_FILE--han",
+          "title": "Add generic `<SETTING>_FILE` handling and focused redaction/precedence tests.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "Document-the-inventory--selected",
+          "title": "Document the inventory, selected SOPS/age approach, and Gemini implementation contract.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "Generate-and-verify-the-VPS-age",
+          "title": "Generate and verify the VPS age key as `root:root`, mode `0600`, with its directory at mode `0700`; only the public recipient was read.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "3-5-Owner---Codex--restored-the",
+          "title": "3.5 Owner + Codex: restored the existing local key to `anu:anu` mode `0600` and verified its public recipient using a temporary container. Private key material was not exposed.",
+          "completed": true,
+          "owner": " Owner + Codex",
+          "contract_path": "",
+          "contract_title": ""
+        }
+      ],
+      "decisions": [
+        {
+          "title": "DEC-003-1 \u2014 Use SOPS + age on the single VPS",
+          "body": "**Decision:** Use SOPS with age recipients; do not deploy HashiCorp Vault, Kubernetes, or Consul.\n\n**Reason:** The current deployment is a single-VPS Docker Compose application and needs a lightweight encrypted-at-rest workflow.\n\n**Impact:** Git stores only encrypted service groups. Public recipient..."
+        },
+        {
+          "title": "DEC-003-2 \u2014 Split secrets by service",
+          "body": "**Decision:** Keep backend, PostgreSQL, and backup secrets in separate groups and materialize only required files under `/run/sulocraft/`.\n\n**Reason:** A compromised service must not automatically gain unrelated database or backup credentials.\n\n**Impact:** Do not leave one global production `.env` a..."
+        },
+        {
+          "title": "DEC-003-3 \u2014 Keep frontend configuration public-only",
+          "body": "**Decision:** Never pass private credentials through Vite, frontend source, build arguments, or image layers.\n\n**Impact:** OAuth client IDs may be public only where the actual auth design requires them; client secrets remain backend-only."
+        },
+        {
+          "title": "DEC-003-4 \u2014 Select deployment environment from runtime configuration",
+          "body": "**Decision:** Deployment and secret decryption must accept the target environment through configuration, environment variables, or command-line arguments. Preprod-specific names and paths must not be embedded as the only supported deployment mode.\n\n**Reason:** The same vault workflow should be reusa..."
+        },
+        {
+          "title": "DEC-003-5 \u2014 Keep preprod production-equivalent",
+          "body": "**Decision:** Build and operate preprod with the same application code, deployment workflow, service topology, and security controls intended for production. Environment differences must be supplied through validated configuration and environment-specific encrypted secret groups.\n\n**Reason:** Prepro..."
+        }
+      ],
+      "contracts": [
+        {
+          "path": "work/work-003-vault/tasks/task-001-compose-secrets.md",
+          "filename": "task-001-compose-secrets.md",
+          "title": "Task 3.1 \u2014 Compose secret interfaces",
+          "owner": "Gemini",
+          "status": "Completed",
+          "objective": "",
+          "scope_in": [],
+          "scope_out": [],
+          "acceptance_checks": []
+        },
+        {
+          "path": "work/work-003-vault/tasks/task-002-local-preprod-decrypt.md",
+          "filename": "task-002-local-preprod-decrypt.md",
+          "title": "Task 3.2 \u2014 Local preprod secret decrypt helper",
+          "owner": "Codex",
+          "status": "Completed",
+          "objective": "Provide a simple local command that decrypts only the approved preprod secret groups needed for local Docker development, with safe file permissions and ignored plaintext outputs.",
+          "scope_in": [],
+          "scope_out": [
+            "Out of scope: VPS deployment/bootstrap, key generation or rotation, production secret activation, changing application behavior, and printing secret values."
+          ],
+          "acceptance_checks": [
+            "- [x] `scripts/decrypt_preprod_secrets.py` decrypts only backend/PostgreSQL groups into ignored service-specific files; the helper always rewrites the database URL to target the isolated local Compose database.",
+            "- [x] The helper fails safely with actionable, redacted errors and does not pass the private key into an app container.",
+            "- [x] Generated secret files use owner-only permissions and are excluded from Git and Docker contexts; `docker/compose.preprod.yaml` mounts service-scoped files.",
+            "- [x] Three focused tests use a mocked Docker command and dummy values; all pass.",
+            "- [x] After Gemini completed Task 3.11, repeat the local API/frontend check: local Compose reports API/PostgreSQL healthy and frontend running; `/health` and `/api/v1/storefront/home` respond, and the referenced owner-story image endpoint returns HTTP 200. The focused decrypt regression passes 3/3."
+          ]
+        },
+        {
+          "path": "work/work-003-vault/tasks/task-003-vps-deploy.md",
+          "filename": "task-003-vps-deploy.md",
+          "title": "Task 3.3 \u2014 VPS secret bootstrap and deploy",
+          "owner": "Gemini",
+          "status": "",
+          "objective": "",
+          "scope_in": [],
+          "scope_out": [],
+          "acceptance_checks": []
+        },
+        {
+          "path": "work/work-003-vault/tasks/task-004-vault-tests.md",
+          "filename": "task-004-vault-tests.md",
+          "title": "Task 3.4 \u2014 Vault/deploy regression tests",
+          "owner": "Gemini",
+          "status": "",
+          "objective": "",
+          "scope_in": [],
+          "scope_out": [],
+          "acceptance_checks": []
+        },
+        {
+          "path": "work/work-003-vault/tasks/task-005-vps-key-bootstrap.md",
+          "filename": "task-005-vps-key-bootstrap.md",
+          "title": "Task 3.6 \u2014 Safe VPS age-key bootstrap",
+          "owner": "Gemini",
+          "status": "",
+          "objective": "",
+          "scope_in": [],
+          "scope_out": [],
+          "acceptance_checks": []
+        },
+        {
+          "path": "work/work-003-vault/tasks/task-006-age-key-rotation.md",
+          "filename": "task-006-age-key-rotation.md",
+          "title": "Task 3.7 \u2014 Guarded age-key rotation",
+          "owner": "Gemini + Codex",
+          "status": "",
+          "objective": "",
+          "scope_in": [],
+          "scope_out": [],
+          "acceptance_checks": []
+        },
+        {
+          "path": "work/work-003-vault/tasks/task-007-sops-encryption.md",
+          "filename": "task-007-sops-encryption.md",
+          "title": "Task 3.8 \u2014 Provision .sops.yaml recipient rules and encrypt preprod groups",
+          "owner": "Codex / Owner",
+          "status": "Completed",
+          "objective": "Add `.sops.yaml` configuration containing authorized public age recipients (developer and VPS recipients), and encrypt approved preprod dotenv groups into `secrets/encrypted/backend.enc.env`, `secrets/encrypted/postgres.enc.env`, and `secrets/encrypted/backup.enc.env`. This filename/format matches Gemini's active `bootstrap_secrets.sh` contract, which decrypts env-format groups and materializes one secret file per variable.",
+          "scope_in": [
+            "Create root `.sops.yaml` mapping recipient rules to the three `secrets/encrypted/*.enc.env` groups.",
+            "Encrypt preprod secret values into service-scoped files.",
+            "Verify that only encrypted ciphertext is tracked by Git."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Exposing private keys."
+          ],
+          "acceptance_checks": [
+            "- [x] `.sops.yaml` contains correct creation rules and public recipients.",
+            "- [x] All three `secrets/encrypted/*.enc.env` groups are SOPS-encrypted and decryptable with the authorized local and VPS age keys; plaintext comparisons did not print values.",
+            "- [x] No plaintext files exist in `secrets/`; Git ignore rules allow only encrypted `.enc.env` groups.",
+            "- [x] `bash scripts/security/scan-config.sh` passes all 6 configuration checks."
+          ]
+        },
+        {
+          "path": "work/work-003-vault/tasks/task-008-seed-repair-verification.md",
+          "filename": "task-008-seed-repair-verification.md",
+          "title": "Task 3.9 \u2014 Repair duplicate seed issue, rebuild local Docker, and verify",
+          "owner": "Codex + Gemini",
+          "status": "Completed",
+          "objective": "Ensure local API container starts cleanly with idempotent database seeding, rebuild local Docker services, decrypt local preprod secrets, and verify that the complete storefront and API function properly on `http://localhost:8080` and `http://localhost:8000`.",
+          "scope_in": [
+            "Rebuild Docker images (`docker/compose.yaml` and `backend/Dockerfile`).",
+            "Verify seed execution succeeds idempotently without unique constraint violations.",
+            "Verify health endpoints (`/health`) and sample storefront requests."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "VPS deployment."
+          ],
+          "acceptance_checks": [
+            "- [x] `docker compose up --build` brings up `api`, `frontend`, and `db` cleanly.",
+            "- [x] `http://localhost:8080` and `http://localhost:8000/health` respond successfully.",
+            "- [x] No duplicate key collisions or uncaught exceptions in container logs."
+          ]
+        },
+        {
+          "path": "work/work-003-vault/tasks/task-009-vps-release.md",
+          "filename": "task-009-vps-release.md",
+          "title": "Task 3.10 \u2014 VPS release scope moved to Work 012",
+          "owner": "Codex",
+          "status": "Moved \u2014 VPS deployment is a separate work item",
+          "objective": "",
+          "scope_in": [],
+          "scope_out": [],
+          "acceptance_checks": []
+        },
+        {
+          "path": "work/work-003-vault/tasks/task-011-seed-idempotency.md",
+          "filename": "task-011-seed-idempotency.md",
+          "title": "Task 3.11 \u2014 Repair idempotent catalogue seed associations",
+          "owner": "Gemini",
+          "status": "Completed",
+          "objective": "Fix the local database seed failure caused by duplicate product/occasion associations so catalogue seeding can be rerun safely and the API starts cleanly against the local database.",
+          "scope_in": [],
+          "scope_out": [
+            "Out of scope: vault/decryption scripts, unrelated catalogue changes, frontend changes, migrations unless the current schema proves they are required, and deployment."
+          ],
+          "acceptance_checks": [
+            "- [x] A fresh database seed completes without duplicate-key errors.",
+            "- [x] Running the seed again is idempotent and preserves the expected product/occasion associations and ordering.",
+            "- [x] A focused regression test reproduces the previously failing path and passes (`test_seed_repair_idempotence` and `test_fresh_database_seed_idempotency_isolated` in `backend/tests/test_occasions_admin.py`).",
+            "- [x] Relevant backend tests pass: all 173 backend tests pass in `pytest backend/tests/`.",
+            "- [x] No unrelated changed files or secret-bearing output are included in the handoff."
+          ]
+        },
+        {
+          "path": "work/work-003-vault/tasks/task-012-dotenv-runtime-integration.md",
+          "filename": "task-012-dotenv-runtime-integration.md",
+          "title": "Task 3.12 \u2014 Integrate SOPS dotenv inputs with local and VPS runtime",
+          "owner": "Codex",
+          "status": "Completed",
+          "objective": "Make SOPS dotenv ciphertext decrypt consistently in the local helper, VPS bootstrap, and rotation checks, and ensure Alembic honors the same file-backed database URL as the API.",
+          "scope_in": [],
+          "scope_out": [
+            "Out of scope: changing credentials, key rotation, external deployment, or changing the owner-approved database contents."
+          ],
+          "acceptance_checks": [
+            "- [x] Actual encrypted dotenv groups decrypt with explicit input/output types without printing plaintext.",
+            "- [x] Local and VPS decrypt paths specify dotenv formats; rotation verification does too.",
+            "- [x] Alembic uses `DATABASE_URL_FILE` even when a stale plain `DATABASE_URL` is present; a one-off Compose migration succeeded against local PostgreSQL.",
+            "- [x] Rotation verification's Docker fallback specifies dotenv formats and successfully verifies all three encrypted groups with the authorized local key.",
+            "- [x] Local helper tests pass (3/3); security scan passes (6 checks); local API and frontend containers build, and API health is HTTP 200.",
+            "- [x] Local storefront visual verification: the homepage renders the campaign hero image, product cards, occasions, and story section from the local API; API and same-origin proxy checks return HTTP 200."
+          ]
+        },
+        {
+          "path": "work/work-003-vault/tasks/task-013-isolate-backend-test-database.md",
+          "filename": "task-013-isolate-backend-test-database.md",
+          "title": "Task 3.13 \u2014 Isolate backend tests from shared development databases",
+          "owner": "Gemini",
+          "status": "Completed",
+          "objective": "Make backend tests run only against a disposable test database so test setup and cleanup can never mutate the local preprod database or a deployed database.",
+          "scope_in": [],
+          "scope_out": [
+            "Out of scope: altering preprod data, deploying, changing credentials, or broad production behavior changes."
+          ],
+          "acceptance_checks": [
+            "- [x] Tests refuse to run before connecting when the configured database is the local preprod or a non-test database.",
+            "- [x] A documented Docker command starts a disposable database with no persistent volume and runs the full backend suite against it (`backend/scripts/run_isolated_tests.sh` using `docker/compose.test.yaml`).",
+            "- [x] Fixture cleanup cannot delete records outside the test database and does not rely on arbitrary primary-key thresholds (dynamically tracks `SEEDED_*_IDS`).",
+            "- [x] Full suite passes in the disposable test environment; report exact totals and skipped tests (173 passed, 0 failed, 0 skipped).",
+            "- [x] Verify the existing local preprod database remains reachable and its seeded product/occasion/catalogue data still renders after the isolated test run (health ok, 7 sections, 24 catalogue products intact)."
+          ]
+        },
+        {
+          "path": "work/work-003-vault/tasks/task-014-configurable-deployment-environments.md",
+          "filename": "task-014-configurable-deployment-environments.md",
+          "title": "Task 3.14 \u2014 Make vault deployment environment-configurable",
+          "owner": "Gemini",
+          "status": "Completed",
+          "objective": "Make secret decryption and deployment select the target environment at runtime. Preprod must use the same application code, deployment workflow, service topology, and security controls intended for production, so production promotion requires configuration/credential selection only.",
+          "scope_in": [],
+          "scope_out": [
+            "Out of scope: creating production secrets, rotating live credentials, changing DNS, or deploying/activating production."
+          ],
+          "acceptance_checks": [
+            "- [x] The selected environment is not hard-coded as `preprod` in helper/deploy logic; CLI/environment/config selection works and has documented precedence (`--env`, `--config`, `SULOCRAFT_ENV`, `APP_ENV`).",
+            "- [x] A supplied config/env file can select the current preprod encrypted groups and local runtime paths; no static `.env.preprod` filename is required by the scripts.",
+            "- [x] The same deployment entry point, application artifact, and service topology can be selected for preprod and prod by configuration only; prod cannot silently fall back to preprod paths or secrets.",
+            "- [x] Missing/unknown environment or required path fails closed before decryption or deployment; no secret values are printed.",
+            "- [x] Tests cover config/argument/environment selection and prove one environment's secret paths cannot be silently reused for another (`scripts/security/test_decrypt_secrets.py`).",
+            "- [x] Existing preprod encrypted groups still decrypt and local Compose startup works with the chosen runtime configuration.",
+            "- [x] No VPS deploy is performed; Codex owns final integrated local review and Task 3.10 release."
+          ]
+        }
+      ],
+      "total_subtasks": 17,
+      "completed_subtasks": 17,
+      "progress_percent": 100
+    },
+    {
+      "id": "work-004",
+      "number": 4,
+      "title": "Agent task workflow",
+      "status": "Completed",
+      "folder_name": "work-004-task-workflow",
+      "relative_path": "work/work-004-task-workflow",
+      "goal": "**Objective:** Coordinate Codex and Gemini around small, verifiable subtasks while reducing repeated context reads.",
+      "current_owner": "",
+      "active_handoffs": "",
+      "handoff_state": "",
+      "subtasks": [
+        {
+          "id": "4-1-Create-a-small--work-INDEX-m",
+          "title": "4.1 Create a small `work/INDEX.md` and dedicated folders for current major work.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "4-2-Add-concise-README--task--de",
+          "title": "4.2 Add concise README, task, decision, and notes files for each active work item.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "4-3-Update--AGENTS-md--and-Gemin",
+          "title": "4.3 Update `AGENTS.md` and Gemini handoff rules to use the work-folder reading/update process.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "4-4-Keep--TASKS-md--as-a-small-p",
+          "title": "4.4 Keep `TASKS.md` as a small pointer and `docs/TODO.md` as a backlog index.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "4-5-Require-a-pickup-ready-contr",
+          "title": "4.5 Require a pickup-ready contract and return handoff for every cross-agent subtask; add a reusable template and direct Gemini links.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "4-6-Assign-release-ownership--Ge",
+          "title": "4.6 Assign release ownership: Gemini completes backend implementation and hands it off; Codex integrates, verifies the full local stack, and owns the combined dev commit/push.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "4-7-Apply-work-level-coordinatio",
+          "title": "4.7 Apply work-level coordination and handoff rules across every work item; make global docs index-only, preserve history, and give Gemini a reusable context prompt. Task details",
+          "completed": true,
+          "owner": "",
+          "contract_path": "work/work-004-task-workflow/tasks/task-007-work-scoped-coordination.md",
+          "contract_title": "Task details"
+        }
+      ],
+      "decisions": [],
+      "contracts": [
+        {
+          "path": "work/work-004-task-workflow/tasks/task-007-work-scoped-coordination.md",
+          "filename": "task-007-work-scoped-coordination.md",
+          "title": "Task 4.7 \u2014 Work-scoped coordination and handoffs",
+          "owner": "Codex",
+          "status": "Completed",
+          "objective": "Apply one consistent, low-duplication coordination and handoff workflow to every work item, and provide Gemini a reusable prompt that makes the repository rules explicit.",
+          "scope_in": [
+            "Define global index vs work-local source-of-truth responsibilities in `AGENTS.md`, workflow decisions, and task template.",
+            "Give every current work folder a `coordination.md` entry point, with active handoffs linked to exact task contracts.",
+            "Replace global handoff/status narrative with compact routing indexes and retain old history in an archive.",
+            "Reconcile Work 010's Task 10.18 status with Gemini's reported completion without claiming local integration verification is done.",
+            "Create a reusable Gemini context/rules prompt and validate all affected links and statuses."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Implementing application features, pushing branches, or deploying to the VPS.",
+            "Marking unverified work complete based only on stale historical notes."
+          ],
+          "acceptance_checks": [
+            "- [x] Every current work item has a concise `coordination.md` and its own source-of-truth task files remain authoritative.",
+            "- [x] Global docs contain only routing/current registry information; full prior history remains archived.",
+            "- [x] Work 010 clearly says Gemini backend work is reported complete and Codex local verification remains pending/in progress.",
+            "- [x] Gemini prompt instructs it to read/update only the selected work, use one contract per handoff, and avoid repeating completed asset work.",
+            "- [x] Repository instructions and template enforce the same process.",
+            "- [x] Markdown links and active statuses are validated; no push/deployment is performed."
+          ]
+        }
+      ],
+      "total_subtasks": 7,
+      "completed_subtasks": 7,
+      "progress_percent": 100
+    },
+    {
+      "id": "work-005",
+      "number": 5,
+      "title": "Global SEO optimization & multinational ranking",
+      "status": "Pending",
+      "folder_name": "work-005-seo-optimization",
+      "relative_path": "work/work-005-seo-optimization",
+      "goal": "**Objective:** Implement enterprise-grade, multinational search engine optimization (SEO) across Sulocraft to rank high globally for handcrafted crochet gifting, artisanal bouquets, and amigurumi.",
+      "current_owner": "",
+      "active_handoffs": "",
+      "handoff_state": "",
+      "subtasks": [
+        {
+          "id": "5-1-Gemini---Codex--Structured-d",
+          "title": "5.1 Gemini + Codex: Structured data and rich snippet validation per task-001-structured-data.md.",
+          "completed": false,
+          "owner": " Gemini + Codex",
+          "contract_path": "work/work-005-seo-optimization/tasks/task-001-structured-data.md",
+          "contract_title": "task-001-structured-data.md"
+        },
+        {
+          "id": "5-2-Gemini---Codex--Internationa",
+          "title": "5.2 Gemini + Codex: International SEO & hreflang architecture per task-002-international-seo.md.",
+          "completed": false,
+          "owner": " Gemini + Codex",
+          "contract_path": "work/work-005-seo-optimization/tasks/task-002-international-seo.md",
+          "contract_title": "task-002-international-seo.md"
+        },
+        {
+          "id": "5-3-Codex--Meta-tags--dynamic-so",
+          "title": "5.3 Codex: Meta tags, dynamic social cards, and prerender route coverage per task-003-meta-social-prerender.md.",
+          "completed": false,
+          "owner": " Codex",
+          "contract_path": "work/work-005-seo-optimization/tasks/task-003-meta-social-prerender.md",
+          "contract_title": "task-003-meta-social-prerender.md"
+        },
+        {
+          "id": "5-4-Codex--Automated-SEO-test-su",
+          "title": "5.4 Codex: Automated SEO test suite and lighthouse / Core Web Vitals verification per task-004-seo-audit-vitals.md.",
+          "completed": false,
+          "owner": " Codex",
+          "contract_path": "work/work-005-seo-optimization/tasks/task-004-seo-audit-vitals.md",
+          "contract_title": "task-004-seo-audit-vitals.md"
+        },
+        {
+          "id": "Initial---api-v1-seo-resolve--en",
+          "title": "Initial `/api/v1/seo/resolve` endpoint implemented with default sitemap and robots.txt.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "Initial-route-pre-rendering-scri",
+          "title": "Initial route pre-rendering script created at `scripts/prerender.mjs`.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        }
+      ],
+      "decisions": [
+        {
+          "title": "DEC-005-1 \u2014 Backend-driven SEO metadata resolver",
+          "body": "**Decision:** Maintain SEO title, description, canonical, and structured data schemas dynamically in the backend via `/api/v1/seo/resolve` with catalogue fallbacks.\n\n**Reason:** Catalog items, occasions, and campaigns change over time. Storing SEO rules in the backend guarantees that both server-sid..."
+        },
+        {
+          "title": "DEC-005-2 \u2014 Canonical URLs and International targeting",
+          "body": "**Decision:** Use absolute canonical URLs pointing to `https://sulocraft.com/` for production and `x-default` hreflang tags for international reach with English (`en`) default.\n\n**Reason:** Prevents duplicate content penalties across query params (`?sort=`, `?page=`) and establishes clear internatio..."
+        }
+      ],
+      "contracts": [
+        {
+          "path": "work/work-005-seo-optimization/tasks/task-001-structured-data.md",
+          "filename": "task-001-structured-data.md",
+          "title": "Task 5.1 \u2014 Structured data and rich snippet validation",
+          "owner": "Gemini + Codex",
+          "status": "Pending",
+          "objective": "Validate and enrich JSON-LD structured data for Google Search rich results: Product (with Price, Currency INR, Availability InStock, Brand Sulocraft, SKU, Image), BreadcrumbList, Organization, and MerchantReturnPolicy.",
+          "scope_in": [
+            "Enrich backend schema serializer in `backend/app/services/seo.py`.",
+            "Validate schema output with Google Rich Results test format.",
+            "Render JSON-LD on product, category, collection, and static info pages."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Third-party analytics tracking tags."
+          ],
+          "acceptance_checks": [
+            "- [ ] Product JSON-LD includes valid offers, pricing, availability, and high-res image URLs.",
+            "- [ ] Breadcrumbs correctly represent hierarchy (Home > Category > Product).",
+            "- [ ] No schema validation errors or missing required fields."
+          ]
+        },
+        {
+          "path": "work/work-005-seo-optimization/tasks/task-002-international-seo.md",
+          "filename": "task-002-international-seo.md",
+          "title": "Task 5.2 \u2014 International SEO & hreflang architecture",
+          "owner": "Gemini + Codex",
+          "status": "Pending",
+          "objective": "Implement multinational SEO architecture to allow Sulocraft to rank effectively across global regions (India, US, UK, Canada, Australia) while adhering to internationalization best practices.",
+          "scope_in": [
+            "Add `hreflang=\"en\"` and `hreflang=\"x-default\"` tags to page `<head>`.",
+            "Ensure canonical tags point unambiguously to canonical URL without tracking parameters.",
+            "Add geo-targeting and OpenGraph locale metadata (`og:locale=\"en_IN\"`, `og:locale:alternate=\"en_US\"`)."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Full multi-language translation machine in V1 (content is in English)."
+          ],
+          "acceptance_checks": [
+            "- [ ] Every rendered route includes `<link rel=\"canonical\">` and appropriate `<link rel=\"alternate\" hreflang=\"...\">` tags.",
+            "- [ ] Canonical tags strip query parameters (`?sort=`, `?page=`, `?filter=`)."
+          ]
+        },
+        {
+          "path": "work/work-005-seo-optimization/tasks/task-003-meta-social-prerender.md",
+          "filename": "task-003-meta-social-prerender.md",
+          "title": "Task 5.3 \u2014 Meta tags, dynamic social cards, and prerender route coverage",
+          "owner": "Codex",
+          "status": "Pending",
+          "objective": "Ensure all public storefront pages (Home, Shop, 5 Categories, 4 Collections, 8 Occasions, 16 Products, About, Contact, Terms, Privacy) have unique meta titles, descriptions, OpenGraph images, and Twitter Card tags pre-rendered into static HTML for instant search engine indexing.",
+          "scope_in": [
+            "Run `scripts/prerender.mjs` to generate HTML files into `dist/`.",
+            "Ensure dynamic social card images use absolute `https://images.sulocraft.com` URLs.",
+            "Verify character length limits (Title: 50-60 chars; Description: 140-160 chars)."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Private account or admin pages (must remain `noindex, nofollow`)."
+          ],
+          "acceptance_checks": [
+            "- [ ] `node scripts/prerender.mjs` completes successfully and produces HTML for 48+ routes.",
+            "- [ ] Direct curl on built static HTML confirms `<meta>` tags and JSON-LD are present without JS execution."
+          ]
+        },
+        {
+          "path": "work/work-005-seo-optimization/tasks/task-004-seo-audit-vitals.md",
+          "filename": "task-004-seo-audit-vitals.md",
+          "title": "Task 5.4 \u2014 Automated SEO test suite and Core Web Vitals verification",
+          "owner": "Codex",
+          "status": "Pending",
+          "objective": "Add automated unit and regression tests for all SEO components, ensure zero hydration mismatches, and verify Core Web Vitals (LCP, CLS, FID) to maintain high search ranking scores.",
+          "scope_in": [
+            "Add/update tests in `src/components/SeoManager.test.tsx`.",
+            "Add backend test cases for sitemap URL generation in `backend/tests/test_seo.py`.",
+            "Verify zero layout shifts (`CLS < 0.1`) and fast image loading (`LCP < 2.5s`)."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Third-party paid SEO audits."
+          ],
+          "acceptance_checks": [
+            "- [ ] `npm test` and `pytest backend/tests/test_seo.py` pass.",
+            "- [ ] No hydration errors in browser console during client hydration of pre-rendered pages."
+          ]
+        }
+      ],
+      "total_subtasks": 6,
+      "completed_subtasks": 2,
+      "progress_percent": 33
+    },
+    {
+      "id": "work-006",
+      "number": 6,
+      "title": "Preprod DNS, email deliverability & continuous deployment",
+      "status": "In Progress",
+      "folder_name": "work-006-dns-email-cd",
+      "relative_path": "work/work-006-dns-email-cd",
+      "goal": "**Objective:** Configure production DNS records, establish authenticated email routing (SPF, DKIM, DMARC), automate dev-branch CI/CD backend deployment to the VPS, and connect the persistent Cloudflare Pages development storefront.",
+      "current_owner": "Gemini \u2014 Task 6.3 (GitHub Actions CI/CD workflow hardening)",
+      "active_handoffs": "Task 6.3 in progress",
+      "handoff_state": "Task 6.3 remains in progress. The run for commit `e98b53f` failed two backend tests, so deployment was skipped. Follow-up contract: [Task 6.3.5](tasks/task-004-backend-actions-failure.md). No new Gemini handoff has been sent.",
+      "subtasks": [
+        {
+          "id": "6-3-Gemini--GitHub-Actions-CI-CD",
+          "title": "6.3 Gemini: GitHub Actions CI/CD workflow hardening with protected secrets per task-003-github-actions-cd.md.",
+          "completed": false,
+          "owner": " Gemini",
+          "contract_path": "work/work-006-dns-email-cd/tasks/task-003-github-actions-cd.md",
+          "contract_title": "task-003-github-actions-cd.md"
+        },
+        {
+          "id": "6-3-1-Document-SSH-deployment-cr",
+          "title": "6.3.1 Document SSH deployment credential setup & inventory",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "6-3-2-Modernize---github-workflo",
+          "title": "6.3.2 Modernize `.github/workflows/deploy-dev-backend.yml`",
+          "completed": false,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "6-3-3-Enforce-test-gate-before-d",
+          "title": "6.3.3 Enforce test gate before deployment",
+          "completed": false,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "6-3-4-Post-deployment-health-ver",
+          "title": "6.3.4 Post-deployment health verification",
+          "completed": false,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "6-3-5-Resolve-backend-CI-failure",
+          "title": "6.3.5 Resolve backend CI failures from commit `e98b53f` and verify the dev deployment workflow completes. Contract: task-004-backend-actions-failure.md.",
+          "completed": false,
+          "owner": "",
+          "contract_path": "work/work-006-dns-email-cd/tasks/task-004-backend-actions-failure.md",
+          "contract_title": "task-004-backend-actions-failure.md"
+        },
+        {
+          "id": "6-1-Owner---Codex--Cloudflare",
+          "title": "6.1 Owner + Codex: Cloudflare & Resend DNS records per task-001-cloudflare-resend-dns.md.",
+          "completed": false,
+          "owner": " Owner + Codex",
+          "contract_path": "work/work-006-dns-email-cd/tasks/task-001-cloudflare-resend-dns.md",
+          "contract_title": "task-001-cloudflare-resend-dns.md"
+        },
+        {
+          "id": "6-2-Gemini---Codex--Transactiona",
+          "title": "6.2 Gemini + Codex: Transactional email verification on preprod domain per task-002-email-deliverability.md.",
+          "completed": false,
+          "owner": " Gemini + Codex",
+          "contract_path": "work/work-006-dns-email-cd/tasks/task-002-email-deliverability.md",
+          "contract_title": "task-002-email-deliverability.md"
+        },
+        {
+          "id": "6-4-Owner---Codex--Cloudflare-Pa",
+          "title": "6.4 Owner + Codex: Cloudflare Pages dev storefront setup (`dev.sulocraft.com` + Cloudflare Access) per task-004-dev-storefront-access.md.",
+          "completed": false,
+          "owner": " Owner + Codex",
+          "contract_path": "work/work-006-dns-email-cd/tasks/task-004-dev-storefront-access.md",
+          "contract_title": "task-004-dev-storefront-access.md"
+        },
+        {
+          "id": "Initial-VPS-deploy-script-create",
+          "title": "Initial VPS deploy script created at `backend/scripts/deploy_vps.sh`.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "Email-service-implementation-and",
+          "title": "Email service implementation and branded templates completed in backend.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "6-5-1-VPS-backend-sync-and-Compo",
+          "title": "6.5.1 VPS backend sync and Compose restart completed; API and database are healthy.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "6-5-Cloudflare-dev-storefront-bu",
+          "title": "6.5 Cloudflare dev storefront bundle uses the dev API URL and renders the live catalogue.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        }
+      ],
+      "decisions": [
+        {
+          "title": "DEC-006-1 \u2014 Strict DMARC and Custom Return-Path",
+          "body": "**Decision:** Configure strict SPF, DKIM (2048-bit), and DMARC (`v=DMARC1; p=quarantine; sp=quarantine; pct=100;`) on `sulocraft.com` with Resend-managed return paths.\n\n**Reason:** Direct-to-consumer stores require maximum inbox deliverability for order receipts, magic links, and shipping notices."
+        },
+        {
+          "title": "DEC-006-2 \u2014 Safe Automated Pre-Migration Backup",
+          "body": "**Decision:** The GitHub Actions continuous deployment pipeline must trigger an automated compressed database dump before running Alembic migrations on the VPS.\n\n**Reason:** Prevents schema or data loss during automated migrations on `dev`."
+        }
+      ],
+      "contracts": [
+        {
+          "path": "work/work-006-dns-email-cd/tasks/task-001-cloudflare-resend-dns.md",
+          "filename": "task-001-cloudflare-resend-dns.md",
+          "title": "Task 6.1 \u2014 Cloudflare & Resend DNS records configuration",
+          "owner": "Owner + Codex",
+          "status": "Pending",
+          "objective": "Privately verify the Gmail destination address, create incoming forward routes (`hello@`, `support@`, `orders@`), and add necessary TXT, MX, and CNAME records in Cloudflare DNS to verify the domain in Resend.",
+          "scope_in": [
+            "Add Resend DKIM records in Cloudflare DNS.",
+            "Add SPF TXT record: `v=spf1 include:resend.com ~all`.",
+            "Add DMARC TXT record: `v=DMARC1; p=quarantine; sp=quarantine; pct=100;`.",
+            "Add Cloudflare Email Routing for inbox forwarding."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Third-party marketing email campaigns."
+          ],
+          "acceptance_checks": [
+            "- [ ] Resend domain verification status shows \"Verified\" (DKIM & SPF passed).",
+            "- [ ] Test email sent to `hello@sulocraft.com` forwards to owner's Gmail."
+          ]
+        },
+        {
+          "path": "work/work-006-dns-email-cd/tasks/task-002-email-deliverability.md",
+          "filename": "task-002-email-deliverability.md",
+          "title": "Task 6.2 \u2014 Transactional email deliverability and live provider verification",
+          "owner": "Gemini + Codex",
+          "status": "Pending",
+          "objective": "Verify live email sending through Resend on the pre-production environment for Magic Link authentication, Order Confirmation, and Shipping Status notices.",
+          "scope_in": [
+            "Trigger test magic link from live preprod environment.",
+            "Trigger mock order placement and verify customer receipt.",
+            "Check spam score and DKIM alignment in email headers."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Promotional bulk newsletters."
+          ],
+          "acceptance_checks": [
+            "- [ ] Email headers confirm `d=sulocraft.com`, `spf=pass`, `dkim=pass`, `dmarc=pass`.",
+            "- [ ] Email renders correctly on Apple Mail, Gmail, and Outlook."
+          ]
+        },
+        {
+          "path": "work/work-006-dns-email-cd/tasks/task-003-github-actions-cd.md",
+          "filename": "task-003-github-actions-cd.md",
+          "title": "Task 6.3 \u2014 GitHub Actions CI/CD workflow hardening with protected secrets",
+          "owner": "Gemini",
+          "status": "In Progress",
+          "objective": "Harden the GitHub Actions workflow `.github/workflows/deploy-dev-backend.yml` to trigger the preprod stage on push to `dev` only after backend test gates pass, then invoke the shared deployment command with protected environment configuration. The deployment command owns backups, encrypted SOPS bootstrap via the VPS host age key, migrations, activation, health checks, and failure recovery.",
+          "scope_in": [],
+          "scope_out": [],
+          "acceptance_checks": [
+            "- [ ] GitHub Actions workflow does not require plaintext secrets or `.env` files in GitHub Secrets.",
+            "- [ ] Push to `dev` triggers the action, runs all tests, and executes preprod deployment.",
+            "- [ ] Pipeline aborts cleanly if any test fails, without modifying VPS state.",
+            "- [ ] SSH private key is never printed or logged during workflow execution."
+          ]
+        },
+        {
+          "path": "work/work-006-dns-email-cd/tasks/task-004-backend-actions-failure.md",
+          "filename": "task-004-backend-actions-failure.md",
+          "title": "Task 6.3.5 \u2014 Resolve backend CI failures and verify dev deployment",
+          "owner": "Gemini (backend test diagnosis); Codex (CI run verification)",
+          "status": "Pending",
+          "objective": "Resolve the backend test failures in the `dev` push workflow for commit `e98b53f21d24798975658686df4bdf206ea28cd7`, then verify GitHub Actions reaches and successfully completes the PREPROD deployment job.",
+          "scope_in": [],
+          "scope_out": [
+            "Out of scope: frontend dependency audit findings (tracked in Work 013 Task 13.10), production deployment, secret rotation, and Cloudflare configuration."
+          ],
+          "acceptance_checks": [
+            "- [ ] Both previously failing tests pass for the right reasons, with sandbox and fail-closed behavior preserved.",
+            "- [ ] Full backend test suite passes in the same Python/dependency environment used by GitHub Actions.",
+            "- [ ] A new push-triggered run passes `Run Backend Test Suite` and completes `Deploy to VPS Preprod`.",
+            "- [ ] Post-deploy API health verification passes; no plaintext secrets are added to GitHub or repository files."
+          ]
+        },
+        {
+          "path": "work/work-006-dns-email-cd/tasks/task-004-dev-storefront-access.md",
+          "filename": "task-004-dev-storefront-access.md",
+          "title": "Task 6.4 \u2014 Cloudflare Pages dev storefront setup & Cloudflare Access",
+          "owner": "Owner + Codex",
+          "status": "Pending",
+          "objective": "Connect Cloudflare Pages project `sulocraft-dev` to the repository `dev` branch, configure environment variables (`VITE_API_BASE_URL=https://api.sulocraft.com/api/v1`), attach custom domain `dev.sulocraft.com`, and protect it with Cloudflare Access (One-Time PIN for authorized developers).",
+          "scope_in": [
+            "Configure Cloudflare Pages build command: `pnpm build`.",
+            "Attach `dev.sulocraft.com` custom domain.",
+            "Set up Cloudflare Access zero-trust application with email policy."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Public `sulocraft.com` domain."
+          ],
+          "acceptance_checks": [
+            "- [ ] `https://dev.sulocraft.com` prompts for Cloudflare Access authentication.",
+            "- [ ] Authenticated users see the latest pre-rendered React storefront communicating with the live preprod API."
+          ]
+        },
+        {
+          "path": "work/work-006-dns-email-cd/tasks/task-005-dev-frontend-api-url.md",
+          "filename": "task-005-dev-frontend-api-url.md",
+          "title": "Task 6.5 \u2014 Dev storefront API base URL",
+          "owner": "Codex",
+          "status": "Completed",
+          "objective": "Ensure the deployed `dev.sulocraft.com` frontend sends catalogue requests to the dev API.",
+          "scope_in": [],
+          "scope_out": [],
+          "acceptance_checks": []
+        }
+      ],
+      "total_subtasks": 13,
+      "completed_subtasks": 5,
+      "progress_percent": 38
+    },
+    {
+      "id": "work-007",
+      "number": 7,
+      "title": "End-to-end purchase & mobile rendering QA",
+      "status": "Pending",
+      "folder_name": "work-007-e2e-qa",
+      "relative_path": "work/work-007-e2e-qa",
+      "goal": "**Objective:** Execute exhaustive quality assurance across the entire customer journey (browsing, search, occasion filtering, cart, login auto-merge, checkout, multi-provider payment, order tracking, returns) across mobile and desktop viewport targets.",
+      "current_owner": "",
+      "active_handoffs": "",
+      "handoff_state": "",
+      "subtasks": [
+        {
+          "id": "7-1-Codex---Gemini--Guest-checko",
+          "title": "7.1 Codex + Gemini: Guest checkout & user login cart-merge regression in Docker per task-001-guest-merge-regression.md.",
+          "completed": false,
+          "owner": " Codex + Gemini",
+          "contract_path": "work/work-007-e2e-qa/tasks/task-001-guest-merge-regression.md",
+          "contract_title": "task-001-guest-merge-regression.md"
+        },
+        {
+          "id": "7-2-Gemini---Codex--Multi-provid",
+          "title": "7.2 Gemini + Codex: Multi-provider payment flow testing (Mock & Razorpay) per task-002-payment-reconciliation.md.",
+          "completed": false,
+          "owner": " Gemini + Codex",
+          "contract_path": "work/work-007-e2e-qa/tasks/task-002-payment-reconciliation.md",
+          "contract_title": "task-002-payment-reconciliation.md"
+        },
+        {
+          "id": "7-3-Codex--Mobile-viewport-rende",
+          "title": "7.3 Codex: Mobile viewport rendering matrix verification per task-003-mobile-rendering-matrix.md.",
+          "completed": false,
+          "owner": " Codex",
+          "contract_path": "work/work-007-e2e-qa/tasks/task-003-mobile-rendering-matrix.md",
+          "contract_title": "task-003-mobile-rendering-matrix.md"
+        },
+        {
+          "id": "7-4-Owner---Codex---Gemini--Pre",
+          "title": "7.4 Owner + Codex + Gemini: Pre-launch quality sign-off per task-004-prelaunch-signoff.md.",
+          "completed": false,
+          "owner": " Codex + Gemini",
+          "contract_path": "work/work-007-e2e-qa/tasks/task-004-prelaunch-signoff.md",
+          "contract_title": "task-004-prelaunch-signoff.md"
+        },
+        {
+          "id": "Initial-purchase-regression-test",
+          "title": "Initial purchase regression test suite implemented with 6 passing tests.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "Vitest-and-Testing-Library-confi",
+          "title": "Vitest and Testing Library configured for frontend component tests.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        }
+      ],
+      "decisions": [
+        {
+          "title": "DEC-007-1 \u2014 Mobile-First Quality Gate",
+          "body": "**Decision:** Mobile (`390\u00d7844` viewport) is the primary target for all shopping QA tests. Mobile tests must pass before desktop verification.\n\n**Reason:** Over 75% of Indian D2C e-commerce traffic originates from mobile devices (iOS Safari and Android Chrome)."
+        },
+        {
+          "title": "DEC-007-2 \u2014 Idempotent Webhook Processing",
+          "body": "**Decision:** Payment webhooks must be verified with idempotency keys and state checks. Repeated webhook deliveries must never create duplicate orders or double-charge stock.\n\n**Reason:** Razorpay webhooks can retry upon transient network timeouts."
+        }
+      ],
+      "contracts": [
+        {
+          "path": "work/work-007-e2e-qa/tasks/task-001-guest-merge-regression.md",
+          "filename": "task-001-guest-merge-regression.md",
+          "title": "Task 7.1 \u2014 Guest checkout & user login cart-merge regression",
+          "owner": "Codex + Gemini",
+          "status": "Pending",
+          "objective": "Verify that guest users can browse products, add items to cart (persisted in cookies), authenticate via Google/Facebook/Magic Link, have their guest cart auto-merged into their customer profile without losing personalization notes, and proceed through checkout smoothly.",
+          "scope_in": [
+            "Add item to cart as guest.",
+            "Complete authentication flow.",
+            "Assert cart item count, product options, and prices remain intact.",
+            "Place order and verify order status timeline."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Modifying cart models."
+          ],
+          "acceptance_checks": [
+            "- [ ] `pytest backend/tests/test_purchase_regression.py` passes all regression tests.",
+            "- [ ] Manual verification in browser at `http://localhost:8080` confirms seamless cart merge."
+          ]
+        },
+        {
+          "path": "work/work-007-e2e-qa/tasks/task-002-payment-reconciliation.md",
+          "filename": "task-002-payment-reconciliation.md",
+          "title": "Task 7.2 \u2014 Multi-provider payment flow & webhook reconciliation testing",
+          "owner": "Gemini + Codex",
+          "status": "Pending",
+          "objective": "Test both Mock and Razorpay payment gateways end-to-end: payment intent creation, UPI QR code display, modal completion, webhook signature verification, and order state transition to `CONFIRMED`.",
+          "scope_in": [
+            "Verify payment intent creation returns correct integer paise amounts.",
+            "Test simulated Razorpay webhook payloads with signature validation.",
+            "Verify order inventory decrement occurs only upon confirmed payment."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Real money transactions."
+          ],
+          "acceptance_checks": [
+            "- [ ] `pytest backend/tests/test_payments.py` passes all payment provider tests.",
+            "- [ ] Successful payment updates order payment status to `PAID` and triggers notification queue."
+          ]
+        },
+        {
+          "path": "work/work-007-e2e-qa/tasks/task-003-mobile-rendering-matrix.md",
+          "filename": "task-003-mobile-rendering-matrix.md",
+          "title": "Task 7.3 \u2014 Mobile viewport rendering matrix verification",
+          "owner": "Codex",
+          "status": "Pending",
+          "objective": "Inspect every customer-facing view across the required device matrix (`390\u00d7844` mobile, `430\u00d7932` large mobile, desktop Chrome, desktop Firefox) to guarantee zero horizontal scroll, legible typography, proper tap target sizes (\u226544px), and seamless sticky buy-buttons.",
+          "scope_in": [
+            "Mobile viewport testing (`390\u00d7844`).",
+            "Tablet and large screen responsive spacing.",
+            "Image cropping, touch targets, and navigation drawer transitions."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Native iOS/Android app builds."
+          ],
+          "acceptance_checks": [
+            "- [ ] Zero horizontal overflow on `390\u00d7844` viewport across all pages.",
+            "- [ ] Primary CTAs (\"Add to Cart\", \"Checkout\", \"Pay Now\") remain accessible and above the fold.",
+            "- [ ] No layout shift on image loads or drawer opens."
+          ]
+        },
+        {
+          "path": "work/work-007-e2e-qa/tasks/task-004-prelaunch-signoff.md",
+          "filename": "task-004-prelaunch-signoff.md",
+          "title": "Task 7.4 \u2014 Pre-launch quality sign-off and owner review",
+          "owner": "Owner + Codex + Gemini",
+          "status": "Pending",
+          "objective": "Conduct a comprehensive pre-launch audit of prototype content, legal links (Terms, Privacy, Returns policy), contact forms, pricing precision, and stock levels to certify the store for live customer orders.",
+          "scope_in": [
+            "Verify all prices and discounts match business expectations.",
+            "Verify return and cancellation policies are clearly stated.",
+            "Verify email notifications and SMS dispatches function reliably."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Post-launch growth marketing."
+          ],
+          "acceptance_checks": [
+            "- [ ] Complete checklist verified with owner.",
+            "- [ ] Test order placed, paid, fulfilled, and refunded successfully in staging environment."
+          ]
+        }
+      ],
+      "total_subtasks": 6,
+      "completed_subtasks": 2,
+      "progress_percent": 33
+    },
+    {
+      "id": "work-008",
+      "number": 8,
+      "title": "Customer promotions & reviews engine",
+      "status": "Pending",
+      "folder_name": "work-008-promotions-reviews",
+      "relative_path": "work/work-008-promotions-reviews",
+      "goal": "**Objective:** Complete Milestone 10: discount coupons/promotions engine and authenticated customer product reviews with admin moderation.",
+      "current_owner": "",
+      "active_handoffs": "",
+      "handoff_state": "",
+      "subtasks": [
+        {
+          "id": "8-1-Gemini--Promotions-coupons-e",
+          "title": "8.1 Gemini: Promotions/coupons engine backend validation and discount calculations per task-001-promotions-backend.md.",
+          "completed": false,
+          "owner": " Gemini",
+          "contract_path": "work/work-008-promotions-reviews/tasks/task-001-promotions-backend.md",
+          "contract_title": "task-001-promotions-backend.md"
+        },
+        {
+          "id": "8-2-Gemini--Customer-product-rev",
+          "title": "8.2 Gemini: Customer product review submission and moderation flow per task-002-reviews-backend.md.",
+          "completed": false,
+          "owner": " Gemini",
+          "contract_path": "work/work-008-promotions-reviews/tasks/task-002-reviews-backend.md",
+          "contract_title": "task-002-reviews-backend.md"
+        },
+        {
+          "id": "8-3-Codex--Storefront-coupon-inp",
+          "title": "8.3 Codex: Storefront coupon input & review UI integration per task-003-promotions-reviews-ui.md.",
+          "completed": false,
+          "owner": " Codex",
+          "contract_path": "work/work-008-promotions-reviews/tasks/task-003-promotions-reviews-ui.md",
+          "contract_title": "task-003-promotions-reviews-ui.md"
+        },
+        {
+          "id": "8-4-Codex---Gemini--Automated-te",
+          "title": "8.4 Codex + Gemini: Automated tests and local Docker verification per task-004-tests-verification.md.",
+          "completed": false,
+          "owner": " Codex + Gemini",
+          "contract_path": "work/work-008-promotions-reviews/tasks/task-004-tests-verification.md",
+          "contract_title": "task-004-tests-verification.md"
+        },
+        {
+          "id": "Initial-promotions-schema--coupo",
+          "title": "Initial promotions schema, coupon validation, and product review models created in backend.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "52-passing-backend-tests-in--bac",
+          "title": "52 passing backend tests in `backend/tests/test_promotions.py`.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        }
+      ],
+      "decisions": [
+        {
+          "title": "DEC-008-1 \u2014 Server-Side Discount Calculation",
+          "body": "**Decision:** The frontend never computes final discounted cart subtotals. It sends the coupon code to `POST /api/v1/cart/coupon`, and the backend returns the authoritative discount in integer paise.\n\n**Reason:** Prevents tampering with discounts, minimum order value thresholds, or expiration dates."
+        },
+        {
+          "title": "DEC-008-2 \u2014 Moderation Default for Reviews",
+          "body": "**Decision:** New customer reviews default to `is_approved=False` or verified-purchase gating before appearing publicly on product pages.\n\n**Reason:** Protects brand integrity against spam and abusive content."
+        }
+      ],
+      "contracts": [
+        {
+          "path": "work/work-008-promotions-reviews/tasks/task-001-promotions-backend.md",
+          "filename": "task-001-promotions-backend.md",
+          "title": "Task 8.1 \u2014 Promotions and coupons engine backend validation",
+          "owner": "Gemini",
+          "status": "Pending",
+          "objective": "Validate discount coupon application (`POST /api/v1/cart/coupon`), supporting percentage discounts, fixed rupee amounts, minimum cart subtotals, per-customer usage limits, and expiration dates.",
+          "scope_in": [
+            "Coupon validation endpoint.",
+            "Cart item association and discount snapshot in order creation.",
+            "Error envelopes for invalid, expired, or sub-minimum codes."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Frontend styling."
+          ],
+          "acceptance_checks": [
+            "- [ ] Percentage and fixed amount coupons deduct correct paise amounts.",
+            "- [ ] Sub-minimum cart requests return HTTP 400 with helpful message.",
+            "- [ ] Tests pass: `pytest backend/tests/test_promotions.py`."
+          ]
+        },
+        {
+          "path": "work/work-008-promotions-reviews/tasks/task-002-reviews-backend.md",
+          "filename": "task-002-reviews-backend.md",
+          "title": "Task 8.2 \u2014 Customer product review submission and moderation backend",
+          "owner": "Gemini",
+          "status": "Pending",
+          "objective": "Support customer review submissions (`POST /api/v1/products/{id}/reviews`) with star rating (1\u20135), title, body, and verified buyer checks, alongside admin moderation endpoints (`GET /api/v1/admin/reviews`, `PATCH /api/v1/admin/reviews/{id}`).",
+          "scope_in": [
+            "Review creation endpoint requiring authenticated customer.",
+            "Verified buyer flag set automatically if customer completed an order for that product.",
+            "Admin approval/rejection endpoints."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Video review uploads."
+          ],
+          "acceptance_checks": [
+            "- [ ] Unauthenticated users cannot post reviews.",
+            "- [ ] Average rating and count update correctly on product record.",
+            "- [ ] Only approved reviews appear on `GET /api/v1/products/{slug}`."
+          ]
+        },
+        {
+          "path": "work/work-008-promotions-reviews/tasks/task-003-promotions-reviews-ui.md",
+          "filename": "task-003-promotions-reviews-ui.md",
+          "title": "Task 8.3 \u2014 Storefront coupon input & customer review UI integration",
+          "owner": "Codex",
+          "status": "Pending",
+          "objective": "Connect coupon input box in Cart and Checkout drawers to backend coupon validation API, and render customer review lists, star ratings, and review submission modal on product detail pages.",
+          "scope_in": [
+            "Coupon input component with Apply / Remove buttons.",
+            "Product page reviews tab/accordion with star rating summary.",
+            "Review form modal with rating stars, title, review body, and submission status."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Admin moderation UI (covered in Work 001)."
+          ],
+          "acceptance_checks": [
+            "- [ ] Applying a valid coupon reduces cart total and displays green discount indicator.",
+            "- [ ] Submitting a review shows success confirmation and indicates moderation notice."
+          ]
+        },
+        {
+          "path": "work/work-008-promotions-reviews/tasks/task-004-tests-verification.md",
+          "filename": "task-004-tests-verification.md",
+          "title": "Task 8.4 \u2014 Promotions and reviews tests & local Docker verification",
+          "owner": "Codex + Gemini",
+          "status": "Pending",
+          "objective": "Run unit and integration tests across backend and frontend for promotions and reviews, rebuild local Docker stack, and verify the integrated flow at `http://localhost:8080`.",
+          "scope_in": [
+            "Vitest component tests for coupon application and review forms.",
+            "Pytest suite execution: `pytest backend/tests/test_promotions.py`.",
+            "Verification in browser on `http://localhost:8080/cart` and `http://localhost:8080/products/{slug}`."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "VPS deployment."
+          ],
+          "acceptance_checks": [
+            "- [ ] All frontend and backend tests pass.",
+            "- [ ] Local Docker storefront applies test coupons and accepts reviews without console errors."
+          ]
+        }
+      ],
+      "total_subtasks": 6,
+      "completed_subtasks": 2,
+      "progress_percent": 33
+    },
+    {
+      "id": "work-009",
+      "number": 9,
+      "title": "Storefront search typeahead",
+      "status": "In Progress",
+      "folder_name": "work-009-storefront-search",
+      "relative_path": "work/work-009-storefront-search",
+      "goal": "**Objective:** Make the storefront search overlay find active products through the backend catalogue as the customer types, instead of only filtering a preloaded browser list.",
+      "current_owner": "",
+      "active_handoffs": "",
+      "handoff_state": "",
+      "subtasks": [
+        {
+          "id": "9-8-Add-a-backend-driven-discove",
+          "title": "9.8 Add a backend-driven discovery state to the empty search overlay: trending search keywords and trending products, with no hardcoded or fabricated entries. Frontend renderer/API client are implemented; Gemini backend API and analytics are pending.",
+          "completed": false,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "9-7-Finish-local-visual-acceptan",
+          "title": "9.7 Finish local visual acceptance at desktop width; mobile typeahead, local API results, and Docker rebuild are verified.",
+          "completed": false,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "9-1-Audit-current-storefront-sea",
+          "title": "9.1 Audit current storefront search and backend capability: the UI filters the preloaded first 100 products in memory; the public API already has a database-backed search endpoint matching names, descriptions, tags, and category names.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "9-2-Add-typed--searchProducts-qu",
+          "title": "9.2 Add typed `searchProducts(query, { limit, signal })` API client using the existing endpoint and shared product mapper.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "9-3-Replace-in-memory-filtering",
+          "title": "9.3 Replace in-memory filtering with debounced API search (275 ms, two-character minimum), abort prior requests, and prevent stale results.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "9-4-Add-loading--retryable-error",
+          "title": "9.4 Add loading, retryable error, no-result, keyboard selection, Escape handling, focus restoration/trapping, and accessible result announcements.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "9-5-Remove-hardcoded-trending-ph",
+          "title": "9.5 Remove hardcoded trending phrases and Unsplash collection cards; show neutral search guidance until the customer starts typing.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "9-6-Add-API-client-and-overlay-t",
+          "title": "9.6 Add API-client and overlay tests; full frontend suite passes **50 tests** and TypeScript type-check passes.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        }
+      ],
+      "decisions": [],
+      "contracts": [
+        {
+          "path": "work/work-009-storefront-search/tasks/task-009-search-discovery-api.md",
+          "filename": "task-009-search-discovery-api.md",
+          "title": "Task 9.8 \u2014 Search empty-state discovery API",
+          "owner": "Gemini (backend), Codex (frontend integration)",
+          "status": "Backend Pending; frontend In Progress",
+          "objective": "When the search overlay opens with no query, show useful trending search terms and products based on actual Sulocraft activity. Keep ranking and business data in the backend/database; never hardcode or fabricate trends in the UI.",
+          "scope_in": [],
+          "scope_out": [],
+          "acceptance_checks": []
+        }
+      ],
+      "total_subtasks": 8,
+      "completed_subtasks": 6,
+      "progress_percent": 75
+    },
+    {
+      "id": "work-010",
+      "number": 10,
+      "title": "Seasonal Gift by Occasion",
+      "status": "In Progress",
+      "folder_name": "work-010-gift-by-occasion",
+      "relative_path": "work/work-010-gift-by-occasion",
+      "goal": "**Objective:** Make the homepage's Gift by Occasion section a database-driven, seasonal discovery feature that the owner can configure from admin, with each active occasion showing relevant products and its own clear artwork.",
+      "current_owner": "",
+      "active_handoffs": "",
+      "handoff_state": "",
+      "subtasks": [
+        {
+          "id": "10-18-6---Codex--rebuild-the-loc",
+          "title": "10.18.6 \u2014 Codex: rebuild the local Docker API/database/frontend and verify the real occasion response, five default cards, distinct image rendering, and desktop/mobile layout. Record results in the Task 10.18 contract and notes.",
+          "completed": false,
+          "owner": " Codex",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "10-18-7---Owner-reviews-the-loca",
+          "title": "10.18.7 \u2014 Owner reviews the locally verified result; only then approve any release.",
+          "completed": false,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "10-1-10-17---Implement-database",
+          "title": "10.1\u201310.17 \u2014 Implement database-driven occasions, product associations, admin management, homepage ordering/rendering, occasion filtering, artwork, and earlier integration/owner acceptance. Historical decisions are identified below where later changed.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "10-18-1---Audit-existing-occasio",
+          "title": "10.18.1 \u2014 Audit existing occasion visibility and image URLs; identify broken, repeated, and generic fallback references.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "10-18-2---Gemini-reports-idempot",
+          "title": "10.18.2 \u2014 Gemini reports idempotent migration/seed behavior with Birthday, Just Because, Anniversary, Baby Shower, and Wedding enabled by default; all other existing occasions disabled by default.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "10-18-3---Gemini-reports-that-ev",
+          "title": "10.18.3 \u2014 Gemini reports that every occasion is admin-toggleable while stable IDs and product associations remain intact.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "10-18-4a---Upload-ten-approved-e",
+          "title": "10.18.4a \u2014 Upload ten approved existing Sulocraft images to R2 and verify every public URL returns an image.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "10-18-4b---Gemini-reports-DB-see",
+          "title": "10.18.4b \u2014 Gemini reports DB/seed/migration references updated to the verified R2 keys; no duplicate image copies or re-uploads are needed.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "10-18-5---Add-revise-frontend-ba",
+          "title": "10.18.5 \u2014 Add/revise frontend/backend regression coverage for default visibility, admin toggles, ordering, image keys, and failed-image fallback.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        }
+      ],
+      "decisions": [],
+      "contracts": [
+        {
+          "path": "work/work-010-gift-by-occasion/tasks/task-010-evergreen-occasion-rules.md",
+          "filename": "task-010-evergreen-occasion-rules.md",
+          "title": "Task 10.9 \u2014 Evergreen occasion rules",
+          "owner": "Gemini (backend/admin API), Codex (frontend admin controls and integration)",
+          "status": "Completed (Implementation verified locally with full backend test suite, frontend unit tests, and automated API verification suite `scripts/verify_api.py`)",
+          "objective": "",
+          "scope_in": [],
+          "scope_out": [],
+          "acceptance_checks": []
+        },
+        {
+          "path": "work/work-010-gift-by-occasion/tasks/task-018-default-occasions-and-images.md",
+          "filename": "task-018-default-occasions-and-images.md",
+          "title": "Task 10.18 \u2014 Default occasion visibility and image repair",
+          "owner": "",
+          "status": "Gemini implementation returned; Codex local integration verification in progress.",
+          "objective": "Show Birthday, Just Because, Anniversary, Baby Shower, and Wedding by default. Keep other occasions stored and admin-manageable but disabled by default. Use distinct, valid Sulocraft/R2 artwork and preserve product associations and admin controls.",
+          "scope_in": [],
+          "scope_out": [],
+          "acceptance_checks": []
+        }
+      ],
+      "total_subtasks": 9,
+      "completed_subtasks": 7,
+      "progress_percent": 78
+    },
+    {
+      "id": "work-011",
+      "number": 11,
+      "title": "Automated API Verification & Reporting Suite",
+      "status": "Completed",
+      "folder_name": "work-011-api-verification",
+      "relative_path": "work/work-011-api-verification",
+      "goal": "**Objective:** Automate local and CI-ready API verification and structured report generation for the Sulocraft e-commerce platform, covering storefront content resolution, catalogue querying and filtering, and admin occasion governance and evergreen constraints.",
+      "current_owner": "",
+      "active_handoffs": "",
+      "handoff_state": "",
+      "subtasks": [
+        {
+          "id": "11-1-Initialize-Work-011-directo",
+          "title": "11.1 Initialize Work 011 directory structure (`work/work-011-api-verification/`), tasks, decisions, and register in `work/INDEX.md`.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "11-2-Design-and-implement--scrip",
+          "title": "11.2 Design and implement `scripts/verify_api.py` covering Storefront Home, Catalogue Occasions, Product Filtering, Admin Occasions governance, and Evergreen rules.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "11-3-Implement-structured-report",
+          "title": "11.3 Implement structured report generation outputting Markdown reports in `work/work-011-api-verification/reports/api-verification-report.md`.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "11-4-Execute-automated-verificat",
+          "title": "11.4 Execute automated verification against the local Docker API (`http://localhost:8000`), confirm all checks pass, and verify generated report.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "11-5-Cross-validate-with-Work-01",
+          "title": "11.5 Cross-validate with Work 010 acceptance criteria and update Work 010 and Work 011 statuses.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        }
+      ],
+      "decisions": [
+        {
+          "title": "DEC-011-001: Zero external dependency API verification runner",
+          "body": "- **Date:** 2026-10-03\n- **Decision:** Implement `scripts/verify_api.py` using Python's standard library (`urllib.request`, `json`, `time`, `datetime`, `argparse`).\n- **Rationale:** Enables execution in any environment (host machine, minimal CI runner, inside docker container) without requiring virt..."
+        },
+        {
+          "title": "DEC-011-002: Dual Output Format (CLI Table + Markdown Artifact)",
+          "body": "- **Date:** 2026-10-03\n- **Decision:** The verification script will print formatted summary tables to stdout and write an extensive audit report to `work/work-011-api-verification/reports/api-verification-report.md`.\n- **Rationale:** Provides immediate developer feedback in console logs while mainta..."
+        }
+      ],
+      "contracts": [],
+      "total_subtasks": 5,
+      "completed_subtasks": 5,
+      "progress_percent": 100
+    },
+    {
+      "id": "work-012",
+      "number": 12,
+      "title": "PROD/PREPROD isolation on one VPS",
+      "status": "In Progress",
+      "folder_name": "work-012-vps-environment-isolation",
+      "relative_path": "work/work-012-vps-environment-isolation",
+      "goal": "Run production and preproduction on the existing single VPS using Docker Compose, with logical isolation for APIs, databases, persistent data, networks, secrets, integrations, and resource use. Preserve a path to move production to a separate VPS later without application redesign.",
+      "current_owner": "Codex \u2014 Work 012 item 09 (Deployment Workflow)",
+      "active_handoffs": "None. Gemini's Task 12.10.1 is completed; no Gemini task is waiting.",
+      "handoff_state": "Tasks 12.09.2, 12.09.3, and 12.09.4 are completed. PREPROD release `d27b8d5da01b-9a161e68c2c6` is live and healthy. Task 12.09.5 (same-artifact PROD promotion) is pending; production encrypted secret groups are not provisioned. Task 12.09.6 (Work 006 CI alignment) is pending.",
+      "subtasks": [
+        {
+          "id": "01---Current-state-discovery--do",
+          "title": "01 \u2014 Current-state discovery; documented repo and read-only VPS baseline, owner confirmed `api-dev.sulocraft.com` for PREPROD.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "02---Container-isolation--Task-1",
+          "title": "02 \u2014 Container isolation: Task 12.02.1 (Gemini); parameterized Compose runtime with dynamic project scoping (`sulocraft-prod` and `sulocraft-preprod`), decoupled reverse proxy gateway (`docker/compose.proxy.yaml`), and automated regression tests in `scripts/security/test_vps_isolation.py`.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "work/work-012-vps-environment-isolation/02-container-isolation/tasks/task-001-container-isolation.md",
+          "contract_title": "Task 12.02.1"
+        },
+        {
+          "id": "03---Networking-and-reverse-prox",
+          "title": "03 \u2014 Networking and reverse-proxy routing: Task 12.03.1 (Gemini); least-privilege Docker network segmentation (`sulocraft-gateway` vs private `internal`), validated `docker/Caddyfile` with automated Caddy 2 CLI validation, security headers, and domain routing (`api.sulocraft.com` & `api-dev.sulocraft.com`).",
+          "completed": true,
+          "owner": "",
+          "contract_path": "work/work-012-vps-environment-isolation/03-networking-proxy/tasks/task-001-networking-proxy.md",
+          "contract_title": "Task 12.03.1"
+        },
+        {
+          "id": "04---Database-and-persistent-vol",
+          "title": "04 \u2014 Database and persistent-volume isolation: Task 12.04.1, Task 12.04.2 (Codex); distinct target-scoped secret paths, Compose projects and volumes; API/database credential consistency validation; independent disposable migrations.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "work/work-012-vps-environment-isolation/04-database-isolation/tasks/task-001-db-isolation-audit.md",
+          "contract_title": "Task 12.04.1"
+        },
+        {
+          "id": "05---Secret-and-non-secret-confi",
+          "title": "05 \u2014 Secret and non-secret configuration isolation: Task 12.05.1 (Gemini); runtime secret paths, fail-closed bootstrap resolution, and credential inventory.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "work/work-012-vps-environment-isolation/05-secrets-config/tasks/task-001-secrets-config-isolation.md",
+          "contract_title": "Task 12.05.1"
+        },
+        {
+          "id": "06---R2-storage-isolation--Task",
+          "title": "06 \u2014 R2/storage isolation: Task 12.06.1 (Gemini); dynamic bucket defaults (`sulocraft-products-${TARGET_ENV:-preprod}`, `sulocraft-backups-${TARGET_ENV:-preprod}`), environment-scoped backup script object paths, and automated tests.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "work/work-012-vps-environment-isolation/06-storage-r2/tasks/task-001-storage-isolation.md",
+          "contract_title": "Task 12.06.1"
+        },
+        {
+          "id": "07---Email-and-OAuth-isolation",
+          "title": "07 \u2014 Email and OAuth isolation: Task 12.07.1 (Gemini); fail-closed email sandbox recipient allowlist (`@sulocraft.com`), suppression logging without credential leak, redirect mailbox support, and dynamic domain/OAuth callback resolution (`dev.sulocraft.com` / `api-dev.sulocraft.com` vs `sulocraft.com` / `api.sulocraft.com`).",
+          "completed": true,
+          "owner": "",
+          "contract_path": "work/work-012-vps-environment-isolation/07-email-oauth-isolation/tasks/task-001-email-oauth-isolation.md",
+          "contract_title": "Task 12.07.1"
+        },
+        {
+          "id": "08---Resource-limits-and-environ",
+          "title": "08 \u2014 Resource limits and environment-aware logging: Task 12.08.1 (Gemini); CPU/memory/pids limits in Compose, json-file log rotation (10m/3), and structured logging with environment identification.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "work/work-012-vps-environment-isolation/08-resource-limits/tasks/task-001-resource-limits-logging.md",
+          "contract_title": "Task 12.08.1"
+        },
+        {
+          "id": "10---Security-isolation-validati",
+          "title": "10 \u2014 Security/isolation validation: Task 12.10.1 (Gemini); automated test suite validating multi-environment network, secret, DB, storage, and email boundaries.",
+          "completed": true,
+          "owner": "",
+          "contract_path": "work/work-012-vps-environment-isolation/10-security-validation/tasks/task-001-security-isolation-validation.md",
+          "contract_title": "Task 12.10.1"
+        },
+        {
+          "id": "09---Deployment-workflow-and-sam",
+          "title": "09 \u2014 Deployment workflow and same-artifact promotion: Tasks 12.09.2, 12.09.3, and 12.09.4 are complete. PREPROD is deployed and healthy; exact-image PROD promotion (12.09.5) and Work 006 CI alignment (12.09.6) remain.",
+          "completed": false,
+          "owner": "",
+          "contract_path": "work/work-012-vps-environment-isolation/09-deployment-workflow/tasks/task-002-target-config-preflight.md",
+          "contract_title": "12.09.2"
+        },
+        {
+          "id": "11---Cutover-and-operational-val",
+          "title": "11 \u2014 Cutover and operational validation",
+          "completed": false,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        }
+      ],
+      "decisions": [
+        {
+          "title": "DEC-012-001 \u2014 Separate VPS environment work from the secret vault",
+          "body": "**Decision:** Work 012 owns PROD/PREPROD environment isolation and deployment mechanics. Work 003 owns SOPS/age secret encryption, decryption, key safety, and rotation. Work 006 owns CI/CD triggers and calls the shared deployment interface.\n\n**Reason:** Keep ownership clear and avoid duplicating vau..."
+        },
+        {
+          "title": "DEC-012-002 \u2014 Preserve the three-stage release gate",
+          "body": "**Decision:** Verify locally first, deploy and validate in preprod next, and promote the same tested artifact to production only after preprod is stable and accepted. Differences between environments should be configuration/secrets only."
+        },
+        {
+          "title": "DEC-012-003 \u2014 Use logical isolation on the existing VPS",
+          "body": "**Decision:** Use the current VPS and Docker Compose approach; do not add Kubernetes or unrelated infrastructure. Treat one VPS as a shared physical failure/compromise domain."
+        },
+        {
+          "title": "DEC-012-004 \u2014 Discovery precedes implementation",
+          "body": "**Decision:** Item 01 must be documented and reviewed before item 02. The owner reviewed it on 2026-10-04 and confirmed `api-dev.sulocraft.com` as the PREPROD API hostname, superseding the example `api-preprod.sulocraft.com` in the supplied target. Validate live DNS/TLS in item 03; do not change DNS..."
+        },
+        {
+          "title": "DEC-012-005 \u2014 Use one parameterized Compose definition with separate project identities",
+          "body": "**Decision:** Item 02 will evaluate a shared parameterized Compose definition launched as distinct `sulocraft-preprod` and `sulocraft-prod` projects, without fixed `container_name` values. Project-scoped services and named volumes must not collide. The shared public proxy must be separated from the ..."
+        },
+        {
+          "title": "DEC-012-006 \u2014 Require target-specific database secret paths and projects",
+          "body": "**Decision:** Each deployment selects `sulocraft-${TARGET_ENV}` and a target-specific runtime secret directory. Compose requires explicit host-file paths for the database and database URL secrets; missing paths fail configuration. Bootstrap rejects missing PROD encrypted groups and validates that th..."
+        },
+        {
+          "title": "DEC-012-007 \u2014 One deploy command with an explicit environment target",
+          "body": "**Decision:** The final operator interface is `./deploy_vps.sh --env preprod` for the PREPROD environment serving `dev.sulocraft.com`, and `./deploy_vps.sh --env prod` for production. The environment argument is mandatory; the script must never guess or default the target. A separate config input ma..."
+        }
+      ],
+      "contracts": [],
+      "total_subtasks": 11,
+      "completed_subtasks": 9,
+      "progress_percent": 82
+    },
+    {
+      "id": "work-013",
+      "number": 13,
+      "title": "Automated security audit & release gate",
+      "status": "In Progress",
+      "folder_name": "work-013-security-audit",
+      "relative_path": "work/work-013-security-audit",
+      "goal": "**Objective:** Establish a permanent, automated security-audit workflow and release gate across local development, CI pull requests, and deployed development environments.",
+      "current_owner": "",
+      "active_handoffs": "",
+      "handoff_state": "",
+      "subtasks": [
+        {
+          "id": "13-9-Gemini--VPS-deployment-SSH",
+          "title": "13.9 Gemini: VPS deployment SSH key hardening, capability restriction & least-privilege runner isolation per task-009-ssh-deployment-hardening.md.",
+          "completed": false,
+          "owner": " Gemini",
+          "contract_path": "work/work-013-security-audit/tasks/task-009-ssh-deployment-hardening.md",
+          "contract_title": "task-009-ssh-deployment-hardening.md"
+        },
+        {
+          "id": "13-9-1-SSH-Capability-Restrictio",
+          "title": "13.9.1 SSH Capability Restriction (`no-pty`, `no-port-forwarding`, `no-agent-forwarding`, `no-X11-forwarding`)",
+          "completed": false,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "13-9-2-Dedicated-Non-Root--deplo",
+          "title": "13.9.2 Dedicated Non-Root `deploy` System User",
+          "completed": false,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "13-9-3-Forced-Command---Wrapper",
+          "title": "13.9.3 Forced Command / Wrapper Enforcement",
+          "completed": false,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "13-9-4-Security-Audit-Verificati",
+          "title": "13.9.4 Security Audit Verification",
+          "completed": false,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "13-10-Codex--Resolve-the-failed",
+          "title": "13.10 Codex: Resolve the failed `dev` security release gate caused by high-severity frontend dependency findings in task-010-dev-release-gate-failure.md.",
+          "completed": false,
+          "owner": " Codex",
+          "contract_path": "work/work-013-security-audit/tasks/task-010-dev-release-gate-failure.md",
+          "contract_title": "task-010-dev-release-gate-failure.md"
+        },
+        {
+          "id": "9-1-Gemini---Codex--Work-directo",
+          "title": "9.1 Gemini + Codex: Work directory structure, Threat Model, and Audit Policy per task-001-threat-model-policy.md.",
+          "completed": true,
+          "owner": " Gemini + Codex",
+          "contract_path": "work/work-013-security-audit/tasks/task-001-threat-model-policy.md",
+          "contract_title": "task-001-threat-model-policy.md"
+        },
+        {
+          "id": "9-2-Gemini--Secret-scanning---se",
+          "title": "9.2 Gemini: Secret scanning & secret architecture audit per task-002-secrets-audit.md.",
+          "completed": true,
+          "owner": " Gemini",
+          "contract_path": "work/work-013-security-audit/tasks/task-002-secrets-audit.md",
+          "contract_title": "task-002-secrets-audit.md"
+        },
+        {
+          "id": "9-3-Gemini--Static-Application-S",
+          "title": "9.3 Gemini: Static Application Security Testing (SAST) & dependency auditing per task-003-sast-deps.md.",
+          "completed": true,
+          "owner": " Gemini",
+          "contract_path": "work/work-013-security-audit/tasks/task-003-sast-deps.md",
+          "contract_title": "task-003-sast-deps.md"
+        },
+        {
+          "id": "9-4-Gemini--Container---infrastr",
+          "title": "9.4 Gemini: Container & infrastructure security scanning per task-004-container-infra.md.",
+          "completed": true,
+          "owner": " Gemini",
+          "contract_path": "work/work-013-security-audit/tasks/task-004-container-infra.md",
+          "contract_title": "task-004-container-infra.md"
+        },
+        {
+          "id": "9-5-Gemini--Custom-backend-autho",
+          "title": "9.5 Gemini: Custom backend authorization & e-commerce business logic tests per task-005-auth-business-tests.md.",
+          "completed": true,
+          "owner": " Gemini",
+          "contract_path": "work/work-013-security-audit/tasks/task-005-auth-business-tests.md",
+          "contract_title": "task-005-auth-business-tests.md"
+        },
+        {
+          "id": "9-6-Gemini--Dynamic-security-tes",
+          "title": "9.6 Gemini: Dynamic security testing (DAST) & TLS auditing per task-006-dast-tls.md.",
+          "completed": true,
+          "owner": " Gemini",
+          "contract_path": "work/work-013-security-audit/tasks/task-006-dast-tls.md",
+          "contract_title": "task-006-dast-tls.md"
+        },
+        {
+          "id": "9-7-Gemini--Local-pre-push-secur",
+          "title": "9.7 Gemini: Local pre-push security gate & master audit runner per task-007-prepush-full-audit.md.",
+          "completed": true,
+          "owner": " Gemini",
+          "contract_path": "work/work-013-security-audit/tasks/task-007-prepush-full-audit.md",
+          "contract_title": "task-007-prepush-full-audit.md"
+        },
+        {
+          "id": "9-8-Gemini--CI-security-workflow",
+          "title": "9.8 Gemini: CI security workflow (.github/workflows/security.yml) per task-008-ci-security-workflow.md.",
+          "completed": true,
+          "owner": " Gemini",
+          "contract_path": "work/work-013-security-audit/tasks/task-008-ci-security-workflow.md",
+          "contract_title": "task-008-ci-security-workflow.md"
+        }
+      ],
+      "decisions": [
+        {
+          "title": "DEC-009-1 \u2014 Defense in Depth across 3 Release Levels",
+          "body": "**Decision:** Enforce security checks across three distinct boundaries:\n- Level 1: Local / Pre-push (fast developer feedback under 60 seconds).\n- Level 2: CI / Pull Request (complete static analysis, container scan, and backend authorization suites).\n- Level 3: Deployed Development Environment (OWAS..."
+        },
+        {
+          "title": "DEC-009-2 \u2014 Authoritative Backend Business & Authorization Enforcement",
+          "body": "**Decision:** Client-side form validation and role checks in React are treated solely as user experience affordances. The backend must enforce all role authorizations, order ownership filters, and price calculations independently.\n\n**Reason:** Automated scanners do not catch subtle business logic fl..."
+        },
+        {
+          "title": "DEC-009-3 \u2014 Machine-Readable Gating & Redacted Disclosures",
+          "body": "**Decision:** Security scripts must generate structured JSON/Markdown reports in `work/work-013-security-audit/reports/` and exit non-zero on High/Critical actionable findings. Discovered secret findings must be redacted in all console and CI logs.\n\n**Reason:** Prevents sensitive credential leakage ..."
+        }
+      ],
+      "contracts": [
+        {
+          "path": "work/work-013-security-audit/tasks/task-001-threat-model-policy.md",
+          "filename": "task-001-threat-model-policy.md",
+          "title": "Task 9.1 \u2014 Threat model, audit policy, and security directory structure",
+          "owner": "Gemini + Codex",
+          "status": "In Progress",
+          "objective": "Establish the security governance foundation: create the `work/work-013-security-audit/` hierarchy (`findings/`, `exceptions/`, `reports/`), document the Sulocraft e-commerce threat model, and codify the automated security release gate policy with pass/fail criteria.",
+          "scope_in": [
+            "`work/work-013-security-audit/README.md`",
+            "`work/work-013-security-audit/threat-model.md`",
+            "`work/work-013-security-audit/audit-policy.md`",
+            "`work/work-013-security-audit/decisions.md`",
+            "`work/work-013-security-audit/tasks.md`",
+            "`work/work-013-security-audit/notes.md`",
+            "Directory placeholders for findings, exceptions, and reports."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Modifying application business logic or UI components."
+          ],
+          "acceptance_checks": [
+            "- [ ] `work/work-013-security-audit/` contains README, threat-model, audit-policy, decisions, tasks, and notes.",
+            "- [ ] Threat model covers D2C shopping, payments, admin, secrets, R2 assets, and magic links.",
+            "- [ ] Audit policy establishes explicit blocking vs warning criteria across Level 1, 2, and 3."
+          ]
+        },
+        {
+          "path": "work/work-013-security-audit/tasks/task-002-secrets-audit.md",
+          "filename": "task-002-secrets-audit.md",
+          "title": "Task 9.2 \u2014 Secret scanning and secret architecture audit",
+          "owner": "Gemini",
+          "status": "Pending",
+          "objective": "Implement `scripts/security/scan-secrets.sh` (Gitleaks integration) and `scripts/security/scan-config.sh` (secret architecture validation) to detect unencrypted credentials and enforce the SOPS + age vault architecture.",
+          "scope_in": [
+            "`scripts/security/scan-secrets.sh` scanning tracked files, staged changes, and git history.",
+            "Reviewed suppression via `.gitleaks.toml`.",
+            "`scripts/security/scan-config.sh` verifying:",
+            "No plaintext production `.env` committed.",
+            "No age private key in repo or container mounts.",
+            "All `*.sops.yaml` files are encrypted.",
+            "PostgreSQL port 5432 is not publicly exposed.",
+            "`VITE_*` variables are strictly public."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Modifying decrypted secret values."
+          ],
+          "acceptance_checks": [
+            "- [ ] `scan-secrets.sh` runs and exits 0 on clean repo, fails closed on test dummy secret.",
+            "- [ ] `scan-config.sh` verifies Compose and secret file permissions without leaking secrets."
+          ]
+        },
+        {
+          "path": "work/work-013-security-audit/tasks/task-003-sast-deps.md",
+          "filename": "task-003-sast-deps.md",
+          "title": "Task 9.3 \u2014 Static application security testing (SAST) and dependency auditing",
+          "owner": "Gemini",
+          "status": "Pending",
+          "objective": "Implement `scripts/security/scan-sast.sh` using Semgrep Community Edition and `scripts/security/scan-dependencies.sh` executing `npm audit` and `pip-audit` to detect vulnerabilities in code and third-party dependencies.",
+          "scope_in": [
+            "`scripts/security/scan-sast.sh` with rules for Python, TS/JS, Shell, Dockerfiles.",
+            "`scripts/security/scan-dependencies.sh` running `npm audit --audit-level=high` and `pip-audit`.",
+            "Machine-readable output in `work/work-013-security-audit/reports/`."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Running `npm audit fix --force` automatically."
+          ],
+          "acceptance_checks": [
+            "- [ ] `scan-sast.sh` executes Semgrep rules and produces clean structured output.",
+            "- [ ] `scan-dependencies.sh` audits package-lock.json and python environment, reporting High/Critical counts."
+          ]
+        },
+        {
+          "path": "work/work-013-security-audit/tasks/task-004-container-infra.md",
+          "filename": "task-004-container-infra.md",
+          "title": "Task 9.4 \u2014 Container and infrastructure security scanning",
+          "owner": "Gemini",
+          "status": "Pending",
+          "objective": "Implement `scripts/security/scan-container.sh` using Trivy to audit repository filesystems, Dockerfiles, Compose files, and production container images for known vulnerabilities, misconfigurations, and embedded secrets.",
+          "scope_in": [
+            "`scripts/security/scan-container.sh` with Trivy scanners (`vuln,secret,misconfig`).",
+            "Auditing `backend/Dockerfile`, `docker/frontend.Dockerfile`, `docker/compose.yaml`, `backend/docker-compose.yml`.",
+            "Machine-readable JSON/SARIF output saved to `work/work-013-security-audit/reports/`."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Running host root commands."
+          ],
+          "acceptance_checks": [
+            "- [ ] `scan-container.sh` scans Dockerfiles and Compose configurations.",
+            "- [ ] Confirms Postgres port 5432 is not exposed to public host interface."
+          ]
+        },
+        {
+          "path": "work/work-013-security-audit/tasks/task-005-auth-business-tests.md",
+          "filename": "task-005-auth-business-tests.md",
+          "title": "Task 9.5 \u2014 Custom authorization and e-commerce business logic tests",
+          "owner": "Gemini",
+          "status": "Completed",
+          "objective": "Create explicit backend integration test suites (`test_security_authorization.py` and `test_security_business_logic.py`) to systematically test Broken Access Control (IDOR, Admin Gating) and Business Logic Integrity (price tampering, inventory bypass, self-refunds, role escalation).",
+          "scope_in": [
+            "`backend/tests/test_security_authorization.py`:",
+            "Customer A cannot read or write Customer B's orders, addresses, cart, returns, profile, or payments.",
+            "Path parameter manipulation (`GET /api/v1/orders/{b_order_id}`) returns 403 or 404, NEVER 200.",
+            "Normal customers and unauthenticated visitors cannot access `/admin/*` endpoints.",
+            "`backend/tests/test_security_business_logic.py`:",
+            "Customer cannot tamper with product price, GST, shipping, or discounts in order requests.",
+            "Authoritative integer paise total calculations.",
+            "Out-of-stock items cannot be purchased; negative/zero quantities rejected.",
+            "Customers cannot self-refund or mark orders paid/shipped.",
+            "Customers cannot escalate their role to admin."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Frontend UI components."
+          ],
+          "acceptance_checks": [
+            "- [x] All authorization and business logic tests execute and pass 100% (15/15 passed).",
+            "- [x] No regression across existing backend tests (157/157 passed)."
+          ]
+        },
+        {
+          "path": "work/work-013-security-audit/tasks/task-006-dast-tls.md",
+          "filename": "task-006-dast-tls.md",
+          "title": "Task 9.6 \u2014 Dynamic security testing (DAST) and TLS auditing",
+          "owner": "Gemini",
+          "status": "Completed",
+          "objective": "Implement `scripts/security/scan-dast.sh` (OWASP ZAP baseline DAST) and `scripts/security/scan-tls.sh` (TLS protocol and cipher suite auditing) targeting the deployed development environment (`https://dev.sulocraft.com` and dev API).",
+          "scope_in": [
+            "`scripts/security/scan-dast.sh`:",
+            "OWASP ZAP baseline automation (Docker runner).",
+            "Checks SQLi indicators, XSS, security headers (CSP, HSTS, X-Content-Type-Options), cookie flags (HttpOnly, Secure, SameSite), open redirects.",
+            "`scripts/security/scan-tls.sh`:",
+            "Checks TLS versions (1.2/1.3), weak ciphers, cert expiration, and hostname alignment."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Scanning production `https://sulocraft.com`."
+          ],
+          "acceptance_checks": [
+            "- [x] Scripts validate target URL before initiating scans and reject unconfigured targets.",
+            "- [x] ZAP baseline report generates in `work/work-013-security-audit/reports/`."
+          ]
+        },
+        {
+          "path": "work/work-013-security-audit/tasks/task-007-prepush-full-audit.md",
+          "filename": "task-007-prepush-full-audit.md",
+          "title": "Task 9.7 \u2014 Local pre-push security gate and master audit runner",
+          "owner": "Gemini",
+          "status": "Completed",
+          "objective": "Implement `scripts/security/pre-push.sh` for fast Level 1 developer checks and `scripts/security/full-audit.sh` to orchestrate all security checks and generate a consolidated release gate report.",
+          "scope_in": [
+            "`scripts/security/pre-push.sh` with git hook installation instructions.",
+            "`scripts/security/full-audit.sh` producing console and markdown reports.",
+            "Fail-closed non-zero exit code on failure."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Modifying developer git hooks automatically without consent."
+          ],
+          "acceptance_checks": [
+            "- [x] `pre-push.sh` completes fast checks cleanly.",
+            "- [x] `full-audit.sh` outputs consolidated report and evaluates production eligibility accurately."
+          ]
+        },
+        {
+          "path": "work/work-013-security-audit/tasks/task-008-ci-security-workflow.md",
+          "filename": "task-008-ci-security-workflow.md",
+          "title": "Task 9.8 \u2014 CI security workflow (.github/workflows/security.yml)",
+          "owner": "Gemini",
+          "status": "Completed",
+          "objective": "Create `.github/workflows/security.yml` providing a complete Level 2 CI security gate across independent jobs: `security-secrets`, `security-sast`, `security-frontend-deps`, `security-backend-deps`, `security-container`, `security-tests`, and `security-gate`.",
+          "scope_in": [
+            "Separate jobs for clear troubleshooting and parallel execution.",
+            "Job summary reporting using GitHub Actions `$GITHUB_STEP_SUMMARY`.",
+            "Non-destructive execution with zero leaked secrets."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Running DAST against production domains."
+          ],
+          "acceptance_checks": [
+            "- [x] GitHub Actions workflow syntax validates.",
+            "- [x] Jobs report individual pass/fail statuses and consolidate in security gate."
+          ]
+        },
+        {
+          "path": "work/work-013-security-audit/tasks/task-009-ssh-deployment-hardening.md",
+          "filename": "task-009-ssh-deployment-hardening.md",
+          "title": "Task 13.9 \u2014 VPS deployment SSH key hardening, capability restriction & least-privilege runner isolation",
+          "owner": "Pending",
+          "status": "Pending",
+          "objective": "Harden the GitHub Actions SSH deployment pathway on the VPS to resolve the \"Secret Zero\" threat vector: ensure that an exposure of the deployment SSH key cannot grant an attacker an interactive root shell, arbitrary command execution, internal network tunneling, or direct access to the server's master Age decryption key (`/etc/sulocraft/age/keys.txt`).",
+          "scope_in": [
+            "Documenting and implementing SSH key capability restrictions (`no-pty`, `no-port-forwarding`, `no-agent-forwarding`, `no-X11-forwarding`) in `~/.ssh/authorized_keys`.",
+            "Creating a dedicated non-root `deploy` user with scoped sudo permissions for Docker/Compose operations.",
+            "Ensuring `/etc/sulocraft/age/keys.txt` remains unreadable by non-root users (`0600`, `root:root`).",
+            "Evaluating and testing forced command wrappers (`command=\"/opt/sulocraft/scripts/deploy-wrapper\"`) to reject arbitrary shell execution.",
+            "Adding automated security audit checks to ensure SSH permissions and configurations remain compliant."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Modifying live VPS configuration without explicit owner authorization.",
+            "Replacing the core SOPS/Age architecture."
+          ],
+          "acceptance_checks": [
+            "- [ ] Deployment SSH key cannot allocate a pseudo-terminal or establish port forwarding.",
+            "- [ ] Non-root `deploy` account cannot read `/etc/sulocraft/age/keys.txt`.",
+            "- [ ] Automated security scan passes and validates that no unencrypted keys or unrestricted deployment identities exist.",
+            "- [ ] CI deployment workflow `.github/workflows/deploy-dev-backend.yml` functions seamlessly with the hardened deployment user and restricted key."
+          ]
+        },
+        {
+          "path": "work/work-013-security-audit/tasks/task-010-dev-release-gate-failure.md",
+          "filename": "task-010-dev-release-gate-failure.md",
+          "title": "Task 13.10 \u2014 Resolve failed dev security release gate",
+          "owner": "Codex",
+          "status": "Pending",
+          "objective": "Resolve the frontend dependency findings that caused the security release gate to fail on commit `e98b53f21d24798975658686df4bdf206ea28cd7`, then verify the push-triggered security workflow passes.",
+          "scope_in": [],
+          "scope_out": [
+            "Out of scope: backend CI test failures (tracked in Work 006 Task 6.3.5), backend deployment implementation, and production release."
+          ],
+          "acceptance_checks": [
+            "- [ ] All high-severity findings are resolved with patched versions or explicitly approved, documented exceptions.",
+            "- [ ] `pnpm audit --audit-level=high` passes locally using the committed lockfile.",
+            "- [ ] Frontend build and relevant tests pass.",
+            "- [ ] A new push-triggered security workflow completes with all required jobs and `Master Security Release Gate` successful."
+          ]
+        }
+      ],
+      "total_subtasks": 14,
+      "completed_subtasks": 8,
+      "progress_percent": 57
+    },
+    {
+      "id": "work-014",
+      "number": 14,
+      "title": "Agent Coordination & Task Progress GUI",
+      "status": "Completed",
+      "folder_name": "work-014-task-gui",
+      "relative_path": "work/work-014-task-gui",
+      "goal": "Provide a lightweight, interactive web GUI dashboard to visualize, navigate, and track all work items, subtasks, agent handoffs, and completion progress across the `work/` tracking system.",
+      "current_owner": "Gemini \u2014 Completed",
+      "active_handoffs": "None",
+      "handoff_state": "Task 14.01.1 completed and verified. 5/5 automated unit tests passed. Dashboard engine and static export operational.",
+      "subtasks": [
+        {
+          "id": "14-1-Gemini--Interactive-Agent-C",
+          "title": "14.1 Gemini: Interactive Agent Coordination & Task Progress GUI per task-001-task-progress-gui.md.",
+          "completed": true,
+          "owner": " Gemini",
+          "contract_path": "work/work-014-task-gui/tasks/task-001-task-progress-gui.md",
+          "contract_title": "task-001-task-progress-gui.md"
+        },
+        {
+          "id": "14-1-1-Work-directory-structure",
+          "title": "14.1.1 Work directory structure and metadata specification",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "14-1-2-Dynamic-markdown-parser-e",
+          "title": "14.1.2 Dynamic markdown parser engine in `scripts/workflow_gui.py`",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "14-1-3-Interactive-web-dashboard",
+          "title": "14.1.3 Interactive web dashboard UI with search, filtering, and contract drawer",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "14-1-4-Dual-delivery-CLI-----bui",
+          "title": "14.1.4 Dual delivery CLI (`--build` and `--serve`)",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        },
+        {
+          "id": "14-1-5-Automated-verification-te",
+          "title": "14.1.5 Automated verification test suite in `backend/tests/test_workflow_gui.py` (5/5 passed)",
+          "completed": true,
+          "owner": "",
+          "contract_path": "",
+          "contract_title": ""
+        }
+      ],
+      "decisions": [
+        {
+          "title": "DEC-014-01: Zero External Runtime Dependencies",
+          "body": "- **Context**: The project needs a lightweight, cross-platform way to visualize work items and task progress without adding heavy npm/pip runtime dependencies.\n- **Decision**: Implement the parser and HTTP server using Python's standard library (`http.server`, `urllib`, `re`, `json`, `pathlib`). The..."
+        },
+        {
+          "title": "DEC-014-02: Live Read directly from Repository Markdown Files",
+          "body": "- **Context**: As tasks transition between Pending, In Progress, and Completed across different agents (Gemini, Codex, GPT), hardcoding state in a database or JSON cache risks becoming stale.\n- **Decision**: The dashboard parser directly reads `work/INDEX.md`, each work folder's `tasks.md`, `coordin..."
+        }
+      ],
+      "contracts": [
+        {
+          "path": "work/work-014-task-gui/tasks/task-001-task-progress-gui.md",
+          "filename": "task-001-task-progress-gui.md",
+          "title": "Task 14.01.1 \u2014 Interactive Agent Coordination & Task Progress GUI",
+          "owner": "Gemini",
+          "status": "Completed",
+          "objective": "Build and deliver an interactive web-based dashboard and CLI to visualize the entire `work/` tracking system: list all work items, track completion percentages, navigate individual subtasks and checklists, inspect cross-agent handoffs, and view detailed task contracts.",
+          "scope_in": [
+            "Python parser in `scripts/workflow_gui.py` scanning `work/INDEX.md`, each `work/work-*/` directory, `tasks.md`, `coordination.md`, and individual task contracts.",
+            "Interactive single-page web GUI with responsive two-column layout, real-time status filtering (All, In Progress, Completed, Pending), search bar, subtask checklists, and task contract viewer.",
+            "Standalone static HTML generator (`python3 scripts/workflow_gui.py --build`).",
+            "Embedded local development server (`python3 scripts/workflow_gui.py --serve [--port 8088]`).",
+            "JSON export mode (`python3 scripts/workflow_gui.py --json`).",
+            "Unit tests in `backend/tests/test_workflow_gui.py`."
+          ],
+          "scope_out": [
+            "Out of scope:",
+            "Adding heavy external web frameworks (Django, React SSR, etc.).",
+            "Modifying the underlying markdown schema or task contracts in other work folders."
+          ],
+          "acceptance_checks": [
+            "- [ ] `scripts/workflow_gui.py` accurately parses all active work items and subtasks from disk without error.",
+            "- [ ] `./backend/.venv/bin/pytest backend/tests/test_workflow_gui.py` passes all unit tests.",
+            "- [ ] `python3 scripts/workflow_gui.py --build` generates `work/dashboard.html` with valid syntax and complete project data.",
+            "- [ ] Interactive filtering, search, and contract inspection work smoothly in the GUI across light and dark themes.",
+            "- [ ] `python3 scripts/workflow_gui.py --serve` responds with HTTP 200 and live-rendered HTML."
+          ]
+        }
+      ],
+      "total_subtasks": 6,
+      "completed_subtasks": 6,
+      "progress_percent": 100
+    }
+  ]
+};
+    let currentFilter = 'ALL';
+    let searchQuery = '';
+    let selectedItemId = DATA.items.length > 0 ? DATA.items[0].id : null;
+
+    function getStatusBadge(status) {
+      switch(status) {
+        case 'Completed':
+          return '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950 text-emerald-300 border border-emerald-700/50">Completed</span>';
+        case 'In Progress':
+          return '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-950 text-blue-300 border border-blue-700/50">In Progress</span>';
+        case 'Pending':
+          return '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-950 text-amber-300 border border-amber-700/50">Pending</span>';
+        case 'Blocked':
+          return '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-950 text-red-300 border border-red-700/50">Blocked</span>';
+        default:
+          return '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gray-800 text-gray-300 border border-gray-700">' + status + '</span>';
+      }
+    }
+
+    function filterItems() {
+      return DATA.items.filter(item => {
+        // Filter by Status
+        if (currentFilter === 'COMPLETED' && item.status !== 'Completed') return false;
+        if (currentFilter === 'IN_PROGRESS' && item.status !== 'In Progress') return false;
+        if (currentFilter === 'PENDING' && item.status !== 'Pending') return false;
+        if (currentFilter === 'BLOCKED' && item.status !== 'Blocked') return false;
+
+        // Filter by Search Query
+        if (searchQuery) {
+          const q = searchQuery.toLowerCase();
+          const matchTitle = item.title.toLowerCase().includes(q);
+          const matchId = item.id.toLowerCase().includes(q);
+          const matchOwner = (item.current_owner || '').toLowerCase().includes(q);
+          const matchGoal = (item.goal || '').toLowerCase().includes(q);
+          const matchSubtask = item.subtasks.some(st => st.title.toLowerCase().includes(q));
+          if (!matchTitle && !matchId && !matchOwner && !matchGoal && !matchSubtask) return false;
+        }
+
+        return true;
+      });
+    }
+
+    function setFilter(filter) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('bg-blue-600', 'text-white');
+        btn.classList.add('bg-[var(--card)]', 'text-[var(--muted-foreground)]');
+      });
+      const activeBtn = document.getElementById('filter-' + filter);
+      if (activeBtn) {
+        activeBtn.classList.remove('bg-[var(--card)]', 'text-[var(--muted-foreground)]');
+        activeBtn.classList.add('bg-blue-600', 'text-white');
+      }
+      renderList();
+    }
+
+    function handleSearch(val) {
+      searchQuery = val.trim();
+      renderList();
+    }
+
+    function selectItem(id) {
+      selectedItemId = id;
+      renderList();
+      renderDetail();
+    }
+
+    function renderList() {
+      const items = filterItems();
+      const listEl = document.getElementById('work-items-list');
+      document.getElementById('items-count-badge').textContent = `Showing ${items.length}`;
+
+      if (items.length === 0) {
+        listEl.innerHTML = `
+          <div class="p-8 text-center text-xs text-gray-500">
+            No work items match the selected filter or search query.
+          </div>
+        `;
+        return;
+      }
+
+      // If selected item is not in filtered list, select first available
+      if (!items.some(i => i.id === selectedItemId)) {
+        selectedItemId = items[0].id;
+        renderDetail();
+      }
+
+      listEl.innerHTML = items.map(item => {
+        const isSelected = item.id === selectedItemId;
+        return `
+          <div
+            onclick="selectItem('${item.id}')"
+            class="p-3.5 cursor-pointer transition flex flex-col gap-2 ${
+              isSelected
+                ? 'bg-blue-950/40 border-l-4 border-blue-500 pl-3'
+                : 'hover:bg-gray-800/50'
+            }"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2 truncate">
+                <span class="font-mono text-xs font-bold text-gray-400">#${String(item.number).padStart(3, '0')}</span>
+                <span class="text-xs font-semibold text-gray-100 truncate">${item.title}</span>
+              </div>
+              <div>${getStatusBadge(item.status)}</div>
+            </div>
+
+            <div class="flex items-center justify-between text-[11px] text-gray-400">
+              <span class="flex items-center gap-1 truncate max-w-[180px]">
+                <span class="text-gray-500">Owner:</span>
+                <span class="font-medium text-gray-300 truncate">${item.current_owner || 'Unassigned'}</span>
+              </span>
+              <span>${item.completed_subtasks}/${item.total_subtasks} tasks (${item.progress_percent}%)</span>
+            </div>
+
+            <!-- Mini Progress Bar -->
+            <div class="w-full bg-gray-800 rounded-full h-1.5 overflow-hidden">
+              <div class="bg-blue-500 h-1.5 rounded-full transition-all" style="width: ${item.progress_percent}%;"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderDetail() {
+      const item = DATA.items.find(i => i.id === selectedItemId);
+      const headerEl = document.getElementById('detail-header');
+      const bodyEl = document.getElementById('detail-body');
+
+      if (!item) {
+        headerEl.innerHTML = '<span class="text-xs text-gray-400">Select an item</span>';
+        bodyEl.innerHTML = '<div class="text-center text-xs text-gray-500 py-12">No work item selected.</div>';
+        return;
+      }
+
+      // Render Header
+      headerEl.innerHTML = `
+        <div class="flex flex-col gap-1">
+          <div class="flex items-center gap-2">
+            <span class="font-mono text-xs font-bold px-2 py-0.5 rounded bg-gray-800 text-gray-300">Work ${String(item.number).padStart(3, '0')}</span>
+            <h2 class="text-sm font-bold text-white truncate max-w-md">${item.title}</h2>
+          </div>
+          <span class="text-[11px] text-gray-400 font-mono">${item.relative_path}</span>
+        </div>
+        <div class="flex items-center gap-3">
+          ${getStatusBadge(item.status)}
+        </div>
+      `;
+
+      // Render Subtasks
+      const subtasksHtml = item.subtasks.length === 0
+        ? '<p class="text-xs text-gray-500 italic">No checklist subtasks declared in tasks.md.</p>'
+        : `
+          <div class="space-y-2">
+            ${item.subtasks.map(st => `
+              <div class="flex items-start justify-between gap-3 p-2.5 rounded-lg border ${
+                st.completed ? 'bg-emerald-950/20 border-emerald-900/40 text-gray-300' : 'bg-gray-800/40 border-gray-700/50 text-gray-200'
+              }">
+                <div class="flex items-start gap-2.5">
+                  <span class="mt-0.5 text-xs ${st.completed ? 'text-emerald-400 font-bold' : 'text-gray-500'}">
+                    ${st.completed ? '☑' : '☐'}
+                  </span>
+                  <div class="flex flex-col">
+                    <span class="text-xs font-medium ${st.completed ? 'line-through text-gray-400' : ''}">${st.title}</span>
+                    ${st.owner ? `<span class="text-[10px] text-blue-400 font-semibold mt-0.5">Assigned: ${st.owner}</span>` : ''}
+                  </div>
+                </div>
+                ${st.contract_path ? `
+                  <button onclick="viewContract('${item.id}', '${st.contract_path}')" class="shrink-0 px-2 py-1 rounded bg-blue-900/40 hover:bg-blue-800 text-blue-300 text-[10px] font-medium border border-blue-700/50 transition">
+                    View Contract
+                  </button>
+                ` : ''}
+              </div>
+            `).join('')}
+          </div>
+        `;
+
+      // Render Contracts List
+      const contractsHtml = item.contracts.length === 0
+        ? ''
+        : `
+          <div class="pt-4 border-t border-[var(--border)]">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground)] mb-3 flex items-center gap-1.5">
+              <span>📄</span> Task Contracts (${item.contracts.length})
+            </h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              ${item.contracts.map(c => `
+                <div onclick="showModal('${escapeHtml(c.title || c.filename)}', '${escapeHtml(c.objective || 'No objective specified.')}', '${escapeHtml(c.status || '')}', '${escapeHtml(c.owner || '')}', ${JSON.stringify(c.acceptance_checks).replace(/"/g, '&quot;')})" class="p-2.5 rounded-lg bg-[var(--card-hover)] border border-[var(--border)] hover:border-blue-500 cursor-pointer transition">
+                  <div class="text-xs font-semibold text-white truncate">${c.title || c.filename}</div>
+                  <div class="text-[10px] text-gray-400 mt-1 flex items-center justify-between">
+                    <span>${c.owner || 'Unassigned'}</span>
+                    <span class="text-blue-400">Inspect →</span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+
+      // Render Decisions
+      const decisionsHtml = item.decisions.length === 0
+        ? ''
+        : `
+          <div class="pt-4 border-t border-[var(--border)]">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground)] mb-3 flex items-center gap-1.5">
+              <span>⚖️</span> Recorded Decisions (${item.decisions.length})
+            </h4>
+            <div class="space-y-2">
+              ${item.decisions.map(d => `
+                <div class="p-2.5 rounded-lg bg-gray-900/60 border border-[var(--border)]">
+                  <div class="text-xs font-bold text-gray-200">${d.title}</div>
+                  <div class="text-[11px] text-gray-400 mt-1 whitespace-pre-line">${d.body}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+
+      // Assemble Detail Body
+      bodyEl.innerHTML = `
+        <!-- Objective Card -->
+        <div class="bg-gray-900/60 border border-[var(--border)] rounded-xl p-4">
+          <div class="text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground)] mb-1.5">Objective / Goal</div>
+          <p class="text-xs text-gray-200 leading-relaxed">${item.goal || 'No explicit goal documented in README.'}</p>
+        </div>
+
+        <!-- Coordination & Handoff Card -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="bg-gray-900/40 border border-[var(--border)] rounded-xl p-3.5">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Current Owner</div>
+            <div class="text-xs font-semibold text-blue-300">${item.current_owner || 'Unassigned / Pending'}</div>
+          </div>
+          <div class="bg-gray-900/40 border border-[var(--border)] rounded-xl p-3.5">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Handoff State</div>
+            <div class="text-xs font-semibold text-gray-200 truncate">${item.handoff_state || 'No active handoff'}</div>
+          </div>
+        </div>
+
+        <!-- Subtasks Section -->
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground)] flex items-center gap-1.5">
+              <span>☑</span> Subtasks & Checklist (${item.completed_subtasks}/${item.total_subtasks})
+            </h4>
+            <span class="text-xs font-semibold text-blue-400">${item.progress_percent}% Complete</span>
+          </div>
+          ${subtasksHtml}
+        </div>
+
+        ${contractsHtml}
+        ${decisionsHtml}
+      `;
+    }
+
+    function viewContract(itemId, contractPath) {
+      const item = DATA.items.find(i => i.id === itemId);
+      if (!item) return;
+      const contract = item.contracts.find(c => c.path === contractPath || contractPath.endsWith(c.filename));
+      if (contract) {
+        showModal(contract.title || contract.filename, contract.objective, contract.status, contract.owner, contract.acceptance_checks);
+      } else {
+        alert('Contract file: ' + contractPath);
+      }
+    }
+
+    function showModal(title, objective, status, owner, acceptanceChecks) {
+      document.getElementById('modal-title').textContent = title;
+      const bodyEl = document.getElementById('modal-body');
+      
+      const checksHtml = (acceptanceChecks && acceptanceChecks.length > 0)
+        ? `<div class="mt-4 pt-3 border-t border-[var(--border)]">
+             <div class="font-bold text-gray-300 mb-2 uppercase tracking-wider text-[10px]">Acceptance Criteria:</div>
+             <div class="space-y-1.5">${acceptanceChecks.map(c => `<div class="p-1.5 bg-gray-900 rounded font-mono text-[11px] text-gray-300">${escapeHtml(c)}</div>`).join('')}</div>
+           </div>`
+        : '';
+
+      bodyEl.innerHTML = `
+        <div class="flex items-center justify-between pb-3 border-b border-[var(--border)]">
+          <span class="text-gray-400">Owner: <strong class="text-blue-400">${owner || 'Unassigned'}</strong></span>
+          ${status ? getStatusBadge(status) : ''}
+        </div>
+        <div>
+          <div class="font-bold text-gray-300 mb-1 uppercase tracking-wider text-[10px]">Objective:</div>
+          <p class="leading-relaxed text-gray-200 bg-gray-900/60 p-3 rounded-lg border border-[var(--border)]">${objective || 'No objective specified.'}</p>
+        </div>
+        ${checksHtml}
+      `;
+      document.getElementById('contract-modal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('contract-modal').classList.add('hidden');
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Close modal on Escape
+    window.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    // Initial render
+    renderList();
+    renderDetail();
+  </script>
+</body>
+</html>
