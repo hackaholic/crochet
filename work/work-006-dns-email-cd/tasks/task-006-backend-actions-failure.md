@@ -1,7 +1,7 @@
 # Task 6.3.5 — Resolve backend CI failures and verify dev deployment
 
 **Owner:** Codex
-**Status:** In Progress
+**Status:** Completed
 **Work item:** Work 006 / Continuous deployment
 
 ## Objective
@@ -18,6 +18,7 @@ Resolve the `dev` push workflow failures from the backend test gate through the 
 - Keep non-production email sandboxing and fail-closed secret bootstrap behavior intact. Fix test configuration/fixtures or implementation based on root-cause evidence; do not weaken production controls to satisfy a test.
 - PREPROD was already deployed manually and verified healthy. This contract covers the GitHub Actions deployment path only.
 - Follow-up run: [Deploy development backend #13](https://github.com/hackaholic/crochet/actions/runs/37214436877) passed the complete backend suite, then the deploy step failed before opening SSH because it printed an empty host (`:/opt/sulocraft/releases/...`, exit 255). Root cause: a temporary `DEPLOY_HOST=...` assignment and expansion of `$DEPLOY_HOST` were written on the same shell command; arguments expand before that assignment takes effect.
+- Verification run: [Deploy development backend #14](https://github.com/hackaholic/crochet/actions/runs/37215074787) passed the backend suite, deployed release `f361a21b11c1` to PREPROD, bootstrapped secrets, passed the VPS API health check, and passed the public `api-dev.sulocraft.com/health` check.
 
 ## Scope
 
@@ -34,8 +35,8 @@ Resolve the `dev` push workflow failures from the backend test gate through the 
 - [x] Both previously failing tests pass locally for the right reasons, with sandbox and fail-closed behavior preserved.
 - [x] Full backend test suite passes in the GitHub Actions Python 3.12/uv environment (run #13).
 - [x] A regression test executes the workflow shell block with stubbed VPS values and asserts host/release ID propagation.
-- [ ] A new push-triggered run passes `Run Backend Test Suite` and completes `Deploy to VPS Preprod`.
-- [ ] Post-deploy API health verification passes; no plaintext secrets are added to GitHub or repository files.
+- [x] A new push-triggered run passes `Run Backend Test Suite` and completes `Deploy to VPS Preprod`: [run 37215074787](https://github.com/hackaholic/crochet/actions/runs/37215074787).
+- [x] Post-deploy API health verification passes; no plaintext secrets are added to GitHub or repository files.
 
 ## Handoff back
 

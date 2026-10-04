@@ -1,8 +1,8 @@
 # Work 006 coordination
 
-**Current owner:** Codex — Task 6.3.5 (backend test failures from the `dev` Actions run)
-**Active cross-agent handoffs:** Task 6.3 workflow setup remains with Gemini; Task 6.3.5 is being verified by Codex.
-**Handoff state:** The full backend suite passed on GitHub. Task 6.3.5 remains In Progress because the deploy step passed an empty SSH host; workflow invocation is fixed and regression-tested locally. A new push must verify PREPROD deployment and health check. Follow-up contract: [Task 6.3.5](tasks/task-006-backend-actions-failure.md). No Gemini handoff is needed.
+**Current owner:** Gemini — Task 6.3 (remaining GitHub Actions workflow hardening)
+**Active cross-agent handoffs:** Task 6.3 remains in progress with Gemini; Task 6.3.5 is complete.
+**Handoff state:** Task 6.3.5 is complete. The backend suite passed, PREPROD release `f361a21b11c1` deployed, secrets bootstrapped, and both VPS and public API health checks passed in [run 37215074787](https://github.com/hackaholic/crochet/actions/runs/37215074787). No new Gemini handoff was sent.
 
 ## Ownership boundaries
 
