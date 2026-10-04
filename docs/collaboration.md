@@ -12,9 +12,9 @@ Before changing a shared request, response, pricing unit, authentication assumpt
 
 ## Before starting work
 
-1. Read [`../work/INDEX.md`](../work/INDEX.md), then the selected work folder and exact task contract; check its mapped GitHub Issue when authenticated access is available.
-2. Mark only the assigned subtask `In Progress` in its work folder before editing.
-3. Check `git status` and preserve unrelated work. Do not use archived task snapshots as the current backlog.
+1. Read `README.md`, [plan.md](plan.md), [TODO.md](TODO.md), and [pending.md](pending.md).
+2. Mark one task as `In progress` with your name before editing overlapping files.
+3. Check `git status` and preserve unrelated work.
 
 ## During work
 
@@ -28,8 +28,8 @@ Before changing a shared request, response, pricing unit, authentication assumpt
 
 1. Run the relevant validation for the change.
 2. For frontend work, verify Chrome/Chromium, Firefox, and mobile rendering using [testing-plan.md](testing-plan.md); mobile is required, not optional.
-3. Update the task status and record blockers/handoffs in the selected work folder.
-4. Add a dated note to that work item's `decisions.md` for material decisions.
+3. Update the task status and document any limitation in `pending.md`.
+4. Add a dated note to `decisions.md` for material decisions.
 5. State changed files, validation performed, and any follow-up work.
 
 ## Ownership convention
