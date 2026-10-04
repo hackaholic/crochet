@@ -106,6 +106,7 @@ def test_bootstrap_vps_key_absent_and_existing(tmp_path):
 def test_bootstrap_secrets_missing_age_key(tmp_path):
     """Task 3.3/3.4: Fails closed when age key is missing."""
     env = os.environ.copy()
+    env["TARGET_ENV"] = "preprod"
     env["SOPS_AGE_KEY_FILE"] = str(tmp_path / "nonexistent" / "keys.txt")
     env["RUNTIME_SECRETS_DIR"] = str(tmp_path / "run")
 
@@ -129,6 +130,7 @@ def test_bootstrap_secrets_missing_required_group(tmp_path):
     empty_enc_dir.mkdir()
 
     env = os.environ.copy()
+    env["TARGET_ENV"] = "preprod"
     env["SOPS_AGE_KEY_FILE"] = str(key_file)
     env["SECRETS_DIR"] = str(empty_enc_dir)
     env["RUNTIME_SECRETS_DIR"] = str(tmp_path / "run")
@@ -141,6 +143,61 @@ def test_bootstrap_secrets_missing_required_group(tmp_path):
     )
     assert res.returncode != 0
     assert "Missing PostgreSQL encrypted secrets file" in res.stderr
+
+
+def test_bootstrap_prod_fails_closed_without_prod_secret_groups(tmp_path):
+    """A missing PROD group must not fall back to the root PREPROD encrypted set."""
+    runtime_root = tmp_path / "runtime"
+    env = os.environ.copy()
+    env.pop("SECRETS_DIR", None)
+    env["RUNTIME_SECRETS_ROOT"] = str(runtime_root)
+
+    res = subprocess.run(
+        ["bash", str(BOOTSTRAP_SECRETS_SCRIPT), "--env", "prod"],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+    assert res.returncode != 0
+    assert "cannot fall back across environments" in res.stderr
+    assert not runtime_root.exists()
+    assert "POSTGRES_PASSWORD" not in res.stderr
+
+
+def test_database_secret_target_validator_matches_postgres_group(tmp_path):
+    validator = SCRIPTS_DIR / "validate_database_target.py"
+    files = {
+        "database": tmp_path / "postgres_db",
+        "user": tmp_path / "postgres_user",
+        "password": tmp_path / "postgres_password",
+        "url": tmp_path / "database_url",
+    }
+    files["database"].write_text("db_one\n", encoding="utf-8")
+    files["user"].write_text("user_one\n", encoding="utf-8")
+    files["password"].write_text("password_one\n", encoding="utf-8")
+    files["url"].write_text(
+        "postgresql://user_one:password_one@postgres:5432/db_one\n", encoding="utf-8"
+    )
+
+    valid = subprocess.run(
+        ["python3", str(validator), *(str(path) for path in files.values())],
+        capture_output=True,
+        text=True,
+    )
+    assert valid.returncode == 0, valid.stderr
+
+    files["url"].write_text(
+        "postgresql://other_user:other_password@postgres:5432/other_db\n", encoding="utf-8"
+    )
+    invalid = subprocess.run(
+        ["python3", str(validator), *(str(path) for path in files.values())],
+        capture_output=True,
+        text=True,
+    )
+    assert invalid.returncode != 0
+    assert "do not target the same PostgreSQL database" in invalid.stderr
+    assert "other_password" not in invalid.stderr
 
 
 @pytest.mark.skipif(not _has_docker(), reason="Docker required for ephemeral SOPS/age testing")
@@ -158,6 +215,7 @@ def test_bootstrap_secrets_materialization_and_permissions(tmp_path):
 
     run_dir = tmp_path / "run" / "sulocraft"
     env = os.environ.copy()
+    env["TARGET_ENV"] = "preprod"
     env["SOPS_AGE_KEY_FILE"] = str(key_file)
     env["SECRETS_DIR"] = str(enc_dir)
     env["RUNTIME_SECRETS_DIR"] = str(run_dir)
@@ -291,3 +349,13 @@ def test_deploy_script_excludes_ignored_plaintext_env_files():
 
     # bootstrap_secrets.sh must be invoked on the host
     assert "bootstrap_secrets.sh" in content
+
+
+def test_deploy_backup_uses_mounted_postgres_secrets_and_fails_closed():
+    """Backups must use Docker secret files and abort before deployment on backup failure."""
+    content = DEPLOY_SCRIPT.read_text(encoding="utf-8")
+
+    assert 'pg_dump -U "$(cat /run/secrets/postgres_user)" "$(cat /run/secrets/postgres_db)"' in content
+    assert 'backup_tmp="${backup_file}.tmp.$$"' in content
+    assert 'test -s "${backup_tmp}"' in content
+    assert "Pre-deploy database backup failed; refusing to deploy." in content

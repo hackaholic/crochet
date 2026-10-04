@@ -15,14 +15,14 @@
 # 9. TLS & Cipher Suite Transport Audit (scan-tls.sh)
 #
 # Generates consolidated summary at:
-#   work/security/reports/summary.md
+#   work/work-013-security-audit/reports/summary.md
 # ==============================================================================
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-REPORTS_DIR="${REPO_ROOT}/work/security/reports"
+REPORTS_DIR="${REPO_ROOT}/work/work-013-security-audit/reports"
 mkdir -p "${REPORTS_DIR}"
 
 SUMMARY_MD="${REPORTS_DIR}/summary.md"
@@ -109,7 +109,7 @@ cat <<EOF > "${SUMMARY_MD}"
 
 - **High / Critical actionable findings:** 0
 - **Release Gating:** Fail-closed enforcement active.
-- **Approved Exceptions:** [work/security/exceptions/](../exceptions/)
+- **Approved Exceptions:** [work/work-013-security-audit/exceptions/](../exceptions/)
 EOF
 
 echo ""

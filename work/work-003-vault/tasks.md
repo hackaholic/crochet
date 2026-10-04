@@ -6,7 +6,7 @@ None.
 
 ## Pending
 
-- Work 003 does not own VPS deployment. The deployment automation and environment isolation are tracked in [Work 012](../vps-environment-isolation/README.md).
+- Work 003 does not own VPS deployment. The deployment automation and environment isolation are tracked in [Work 012](../work-012-vps-environment-isolation/README.md).
 
 ## Completed
 

@@ -6,7 +6,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-REPORT_DIR="${REPO_ROOT}/work/security/reports"
+REPORT_DIR="${REPO_ROOT}/work/work-013-security-audit/reports"
 REPORT_FILE="${REPORT_DIR}/sast-report.json"
 mkdir -p "${REPORT_DIR}"
 
@@ -33,7 +33,7 @@ elif [ "${RUNNER}" = "docker" ]; then
         semgrep scan \
         --config=p/security-audit \
         --config=p/owasp-top-ten \
-        --json --output=/src/work/security/reports/sast-report.json \
+        --json --output=/src/work/work-013-security-audit/reports/sast-report.json \
         --error /src || true
 else
     echo "==> [SAST] Running fallback static AST & pattern checks..."
@@ -42,7 +42,7 @@ else
 import os, sys, re, json
 
 REPO_ROOT = os.environ.get("REPO_ROOT", os.getcwd())
-REPORT_FILE = os.path.join(REPO_ROOT, "work/security/reports/sast-report.json")
+REPORT_FILE = os.path.join(REPO_ROOT, "work/work-013-security-audit/reports/sast-report.json")
 
 DANGEROUS_PATTERNS = [
     (r"subprocess\.(?:call|Popen|run)\([^)]*shell\s*=\s*True", "Command Injection: shell=True in subprocess", "HIGH"),
@@ -89,8 +89,8 @@ python3 - <<'PY'
 import json, os, sys, re
 
 REPO_ROOT = os.environ.get("REPO_ROOT", os.getcwd())
-REPORT_FILE = os.path.join(REPO_ROOT, "work/security/reports/sast-report.json")
-EXCEPTIONS_DIR = os.path.join(REPO_ROOT, "work/security/exceptions")
+REPORT_FILE = os.path.join(REPO_ROOT, "work/work-013-security-audit/reports/sast-report.json")
+EXCEPTIONS_DIR = os.path.join(REPO_ROOT, "work/work-013-security-audit/exceptions")
 
 active_exceptions = set()
 if os.path.isdir(EXCEPTIONS_DIR):

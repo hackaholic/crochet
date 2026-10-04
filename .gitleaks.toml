@@ -12,7 +12,7 @@ paths = [
     '''(^|/)\.env\.preprod.*''',
     '''(^|/)backend/\.env\.preprod.*''',
     '''(^|/)backend/tests/.*''',
-    '''(^|/)work/security/.*''',
+    '''(^|/)work/work-013-security-audit/.*''',
     '''(^|/)docs/.*''',
     '''(^|/)\.git/.*''',
 ]

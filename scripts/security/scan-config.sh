@@ -6,7 +6,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-REPORT_DIR="${REPO_ROOT}/work/security/reports"
+REPORT_DIR="${REPO_ROOT}/work/work-013-security-audit/reports"
 REPORT_FILE="${REPORT_DIR}/config-audit.json"
 mkdir -p "${REPORT_DIR}"
 
@@ -19,7 +19,7 @@ import sys, os, subprocess, json, re
 from pathlib import Path
 
 REPO_ROOT = os.environ.get("REPO_ROOT", os.getcwd())
-REPORT_FILE = os.path.join(REPO_ROOT, "work/security/reports/config-audit.json")
+REPORT_FILE = os.path.join(REPO_ROOT, "work/work-013-security-audit/reports/config-audit.json")
 os.makedirs(os.path.dirname(REPORT_FILE), exist_ok=True)
 
 failures = []

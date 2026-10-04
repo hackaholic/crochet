@@ -6,7 +6,8 @@ set -euo pipefail
 
 TARGET_ENV="${TARGET_ENV:-${SULOCRAFT_ENV:-${APP_ENV:-preprod}}}"
 SECRETS_DIR="${SECRETS_DIR:-}"
-RUNTIME_SECRETS_DIR="${RUNTIME_SECRETS_DIR:-/run/sulocraft}"
+RUNTIME_SECRETS_ROOT="${RUNTIME_SECRETS_ROOT:-/run/sulocraft}"
+RUNTIME_SECRETS_DIR="${RUNTIME_SECRETS_DIR:-}"
 SOPS_AGE_KEY_FILE="${SOPS_AGE_KEY_FILE:-/etc/sulocraft/age/keys.txt}"
 CLEANUP_ON_FAILURE="${CLEANUP_ON_FAILURE:-true}"
 
@@ -24,13 +25,22 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+case "${TARGET_ENV}" in
+  preprod|prod|dev) ;;
+  *) echo "Error: Unsupported target environment '${TARGET_ENV}'." >&2; exit 2 ;;
+esac
+RUNTIME_SECRETS_DIR="${RUNTIME_SECRETS_DIR:-${RUNTIME_SECRETS_ROOT%/}/${TARGET_ENV}}"
+
 if [[ -z "${SECRETS_DIR}" ]]; then
   if [[ -d "secrets/encrypted/${TARGET_ENV}" ]]; then
     SECRETS_DIR="secrets/encrypted/${TARGET_ENV}"
   elif [[ -d "secrets/${TARGET_ENV}/encrypted" ]]; then
     SECRETS_DIR="secrets/${TARGET_ENV}/encrypted"
-  else
+  elif [[ "${TARGET_ENV}" == "preprod" && -d "secrets/encrypted" ]]; then
     SECRETS_DIR="secrets/encrypted"
+  else
+    echo "Error: Encrypted secrets directory for environment '${TARGET_ENV}' not found; cannot fall back across environments." >&2
+    exit 1
   fi
 fi
 
@@ -214,6 +224,12 @@ for req in "${REQUIRED_SECRETS[@]}"; do
     exit 1
   fi
 done
+
+python3 "$(dirname "$0")/validate_database_target.py" \
+  "${RUNTIME_SECRETS_DIR}/postgres/postgres_db" \
+  "${RUNTIME_SECRETS_DIR}/postgres/postgres_user" \
+  "${RUNTIME_SECRETS_DIR}/postgres/postgres_password" \
+  "${RUNTIME_SECRETS_DIR}/backend/database_url"
 
 echo "Secret bootstrap completed successfully. Runtime secrets materialized under '${RUNTIME_SECRETS_DIR}'."
 exit 0

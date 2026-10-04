@@ -121,7 +121,7 @@ Status Legend:
 ---
 
 ### Work: Automated Security Audit & Release Gate
-**Objective**: Build automated multi-level security audit workflow (Level 1 pre-push, Level 2 CI gate, Level 3 dev DAST). Tracked in `work/security/`.
+**Objective**: Build automated multi-level security audit workflow (Level 1 pre-push, Level 2 CI gate, Level 3 dev DAST). Tracked in `work/work-013-security-audit/`.
 
 - [x] **Task 9.1**: Work directory structure, Threat Model, and Audit Policy per `tasks/task-001-threat-model-policy.md`. — `Completed`
 - [x] **Task 9.2**: Secret scanning & secret architecture audit per `tasks/task-002-secrets-audit.md`. — `Completed`

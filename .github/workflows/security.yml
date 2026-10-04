@@ -40,8 +40,8 @@ jobs:
         with:
           name: secrets-and-config-reports
           path: |
-            work/security/reports/secrets-report.json
-            work/security/reports/config-audit.json
+            work/work-013-security-audit/reports/secrets-report.json
+            work/work-013-security-audit/reports/config-audit.json
           retention-days: 14
 
   security-sast:
@@ -61,7 +61,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: sast-report
-          path: work/security/reports/sast-report.json
+          path: work/work-013-security-audit/reports/sast-report.json
           retention-days: 14
 
   security-frontend-deps:
@@ -111,7 +111,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: dependency-report
-          path: work/security/reports/dependencies-report.json
+          path: work/work-013-security-audit/reports/dependencies-report.json
           retention-days: 14
 
   security-container:
@@ -131,7 +131,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: container-report
-          path: work/security/reports/container-report.json
+          path: work/work-013-security-audit/reports/container-report.json
           retention-days: 14
 
   security-tests:

@@ -26,7 +26,7 @@ The work directory is the source of truth for task scope and live state. Global 
 ## Dependencies and relevant files
 
 - Depends on: Work 004 tasks 4.1–4.6; current work directories and task contracts.
-- Inspect/edit: `AGENTS.md`, `work/INDEX.md`, `work/TASK_TEMPLATE.md`, all `work/work-*/` and `work/security/` folders, `docs/handoffs.md`, `docs/coordination-status.md`, relevant Markdown links.
+- Inspect/edit: `AGENTS.md`, `work/INDEX.md`, `work/TASK_TEMPLATE.md`, all `work/work-*/` and `work/work-013-security-audit/` folders, `docs/handoffs.md`, `docs/coordination-status.md`, relevant Markdown links.
 
 ## Acceptance checks
 

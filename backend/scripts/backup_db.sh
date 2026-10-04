@@ -6,6 +6,7 @@
 
 set -euo pipefail
 
+TARGET_ENV="${TARGET_ENV:-${SULOCRAFT_ENV:-${APP_ENV:-preprod}}}"
 TIMESTAMP=$(date -u +"%Y%m%d_%H%M%S")
 BACKUP_DIR="${BACKUP_DIR:-/tmp/sulocraft_backups}"
 BACKUP_FILE="${BACKUP_DIR}/sulocraft_db_${TIMESTAMP}.sql.gz"
@@ -93,7 +94,12 @@ elif val=$(read_secret "R2_SECRET_ACCESS_KEY"); then
 fi
 
 ENDPOINT="${BACKUP_R2_ENDPOINT:-${R2_ENDPOINT:-}}"
-BUCKET="${BACKUP_R2_BUCKET:-${R2_PRIVATE_BACKUP_BUCKET:-sulocraft-backups}}"
+if [ "${TARGET_ENV}" = "production" ] || [ "${TARGET_ENV}" = "prod" ]; then
+    DEFAULT_BACKUP_BUCKET="sulocraft-backups"
+else
+    DEFAULT_BACKUP_BUCKET="sulocraft-backups-${TARGET_ENV}"
+fi
+BUCKET="${BACKUP_R2_BUCKET:-${R2_PRIVATE_BACKUP_BUCKET:-${DEFAULT_BACKUP_BUCKET}}}"
 
 if [ -n "${ENDPOINT}" ] && [ -n "${R2_KEY}" ] && [ -n "${R2_SECRET}" ]; then
     echo "==> [$(date -u)] Uploading backup archive to Cloudflare R2 bucket: ${BUCKET}..."
@@ -102,7 +108,7 @@ if [ -n "${ENDPOINT}" ] && [ -n "${R2_KEY}" ] && [ -n "${R2_SECRET}" ]; then
     BACKUP_R2_SECRET_ACCESS_KEY="${R2_SECRET}" \
     BACKUP_R2_BUCKET="${BUCKET}" \
     BACKUP_FILE_PATH="${BACKUP_FILE}" \
-    BACKUP_OBJECT_NAME="database/sulocraft_db_${TIMESTAMP}.sql.gz" \
+    BACKUP_OBJECT_NAME="database/${TARGET_ENV}/sulocraft_db_${TIMESTAMP}.sql.gz" \
     python3 - <<'PY'
 import os
 import boto3

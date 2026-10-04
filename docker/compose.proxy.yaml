@@ -1,0 +1,42 @@
+# docker/compose.proxy.yaml - Standalone Caddy reverse proxy for Sulocraft VPS
+# Routes public traffic (80/443) to isolated per-environment APIs via the shared gateway network.
+services:
+  reverse-proxy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      PROD_API_DOMAIN: ${PROD_API_DOMAIN:-api.sulocraft.com}
+      PREPROD_API_DOMAIN: ${PREPROD_API_DOMAIN:-api-dev.sulocraft.com}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - sulocraft-gateway
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+          pids: 100
+        reservations:
+          cpus: "${PROXY_CPUS_RESERVED:-0.05}"
+          memory: ${PROXY_MEM_RESERVED:-64M}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${LOG_MAX_SIZE:-10m}"
+        max-file: "${LOG_MAX_FILE:-3}"
+
+networks:
+  sulocraft-gateway:
+    name: sulocraft-gateway
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:

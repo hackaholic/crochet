@@ -1,5 +1,4 @@
-"""FastAPI entry point for Sulocraft."""
-
+import logging
 import os
 from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI, Request, Response
@@ -13,6 +12,10 @@ from app.core.config import settings
 from app.db.seed import seed_catalogue
 from app.db.session import SessionLocal, get_db, init_db
 from app.services.seo import SeoService
+
+LOG_FORMAT = f"[sulocraft][env={settings.app_env}] [%(asctime)s] [%(levelname)s] [%(name)s]: %(message)s"
+logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+logger = logging.getLogger("sulocraft.api")
 
 
 class CloudflareCacheControlMiddleware(BaseHTTPMiddleware):

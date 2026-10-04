@@ -1,0 +1,22 @@
+# Work 013 notes
+
+- Threat model and audit policy defined in `threat-model.md` and `audit-policy.md`.
+- Target directories for findings, exceptions, and reports initialized:
+  - `work/work-013-security-audit/findings/`
+  - `work/work-013-security-audit/exceptions/`
+  - `work/work-013-security-audit/reports/`
+- Standardized tool runners in `scripts/security/` support both native CLI execution (when installed) and containerized execution (Docker fallback) to ensure reliable operation on any machine.
+- Tasks 9.1 through 9.8 completed:
+  - Task 9.1: Work directory structure, threat model, audit policy, exceptions & findings framework established.
+  - Task 9.2: Gitleaks configured (`.gitleaks.toml`), `scan-secrets.sh` verified, `scan-config.sh` verified.
+  - Task 9.3: Semgrep SAST configured (`.semgrepignore`), `scan-sast.sh` verified (exception `EXC-001` recorded for XML escaping in `seo.py`), dependency scanners (`scan-dependencies.sh`) verified.
+  - Task 9.4: Container scanning (`scan-container.sh`) using Trivy configured with finding `SEC-001` (medium non-root user notice).
+  - Task 9.5: Automated security test suites implemented:
+    - `backend/tests/test_security_authorization.py`: IDOR access protection across orders, tracking, cancellation, saved addresses, checkout addresses, cart items, and payments; RBAC admin barrier on all administrative routes.
+    - `backend/tests/test_security_business_logic.py`: Authoritative pricing calculations, coupon limits, inventory stock integrity, negative/zero quantity rejections, order status immutability, role escalation prevention, and magic link security (expiration, single-use, open redirect prevention).
+    - Fixed cart IDOR vulnerability where guest token lookup previously allowed foreign session hijacking of user carts.
+    - 15/15 security tests passing cleanly; 157/157 total backend tests passing.
+  - Task 9.6: DAST (`scripts/security/scan-dast.sh` with OWASP ZAP baseline and native fallback) and TLS transport audit (`scripts/security/scan-tls.sh`) verified.
+  - Task 9.7: Local pre-push release gate (`scripts/security/pre-push.sh`) and master audit orchestrator (`scripts/security/full-audit.sh`) operational, generating consolidated report at `work/work-013-security-audit/reports/summary.md`.
+  - Task 9.8: CI workflow `.github/workflows/security.yml` created, validated, and ready for PR and push enforcement.
+- Task 13.9 (Pending): VPS deployment SSH key hardening, capability restriction & least-privilege runner isolation added to threat model and task backlog (`tasks/task-009-ssh-deployment-hardening.md`). Addresses "Secret Zero" threat model for CI/CD runners through SSH option capability restriction (`no-pty`, `no-port-forwarding`), dedicated `deploy` user, and forced commands.

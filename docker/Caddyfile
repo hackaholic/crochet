@@ -1,31 +1,55 @@
 # Caddyfile for the Sulocraft API reverse proxy.
-# API_DOMAIN selects api-dev.sulocraft.com in staging and api.sulocraft.com in
-# production. Caddy obtains and renews the origin certificate automatically.
-
+# Routes public traffic by hostname to the isolated environment APIs:
+# - Production: api.sulocraft.com -> api-prod:8000
+# - Preproduction: api-dev.sulocraft.com -> api-preprod:8000
 {
-    admin off
+	admin off
 }
 
-(api_backend) {
-    reverse_proxy api:8000 {
-        header_up Host {host}
-        header_up X-Real-IP {remote_host}
-    }
+(api_headers) {
+	header_up Host {host}
+	header_up X-Real-IP {remote_host}
 
-    # Security headers
-    header {
-        X-Content-Type-Options nosniff
-        X-Frame-Options DENY
-        Referrer-Policy strict-origin-when-cross-origin
-    }
+	# Security headers
+	header_down X-Content-Type-Options nosniff
+	header_down X-Frame-Options DENY
+	header_down Referrer-Policy strict-origin-when-cross-origin
 }
 
-{$API_DOMAIN:api.sulocraft.com} {
-    import api_backend
+{$PROD_API_DOMAIN:api.sulocraft.com} {
+	reverse_proxy api-prod:8000 {
+		import api_headers
+	}
 }
 
-# The release script checks the new stack through the VPS loopback interface
-# before activating it. Keep this HTTP-only endpoint available locally.
+{$PREPROD_API_DOMAIN:api-dev.sulocraft.com} {
+	reverse_proxy api-preprod:8000 {
+		import api_headers
+	}
+}
+
+# The release script checks the stack through the VPS loopback interface
+# before activating it. Loopback routing supports testing both environments:
 http://127.0.0.1 {
-    import api_backend
+	@preprod header Host api-dev.sulocraft.com
+	handle @preprod {
+		reverse_proxy api-preprod:8000 {
+			import api_headers
+		}
+	}
+
+	@prod header Host api.sulocraft.com
+	handle @prod {
+		reverse_proxy api-prod:8000 {
+			import api_headers
+		}
+	}
+
+	# Default loopback check forwards to api-preprod if present, else api-prod
+	handle {
+		reverse_proxy api-preprod:8000 api-prod:8000 {
+			import api_headers
+			lb_policy first
+		}
+	}
 }

@@ -2,13 +2,16 @@
 
 ## In Progress
 
-None.
+- [ ] 6.3 Gemini: GitHub Actions CI/CD workflow hardening with protected secrets per [task-003-github-actions-cd.md](tasks/task-003-github-actions-cd.md).
+  - [x] 6.3.1 Document SSH deployment credential setup & inventory
+  - [ ] 6.3.2 Modernize `.github/workflows/deploy-dev-backend.yml`
+  - [ ] 6.3.3 Enforce test gate before deployment
+  - [ ] 6.3.4 Post-deployment health verification
 
 ## Pending
 
 - [ ] 6.1 Owner + Codex: Cloudflare & Resend DNS records per [task-001-cloudflare-resend-dns.md](tasks/task-001-cloudflare-resend-dns.md).
 - [ ] 6.2 Gemini + Codex: Transactional email verification on preprod domain per [task-002-email-deliverability.md](tasks/task-002-email-deliverability.md).
-- [ ] 6.3 Gemini: GitHub Actions CI/CD workflow hardening with protected secrets per [task-003-github-actions-cd.md](tasks/task-003-github-actions-cd.md).
 - [ ] 6.4 Owner + Codex: Cloudflare Pages dev storefront setup (`dev.sulocraft.com` + Cloudflare Access) per [task-004-dev-storefront-access.md](tasks/task-004-dev-storefront-access.md).
 
 ## Completed

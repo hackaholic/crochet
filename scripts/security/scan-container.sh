@@ -6,7 +6,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-REPORT_DIR="${REPO_ROOT}/work/security/reports"
+REPORT_DIR="${REPO_ROOT}/work/work-013-security-audit/reports"
 REPORT_FILE="${REPORT_DIR}/container-report.json"
 mkdir -p "${REPORT_DIR}"
 
@@ -32,7 +32,7 @@ elif [ "${RUNNER}" = "docker" ]; then
         config /src \
         --severity HIGH,CRITICAL \
         --format json \
-        --output /src/work/security/reports/container-report.json || true
+        --output /src/work/work-013-security-audit/reports/container-report.json || true
 else
     echo "==> [CONTAINER] Running Python container & compose heuristic audit..."
     export REPO_ROOT
@@ -40,7 +40,7 @@ else
 import os, sys, json, re
 
 REPO_ROOT = os.environ.get("REPO_ROOT", os.getcwd())
-REPORT_FILE = os.path.join(REPO_ROOT, "work/security/reports/container-report.json")
+REPORT_FILE = os.path.join(REPO_ROOT, "work/work-013-security-audit/reports/container-report.json")
 
 findings = []
 
@@ -81,8 +81,8 @@ python3 - <<'PY'
 import json, os, sys, re
 
 REPO_ROOT = os.environ.get("REPO_ROOT", os.getcwd())
-REPORT_FILE = os.path.join(REPO_ROOT, "work/security/reports/container-report.json")
-EXCEPTIONS_DIR = os.path.join(REPO_ROOT, "work/security/exceptions")
+REPORT_FILE = os.path.join(REPO_ROOT, "work/work-013-security-audit/reports/container-report.json")
+EXCEPTIONS_DIR = os.path.join(REPO_ROOT, "work/work-013-security-audit/exceptions")
 
 if not os.path.isfile(REPORT_FILE):
     print("==> [CONTAINER] Warning: Container report file not generated.")

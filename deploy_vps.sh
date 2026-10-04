@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -n "${SULOCRAFT_PYTHON:-}" ]]; then
+  python_bin="${SULOCRAFT_PYTHON}"
+elif [[ -x "${repo_root}/backend/.venv/bin/python" ]]; then
+  python_bin="${repo_root}/backend/.venv/bin/python"
+else
+  python_bin="python3"
+fi
+exec "${python_bin}" "${repo_root}/scripts/deploy_vps.py" "$@"

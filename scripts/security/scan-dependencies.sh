@@ -6,7 +6,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-REPORT_DIR="${REPO_ROOT}/work/security/reports"
+REPORT_DIR="${REPO_ROOT}/work/work-013-security-audit/reports"
 REPORT_FILE="${REPORT_DIR}/dependencies-report.json"
 mkdir -p "${REPORT_DIR}"
 
@@ -54,13 +54,13 @@ python3 - <<'PY'
 import json, os, sys
 
 REPO_ROOT = os.environ.get("REPO_ROOT", os.getcwd())
-REPORT_DIR = os.path.join(REPO_ROOT, "work/security/reports")
+REPORT_DIR = os.path.join(REPO_ROOT, "work/work-013-security-audit/reports")
 FRONTEND_REPORT = os.path.join(REPORT_DIR, "frontend-audit.json")
 BACKEND_REPORT = os.path.join(REPORT_DIR, "backend-audit.json")
 CONSOLIDATED_FILE = os.path.join(REPORT_DIR, "dependencies-report.json")
 
 # Load exceptions
-EXCEPTIONS_DIR = os.path.join(REPO_ROOT, "work/security/exceptions")
+EXCEPTIONS_DIR = os.path.join(REPO_ROOT, "work/work-013-security-audit/exceptions")
 active_exceptions = set()
 if os.path.isdir(EXCEPTIONS_DIR):
     for fn in os.listdir(EXCEPTIONS_DIR):

@@ -633,7 +633,7 @@ def main():
     )
     parser.add_argument(
         "--report",
-        default="work/work-011-api-verification/reports/api-verification-report.md",
+        default="work/11-api-verification/reports/api-verification-report.md",
         help="Path for markdown report output",
     )
     args = parser.parse_args()

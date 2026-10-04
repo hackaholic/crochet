@@ -1,5 +1,6 @@
 services:
   api:
+    image: ${API_IMAGE:-sulocraft-api:local}
     build:
       context: ..
       dockerfile: backend/Dockerfile
@@ -8,11 +9,12 @@ services:
       - "8000"
     environment:
       APP_ENV: ${APP_ENV:-production}
+      TARGET_ENV: ${TARGET_ENV:-preprod}
       PROJECT_NAME: Sulocraft
       DATABASE_URL_FILE: /run/secrets/database_url
-      FRONTEND_URL: ${FRONTEND_URL:-https://sulocraft.com}
+      FRONTEND_URL: ${FRONTEND_URL:-}
       ADDITIONAL_CORS_ORIGINS: ${ADDITIONAL_CORS_ORIGINS:-}
-      PUBLIC_API_URL: ${PUBLIC_API_URL:-https://api.sulocraft.com}
+      PUBLIC_API_URL: ${PUBLIC_API_URL:-}
       COOKIE_DOMAIN: ${COOKIE_DOMAIN:-.sulocraft.com}
       COOKIE_SECURE: ${COOKIE_SECURE:-true}
       R2_ENDPOINT: ${R2_ENDPOINT:-}
@@ -20,8 +22,8 @@ services:
       R2_ACCESS_KEY_ID_FILE: ${R2_ACCESS_KEY_ID_FILE:-}
       R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
       R2_SECRET_ACCESS_KEY_FILE: ${R2_SECRET_ACCESS_KEY_FILE:-}
-      R2_PUBLIC_BUCKET: ${R2_PUBLIC_BUCKET:-sulocraft-products}
-      R2_PRIVATE_BACKUP_BUCKET: ${R2_PRIVATE_BACKUP_BUCKET:-sulocraft-backups}
+      R2_PUBLIC_BUCKET: ${R2_PUBLIC_BUCKET:-sulocraft-products-${TARGET_ENV:-preprod}}
+      R2_PRIVATE_BACKUP_BUCKET: ${R2_PRIVATE_BACKUP_BUCKET:-sulocraft-backups-${TARGET_ENV:-preprod}}
       R2_PUBLIC_BASE_URL: ${R2_PUBLIC_BASE_URL:-https://images.sulocraft.com}
       IMAGE_BASE_URL: ${IMAGE_BASE_URL:-https://images.sulocraft.com}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
@@ -56,6 +58,9 @@ services:
       SMTP_TLS: ${SMTP_TLS:-true}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       RESEND_API_KEY_FILE: ${RESEND_API_KEY_FILE:-}
+      EMAIL_SANDBOX_ENABLED: ${EMAIL_SANDBOX_ENABLED:-true}
+      EMAIL_ALLOWLIST: ${EMAIL_ALLOWLIST:-@sulocraft.com}
+      EMAIL_SANDBOX_REDIRECT: ${EMAIL_SANDBOX_REDIRECT:-}
       PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-mock}
       RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
       RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
@@ -67,12 +72,31 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      internal:
+      gateway:
+        aliases:
+          - ${API_GATEWAY_ALIAS:-api-${TARGET_ENV:-preprod}}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "${API_CPUS_LIMIT:-0.75}"
+          memory: ${API_MEM_LIMIT:-768M}
+          pids: 150
+        reservations:
+          cpus: "${API_CPUS_RESERVED:-0.10}"
+          memory: ${API_MEM_RESERVED:-128M}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${LOG_MAX_SIZE:-10m}"
+        max-file: "${LOG_MAX_FILE:-3}"
 
   postgres:
     image: postgres:17-alpine
@@ -87,40 +111,43 @@ services:
       - postgres_password
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$(cat /run/secrets/postgres_user 2>/dev/null || echo $$POSTGRES_USER) -d $$(cat /run/secrets/postgres_db 2>/dev/null || echo $$POSTGRES_DB)"]
       interval: 10s
       timeout: 5s
       retries: 5
-
-  reverse-proxy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    environment:
-      API_DOMAIN: ${API_DOMAIN:-api.sulocraft.com}
-    ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
-    volumes:
-      - ../docker/Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      api:
-        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "${POSTGRES_CPUS_LIMIT:-0.75}"
+          memory: ${POSTGRES_MEM_LIMIT:-1024M}
+          pids: 100
+        reservations:
+          cpus: "${POSTGRES_CPUS_RESERVED:-0.10}"
+          memory: ${POSTGRES_MEM_RESERVED:-256M}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${LOG_MAX_SIZE:-10m}"
+        max-file: "${LOG_MAX_FILE:-3}"
 
 secrets:
   postgres_db:
-    file: ${POSTGRES_DB_FILE:-/run/sulocraft/postgres/postgres_db}
+    file: ${POSTGRES_DB_FILE:?Set POSTGRES_DB_FILE to this target's database secret path}
   postgres_user:
-    file: ${POSTGRES_USER_FILE:-/run/sulocraft/postgres/postgres_user}
+    file: ${POSTGRES_USER_FILE:?Set POSTGRES_USER_FILE to this target's database secret path}
   postgres_password:
-    file: ${POSTGRES_PASSWORD_FILE:-/run/sulocraft/postgres/postgres_password}
+    file: ${POSTGRES_PASSWORD_FILE:?Set POSTGRES_PASSWORD_FILE to this target's database secret path}
   database_url:
-    file: ${DATABASE_URL_FILE:-/run/sulocraft/backend/database_url}
+    file: ${DATABASE_URL_FILE:?Set DATABASE_URL_FILE to this target's API database URL secret path}
 
 volumes:
   postgres_data:
-  caddy_data:
-  caddy_config:
+
+networks:
+  internal:
+  gateway:
+    name: ${GATEWAY_NETWORK_NAME:-sulocraft-gateway}
+    external: true

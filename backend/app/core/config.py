@@ -32,6 +32,24 @@ def config_value(name: str, default: str | None = None) -> str | None:
     return os.getenv(name, default)
 
 
+def _default_frontend_url(env: str) -> str:
+    env_lower = env.lower()
+    if env_lower == "development":
+        return "http://localhost:8080"
+    if env_lower in ("staging", "preprod", "dev"):
+        return "https://dev.sulocraft.com"
+    return "https://sulocraft.com"
+
+
+def _default_public_api_url(env: str) -> str:
+    env_lower = env.lower()
+    if env_lower == "development":
+        return "http://localhost:8000"
+    if env_lower in ("staging", "preprod", "dev"):
+        return "https://api-dev.sulocraft.com"
+    return "https://api.sulocraft.com"
+
+
 @dataclass
 class Settings:
     """Application configuration conforming to Sulocraft deployment specifications."""
@@ -41,18 +59,12 @@ class Settings:
     database_url: str = config_value("DATABASE_URL", "sqlite:///./crochet.db") or "sqlite:///./crochet.db"
 
     # Frontend & CORS
-    frontend_url: str = os.getenv(
-        "FRONTEND_URL",
-        "http://localhost:8080" if os.getenv("APP_ENV", "development") == "development" else "https://sulocraft.com",
-    )
+    frontend_url: str = os.getenv("FRONTEND_URL") or _default_frontend_url(os.getenv("APP_ENV", os.getenv("TARGET_ENV", "development")))
     additional_cors_origins: str = os.getenv(
         "ADDITIONAL_CORS_ORIGINS",
-        "https://www.sulocraft.com,http://localhost:3000,http://localhost:5173,http://localhost:8080,http://127.0.0.1:3000,http://127.0.0.1:5173,http://127.0.0.1:8080",
+        "https://www.sulocraft.com,https://dev.sulocraft.com,http://localhost:3000,http://localhost:5173,http://localhost:8080,http://127.0.0.1:3000,http://127.0.0.1:5173,http://127.0.0.1:8080",
     )
-    public_api_url: str = os.getenv(
-        "PUBLIC_API_URL",
-        "http://localhost:8000" if os.getenv("APP_ENV", "development") == "development" else "https://api.sulocraft.com",
-    )
+    public_api_url: str = os.getenv("PUBLIC_API_URL") or _default_public_api_url(os.getenv("APP_ENV", os.getenv("TARGET_ENV", "development")))
 
     # Cookies
     # In production, set COOKIE_DOMAIN to ".sulocraft.com" for cross-subdomain auth
@@ -109,6 +121,22 @@ class Settings:
     smtp_password: str | None = config_value("SMTP_PASSWORD")
     smtp_tls: bool = os.getenv("SMTP_TLS", "true").lower() in ("true", "1", "yes")
     resend_api_key: str | None = config_value("RESEND_API_KEY")
+
+    # Email Sandbox (Restricts outbound email recipients in non-production environments)
+    email_sandbox_enabled: bool = (
+        os.getenv(
+            "EMAIL_SANDBOX_ENABLED",
+            "true" if os.getenv("APP_ENV", "development").lower() != "production" else "false",
+        ).lower() in ("true", "1", "yes")
+    )
+    email_allowlist_raw: str = os.getenv("EMAIL_ALLOWLIST", "@sulocraft.com")
+    email_sandbox_redirect: str | None = os.getenv("EMAIL_SANDBOX_REDIRECT")
+
+    @property
+    def email_allowlist(self) -> list[str]:
+        if not self.email_allowlist_raw:
+            return ["@sulocraft.com"]
+        return [entry.strip().lower() for entry in self.email_allowlist_raw.split(",") if entry.strip()]
 
     # Payment Provider
     payment_provider: str = os.getenv("PAYMENT_PROVIDER", "mock")

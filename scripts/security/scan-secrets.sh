@@ -6,7 +6,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-REPORT_DIR="${REPO_ROOT}/work/security/reports"
+REPORT_DIR="${REPO_ROOT}/work/work-013-security-audit/reports"
 REPORT_FILE="${REPORT_DIR}/secrets-report.json"
 mkdir -p "${REPORT_DIR}"
 
@@ -57,11 +57,11 @@ except Exception as e:
 
 elif [ "${RUNNER}" = "docker" ]; then
     if [ "${MODE}" = "--staged" ]; then
-        DOCKER_CMD=(docker run --rm -v "${REPO_ROOT}:/path" zricethezav/gitleaks:latest git /path --staged -c /path/.gitleaks.toml -r /path/work/security/reports/secrets-report.json -f json --redact)
+        DOCKER_CMD=(docker run --rm -v "${REPO_ROOT}:/path" zricethezav/gitleaks:latest git /path --staged -c /path/.gitleaks.toml -r /path/work/work-013-security-audit/reports/secrets-report.json -f json --redact)
     elif [ "${MODE}" = "--history" ]; then
-        DOCKER_CMD=(docker run --rm -v "${REPO_ROOT}:/path" zricethezav/gitleaks:latest git /path -c /path/.gitleaks.toml -r /path/work/security/reports/secrets-report.json -f json --redact)
+        DOCKER_CMD=(docker run --rm -v "${REPO_ROOT}:/path" zricethezav/gitleaks:latest git /path -c /path/.gitleaks.toml -r /path/work/work-013-security-audit/reports/secrets-report.json -f json --redact)
     else
-        DOCKER_CMD=(docker run --rm -v "${REPO_ROOT}:/path" zricethezav/gitleaks:latest dir /path -c /path/.gitleaks.toml -r /path/work/security/reports/secrets-report.json -f json --redact)
+        DOCKER_CMD=(docker run --rm -v "${REPO_ROOT}:/path" zricethezav/gitleaks:latest dir /path -c /path/.gitleaks.toml -r /path/work/work-013-security-audit/reports/secrets-report.json -f json --redact)
     fi
 
     if "${DOCKER_CMD[@]}"; then
@@ -103,7 +103,7 @@ ALLOWLIST_PATHS = [
     ".env.example",
     "backend/.env.example",
     "docs/",
-    "work/security/",
+    "work/work-013-security-audit/",
     "backend/tests/",
     ".gitleaks.toml",
 ]

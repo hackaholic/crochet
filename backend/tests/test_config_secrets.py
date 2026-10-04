@@ -82,9 +82,13 @@ def test_compose_secret_isolation_and_no_fallback_passwords():
     assert "postgres_user" in top_secrets
     assert "postgres_db" in top_secrets
 
-    # Check top-level secret paths stay service-scoped
-    assert "/postgres/" in top_secrets["postgres_password"]["file"]
-    assert "/backend/" in top_secrets["database_url"]["file"]
+    # Secret source paths must be explicitly supplied by the selected environment.
+    assert top_secrets["postgres_password"]["file"] == (
+        "${POSTGRES_PASSWORD_FILE:?Set POSTGRES_PASSWORD_FILE to this target's database secret path}"
+    )
+    assert top_secrets["database_url"]["file"] == (
+        "${DATABASE_URL_FILE:?Set DATABASE_URL_FILE to this target's API database URL secret path}"
+    )
 
 
 def test_compose_config_validation_with_dummy_secrets(tmp_path):

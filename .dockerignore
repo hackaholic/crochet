@@ -7,4 +7,7 @@ __pycache__
 docs
 /secrets
 /backend/.secrets
+**/.env*
+**/.secrets/**
+.deploy
 E-commerce Website Design.zip

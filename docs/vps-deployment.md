@@ -4,7 +4,7 @@ This runbook covers the pre-production backend host. The frontend remains on Clo
 
 ## Inspected host
 
-Inspection date: 2026-10-01
+Inspection date: 2026-10-04
 
 | Item | Observed value |
 | --- | --- |
@@ -15,15 +15,15 @@ Inspection date: 2026-10-01
 | Disk | 48 GiB root filesystem, approximately 46 GiB available |
 | Docker | 29.8.2, enabled and active |
 | Docker Compose | v5.5.1 |
-| Existing workloads | None at inspection time |
-| Exposed services | SSH on port 22 only |
+| Existing workloads | Isolated `sulocraft-preprod` API and PostgreSQL, plus the existing Caddy proxy |
+| Exposed services | SSH, HTTP, and HTTPS |
 | Time | UTC, synchronized |
 | Swap | None |
 | Firewall | UFW inactive |
 
 The host is suitable for initial low-traffic pre-production. One CPU is the first expected constraint, so build infrequently and monitor load. Add approximately 2 GiB swap before sustained use.
 
-Current development release: `initial-dev-20261001`. FastAPI, PostgreSQL, and Caddy are running as the stable Compose project `sulocraft`; PostgreSQL data is stored in `sulocraft_postgres_data`.
+The PREPROD API and database now run as `sulocraft-preprod`. The original `sulocraft_postgres_data` volume is retained as the pre-cutover recovery copy; PREPROD uses its own `sulocraft-preprod_postgres_data` volume. Caddy remains on the existing proxy service and reaches the isolated API through the shared gateway network.
 
 ## Security work before public traffic
 
@@ -37,67 +37,45 @@ Current development release: `initial-dev-20261001`. FastAPI, PostgreSQL, and Ca
 
 Do not automate steps 3–5 as one blind operation. Losing the verified SSH path can lock the owner out of the VPS.
 
-## Deployment files
+## Deployment command and configuration
 
-- Production Compose stack: `backend/docker-compose.yml`
-- Reverse proxy: `docker/Caddyfile`
-- Local deployment automation: `backend/scripts/deploy_vps.sh`
-- Rollback automation: `backend/scripts/rollback_vps.sh`
-- Safe environment template: `backend/.env.preprod.example`
+- Operator entry point: `./deploy_vps.sh --env preprod` or `./deploy_vps.sh --env prod`
+- YAML template: `deploy/vps-config.example.yaml`
+- Local YAML settings: `.deploy/vps-config.yaml` (ignored by Git)
+- Isolated API/database Compose file: `backend/docker-compose.yml`
+- Internal transfer/activation helper: `scripts/deploy_vps_remote.sh` (the operator does not run it directly)
 
-The deployment script uploads a timestamped release to `/opt/sulocraft/releases`, stores the secret environment at `/opt/sulocraft/shared/.env`, uses the stable Compose project name `sulocraft`, and updates `/opt/sulocraft/current` only after the API health check passes. The named PostgreSQL volume therefore survives application releases.
+The root command requires an explicit `--env` and reads host, deployment root, URLs, runtime-secret root, encrypted secret group, and gateway settings from YAML. It runs the focused release/isolation/secret checks, validates Compose, builds and checksums the API image locally, then rsyncs the immutable release to `/opt/sulocraft/releases`. The VPS verifies the archive, bootstraps SOPS secrets into `/run/sulocraft/<env>`, backs up the active database, and updates `/opt/sulocraft/current` only after API and proxy health checks pass. It does not push to GitHub or build the API image on the VPS.
 
-## First pre-production deployment
+The first PREPROD rollout restored the existing database into the isolated `sulocraft-preprod` volume. Later deployments back up and reuse that target-scoped volume. The old `sulocraft_postgres_data` volume remains available for recovery.
 
-1. Copy `backend/.env.preprod.example` to `backend/.env.preprod`.
-2. Replace every required placeholder locally. The resulting file is ignored by Git.
-3. Put `dev.sulocraft.com` and `api-dev.sulocraft.com` behind Cloudflare Access while `APP_ENV=staging` permits mock checkout testing.
-4. Point `api-dev.sulocraft.com` to the VPS through Cloudflare. The staging environment sets `API_DOMAIN=api-dev.sulocraft.com`; Caddy obtains and renews the origin certificate using persistent `caddy_data` and `caddy_config` volumes.
-5. After direct-origin HTTPS succeeds, use Cloudflare SSL/TLS mode **Full (strict)** for the proxied hostname.
-5. Run:
-
-   ```bash
-   SSH_IDENTITY_FILE="$HOME/.ssh/sulocraft_github_actions" \
-   SSH_KNOWN_HOSTS_FILE="$HOME/.ssh/sulocraft_vps_known_hosts" \
-   DEPLOY_ENV_FILE=backend/.env.preprod \
-   backend/scripts/deploy_vps.sh
-   ```
-
-6. Verify `/health`, API documentation policy, CORS, secure cookies, database migrations, authentication, basket, checkout, and admin access.
-
-Rollback uses an existing release directory and preserves the database volume:
+Local PREPROD deployment and its no-mutation preflight:
 
 ```bash
-backend/scripts/rollback_vps.sh 20261001T120000Z
+./deploy_vps.sh --env preprod --preflight
+./deploy_vps.sh --env preprod
 ```
 
-Schema rollback is deliberately not automatic. Application rollback must remain compatible with the migrated database or use a reviewed database restore.
+Do not use `--env prod` until its distinct encrypted secret groups exist and exact-image promotion is implemented and accepted. The current command fails closed for PROD.
 
-Every deployment after the first creates a compressed PostgreSQL snapshot in `/opt/sulocraft/backups` before replacing the environment or running migrations. The database itself remains in the stable Compose volume `sulocraft_postgres_data`; releases do not copy or recreate live data.
+Each rollout creates a compressed PostgreSQL snapshot in `/opt/sulocraft/backups` before stopping the active target. Failed health checks restart the previous stack and leave `/opt/sulocraft/current` unchanged.
 
 ## Automatic deployment from the dev branch
 
-The workflow `.github/workflows/deploy-dev-backend.yml` runs on backend-related pushes to `dev` and can also be started manually. It:
+The GitHub workflow `.github/workflows/deploy-dev-backend.yml` is the separate CI path and uses the repository Actions secrets below. The local `./deploy_vps.sh` command uses the SSH agent or identity configured in `.deploy/vps-config.yaml`; it does not read GitHub secrets. Work 006 still owns aligning the CI workflow with the stable deployment interface. The configured Actions secrets are:
 
-1. installs the locked Python dependencies;
-2. runs the complete backend test suite;
-3. writes the pre-production environment from a protected GitHub secret;
-4. uploads a timestamped/commit-addressed release over SSH;
-5. backs up the currently running PostgreSQL database;
-6. builds FastAPI, starts PostgreSQL/Caddy, applies Alembic migrations, and waits for `/health`;
-7. marks the release current only after health validation succeeds.
+### GitHub Actions Secrets
 
-Create a GitHub environment named `development` and add these environment secrets:
+Configure these under **Settings $\rightarrow$ Secrets and variables $\rightarrow$ Actions** (see [GitHub Actions SSH Setup Guide](github-actions-ssh-setup.md) for full instructions):
 
 | Secret | Purpose |
 | --- | --- |
 | `VPS_HOST` | `201.18.212.183` |
-| `VPS_USER` | Dedicated deployment account; use `root` only temporarily during initial pre-production setup |
-| `VPS_SSH_PRIVATE_KEY` | Private half of a deployment-only SSH key |
-| `VPS_KNOWN_HOSTS` | Pinned SSH host-key line for the VPS; do not replace this with disabled host checking |
-| `PREPROD_ENV_FILE` | Complete contents of the ignored `backend/.env.preprod` file |
+| `VPS_USER` | Dedicated deployment account (e.g. `root` during pre-production setup) |
+| `VPS_SSH_PRIVATE_KEY` | Private key generated for GitHub Actions deployment |
+| `VPS_KNOWN_HOSTS` | Pinned SSH host-key line obtained via `ssh-keyscan -H <vps-ip>` |
 
-Protect the `development` GitHub environment so only the `dev` branch can use its secrets. The workflow does not contain credentials and must never print the environment file.
+Application secrets are encrypted with SOPS/age and versioned under `secrets/encrypted/`. They do not belong in GitHub Actions secrets.
 
 ## Upload local media to R2
 

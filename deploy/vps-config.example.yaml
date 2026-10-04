@@ -1,0 +1,25 @@
+# Non-secret deployment routing only. Never put API/database credentials here.
+ssh_identity_file: ~/.ssh/sulocraft_vps
+ssh_known_hosts_file: ~/.ssh/known_hosts
+runtime_secrets_root: /run/sulocraft
+compose_file: backend/docker-compose.yml
+
+environments:
+  preprod:
+    host: root@YOUR_VPS_HOST
+    deploy_root: /opt/sulocraft
+    encrypted_secrets_dir: secrets/encrypted
+    app_env: staging
+    frontend_url: https://dev.sulocraft.com
+    public_api_url: https://api-dev.sulocraft.com
+    gateway_network_name: sulocraft-gateway
+    api_gateway_alias: api
+  prod:
+    host: root@YOUR_VPS_HOST
+    deploy_root: /opt/sulocraft
+    encrypted_secrets_dir: secrets/encrypted/prod
+    app_env: production
+    frontend_url: https://sulocraft.com
+    public_api_url: https://api.sulocraft.com
+    gateway_network_name: sulocraft-gateway
+    api_gateway_alias: api-prod

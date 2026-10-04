@@ -18,7 +18,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-REPORTS_DIR="${REPO_ROOT}/work/security/reports"
+REPORTS_DIR="${REPO_ROOT}/work/work-013-security-audit/reports"
 mkdir -p "${REPORTS_DIR}"
 
 TARGET_URL="${DEV_FRONTEND_URL:-${1:-http://localhost:8080}}"
