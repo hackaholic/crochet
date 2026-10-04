@@ -4,7 +4,7 @@ This file is the work-local coordination entry point. The work folder is the sou
 
 ## Current handoffs
 
-Current implementation owner and status are recorded in the selected task entry in tasks.md. If no task is In Progress, the work is queued, completed, or blocked as that file states. A cross-agent handoff becomes active only when an exact contract is assigned and this section links to it.
+Current owner: Codex on Task 13.10 (frontend dependency audit); Task 13.9 (VPS SSH deployment hardening) remains pending with Gemini as its owner. No new Gemini handoff has been sent. See [Task 13.10](tasks/task-010-dev-release-gate-failure.md) and [Task 13.9](tasks/task-009-ssh-deployment-hardening.md).
 
 ## Return protocol
 

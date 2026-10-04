@@ -95,9 +95,11 @@ def test_mock_email_provider():
     assert provider.sent_emails[0]["subject"] == "Order Confirmation"
 
 
-def test_resend_email_provider_mocked():
+def test_resend_email_provider_mocked(monkeypatch):
     """Verify ResendEmailProvider formats REST payload properly."""
     provider = ResendEmailProvider(api_key="re_12345", from_email="Sulocraft <orders@sulocraft.com>")
+    # Exercise the provider payload while retaining the non-production sandbox.
+    monkeypatch.setattr("app.core.config.settings.email_allowlist_raw", "buyer@example.com")
 
     with patch("httpx.Client.post") as mock_post:
         mock_resp = MagicMock()

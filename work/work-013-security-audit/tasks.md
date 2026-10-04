@@ -2,6 +2,8 @@
 
 ## In Progress
 
+- [ ] 13.10 Codex: Remediate the failed `dev` frontend dependency audit and verify a passing security workflow.
+
 ## Pending
 
 - [ ] 13.9 Gemini: VPS deployment SSH key hardening, capability restriction & least-privilege runner isolation per [task-009-ssh-deployment-hardening.md](tasks/task-009-ssh-deployment-hardening.md).

@@ -8,3 +8,7 @@ onlyBuiltDependencies:
 # pnpm 11+ uses this setting.
 allowBuilds:
   esbuild: true
+
+overrides:
+  postcss: ^8.5.18
+  nanoid@3: 3.3.18

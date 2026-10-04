@@ -105,9 +105,12 @@ def test_bootstrap_vps_key_absent_and_existing(tmp_path):
 
 def test_bootstrap_secrets_missing_age_key(tmp_path):
     """Task 3.3/3.4: Fails closed when age key is missing."""
+    empty_enc_dir = tmp_path / "encrypted"
+    empty_enc_dir.mkdir()
     env = os.environ.copy()
     env["TARGET_ENV"] = "preprod"
     env["SOPS_AGE_KEY_FILE"] = str(tmp_path / "nonexistent" / "keys.txt")
+    env["SECRETS_DIR"] = str(empty_enc_dir)
     env["RUNTIME_SECRETS_DIR"] = str(tmp_path / "run")
 
     res = subprocess.run(

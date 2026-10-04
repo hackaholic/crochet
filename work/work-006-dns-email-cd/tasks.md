@@ -7,6 +7,7 @@
   - [ ] 6.3.2 Modernize `.github/workflows/deploy-dev-backend.yml`
   - [ ] 6.3.3 Enforce test gate before deployment
   - [ ] 6.3.4 Post-deployment health verification
+  - [ ] 6.3.5 Resolve backend CI failures from commit `e98b53f` and verify the dev deployment workflow completes. Contract: [task-006-backend-actions-failure.md](tasks/task-006-backend-actions-failure.md).
 
 ## Pending
 
