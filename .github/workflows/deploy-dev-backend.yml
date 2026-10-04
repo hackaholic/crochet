@@ -78,8 +78,9 @@ jobs:
             echo "Please set up these secrets in GitHub Repo Settings -> Secrets and variables -> Actions."
             exit 1
           fi
-          DEPLOY_HOST="${VPS_USER}@${VPS_HOST}" \
-          RELEASE_ID="${RELEASE_ID:0:12}" \
+          DEPLOY_HOST="${VPS_USER}@${VPS_HOST}"
+          export DEPLOY_HOST
+          export RELEASE_ID="${RELEASE_ID:0:12}"
           backend/scripts/deploy_vps.sh --env preprod --host "${DEPLOY_HOST}"
 
       - name: Verify preprod API health

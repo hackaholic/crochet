@@ -6,7 +6,7 @@
 
 ## Objective
 
-Resolve the backend test failures in the `dev` push workflow for commit `e98b53f21d24798975658686df4bdf206ea28cd7`, then verify GitHub Actions reaches and successfully completes the PREPROD deployment job.
+Resolve the `dev` push workflow failures from the backend test gate through the PREPROD deployment invocation, then verify deployment and API health checks complete.
 
 ## Context and contract
 
@@ -17,6 +17,7 @@ Resolve the backend test failures in the `dev` push workflow for commit `e98b53f
   - `tests/test_vault_deploy.py::test_bootstrap_secrets_missing_age_key` received the missing-encrypted-directory error before reaching the expected missing-age-key validation.
 - Keep non-production email sandboxing and fail-closed secret bootstrap behavior intact. Fix test configuration/fixtures or implementation based on root-cause evidence; do not weaken production controls to satisfy a test.
 - PREPROD was already deployed manually and verified healthy. This contract covers the GitHub Actions deployment path only.
+- Follow-up run: [Deploy development backend #13](https://github.com/hackaholic/crochet/actions/runs/37214436877) passed the complete backend suite, then the deploy step failed before opening SSH because it printed an empty host (`:/opt/sulocraft/releases/...`, exit 255). Root cause: a temporary `DEPLOY_HOST=...` assignment and expansion of `$DEPLOY_HOST` were written on the same shell command; arguments expand before that assignment takes effect.
 
 ## Scope
 
@@ -31,7 +32,8 @@ Resolve the backend test failures in the `dev` push workflow for commit `e98b53f
 ## Acceptance checks
 
 - [x] Both previously failing tests pass locally for the right reasons, with sandbox and fail-closed behavior preserved.
-- [ ] Full backend test suite passes in the same Python/dependency environment used by GitHub Actions.
+- [x] Full backend test suite passes in the GitHub Actions Python 3.12/uv environment (run #13).
+- [x] A regression test executes the workflow shell block with stubbed VPS values and asserts host/release ID propagation.
 - [ ] A new push-triggered run passes `Run Backend Test Suite` and completes `Deploy to VPS Preprod`.
 - [ ] Post-deploy API health verification passes; no plaintext secrets are added to GitHub or repository files.
 

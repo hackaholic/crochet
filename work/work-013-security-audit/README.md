@@ -8,7 +8,7 @@
 3. Level 3: Deployed Development Environment dynamic scanning (OWASP ZAP baseline DAST + TLS audit with test accounts against `https://dev.sulocraft.com` and development API).
 4. Threat modeling, audit policies, exception workflows, and consolidated reporting.
 
-**Current state:** In Progress. Tasks 9.1–9.8 are completed; Task 13.10 tracks the failed frontend dependency audit in the `dev` security workflow.
+**Current state:** In Progress. Tasks 9.1–9.8 and 13.10 are completed. Task 13.9 runner SSH hardening remains pending by owner direction.
 
 **Architecture:**
 - Security policy: Fail-closed on High/Critical actionable findings.

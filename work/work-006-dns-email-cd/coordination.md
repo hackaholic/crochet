@@ -2,7 +2,7 @@
 
 **Current owner:** Codex — Task 6.3.5 (backend test failures from the `dev` Actions run)
 **Active cross-agent handoffs:** Task 6.3 workflow setup remains with Gemini; Task 6.3.5 is being verified by Codex.
-**Handoff state:** Both previously failing backend tests pass locally. The full backend suite and a successful new preprod deployment run remain pending. Follow-up contract: [Task 6.3.5](tasks/task-006-backend-actions-failure.md). No new Gemini handoff is needed for this test-only correction.
+**Handoff state:** The full backend suite passed on GitHub. Task 6.3.5 remains In Progress because the deploy step passed an empty SSH host; workflow invocation is fixed and regression-tested locally. A new push must verify PREPROD deployment and health check. Follow-up contract: [Task 6.3.5](tasks/task-006-backend-actions-failure.md). No Gemini handoff is needed.
 
 ## Ownership boundaries
 

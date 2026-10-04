@@ -1,7 +1,7 @@
 # Task 13.10 — Resolve failed dev security release gate
 
 **Owner:** Codex
-**Status:** In Progress
+**Status:** Completed
 **Work item:** Work 013 / Automated security audit & release gate
 
 ## Objective
@@ -30,7 +30,7 @@ Resolve the frontend dependency findings that caused the security release gate t
 - [x] All high-severity findings are resolved with patched versions or explicitly approved, documented exceptions.
 - [x] `pnpm audit --audit-level=high` passes locally using the lockfile generated and checked with pnpm 10.11.1.
 - [x] Frontend tests (25 files / 60 tests), typecheck, and preprod build pass under Node 24.19.0.
-- [ ] A new push-triggered security workflow completes with all required jobs and `Master Security Release Gate` successful.
+- [x] A new push-triggered security workflow completed with all required jobs and `Master Security Release Gate` successful: [run 37214436868](https://github.com/hackaholic/crochet/actions/runs/37214436868).
 
 ## Handoff back
 

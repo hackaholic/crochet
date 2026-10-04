@@ -14,6 +14,7 @@
 
 ## Completed
 
+- [x] 13.10 Codex: Patched frontend dependency advisories; pnpm 10.11.1 audit is clean and [Automated Security Release Gate run 37214436868](https://github.com/hackaholic/crochet/actions/runs/37214436868) passed all jobs.
 - [x] 9.1 Gemini + Codex: Work directory structure, Threat Model, and Audit Policy per [task-001-threat-model-policy.md](tasks/task-001-threat-model-policy.md).
 - [x] 9.2 Gemini: Secret scanning & secret architecture audit per [task-002-secrets-audit.md](tasks/task-002-secrets-audit.md).
 - [x] 9.3 Gemini: Static Application Security Testing (SAST) & dependency auditing per [task-003-sast-deps.md](tasks/task-003-sast-deps.md).

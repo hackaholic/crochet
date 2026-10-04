@@ -12,4 +12,4 @@
 - **Work 010 — Seasonal Gift by Occasion** · In Progress · [work folder](work-010-gift-by-occasion/)
 - **Work 011 — Automated API Verification & Reporting Suite** · Completed · [work folder](work-011-api-verification/)
 - **Work 012 — PROD/PREPROD isolation on one VPS** · In Progress — items 01-08, 10 completed; 09 deployment automation active · [work folder](work-012-vps-environment-isolation/)
-- **Work 013 — Automated security audit & release gate** · In Progress — items 9.1-9.8 completed; Task 13.9 runner hardening pending · [work folder](work-013-security-audit/)
+- **Work 013 — Automated security audit & release gate** · In Progress — items 9.1-9.8 and 13.10 completed; Task 13.9 runner hardening pending per owner direction · [work folder](work-013-security-audit/)
