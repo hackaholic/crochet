@@ -2,6 +2,15 @@
 
 Use these rules for every Sulocraft task and retain them in your project context. The repository is the source of truth; chat messages supplement the recorded task but do not replace it.
 
+## GitHub Projects and existing work
+
+- GitHub Projects/Issues are the human-facing source for high-level backlog, priority, owner, dependencies, milestone, area, environment, and overall status after an issue mapping is verified.
+- `/work` remains the agent execution layer and source for technical subtasks, exact contracts, coordination, handoffs, decisions, blockers, and validation. Never replace, flatten, or delete existing work records to adopt GitHub.
+- Each significant work item maps to one GitHub Issue. Do not create Issues for tiny implementation steps; keep those in the existing work-local task lists/contracts.
+- Inspect the mapped Issue/Project when authenticated access exists. If GitHub high-level status conflicts with a mapped `/work` summary, GitHub wins and the work summary is reconciled. Never overwrite detailed task/handoff history or invent an issue number.
+- Preserve current Work IDs and paths until issue mappings and all references are inventoried. Rename a legacy work directory only under an explicit, reversible migration plan that updates all links and retains every task and contract.
+- On resumption, read `work/INDEX.md`, the selected work item and one current assigned subtask only. After validating a subtask, update its local status/handoff and continue to the next ready subtask unless the work item is complete, genuinely blocked, unsafe without approval, or runtime limits stop execution.
+
 ## Before starting
 
 1. Read `work/INDEX.md`.

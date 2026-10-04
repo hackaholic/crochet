@@ -7,7 +7,7 @@ Frontend deployment instructions are in [docs/cloudflare-deployment.md](docs/clo
 ## Start here
 
 - Read [the project plan](docs/plan.md) for the current direction.
-- Choose work from [the active work index](work/INDEX.md); `docs/TODO.md` is a legacy/backlog view.
+- Choose work from [the active work index](work/INDEX.md). `docs/TODO.md` and `PROJECT_STATE.md` are navigation pointers; older snapshots are archived.
 - Check [pending items](docs/pending.md) before making assumptions.
 - Use [the pricing strategy](docs/pricing.md) before setting or changing product prices.
 - Use [the API contract](docs/api-contract.md) and the selected work folder's `coordination.md` plus task contract to coordinate frontend and backend work.

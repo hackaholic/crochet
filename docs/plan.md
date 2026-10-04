@@ -1,31 +1,5 @@
-# Plan
+# Project plan
 
-## Phase 0 — Establish the baseline
+Use the active [work index](../work/INDEX.md) to select major work, then read only that work folder's README, tasks, decisions, coordination, and assigned contract. The repository's three-stage release gates and environment-parity rules are in [AGENTS.md](../AGENTS.md).
 
-- [ ] Install locked dependencies.
-- [ ] Confirm the production build succeeds.
-- [ ] Review the interface on desktop and mobile widths.
-- [ ] Capture any export defects or visual regressions.
-
-## Phase 1 — Make the prototype internally consistent
-
-- [ ] Replace placeholder brand and product content with approved content.
-- [ ] Decide whether navigation needs shareable URLs.
-- [ ] Define product options, customisation requirements, pricing, and shipping rules.
-- [ ] Fix prototype-only interactions that conflict with the agreed experience.
-
-## Phase 2 — Build commerce foundations
-
-- [ ] Choose the backend, product catalogue source, payment provider, and order workflow.
-- [ ] Add persistent cart and product data.
-- [ ] Build checkout and order confirmation around real payment and fulfilment flows.
-- [ ] Add validation, analytics, error handling, and accessibility review.
-
-## Phase 3 — Launch preparation
-
-- [ ] Replace all placeholder imagery and testimonials.
-- [ ] Set metadata, domain, privacy policy, terms, shipping, and returns information.
-- [ ] Test supported browsers, devices, and checkout paths.
-- [ ] Publish after approval.
-
-See [TODO.md](TODO.md) for work that is ready to begin and [pending.md](pending.md) for decisions that block planning.
+The initial prototype plan is preserved as an [archived snapshot](archive/plan-legacy-2026-10-04.md); it is not an active task list.
