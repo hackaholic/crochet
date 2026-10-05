@@ -14,3 +14,4 @@
 - **Work 012 — PROD/PREPROD isolation on one VPS** · Completed · [work folder](work-012-vps-environment-isolation/)
 - **Work 013 — Automated security audit & release gate** · In Progress — items 9.1-9.8 and 13.10 completed; Task 13.9 runner hardening pending per owner direction · [work folder](work-013-security-audit/)
 - **Work 014 — Agent Coordination & Task Progress GUI** · Completed · [work folder](work-014-task-gui/)
+- **Work 015 — Mobile hero carousel optimization** · Completed · [work folder](work-015-mobile-hero-optimization/)

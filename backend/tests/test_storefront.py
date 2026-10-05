@@ -104,6 +104,8 @@ def test_get_public_storefront_returns_brand_and_seeded_campaigns():
     assert first["destination"] == "/about"
     assert "imageUrl" in first
     assert "imageAlt" in first
+    assert first.get("mobileImageUrl") is None
+    assert first.get("mobileImagePosition") is None
 
 
 def test_storefront_active_and_schedule_filtering():
@@ -206,6 +208,8 @@ def test_admin_campaign_crud():
         "eyebrow": "Seasonal Spotlight",
         "imageUrl": "https://images.sulocraft.com/sunflowers.jpg",
         "imageAlt": "Sunflowers in crochet vase",
+        "mobileImageUrl": "https://images.sulocraft.com/sunflowers-mobile.jpg",
+        "mobileImagePosition": {"x": 65.5, "y": 42.0},
         "destination": "/shop?category=Flowers",
         "priority": 10,
         "isActive": True,
@@ -217,28 +221,92 @@ def test_admin_campaign_crud():
     assert created_data["title"] == "Summer Bloom Festival"
     assert created_data["priority"] == 10
     assert created_data["isActive"] is True
+    assert created_data["mobileImageUrl"] == "https://images.sulocraft.com/sunflowers-mobile.jpg"
+    assert created_data["mobileImagePosition"] == {"x": 65.5, "y": 42.0}
 
     # 2. List
     list_res = client.get("/api/v1/admin/storefront/campaigns", cookies=admin_cookies)
     assert list_res.status_code == 200
     campaign_ids = [c["id"] for c in list_res.json()]
     assert campaign_id in campaign_ids
+    listed_campaign = next(c for c in list_res.json() if c["id"] == campaign_id)
+    assert listed_campaign["mobileImageUrl"] == "https://images.sulocraft.com/sunflowers-mobile.jpg"
+    assert listed_campaign["mobileImagePosition"] == {"x": 65.5, "y": 42.0}
 
     # 3. Update
     update_res = client.put(
         f"/api/v1/admin/storefront/campaigns/{campaign_id}",
         cookies=admin_cookies,
-        json={"title": "Updated Summer Bloom Festival", "priority": 12, "isActive": False},
+        json={
+            "title": "Updated Summer Bloom Festival",
+            "priority": 12,
+            "isActive": False,
+            "mobileImagePosition": {"x": 75.0, "y": 25.0},
+        },
     )
     assert update_res.status_code == 200
     assert update_res.json()["title"] == "Updated Summer Bloom Festival"
     assert update_res.json()["priority"] == 12
     assert update_res.json()["isActive"] is False
+    assert update_res.json()["mobileImagePosition"] == {"x": 75.0, "y": 25.0}
+
+    # Clear mobileImageUrl
+    clear_res = client.put(
+        f"/api/v1/admin/storefront/campaigns/{campaign_id}",
+        cookies=admin_cookies,
+        json={"mobileImageUrl": None},
+    )
+    assert clear_res.status_code == 200
+    assert clear_res.json()["mobileImageUrl"] is None
 
     # 4. Delete
     delete_res = client.delete(f"/api/v1/admin/storefront/campaigns/{campaign_id}", cookies=admin_cookies)
     assert delete_res.status_code == 200
     assert delete_res.json()["status"] == "ok"
+
+
+def test_admin_campaign_focal_position_validation():
+    """Verify campaign mobile focal coordinates outside [0, 100] are rejected with 422."""
+    admin_cookies = _login_admin("9999900000")
+
+    base_payload = {
+        "title": "Focal Test",
+        "description": "Validating focal boundaries",
+        "imageUrl": "https://images.sulocraft.com/test.jpg",
+        "imageAlt": "Test",
+    }
+
+    # X < 0
+    res_neg_x = client.post(
+        "/api/v1/admin/storefront/campaigns",
+        cookies=admin_cookies,
+        json={**base_payload, "mobileImagePosition": {"x": -5.0, "y": 50.0}},
+    )
+    assert res_neg_x.status_code == 422
+
+    # X > 100
+    res_high_x = client.post(
+        "/api/v1/admin/storefront/campaigns",
+        cookies=admin_cookies,
+        json={**base_payload, "mobileImagePosition": {"x": 105.0, "y": 50.0}},
+    )
+    assert res_high_x.status_code == 422
+
+    # Y < 0
+    res_neg_y = client.post(
+        "/api/v1/admin/storefront/campaigns",
+        cookies=admin_cookies,
+        json={**base_payload, "mobileImagePosition": {"x": 50.0, "y": -10.0}},
+    )
+    assert res_neg_y.status_code == 422
+
+    # Y > 100
+    res_high_y = client.post(
+        "/api/v1/admin/storefront/campaigns",
+        cookies=admin_cookies,
+        json={**base_payload, "mobileImagePosition": {"x": 50.0, "y": 100.1}},
+    )
+    assert res_high_y.status_code == 422
 
 
 def test_admin_storefront_unauthorized_forbidden():

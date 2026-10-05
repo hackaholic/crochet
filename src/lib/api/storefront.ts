@@ -9,6 +9,8 @@ export interface HomepageCampaign {
   eyebrow?: string | null;
   imageUrl: string;
   imageAlt: string;
+  mobileImageUrl?: string | null;
+  mobileImagePosition?: { x: number; y: number } | null;
   destination?: string | null;
   priority: number;
   startsAt?: string | null;

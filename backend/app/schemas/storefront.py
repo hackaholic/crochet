@@ -30,6 +30,15 @@ class BrandSettingsUpdate(BaseModel):
     whatsapp_url: str | None = Field(default=None, alias="whatsappUrl")
 
 
+class CampaignImagePosition(BaseModel):
+    """Subject focal point coordinates (percentage between 0 and 100)."""
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    x: float = Field(default=50.0, ge=0.0, le=100.0)
+    y: float = Field(default=50.0, ge=0.0, le=100.0)
+
+
 class HomepageCampaignOut(BaseModel):
     """Public homepage campaign item representation."""
 
@@ -42,6 +51,8 @@ class HomepageCampaignOut(BaseModel):
     eyebrow: str | None = None
     image_url: str = Field(..., serialization_alias="imageUrl", alias="imageUrl")
     image_alt: str = Field(..., serialization_alias="imageAlt", alias="imageAlt")
+    mobile_image_url: str | None = Field(default=None, serialization_alias="mobileImageUrl", alias="mobileImageUrl")
+    mobile_image_position: CampaignImagePosition | None = Field(default=None, serialization_alias="mobileImagePosition", alias="mobileImagePosition")
     destination: str | None = None
     priority: int = 0
     starts_at: datetime | None = Field(default=None, serialization_alias="startsAt", alias="startsAt")
@@ -50,6 +61,11 @@ class HomepageCampaignOut(BaseModel):
     @field_validator("image_url", mode="after")
     @classmethod
     def resolve_image_url(cls, v: str) -> str:
+        return build_image_url(v) if v else v
+
+    @field_validator("mobile_image_url", mode="after")
+    @classmethod
+    def resolve_mobile_image_url(cls, v: str | None) -> str | None:
         return build_image_url(v) if v else v
 
 
@@ -252,6 +268,8 @@ class AdminHomepageCampaignCreate(BaseModel):
     eyebrow: str | None = None
     image_url: str = Field(..., alias="imageUrl")
     image_alt: str = Field(..., alias="imageAlt")
+    mobile_image_url: str | None = Field(default=None, alias="mobileImageUrl")
+    mobile_image_position: CampaignImagePosition | None = Field(default=None, alias="mobileImagePosition")
     destination: str | None = None
     priority: int = 0
     is_active: bool = Field(default=True, alias="isActive")
@@ -270,6 +288,8 @@ class AdminHomepageCampaignUpdate(BaseModel):
     eyebrow: str | None = None
     image_url: str | None = Field(default=None, alias="imageUrl")
     image_alt: str | None = Field(default=None, alias="imageAlt")
+    mobile_image_url: str | None = Field(default=None, alias="mobileImageUrl")
+    mobile_image_position: CampaignImagePosition | None = Field(default=None, alias="mobileImagePosition")
     destination: str | None = None
     priority: int | None = None
     is_active: bool | None = Field(default=None, alias="isActive")

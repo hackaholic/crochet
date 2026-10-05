@@ -36,6 +36,8 @@ class HomepageCampaign(Base):
     eyebrow = Column(String(100), nullable=True)
     image_url = Column(String(500), nullable=False)
     image_alt = Column(String(255), nullable=False)
+    mobile_image_url = Column(String(500), nullable=True)
+    mobile_image_position = Column(JSON().with_variant(JSONB, "postgresql"), nullable=True)
     destination = Column(String(255), nullable=True)  # Storefront route, e.g. /shop?category=Gifts
     priority = Column(Integer, default=0, nullable=False, index=True)  # 1 = top priority
     is_active = Column(Boolean, default=True, nullable=False, index=True)

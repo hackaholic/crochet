@@ -57,6 +57,16 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+.hero-campaign-image {
+  object-position: var(--hero-mobile-object-position, 70% center);
+}
+
+@media (min-width: 640px) {
+  .hero-campaign-image {
+    object-position: center;
+  }
+}
+
 /* Full-width storefront sections share fluid gutters without a global max width. */
 .storefront-shell {
   width: 100%;
@@ -107,4 +117,9 @@ body {
 /* Transition defaults */
 .transition-smooth {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.hero-control-hitbox::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
 }

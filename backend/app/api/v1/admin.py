@@ -2625,6 +2625,11 @@ def create_admin_campaign(
 ) -> AdminHomepageCampaignOut:
     """Create a new homepage campaign."""
     now = datetime.now(timezone.utc)
+    mobile_position = (
+        payload.mobile_image_position.model_dump()
+        if payload.mobile_image_position is not None
+        else None
+    )
     campaign = HomepageCampaign(
         title=payload.title,
         emphasis=payload.emphasis,
@@ -2632,6 +2637,8 @@ def create_admin_campaign(
         eyebrow=payload.eyebrow,
         image_url=payload.image_url,
         image_alt=payload.image_alt,
+        mobile_image_url=payload.mobile_image_url,
+        mobile_image_position=mobile_position,
         destination=payload.destination,
         priority=payload.priority,
         is_active=payload.is_active,
@@ -2670,6 +2677,14 @@ def update_admin_campaign(
         campaign.image_url = payload.image_url
     if payload.image_alt is not None:
         campaign.image_alt = payload.image_alt
+    if "mobile_image_url" in payload.model_fields_set:
+        campaign.mobile_image_url = payload.mobile_image_url
+    if "mobile_image_position" in payload.model_fields_set:
+        campaign.mobile_image_position = (
+            payload.mobile_image_position.model_dump()
+            if payload.mobile_image_position is not None
+            else None
+        )
     if payload.destination is not None:
         campaign.destination = payload.destination
     if payload.priority is not None:
