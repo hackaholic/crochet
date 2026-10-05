@@ -17,6 +17,7 @@
 
 ## Completed
 
+- [x] 6.4.1 Codex: Fixed Cloudflare pnpm 10.11.1 frozen install by placing overrides in the pnpm 10-compatible `package.json` config, pinning `packageManager`, and regenerating the lockfile with pnpm 10.11.1. Frozen install, Docker frontend rebuild, production build, all 67 frontend tests, localhost storefront, and API checks passed.
 - [x] Initial VPS deploy script created at `backend/scripts/deploy_vps.sh`.
 - [x] Email service implementation and branded templates completed in backend.
 - [x] 6.5.1 VPS backend sync and Compose restart completed; API and database are healthy.
