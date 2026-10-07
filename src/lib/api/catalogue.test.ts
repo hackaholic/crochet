@@ -80,4 +80,26 @@ describe('catalogue API adapter', () => {
       body: JSON.stringify({ query: 'crochet flowers' }),
     });
   });
+
+  it('does not send a telemetry event for a blank or whitespace-only search query', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await recordSearchQuery('');
+    await recordSearchQuery('   ');
+    await recordSearchQuery('\t\n');
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects when the search event endpoint fails', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500 }));
+    await expect(recordSearchQuery('crochet')).rejects.toThrow('Search event request failed (500)');
+  });
+
+  it('rejects when search suggestions endpoint fails', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 503 }));
+    await expect(getSearchSuggestions()).rejects.toThrow('Search suggestions request failed (503)');
+  });
 });
+

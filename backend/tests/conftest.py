@@ -71,6 +71,7 @@ from app.models import (
     ProductVariant,
     ReturnRequest,
     Review,
+    SearchEvent,
     User,
     UserIdentity,
     UserSession,
@@ -132,10 +133,14 @@ def setup_test_database():
 @pytest.fixture(autouse=True)
 def clean_transactional_data():
     """Clean transactional and test-created data after each test."""
+    from app.api.v1.catalogue import reset_search_event_rate_limit_store
+    reset_search_event_rate_limit_store()
     yield
+    reset_search_event_rate_limit_store()
     with SessionLocal() as db:
         db.query(MagicLinkToken).delete()
         db.query(NotificationLog).delete()
+        db.query(SearchEvent).delete()
         db.query(Payment).delete()
         db.query(OrderItem).delete()
         db.query(ReturnRequest).delete()
@@ -171,6 +176,7 @@ def clean_transactional_data():
         else:
             db.query(Category).filter(Category.slug.like("test-%")).delete()
 
+        db.query(Product).update({"status": "ACTIVE"})
         db.query(ProductVariant).update({"stock_quantity": 50})
         db.commit()
 

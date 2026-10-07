@@ -1,7 +1,9 @@
+import logging
+import re
 from collections import defaultdict
-from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
-from sqlalchemy import func, or_
+from datetime import datetime, timedelta, timezone
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, Response, status
+from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session, joinedload
 
 from app.api.v1.auth import get_current_user
@@ -18,6 +20,13 @@ from app.models.catalogue import (
     Tag,
     product_categories,
 )
+from app.models.order import (
+    Order,
+    OrderItem,
+    OrderStatus,
+    PaymentStatus,
+)
+from app.models.search import SearchEvent
 from app.models.user import User
 from app.schemas.catalogue import (
     CategoryOut,
@@ -29,9 +38,16 @@ from app.schemas.catalogue import (
     ProductImageOut,
     ProductListItem,
     ReviewOut,
+    SearchEventCreate,
+    SearchEventResponse,
+    SearchSuggestionKeyword,
+    SearchSuggestionsResponse,
     VariantOut,
 )
+from app.services.search import maybe_schedule_opportunistic_pruning
 from app.schemas.review import ReviewCreateRequest
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["catalogue"])
 
@@ -663,6 +679,246 @@ def search_products(
         .all()
     )
     return [_to_product_list_item(p) for p in products]
+
+
+def sanitize_search_query(raw_query: str) -> str | None:
+    """Normalize and sanitize search query for privacy-safe aggregate telemetry.
+
+    Returns normalized query string if safe, or None if suppressed/invalid.
+    Rules:
+    - Normalizes lowercase, trims whitespace, collapses consecutive whitespace.
+    - Strips leading and trailing punctuation.
+    - Bounds length: 2 <= len <= 80.
+    - Suppresses email addresses, phone numbers, credit card sequences, or PII.
+    """
+    if not raw_query or not isinstance(raw_query, str):
+        return None
+
+    # Step 1: Whitespace normalization and lowercasing
+    cleaned = raw_query.strip().lower()
+    cleaned = re.sub(r"\s+", " ", cleaned)
+
+    # Step 2: Strip outer punctuation
+    cleaned = cleaned.strip(""" "'.,;:!?-–—_()[]{}<>~`*^%$#@/\\|+= """)
+
+    # Step 3: Length verification (2 to 80 characters)
+    if len(cleaned) < 2 or len(cleaned) > 80:
+        return None
+
+    # Step 4: Ensure at least one alphanumeric character (supporting Unicode / international scripts)
+    if not any(c.isalnum() for c in cleaned):
+        return None
+
+    # Step 5: Privacy suppression - Email pattern detection
+    if re.search(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+", cleaned):
+        return None
+
+    # Step 6: Privacy suppression - Phone numbers & Credit card sequences
+    # 10 or more digits total anywhere in query is suppressed
+    digits_only = re.sub(r"\D", "", cleaned)
+    if len(digits_only) >= 10:
+        return None
+
+    # Formatted phone number pattern with separators (e.g. +1-555-0199, 123-456-789)
+    phone_match = re.search(r"(\+?\d[\d\s\-\(\)]{6,}\d)", cleaned)
+    if phone_match and len(re.sub(r"\D", "", phone_match.group(0))) >= 7:
+        return None
+
+    return cleaned
+
+
+_SEARCH_EVENT_RATE_LIMIT_STORE: dict[str, list[float]] = {}
+SEARCH_EVENT_RATE_LIMIT_WINDOW: float = 60.0
+SEARCH_EVENT_MAX_REQUESTS: int = 60
+
+
+def reset_search_event_rate_limit_store() -> None:
+    """Clear in-memory search event rate limiting for testing."""
+    _SEARCH_EVENT_RATE_LIMIT_STORE.clear()
+
+
+def check_search_event_rate_limit(request: Request) -> bool:
+    """Sliding-window rate limiter per client IP for search telemetry ingestion.
+
+    Returns True if the request is permitted, or False if rate limit is exceeded.
+    """
+    import time
+    forwarded = request.headers.get("x-forwarded-for")
+    client_ip = (
+        forwarded.split(",")[0].strip()
+        if forwarded
+        else (request.client.host if request.client else "unknown")
+    )
+    if client_ip == "unknown":
+        return True
+
+    now_ts = time.time()
+    timestamps = _SEARCH_EVENT_RATE_LIMIT_STORE.get(client_ip, [])
+    timestamps = [t for t in timestamps if now_ts - t < SEARCH_EVENT_RATE_LIMIT_WINDOW]
+
+    if len(timestamps) >= SEARCH_EVENT_MAX_REQUESTS:
+        _SEARCH_EVENT_RATE_LIMIT_STORE[client_ip] = timestamps
+        return False
+
+    timestamps.append(now_ts)
+    _SEARCH_EVENT_RATE_LIMIT_STORE[client_ip] = timestamps
+    return True
+
+
+@router.post(
+    "/products/search/events",
+    response_model=SearchEventResponse,
+    status_code=status.HTTP_200_OK,
+)
+def record_search_event(
+    payload: SearchEventCreate,
+    request: Request,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+) -> SearchEventResponse:
+    """Record a search query for aggregate anonymous trends (non-blocking).
+
+    Rate-limited per client IP and bounded at schema level.
+    Normalizes queries, strips sensitive PII (emails, phones, long strings),
+    and persists aggregate frequency counts without storing IP addresses,
+    user IDs, or browser session tokens. Triggers opportunistic background
+    retention pruning when scheduled.
+    """
+    if not check_search_event_rate_limit(request):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Rate limit exceeded for search telemetry events. Please slow down.",
+        )
+
+    sanitized = sanitize_search_query(payload.query)
+    if sanitized:
+        try:
+            event = SearchEvent(query=sanitized)
+            db.add(event)
+            db.commit()
+        except Exception as exc:
+            db.rollback()
+            logger.warning("Failed to record search event telemetry: %s", exc)
+
+    maybe_schedule_opportunistic_pruning(background_tasks)
+    return SearchEventResponse(status="recorded")
+
+
+@router.get(
+    "/products/search/suggestions",
+    response_model=SearchSuggestionsResponse,
+    status_code=status.HTTP_200_OK,
+)
+def get_search_suggestions(
+    keyword_limit: int = Query(default=6, ge=1, le=10, description="Max trending keywords to return"),
+    product_limit: int = Query(default=4, ge=1, le=8, description="Max trending products to return"),
+    db: Session = Depends(get_db),
+) -> SearchSuggestionsResponse:
+    """Retrieve backend-driven empty-state search discovery suggestions.
+
+    - Trending keywords: Aggregated from SearchEvent in rolling 30 days,
+      gated by minimum 3 occurrences to protect single-user privacy,
+      ordered by frequency descending.
+    - Trending products: Ranked strictly by non-cancelled, non-refunded,
+      non-failed Order line-item volume in rolling 30 days, filtered for
+      active, in-stock products with valid media and categories.
+    - Zero data fallback: Returns empty lists; never fabricates fake trends.
+    """
+    cutoff = datetime.now(timezone.utc) - timedelta(days=30)
+
+    # 1. Trending Keywords (gated behind count >= 3 in rolling 30 days)
+    trending_terms = (
+        db.query(SearchEvent.query, func.count(SearchEvent.id).label("freq"))
+        .filter(SearchEvent.created_at >= cutoff)
+        .group_by(SearchEvent.query)
+        .having(func.count(SearchEvent.id) >= 3)
+        .order_by(func.count(SearchEvent.id).desc(), SearchEvent.query.asc())
+        .limit(keyword_limit)
+        .all()
+    )
+    trending_keywords = [
+        SearchSuggestionKeyword(term=row[0]) for row in trending_terms
+    ]
+
+    # 2. Trending Products (ranked by 30-day completed/paid order line-item volume)
+    excluded_statuses = [
+        OrderStatus.CANCELLED.value,
+        OrderStatus.REFUNDED.value,
+        "CANCELLED",
+        "REFUNDED",
+    ]
+    excluded_payments = [
+        PaymentStatus.FAILED.value,
+        PaymentStatus.REFUNDED.value,
+        "FAILED",
+        "REFUNDED",
+    ]
+
+    ordered_product_volumes = (
+        db.query(
+            OrderItem.product_id,
+            func.sum(OrderItem.quantity).label("total_volume"),
+        )
+        .join(Order, Order.id == OrderItem.order_id)
+        .filter(
+            Order.created_at >= cutoff,
+            Order.status.not_in(excluded_statuses),
+            Order.payment_status.not_in(excluded_payments),
+            OrderItem.product_id.is_not(None),
+        )
+        .group_by(OrderItem.product_id)
+        .order_by(func.sum(OrderItem.quantity).desc(), OrderItem.product_id.asc())
+        .all()
+    )
+
+    ordered_product_ids = [row[0] for row in ordered_product_volumes if row[0] is not None]
+
+    trending_products: list[ProductListItem] = []
+    if ordered_product_ids:
+        candidate_products = (
+            db.query(Product)
+            .options(
+                joinedload(Product.product_categories),
+                joinedload(Product.categories),
+                joinedload(Product.product_collections),
+                joinedload(Product.collections),
+                joinedload(Product.occasions),
+                joinedload(Product.tags),
+                joinedload(Product.variants),
+                joinedload(Product.images),
+            )
+            .filter(
+                Product.id.in_(ordered_product_ids),
+                Product.status == "ACTIVE",
+                Product.primary_image.is_not(None),
+                Product.primary_image != "",
+                Product.categories.any(Category.is_active.is_(True)),
+                Product.variants.any(
+                    and_(
+                        or_(
+                            ProductVariant.status == "ACTIVE",
+                            ProductVariant.status.is_(None),
+                        ),
+                        ProductVariant.stock_quantity > 0,
+                    )
+                ),
+            )
+            .all()
+        )
+
+        candidate_map = {p.id: p for p in candidate_products}
+        ordered_candidates = [
+            candidate_map[pid]
+            for pid in ordered_product_ids
+            if pid in candidate_map
+        ][:product_limit]
+
+        trending_products = [_to_product_list_item(p) for p in ordered_candidates]
+
+    return SearchSuggestionsResponse(
+        trending_keywords=trending_keywords,
+        trending_products=trending_products,
+    )
 
 
 @router.get("/products/{slug_or_id}", response_model=ProductDetail)

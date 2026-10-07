@@ -37,6 +37,8 @@ logs/
 # beside it.
 /.plugins/
 /.opencode-skills/
+/.agents/
+/ORIGINAL_REQUEST.md
 
 # Python
 .venv/

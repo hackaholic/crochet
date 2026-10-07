@@ -359,3 +359,33 @@ class ProductListResponse(BaseModel):
     total: int
     limit: int
     offset: int
+
+
+class SearchSuggestionKeyword(BaseModel):
+    """Keyword item in trending search suggestions."""
+
+    term: str
+
+
+class SearchSuggestionsResponse(BaseModel):
+    """Response schema for search discovery suggestions."""
+
+    trending_keywords: list[SearchSuggestionKeyword] = Field(default_factory=list)
+    trending_products: list[ProductListItem] = Field(default_factory=list)
+
+
+class SearchEventCreate(BaseModel):
+    """Telemetry payload for recording a debounced search query."""
+
+    query: str = Field(..., max_length=120, description="Debounced search query string (max 120 characters)")
+
+
+class SearchEventResponse(BaseModel):
+    """Acknowledgment response for recorded search telemetry."""
+
+    status: str = "recorded"
+
+
+# Schema aliases for compatibility
+SearchSuggestionsOut = SearchSuggestionsResponse
+SearchEventOut = SearchEventResponse

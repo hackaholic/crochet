@@ -22,6 +22,7 @@ RUN pip install --no-cache-dir \
 COPY backend/alembic.ini ./
 COPY backend/alembic ./alembic
 COPY backend/app ./app
+COPY backend/scripts ./scripts
 # The publication gate validates every controlled media key during startup.
 # Production returns R2 URLs, but the approved manifest still travels with the
 # image so validation never silently accepts missing catalogue media.

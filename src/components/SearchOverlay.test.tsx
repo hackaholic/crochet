@@ -148,4 +148,67 @@ describe('SearchOverlay', () => {
     expect(screen.queryByRole('dialog', { name: 'Search products' })).not.toBeInTheDocument();
     expect(document.activeElement).toBe(trigger);
   });
+
+  it('navigates via onProductClick and closes overlay when clicking a trending product card', async () => {
+    catalogueApi.getSearchSuggestions.mockResolvedValue({
+      trending_keywords: [],
+      trending_products: [rose],
+    });
+    const onProductClick = vi.fn();
+    const onClose = vi.fn();
+    render(<SearchOverlay open onClose={onClose} onProductClick={onProductClick} />);
+
+    await act(async () => { await Promise.resolve(); });
+    const productButton = screen.getByRole('button', { name: /Crochet Rose Bouquet/ });
+    expect(productButton).toBeInTheDocument();
+
+    fireEvent.click(productButton);
+    expect(onProductClick).toHaveBeenCalledWith(rose);
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('retries loading search suggestions when the retry button is clicked after network failure', async () => {
+    catalogueApi.getSearchSuggestions
+      .mockRejectedValueOnce(new Error('Network error'))
+      .mockResolvedValueOnce({
+        trending_keywords: [{ term: 'crochet flowers' }],
+        trending_products: [rose],
+      });
+
+    render(<SearchOverlay open onClose={vi.fn()} onProductClick={vi.fn()} />);
+
+    await act(async () => { await Promise.resolve(); });
+    expect(screen.getByRole('alert')).toHaveTextContent('Search suggestions are temporarily unavailable.');
+    const retryButton = screen.getByRole('button', { name: 'Try again' });
+    expect(retryButton).toBeInTheDocument();
+
+    fireEvent.click(retryButton);
+    await act(async () => { await Promise.resolve(); });
+
+    expect(catalogueApi.getSearchSuggestions).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole('heading', { name: 'Trending searches' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'crochet flowers' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Trending products' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Crochet Rose Bouquet/ })).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('does not degrade or crash live search results when telemetry API rejects', async () => {
+    vi.useFakeTimers();
+    catalogueApi.searchProducts.mockResolvedValue([rose]);
+    catalogueApi.recordSearchQuery.mockRejectedValue(new Error('Telemetry service unavailable (500)'));
+
+    render(<SearchOverlay open onClose={vi.fn()} onProductClick={vi.fn()} />);
+    const input = screen.getByRole('searchbox', { name: 'Search products' });
+
+    fireEvent.change(input, { target: { value: 'rose' } });
+    await act(async () => { await vi.advanceTimersByTimeAsync(275); });
+    await act(async () => { await Promise.resolve(); });
+
+    expect(catalogueApi.searchProducts).toHaveBeenCalledWith('rose', expect.any(Object));
+    expect(catalogueApi.recordSearchQuery).toHaveBeenCalledWith('rose');
+    expect(screen.getByRole('option', { name: /Crochet Rose Bouquet/ })).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
 });
+

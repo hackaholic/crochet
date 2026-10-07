@@ -3092,3 +3092,25 @@ def delete_admin_occasion(
     db.delete(occasion)
     db.commit()
     return {"status": "ok", "message": f"Occasion '{occasion_id}' deleted successfully"}
+
+
+# -----------------------------------------------------------------------------
+# Search Telemetry Maintenance
+# -----------------------------------------------------------------------------
+
+@router.post("/maintenance/search-events/prune")
+def prune_admin_search_events(
+    retention_days: int = Query(default=30, ge=1, le=365, description="Retention window in days"),
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> dict[str, Any]:
+    """Manually purge expired search telemetry events older than retention_days."""
+    from app.services.search import prune_expired_search_events
+
+    pruned = prune_expired_search_events(db, retention_days=retention_days)
+    return {
+        "status": "ok",
+        "pruned_count": pruned,
+        "retention_days": retention_days,
+    }
+

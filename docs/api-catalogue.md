@@ -330,4 +330,16 @@ Returns backend-ranked suggestions for an empty search overlay. Rankings must co
 The keyword objects and product entries are sourced only from backend data; products use the same public catalogue shape as `/products/search`. Return empty arrays when activity is insufficient. The frontend then shows neutral search guidance. Keyword event persistence, normalization, privacy thresholds, and retention are specified in [Work 009 Task 9.8](../work/work-009-storefront-search/tasks/task-009-search-discovery-api.md).
 
 ### `POST /products/search/events`
-Records an aggregate signal for a completed, debounced customer search so future suggestions can be ranked from actual usage. Request body: `{ "query": "crochet flowers" }`. This event is anonymous, best-effort from the frontend, privacy-filtered, and must not affect the product search response. See the Task 9.8 contract for validation and retention requirements.
+Records an aggregate signal for a completed, debounced customer search so future suggestions can be ranked from actual usage.
+
+- **Request body:** `{ "query": "crochet flowers" }`
+- **Validation & Bounds:** Input query string must be 1 to 120 characters (`max_length=120`). Oversized queries are rejected with HTTP 422 before database operations.
+- **Privacy Filtering:** Queries are sanitized by trimming outer whitespace and punctuation, lowercasing, and collapsing whitespace. Queries containing PII (emails, phone numbers, credit card sequences) or shorter than 2 chars or longer than 80 chars are suppressed (return HTTP 200 `{"status": "recorded"}` without persisting). No user IDs, IPs, or session cookies are saved.
+- **Rate Limiting:** Public client IP sliding-window rate limit of 60 requests per 60 seconds. Requests exceeding the threshold return HTTP 429 without performing database writes.
+- **Search Non-Interference:** Telemetry intake is non-blocking and decoupled; rate limiting or failures never impede product searches.
+- **Retention & Purging Policy (30-Day Rolling TTL):**
+  - Because empty-state suggestions evaluate activity strictly within a rolling 30-day window (`created_at >= now - 30 days`), all raw event records older than 30 days are expired and purged to prevent unbounded storage growth.
+  - **Opportunistic Background Pruning:** Every hour during regular telemetry ingestion, a background task opportunistically runs `prune_expired_search_events()` in an isolated session.
+  - **Admin Maintenance API:** `POST /api/v1/admin/maintenance/search-events/prune?retention_days=30` allows authenticated admins to trigger immediate retention cleanup.
+  - **Operator CLI:** `python scripts/prune_search_events.py --days 30` enables cron or operational cleanup directly from the command line.
+
