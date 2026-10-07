@@ -712,6 +712,7 @@ def test_admin_prune_search_events_endpoint():
 
 def test_cli_prune_search_events_script():
     """Verify execution of backend/scripts/prune_search_events.py CLI script."""
+    import os
     import subprocess
     import sys
 
@@ -721,8 +722,9 @@ def test_cli_prune_search_events_script():
         db.add(SearchEvent(query="fresh cli test", created_at=now))
         db.commit()
 
+    script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "scripts", "prune_search_events.py"))
     result = subprocess.run(
-        [sys.executable, "backend/scripts/prune_search_events.py", "--days", "30"],
+        [sys.executable, script_path, "--days", "30"],
         capture_output=True,
         text=True,
         check=True,
