@@ -16,6 +16,7 @@ None.
 - [x] 9.4 Add loading, retryable error, no-result, keyboard selection, Escape handling, focus restoration/trapping, and accessible result announcements.
 - [x] 9.5 Remove hardcoded trending phrases and Unsplash collection cards; show neutral search guidance until the customer starts typing.
 - [x] 9.6 Add API-client and overlay tests; full frontend suite passes **67 tests** and TypeScript type-check passes.
+- [x] 9.7 Desktop-width visual acceptance: inspected the local storefront search overlay at 1440×900 using the browser viewport control. Empty suggestions and a typed `sunflower` result both fit in the centered dialog without clipping or horizontal overflow; `Sunflower Bouquet` renders correctly. No UI change was needed.
 - [x] 9.8 Frontend implementation: fetch backend suggestions on open, report successful searches best-effort, render API keyword/product discovery, and provide loading/retry/no-data states without hardcoded trends. Local browser confirmed `sunflower` returns and renders the database-backed Sunflower Bouquet.
 - [x] 9.8 Backend discovery API: suggestions/events endpoints, privacy filtering, ranking, migration, tests, telemetry controls, and retention are complete. Local API and UI verified; backend suite passed in CI.
 - [x] 9.8.1 (Gemini) Request-level bounds and rate limiting added to `POST /products/search/events`: queries > 120 chars rejected with 422, sliding-window client IP limiter enforces 60 requests/minute (HTTP 429), search non-interference verified, and full discovery test suite (110 tests) passes.
@@ -25,4 +26,4 @@ None.
 
 ## Blocked
 
-- [ ] 9.7 Desktop-width visual acceptance: only the narrow in-app browser is available in this session; a desktop-capable browser target is unavailable.
+None.
