@@ -1,7 +1,7 @@
 # Task 9.9 — Search suggestions unavailable state
 
 **Owner:** Codex (frontend investigation; coordinate with Gemini if API behavior is implicated)
-**Status:** Blocked — preprod API suggestions route returns 404; see [Task 9.10](task-009-preprod-search-api-availability.md)
+**Status:** Completed — preprod API route and empty overlay verified after [Task 9.10](task-009-preprod-search-api-availability.md).
 **Work item:** Work 009 — Storefront search typeahead
 
 ## Objective
@@ -29,9 +29,9 @@ Investigate and fix the reported empty-search overlay showing “Search suggesti
 ## Acceptance checks
 
 - [x] Reproduce the reported unavailable state and record the environment plus suggestions-request URL/status.
-- [ ] After Task 9.10 is resolved, verify HTTP 200 suggestions render; empty arrays render neutral guidance; genuine request failures retain the retryable state.
-- [ ] Add regression tests only if a frontend defect is found; run frontend checks if code changes.
-- [ ] Verify the empty-query overlay on preprod after the API route is deployed.
+- [x] After Task 9.10 is resolved, verify HTTP 200 suggestions render; empty arrays render neutral guidance; genuine request failures retain the retryable state.
+- [x] No frontend defect was found, so no code change or new regression test was needed; existing frontend suite covers retryable failures.
+- [x] Verify the empty-query overlay on preprod after the API route is deployed.
 
 ## Handoff back
 

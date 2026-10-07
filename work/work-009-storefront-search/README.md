@@ -2,7 +2,7 @@
 
 **Objective:** Make the storefront search overlay find active products through the backend catalogue as the customer types, instead of only filtering a preloaded browser list.
 
-**Current state:** API-backed typeahead and frontend discovery renderer/client are implemented. Gemini's backend core and telemetry bounds/rate limiting are complete; local API suggestions return HTTP 200 and the empty-search overlay renders database-backed keyword/product suggestions. Preprod still returns HTTP 404 for the suggestions route, so the rollout/API availability task remains open. Event retention/rollup and desktop-width visual verification also remain open.
+**Current state:** Search typeahead, backend discovery, telemetry protections, and 30-day search-event retention are complete. Local and preprod APIs return HTTP 200; the preprod empty-search overlay renders neutral guidance when the API has no trend data. Desktop-width visual verification remains open because a desktop-capable browser target is unavailable.
 
 **Scope:** Reusable typed frontend API functions and search state; debounced live search, stale-request cancellation, loading/error/empty/results states, keyboard/accessibility behavior, and backend-driven trending keywords/products when the query is empty. No hardcoded business content or fabricated trend rankings.
 

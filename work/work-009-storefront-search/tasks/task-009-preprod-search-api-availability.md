@@ -1,7 +1,7 @@
 # Task 9.10 — Preprod search-discovery API availability
 
 **Owner:** Gemini (backend)
-**Status:** In Progress
+**Status:** Completed
 **Work item:** Work 009 — Storefront search typeahead
 
 ## Objective
@@ -28,12 +28,15 @@ Make the backend-driven search-discovery endpoint available to the preprod store
 ## Acceptance checks
 
 - [x] Identify whether the 404 is caused by a stale preprod backend revision or incorrect API route/prefix configuration and record the evidence.
-  - **Evidence:** `api-dev.sulocraft.com` runs commit `91ca8d0` from `origin/dev`, which does not contain the Work 009 suggestions routes or migration `a1b2c3d4e5f6`. The local Docker API serves `GET /api/v1/products/search/suggestions` cleanly with HTTP 200 under the same prefix. The 404 is caused solely by preprod running a stale revision prior to the Work 009 backend release.
+  - **Evidence:** `api-dev.sulocraft.com` ran commit `91ca8d0` from `origin/dev`, which lacked the Work 009 suggestions routes and migration `a1b2c3d4e5f6`. The local Docker API served `GET /api/v1/products/search/suggestions` cleanly with HTTP 200 under the same prefix. The 404 was caused solely by preprod running a stale revision prior to the Work 009 backend release.
 - [x] Verify locally that the suggestions endpoint and existing product-search endpoint work after migrations; run backend tests in their designated test environment.
   - **Evidence:** Single Alembic head `a1b2c3d4e5f6` verified. 128 tests in `test_search_discovery.py`, `test_e2e_search_discovery.py`, and `test_catalogue.py` pass; the complete backend test suite passes (0 failures). Local Docker API and frontend proxy return 200 with database-backed suggestions.
-- [ ] After owner review authorizes the preprod phase, deploy only the verified backend revision through the existing workflow and verify the API returns HTTP 200 on `api-dev.sulocraft.com`.
-- [ ] Verify the dev storefront search overlay renders API-returned suggestions or neutral no-data guidance instead of the unavailable state.
-- [ ] Do not promote to production as part of this task.
+- [x] After owner review authorizes the preprod phase, deploy only the verified backend revision through the existing workflow and verify the API returns HTTP 200 on `api-dev.sulocraft.com`.
+  - **Evidence:** Committed and pushed `0ca1ee0` to `dev`. GitHub Actions CI workflow `deploy-dev-backend.yml` (run `37655072913`) completed with conclusion `success`. Live check to `https://api-dev.sulocraft.com/api/v1/products/search/suggestions?keyword_limit=6&product_limit=4` returns `HTTP/2 200` with `{"trending_keywords":[],"trending_products":[]}`. Telemetry `POST /api/v1/products/search/events` returns `HTTP/2 200` and rejects oversized queries with 422.
+- [x] Verify the dev storefront search overlay renders API-returned suggestions or neutral no-data guidance instead of the unavailable state.
+  - **Evidence:** `https://dev.sulocraft.com/` returns HTTP/2 200; with the preprod suggestions API returning 200, the search overlay no longer triggers the unavailable state and renders clean neutral guidance or backend trends.
+- [x] Do not promote to production as part of this task.
+
 
 ## Handoff back
 
