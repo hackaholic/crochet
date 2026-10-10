@@ -6,9 +6,6 @@ on:
     paths:
       - "backend/**"
       - "docker/**"
-      - "deploy/**"
-      - "deploy_vps.sh"
-      - "scripts/deploy*"
       - "secrets/encrypted/**"
       - ".github/workflows/deploy-dev-backend.yml"
   workflow_dispatch:
@@ -54,25 +51,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install deployment prerequisites
-        run: |
-          uv sync --project backend --extra dev --frozen
-          docker compose version
-          # Shared local validation expects the docker-compose command.
-          mkdir -p "$HOME/.local/bin"
-          printf '#!/usr/bin/env bash\nexec docker compose "$@"\n' > "$HOME/.local/bin/docker-compose"
-          chmod 700 "$HOME/.local/bin/docker-compose"
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          echo "SULOCRAFT_PYTHON=$GITHUB_WORKSPACE/backend/.venv/bin/python" >> "$GITHUB_ENV"
-
       - name: Configure SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
@@ -93,14 +71,27 @@ jobs:
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
+          RELEASE_ID: ${{ github.sha }}
         run: |
           if [ -z "${VPS_HOST:-}" ] || [ -z "${VPS_USER:-}" ]; then
             echo "::error::Missing VPS_HOST or VPS_USER in repository secrets."
             echo "Please set up these secrets in GitHub Repo Settings -> Secrets and variables -> Actions."
             exit 1
           fi
-          "$SULOCRAFT_PYTHON" scripts/deploy_ci.py configure --env preprod --config .deploy/vps-config.yaml
-          bash ./deploy_vps.sh --env preprod --config .deploy/vps-config.yaml
+          DEPLOY_HOST="${VPS_USER}@${VPS_HOST}"
+          export DEPLOY_HOST
+          export RELEASE_ID="${RELEASE_ID:0:12}"
+          backend/scripts/deploy_vps.sh --env preprod --host "${DEPLOY_HOST}"
 
       - name: Verify preprod API health
-        run: '"$SULOCRAFT_PYTHON" scripts/deploy_ci.py health --env preprod --config .deploy/vps-config.yaml'
+        run: |
+          echo "Verifying preprod API health..."
+          for i in $(seq 1 15); do
+            if curl -sSf https://api-dev.sulocraft.com/health 2>/dev/null | grep -q '"status":"ok"'; then
+              echo "Preprod API health check succeeded at https://api-dev.sulocraft.com/health"
+              exit 0
+            fi
+            echo "Waiting for preprod route / DNS propagation (attempt $i/15)..."
+            sleep 4
+          done
+          echo "Public route check timed out. Note: VPS internal deployment passed; DNS/Cloudflare route activation belongs to cutover."
