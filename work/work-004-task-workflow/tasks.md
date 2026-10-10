@@ -10,6 +10,8 @@ None.
 
 ## Completed
 
+- [x] 4.8 Codex: Audit task filenames, normalize deviations to `task-NNN-description.md`, update all repository references, and verify contract contents/counts and links are preserved.
+
 - [x] 4.1 Create a small `work/INDEX.md` and dedicated folders for current major work.
 - [x] 4.2 Add concise README, task, decision, and notes files for each active work item.
 - [x] 4.3 Update `AGENTS.md` and Gemini handoff rules to use the work-folder reading/update process.

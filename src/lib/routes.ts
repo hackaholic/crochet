@@ -1,6 +1,6 @@
 import type { Product } from '../data/products';
 
-export type AppPage = 'home' | 'shop' | 'product' | 'cart' | 'wishlist' | 'checkout' | 'account' | 'admin' | 'about' | 'contact' | 'shipping' | 'returns' | 'privacy' | 'terms' | 'notFound';
+export type AppPage = 'home' | 'shop' | 'product' | 'cart' | 'wishlist' | 'checkout' | 'account' | 'tracking' | 'admin' | 'about' | 'contact' | 'shipping' | 'returns' | 'privacy' | 'terms' | 'notFound';
 
 const pagePaths: Record<Exclude<AppPage, 'product' | 'notFound'>, string> = {
   home: '/',
@@ -9,6 +9,7 @@ const pagePaths: Record<Exclude<AppPage, 'product' | 'notFound'>, string> = {
   wishlist: '/wishlist',
   checkout: '/checkout',
   account: '/account',
+  tracking: '/track',
   admin: '/admin',
   about: '/about',
   contact: '/contact',
@@ -47,6 +48,7 @@ export function pageFromPath(rawPathname: string): AppPage {
   if (pathname === '/cart') return 'cart';
   if (pathname === '/wishlist') return 'wishlist';
   if (pathname === '/checkout') return 'checkout';
+  if (pathname === '/track' || /^\/track\/[^/]+$/.test(pathname)) return 'tracking';
   if (pathname === '/account') return 'account';
   if (pathname === '/admin') return 'admin';
   if (pathname === '/about') return 'about';
@@ -57,4 +59,9 @@ export function pageFromPath(rawPathname: string): AppPage {
   if (pathname === '/terms') return 'terms';
   if (pathname === '/') return 'home';
   return 'notFound';
+}
+
+/** Fragments are omitted from HTTP requests and Referer headers. */
+export function guestTrackingPath(orderNumber: string, token: string): string {
+  return `/track/${encodeURIComponent(orderNumber)}#token=${encodeURIComponent(token)}`;
 }

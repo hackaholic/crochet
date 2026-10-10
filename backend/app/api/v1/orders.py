@@ -4,9 +4,11 @@ Conforms to Sections 18, 20, 21, 22, and 26 of the E-commerce Multi-Agent Specif
 """
 
 from datetime import datetime, timedelta, timezone
+import os
 import secrets
 from typing import Any
-from fastapi import APIRouter, BackgroundTasks, Cookie, Depends, Header, HTTPException, Query, Response, status
+from urllib.parse import quote
+from fastapi import APIRouter, BackgroundTasks, Cookie, Depends, Header, HTTPException, Query, Request, Response, status
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.images import build_image_url
@@ -33,12 +35,21 @@ from app.schemas.order import (
     AddressCreate,
     AddressOut,
     AddressUpdate,
+    GuestTrackingLinkRequest,
+    GuestTrackingLinkResponse,
     OrderCreate,
     OrderItemOut,
     OrderOut,
     OrderStatusHistoryOut,
     OrderTrackingOut,
 )
+from app.services.guest_tracking import (
+    check_rate_limit,
+    create_guest_order_token,
+    validate_guest_order_token,
+)
+from app.services.notification.service import dispatch_guest_tracking_link_background
+from app.core.config import settings
 
 router = APIRouter(tags=["orders"])
 
@@ -86,7 +97,7 @@ def _to_address_out(addr: Address) -> AddressOut:
     )
 
 
-def _to_order_out(order: Order) -> OrderOut:
+def _to_order_out(order: Order, guest_tracking_token: str | None = None) -> OrderOut:
     """Convert Order ORM to OrderOut schema with dual currency."""
     items_out = [
         OrderItemOut(
@@ -148,6 +159,7 @@ def _to_order_out(order: Order) -> OrderOut:
         tracking_number=order.tracking_number,
         courier_name=order.courier_name,
         estimated_delivery=order.estimated_delivery.isoformat() if order.estimated_delivery else None,
+        guest_tracking_token=guest_tracking_token,
         created_at=order.created_at.isoformat() if order.created_at else "",
         updated_at=order.updated_at.isoformat() if order.updated_at else "",
     )
@@ -551,8 +563,15 @@ def checkout(
 
     db.commit()
     db.refresh(order)
+
+    # 10. Issue scoped guest access token if guest purchase
+    guest_token_val: str | None = None
+    if not user:
+        raw_token, _ = create_guest_order_token(db, order.id)
+        guest_token_val = raw_token
+
     background_tasks.add_task(dispatch_order_placed_background, order.id)
-    return _to_order_out(order)
+    return _to_order_out(order, guest_tracking_token=guest_token_val)
 
 
 @router.get("/orders", response_model=list[OrderOut])
@@ -581,16 +600,40 @@ def list_orders(
     return [_to_order_out(o) for o in orders]
 
 
+def _extract_guest_token(
+    token_param: str | None = None,
+    header_guest_token: str | None = None,
+    authorization: str | None = None,
+) -> str | None:
+    """Extract guest token from query param, X-Guest-Order-Token header, or Authorization header."""
+    if token_param and token_param.strip():
+        return token_param.strip()
+    if header_guest_token and header_guest_token.strip():
+        return header_guest_token.strip()
+    if authorization and authorization.startswith("Bearer "):
+        bearer_val = authorization.removeprefix("Bearer ").strip()
+        if bearer_val:
+            return bearer_val
+    return None
+
+
 @router.get("/orders/{order_id_or_number}", response_model=OrderOut)
 def get_order_detail(
     order_id_or_number: str,
+    response: Response,
+    token: str | None = Query(default=None, description="Order-scoped guest access token"),
+    x_guest_order_token: str | None = Header(default=None, alias="X-Guest-Order-Token"),
+    authorization: str | None = Header(default=None),
     user: User | None = Depends(get_optional_current_user),
     db: Session = Depends(get_db),
 ) -> OrderOut:
     """Retrieve full details of an order.
 
     Conforms to Section 22 security: verifies customer authorization.
+    For registered user orders, strictly verifies user ownership.
+    For guest orders, strictly verifies a valid, unexpired, order-scoped guest token.
     """
+    response.headers["Cache-Control"] = "no-store, private"
     query = (
         db.query(Order)
         .options(
@@ -617,6 +660,14 @@ def get_order_detail(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Order '{order_id_or_number}' not found",
             )
+    else:
+        # Guest order: require valid guest token
+        guest_token = _extract_guest_token(token, x_guest_order_token, authorization)
+        if not guest_token or not validate_guest_order_token(db, order.id, guest_token):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Order '{order_id_or_number}' not found",
+            )
 
     return _to_order_out(order)
 
@@ -624,10 +675,19 @@ def get_order_detail(
 @router.get("/orders/{order_id_or_number}/tracking", response_model=OrderTrackingOut)
 def get_order_tracking(
     order_id_or_number: str,
+    response: Response,
+    token: str | None = Query(default=None, description="Order-scoped guest access token"),
+    x_guest_order_token: str | None = Header(default=None, alias="X-Guest-Order-Token"),
+    authorization: str | None = Header(default=None),
     user: User | None = Depends(get_optional_current_user),
     db: Session = Depends(get_db),
 ) -> OrderTrackingOut:
-    """Retrieve order tracking status and chronological timeline history."""
+    """Retrieve order tracking status and chronological timeline history.
+
+    For registered user orders, requires authenticated user ownership.
+    For guest orders, requires a valid, unexpired, order-scoped guest token.
+    """
+    response.headers["Cache-Control"] = "no-store, private"
     query = (
         db.query(Order)
         .options(
@@ -652,6 +712,14 @@ def get_order_tracking(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Order '{order_id_or_number}' not found",
             )
+    else:
+        # Guest order authorization check
+        guest_token = _extract_guest_token(token, x_guest_order_token, authorization)
+        if not guest_token or not validate_guest_order_token(db, order.id, guest_token):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Order '{order_id_or_number}' not found",
+            )
 
     timeline_out = [
         OrderStatusHistoryOut(
@@ -671,6 +739,66 @@ def get_order_tracking(
         courier_name=order.courier_name,
         estimated_delivery=order.estimated_delivery.isoformat() if order.estimated_delivery else None,
         timeline=timeline_out,
+    )
+
+
+@router.post("/orders/tracking/request-link", response_model=GuestTrackingLinkResponse, status_code=status.HTTP_202_ACCEPTED)
+def request_guest_tracking_link(
+    payload: GuestTrackingLinkRequest,
+    background_tasks: BackgroundTasks,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> GuestTrackingLinkResponse:
+    """Request a secure expiring order tracking link sent to the checkout email.
+
+    Always returns generic 202 Accepted to prevent order and contact enumeration.
+    """
+    client_ip = request.headers.get("x-forwarded-for")
+    if client_ip:
+        client_ip = client_ip.split(",")[0].strip()
+    else:
+        client_ip = request.client.host if request.client else "unknown"
+
+    # Enforce rate limit per IP
+    if not check_rate_limit(client_ip):
+        return GuestTrackingLinkResponse(
+            message="If the order number and email match our records, a secure tracking link has been sent.",
+        )
+
+    order_num = payload.order_number.strip()
+    req_email = payload.email.strip().lower()
+
+    order = db.query(Order).filter(Order.order_number == order_num).first()
+
+    dev_link: str | None = None
+    is_dev = (
+        settings.app_env == "development"
+        or os.getenv("TESTING", "false").lower() == "true"
+    )
+
+    if order:
+        order_email = (order.customer_email or "").strip().lower()
+        if not order_email and order.shipping_address_json:
+            order_email = (order.shipping_address_json.get("email") or "").strip().lower()
+
+        if order_email and order_email == req_email:
+            # Match confirmed! Issue fresh guest token
+            raw_token, _ = create_guest_order_token(db, order.id)
+            encoded_order_number = quote(order.order_number, safe="")
+            tracking_url = f"{settings.frontend_url}/track/{encoded_order_number}#token={raw_token}"
+            if is_dev:
+                dev_link = tracking_url
+
+            background_tasks.add_task(
+                dispatch_guest_tracking_link_background,
+                to_email=order_email,
+                order_number=order.order_number,
+                tracking_url=tracking_url,
+            )
+
+    return GuestTrackingLinkResponse(
+        message="If the order number and email match our records, a secure tracking link has been sent.",
+        dev_tracking_link=dev_link,
     )
 
 

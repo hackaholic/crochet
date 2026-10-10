@@ -1,7 +1,8 @@
+import { guestTrackingPath } from '../lib/routes';
 import { useState } from 'react';
 import { CheckIcon, ArrowRightIcon } from '../components/Icons';
 import type { CartItem } from '../components/CartDrawer';
-import { createOrder } from '../lib/api/orders';
+import { createOrder, type OrderOut } from '../lib/api/orders';
 import { createPaymentIntent, verifyMockPayment } from '../lib/api/payments';
 
 interface CheckoutPageProps {
@@ -30,6 +31,7 @@ const paymentMethods = [
 export default function CheckoutPage({ items, onComplete, onNavigate, couponCode }: CheckoutPageProps) {
   const [step, setStep] = useState<Step>('contact');
   const [selectedPayment, setSelectedPayment] = useState('upi');
+  const [completedOrder, setCompletedOrder] = useState<OrderOut>();
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -57,7 +59,7 @@ export default function CheckoutPage({ items, onComplete, onNavigate, couponCode
           const intent = await createPaymentIntent(order.orderNumber);
           await verifyMockPayment(intent, paymentMethod === 'UPI' ? 'UPI / Mock gateway' : `${paymentMethod} / Mock gateway`);
         }
-        setOrderPlaced(true); onComplete();
+        setCompletedOrder(order); setOrderPlaced(true); onComplete();
       } catch (requestError) { setError(requestError instanceof Error ? requestError.message : 'We could not place your order. Please try again.'); }
       finally { setSubmitting(false); }
     }
@@ -86,6 +88,7 @@ export default function CheckoutPage({ items, onComplete, onNavigate, couponCode
               </div>
             ))}
           </div>
+          {completedOrder && <div className="mb-6"><p className="mb-3 text-sm">Order {completedOrder.orderNumber}</p>{completedOrder.guestTrackingToken && <a className="underline text-[#C4622D]" href={guestTrackingPath(completedOrder.orderNumber, completedOrder.guestTrackingToken)}>Track your order</a>}</div>}
           <button onClick={() => onNavigate('home')} className="px-10 py-4 bg-[#C4622D] text-white rounded-full font-semibold hover:bg-[#D4795A] transition-colors">
             Continue Shopping
           </button>

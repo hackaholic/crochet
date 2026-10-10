@@ -3,7 +3,7 @@ import type { Product } from '../data/products';
 import type { AppPage } from '../lib/routes';
 import { getSeoMetadata, type SeoMetadata } from '../lib/api/seo';
 
-const PRIVATE_PAGES = new Set<AppPage>(['account', 'admin', 'cart', 'checkout', 'wishlist', 'notFound']);
+const PRIVATE_PAGES = new Set<AppPage>(['account', 'tracking', 'admin', 'cart', 'checkout', 'wishlist', 'notFound']);
 
 function setMeta(selector: string, attributes: Record<string, string>) {
   let element = document.head.querySelector<HTMLMetaElement>(selector);

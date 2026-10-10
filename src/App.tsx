@@ -12,6 +12,7 @@ import WishlistPage from './pages/WishlistPage';
 import CheckoutPage from './pages/CheckoutPage';
 import AboutPage from './pages/AboutPage';
 import InfoPage from './pages/InfoPage';
+import GuestTrackingPage from './pages/GuestTrackingPage';
 import AccountPage from './pages/AccountPage';
 import AdminPage from './pages/AdminPage';
 import type { Product } from './data/products';
@@ -102,7 +103,7 @@ export default function App() {
   return (
     <div className="min-h-screen" style={{ fontFamily: 'var(--font-sans)' }}>
       <SeoManager page={showNotFound ? 'notFound' : page} pathname={location.pathname} product={selectedProduct} />
-      <a href="#main-content" className="sr-only fixed left-4 top-4 z-100 rounded-full bg-[#2C1810] px-5 py-3 text-sm font-semibold text-white focus:not-sr-only">
+      <a href="#main-content" onClick={event => { if (page === 'tracking') { event.preventDefault(); const main = document.getElementById('main-content'); main?.focus(); main?.scrollIntoView(); } }} className="sr-only fixed left-4 top-4 z-100 rounded-full bg-[#2C1810] px-5 py-3 text-sm font-semibold text-white focus:not-sr-only">
         Skip to content
       </a>
       {page !== 'admin' && <Header
@@ -179,6 +180,7 @@ export default function App() {
             onNavigate={navigate}
           />
         )}
+        {page === 'tracking' && <GuestTrackingPage key={location.pathname} />}
         {page === 'account' && <AccountPage key={user?.id ?? 'guest'} onSignIn={openAuth} onLogout={signOut} />}
         {page === 'admin' && <AdminPage key={user?.id ?? 'guest'} onSignIn={openAuth} onExitAdmin={() => navigate('home')} />}
         {page === 'about' && (

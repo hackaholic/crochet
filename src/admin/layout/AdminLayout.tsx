@@ -17,7 +17,7 @@ export default function AdminLayout({ currentPage, onNavigate, onExitAdmin, onSe
   return (
     <div className="flex h-screen overflow-hidden bg-[#F8F4EF]" style={{ fontFamily: 'var(--font-sans)' }}>
       <AdminSidebar currentPage={currentPage} onNavigate={onNavigate} onExitAdmin={onExitAdmin} />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="min-w-0 flex-1 flex flex-col overflow-hidden">
         <AdminTopBar
           currentPage={currentPage}
           onSearch={onSearch}

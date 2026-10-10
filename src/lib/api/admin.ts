@@ -85,6 +85,7 @@ export interface AdminProduct {
   slug: string;
   status: string;
   primaryImage: string;
+  primaryImageUrl?: string;
   totalStock: number;
   minPrice: number;
   variants: AdminProductVariant[];
@@ -146,7 +147,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(apiUrl(path), {
     ...init,
     credentials: 'include',
-    headers: { ...(init?.body ? { 'Content-Type': 'application/json' } : {}), ...init?.headers },
+    headers: { ...(init?.body && !(init.body instanceof FormData) ? { 'Content-Type': 'application/json' } : {}), ...init?.headers },
   });
   if (!response.ok) throw new Error(`Admin request failed (${response.status})`);
   return response.json() as Promise<T>;
@@ -172,12 +173,12 @@ export function updateAdminOrderStatus(id: string | number, payload: { status: s
   return request(`/admin/orders/${encodeURIComponent(String(id))}/status`, { method: 'PATCH', body: JSON.stringify(payload) });
 }
 
-export function getAdminProducts(options: { q?: string; lowStock?: boolean; page?: number; pageSize?: number } = {}): Promise<AdminProductList> {
+export function getAdminProducts(options: { q?: string; status?: string; categoryId?: number; lowStock?: boolean; page?: number; pageSize?: number } = {}, signal?: AbortSignal): Promise<AdminProductList> {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(options)) {
     if (value !== undefined && value !== '') params.set(key, String(value));
   }
-  return request(`/admin/products?${params.toString()}`);
+  return request(`/admin/products?${params.toString()}`, { signal });
 }
 
 export function getAdminOccasions(): Promise<AdminOccasion[]> {
@@ -199,3 +200,5 @@ export function updateAdminOccasion(id: string, payload: AdminOccasionUpdateIn):
 export function deleteAdminOccasion(id: string): Promise<{ status: string; message: string }> {
   return request(`/admin/occasions/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }
+
+export { request as adminRequest };

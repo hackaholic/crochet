@@ -6,7 +6,9 @@ None.
 
 ## Pending
 
-None.
+- [ ] 9.11 Gemini: [Paginated search API](tasks/task-011-paginated-search-api.md) — ready for pickup.
+- [ ] 9.12 Codex: [Scroll to load search batches](tasks/task-012-search-scroll-pagination.md) — depends on 9.11.
+- [ ] 9.13 Codex: [Local paginated search acceptance](tasks/task-013-pagination-verification.md) — depends on 9.11 and 9.12.
 
 ## Completed
 

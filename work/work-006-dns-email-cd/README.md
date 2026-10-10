@@ -1,11 +1,11 @@
 # Work 006 — Preprod DNS, email deliverability & continuous deployment
 
-**Objective:** Configure production DNS records, establish authenticated email routing (SPF, DKIM, DMARC), automate dev-branch CI/CD backend deployment to the VPS, and connect the persistent Cloudflare Pages development storefront.
+**Objective:** Verify business email DNS/delivery and the dev-branch deployment integration, using the current configurable deployment architecture.
 
-**Scope:** Cloudflare DNS entries (`api.`, `dev.`, `images.`, email routes), Resend domain verification, GitHub Actions automated deployment workflow, and Cloudflare Pages dev site binding with Cloudflare Access protection.
+**Scope:** Cloudflare email forwarding, Resend sender verification, GitHub Actions backend deployment, and Cloudflare Workers Static Assets development storefront access policy. Preprod API: `api-dev.sulocraft.com`; frontend: `dev.sulocraft.com`; public images: `images.sulocraft.com`. Production promotion is outside this work.
 
-**Current state:** In Progress. The dev VPS backend is healthy, and the dev storefront now calls the dev API and renders products. Remaining work is listed in `tasks.md`.
+**Current state:** In Progress. Frontend API configuration, email implementation, and the initial CI deployment have recorded completion evidence. Tasks 6.1, 6.2, and 6.4 still lack acceptance evidence in this work. Audit 6.6 found CI integration gaps tracked in 6.7. Historical deployment success is not a current live-health assertion.
 
-**Dependencies:** Work 003 SOPS/age vault; Work 012 shared VPS deployment command; `docs/email-architecture.md`; VPS SSH access.
+**Dependencies:** Work 003 secret lifecycle; Work 012 environment isolation; the root `deploy_vps.sh` configurable deployment entry point; Work 013 release controls; `docs/email-architecture.md` and `docs/cloudflare-deployment.md`.
 
-**Done when:** Email records (SPF/DKIM/DMARC) verify in Resend; GitHub Actions runs its protected checks and invokes the shared Work 012 deployment command on push to `dev`; `dev.sulocraft.com` storefront loads live with Cloudflare Access.
+**Done when:** Provider/DNS and delivery checks are recorded; development access policy is confirmed; Actions uses the current deployment contract and fails when public health verification fails. Local → preprod → explicitly accepted production gates remain mandatory.

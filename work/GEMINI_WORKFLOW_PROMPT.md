@@ -32,3 +32,7 @@ Use these rules for every Sulocraft task and retain them in your project context
 ## Handoff contract format
 
 Every cross-agent task must use `work/TASK_TEMPLATE.md` and live under `work/<work-folder>/tasks/`. The work folder is the single source of truth for scope, decisions, status, blockers, and return handoff. One task per handoff; do not hand over a whole work item unless the contract explicitly defines a bounded set of subtasks.
+
+## Contract filename convention
+
+Use `task-NNN-description.md`: a three-digit file number and lowercase hyphenated description. Preserve existing valid filenames and logical task IDs inside contracts/checklists; the filename number is not a dotted subtask ID. Allocate an unused number within the containing `tasks/` directory. Never delete completed contracts or renumber existing files to close gaps. When renaming a nonconforming file, preserve its content/status/ownership and update every reference, including coordination and handoff indexes.

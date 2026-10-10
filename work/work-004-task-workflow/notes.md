@@ -5,3 +5,7 @@
 - Every cross-agent subtask now gets a focused contract file; shared handoffs link directly to it, and the receiving agent must update the same work folder on return.
 - Work 4.7 applies this contract and return path to every work item. The global handoff page is only a registry; work-local `coordination.md` plus the exact task contract carries active state. Old global narratives are retained as archives for history, not treated as current instructions.
 - Work 4.7 verification: all 12 current work folders (Work 001–011 plus Security) have `coordination.md`; global registry/status docs are 9 lines each; the prior 1,763-line handoff and 595-line status logs are preserved under `docs/archive/`; local Markdown-link validation found 0 broken links across 155 files. No code tests, push, or deployment were required for this documentation-only task.
+
+## 2026-10-10 — Task 4.8 naming audit
+Codex normalized eight nonconforming contract filenames in Works 001, 009 and 016. All 87 existing task contracts preserved, with exact content comparison allowing only reference-name substitutions; logical task IDs, owners, statuses and handoffs retained. All task filenames now match task-NNN-description.md. Updated task lists, coordination and global handoff links. Template and Gemini prompt now state the existing convention. Shared ai_skills files unchanged; application/runtime unchanged.
+Validation: 129 Markdown task links resolve; git diff --check required before delivery. No Docker rebuild needed for documentation-only renames.

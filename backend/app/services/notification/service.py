@@ -178,6 +178,76 @@ class EmailService:
         return success, err
 
     @staticmethod
+    def send_guest_tracking_link(
+        db: Session,
+        to_email: str,
+        order_number: str,
+        tracking_url: str,
+        expires_days: int = 14,
+    ) -> tuple[bool, str | None]:
+        """Send an expiring, order-scoped tracking link to a guest purchaser."""
+        subject = f"Sulocraft - Track Your Order #{order_number}"
+        html_body = f"""<!DOCTYPE html>
+<html>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #faf7f5; padding: 24px;">
+    <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; padding: 32px; box-shadow: 0 4px 16px rgba(0,0,0,0.06);">
+        <h2 style="color: #832729; margin-top: 0;">Order Tracking Access</h2>
+        <p style="color: #5a4b48; font-size: 15px; line-height: 1.6;">
+            Here is your secure link to track the status and shipment progress for Sulocraft order <strong>#{order_number}</strong>.
+        </p>
+        <div style="text-align: center; margin: 32px 0;">
+            <a href="{tracking_url}" style="background-color: #832729; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; display: inline-block;">
+                View Order Tracking
+            </a>
+        </div>
+        <p style="color: #7d6b67; font-size: 13px; line-height: 1.5;">
+            This link is secure and valid for {expires_days} days. If you did not request this link, no action is needed.
+        </p>
+    </div>
+</body>
+</html>"""
+        text_body = f"""Sulocraft - Order Tracking #{order_number}
+
+Here is your secure link to track order #{order_number}:
+{tracking_url}
+
+This link is valid for {expires_days} days.
+"""
+
+        email_provider = get_email_provider()
+        success, err = email_provider.send_email(
+            to_email=to_email,
+            subject=subject,
+            html_content=html_body,
+            text_content=text_body,
+            from_email=settings.email_from_orders,
+        )
+
+        provider_name = settings.email_provider or "mock"
+        status = "SENT" if success else "FAILED"
+        if provider_name.lower() == "mock":
+            status = "MOCK"
+
+        log_entry = NotificationLog(
+            channel="EMAIL",
+            recipient=to_email,
+            event_type="GUEST_TRACKING_LINK",
+            status=status,
+            provider=provider_name,
+            subject=subject,
+            body="[guest tracking link dispatched — URL redacted]",
+            error_message=err,
+        )
+        try:
+            db.add(log_entry)
+            db.commit()
+        except Exception as e:
+            logger.error("Failed to persist guest tracking link log: %s", e)
+            db.rollback()
+
+        return success, err
+
+    @staticmethod
     def send_order_confirmation(db: Session, order: Order) -> tuple[bool, str | None]:
         """Send order confirmation email to the customer with idempotency check."""
         email = _extract_order_email(order)
@@ -724,3 +794,21 @@ def dispatch_welcome_background(
             customer_name=customer_name,
             custom_message=custom_message,
         )
+
+
+def dispatch_guest_tracking_link_background(
+    to_email: str,
+    order_number: str,
+    tracking_url: str,
+    expires_days: int = 14,
+) -> None:
+    """Send guest order tracking magic link in FastAPI background task."""
+    with SessionLocal() as db:
+        EmailService.send_guest_tracking_link(
+            db,
+            to_email=to_email,
+            order_number=order_number,
+            tracking_url=tracking_url,
+            expires_days=expires_days,
+        )
+

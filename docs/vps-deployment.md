@@ -62,7 +62,7 @@ Each rollout creates a compressed PostgreSQL snapshot in `/opt/sulocraft/backups
 
 ## Automatic deployment from the dev branch
 
-The GitHub workflow `.github/workflows/deploy-dev-backend.yml` is the separate CI path and uses the repository Actions secrets below. The local `./deploy_vps.sh` command uses the SSH agent or identity configured in `.deploy/vps-config.yaml`; it does not read GitHub secrets. Work 006 still owns aligning the CI workflow with the stable deployment interface. The configured Actions secrets are:
+The GitHub workflow `.github/workflows/deploy-dev-backend.yml` uses the same root `./deploy_vps.sh --env preprod --config .deploy/vps-config.yaml` command as local deployment. After the backend test gate passes, it installs the deployment dependencies and generates its non-secret YAML from `deploy/vps-config.example.yaml`, overriding only SSH host/identity settings from Actions credentials. Edit the template for environment routing; no dashboard application variables are needed. Public health verification reads the same configuration and fails the job on timeout or an unhealthy response. The local command uses its configured SSH identity/agent and does not read GitHub secrets. The configured Actions secrets are:
 
 ### GitHub Actions Secrets
 

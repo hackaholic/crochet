@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { pageFromPath, productPath, productSlug } from './routes';
+import { guestTrackingPath, pageFromPath, productPath, productSlug } from './routes';
 
 const product = { id: 1, name: 'Fallback name', slug: 'forever-crochet-rose-bouquet', price: 2599, rating: 5, reviews: 0, image: '', category: 'Flowers' };
 
@@ -21,4 +21,17 @@ describe('storefront routes', () => {
     expect(pageFromPath('/products/forever-crochet-rose-bouquet/')).toBe('product');
     expect(pageFromPath('/not-a-page')).toBe('notFound');
   });
+});
+
+it('recognizes guest tracking entry and scoped links only', () => {
+  expect(pageFromPath('/track')).toBe('tracking');
+  expect(pageFromPath('/track/TEST-1')).toBe('tracking');
+  expect(pageFromPath('/track/TEST-1/extra')).toBe('notFound');
+});
+
+it('keeps checkout tracking credentials out of URL queries and encodes identifiers', () => {
+  const link = new URL(guestTrackingPath('A/B', 'token+value'), 'https://example.invalid');
+  expect(link.pathname).toBe('/track/A%2FB');
+  expect(link.search).toBe('');
+  expect(new URLSearchParams(link.hash.slice(1)).get('token')).toBe('token+value');
 });

@@ -1,11 +1,11 @@
-# Task 6.4 — Cloudflare Pages dev storefront setup & Cloudflare Access
+# Task 6.4 — Cloudflare Workers Static Assets dev storefront setup & Cloudflare Access
 
 **Owner:** Owner + Codex
 **Status:** Pending
 
 ## Objective
 
-Connect Cloudflare Pages project `sulocraft-dev` to the repository `dev` branch, configure environment variables (`VITE_API_BASE_URL=https://api.sulocraft.com/api/v1`), attach custom domain `dev.sulocraft.com`, and protect it with Cloudflare Access (One-Time PIN for authorized developers).
+Connect Cloudflare Workers Static Assets project `sulocraft-dev` to the repository `dev` branch, configure environment variables (`VITE_API_BASE_URL=https://api-dev.sulocraft.com/api/v1`), attach custom domain `dev.sulocraft.com`, and protect it with Cloudflare Access (One-Time PIN for authorized developers).
 
 ## Context and contract
 
@@ -14,7 +14,7 @@ The dev storefront allows stakeholders to review integrated features in a live w
 ## Scope
 
 - In scope:
-  - Configure Cloudflare Pages build command: `pnpm build`.
+  - Configure Cloudflare Workers Static Assets build command: `pnpm build`.
   - Attach `dev.sulocraft.com` custom domain.
   - Set up Cloudflare Access zero-trust application with email policy.
 - Out of scope:
@@ -22,9 +22,9 @@ The dev storefront allows stakeholders to review integrated features in a live w
 
 ## Dependencies and relevant files
 
-- Depends on: Cloudflare Pages dashboard access.
+- Depends on: Cloudflare Workers Static Assets dashboard access.
 - Inspect/edit:
-  - `docs/TODO.md`
+  - `docs/cloudflare-deployment.md`, `wrangler.jsonc`
 
 ## Acceptance checks
 
@@ -33,4 +33,8 @@ The dev storefront allows stakeholders to review integrated features in a live w
 
 ## Handoff back
 
-- Mark Work 006 completed in `work/INDEX.md` and `work/work-006-dns-email-cd/tasks.md`.
+- Update this task and work-local coordination. Complete Work 006 only after every remaining acceptance task passes.
+
+## Alignment audit — 2026-10-10
+
+Storefront setup and API configuration are already recorded in Task 6.5. Verify the existing setup; do not recreate it. The remaining acceptance is the Cloudflare Access policy and authenticated storefront/API compatibility. Current dashboard state was not checked in this repository audit.

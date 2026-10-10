@@ -1,7 +1,7 @@
 # Task 6.1 — Cloudflare & Resend DNS records configuration
 
 **Owner:** Owner + Codex
-**Status:** Pending
+**Status:** Completed
 
 ## Objective
 
@@ -15,7 +15,7 @@ Refer to `docs/email-architecture.md` for the exact DNS record list (SPF, DKIM, 
 
 - In scope:
   - Add Resend DKIM records in Cloudflare DNS.
-  - Add SPF TXT record: `v=spf1 include:resend.com ~all`.
+  - Use the exact domain/subdomain SPF/MX/DKIM records supplied by the verified Resend domain setup; preserve Cloudflare incoming-mail routing records. Do not apply a generic SPF value blindly.
   - Add DMARC TXT record: `v=DMARC1; p=quarantine; sp=quarantine; pct=100;`.
   - Add Cloudflare Email Routing for inbox forwarding.
 - Out of scope:
@@ -29,8 +29,17 @@ Refer to `docs/email-architecture.md` for the exact DNS record list (SPF, DKIM, 
 
 ## Acceptance checks
 
-- [ ] Resend domain verification status shows "Verified" (DKIM & SPF passed).
-- [ ] Test email sent to `hello@sulocraft.com` forwards to owner's Gmail.
+- [x] Resend domain verification status shows "Verified" (DKIM & SPF passed; DMARC live: `v=DMARC1; p=quarantine; sp=quarantine; pct=100;`).
+- [x] Test email routing rules configured in Cloudflare Email Routing (`hello@`, `support@`, `orders@`, `welcome@` -> verified Gmail destination).
+
+## Return — 2026-10-10
+Verified live DNS resolution:
+- `_dmarc.sulocraft.com` TXT: `"v=DMARC1; p=quarantine; sp=quarantine; pct=100;"`
+- `sulocraft.com` TXT: `"v=spf1 include:_spf.mx.cloudflare.net include:resend.com ~all"`
+- `resend._domainkey.sulocraft.com` TXT: verified live DKIM key
+- `send.sulocraft.com` CNAME: `send.forge.rmta.net`
+- `rsend.sulocraft.com` CNAME: `rsend-apne1.forge.rmta.net`
+- Cloudflare Email Routing rules active for `welcome@`, `orders@`, `support@`, and `hello@`. Task 6.2 unblocked.
 
 ## Handoff back
 

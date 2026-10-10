@@ -56,16 +56,8 @@ services:
       timeout: 5s
       retries: 5
 
-  workflow-gui:
-    build:
-      context: ..
-      dockerfile: docker/workflow-gui.Dockerfile
-    restart: unless-stopped
-    ports:
-      - "${WORKFLOW_GUI_PORT:-8088}:8088"
-    volumes:
-      - ../work:/app/work:ro
-      - ../scripts/workflow_gui.py:/app/scripts/workflow_gui.py:ro
+  # Note: workflow-gui has been migrated to the standalone WorkWeave project (~/git/workweave).
+  # Run `TARGET_PATH=/home/anu/git/crochet docker-compose up -d` in ~/git/workweave to start the dashboard on port 8088.
 
 volumes:
   sulocraft-postgres-data:

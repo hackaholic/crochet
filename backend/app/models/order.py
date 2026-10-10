@@ -139,6 +139,12 @@ class Order(Base):
         cascade="all, delete-orphan",
         order_by="ReturnRequest.id.desc()",
     )
+    guest_tokens = relationship(
+        "GuestOrderAccessToken",
+        back_populates="order",
+        cascade="all, delete-orphan",
+        order_by="GuestOrderAccessToken.id.desc()",
+    )
 
 
 class OrderItem(Base):
@@ -208,3 +214,24 @@ class ReturnRequest(Base):
 
     order = relationship("Order", back_populates="returns")
     user = relationship("User")
+
+
+class GuestOrderAccessToken(Base):
+    """Secure, order-scoped expiring access token for guest order tracking and detail retrieval.
+
+    The raw token is NEVER persisted in the database; only its SHA-256 hex digest is stored.
+    Tokens expire after a configured delivery window (default 14 days) or upon explicit revocation.
+    """
+
+    __tablename__ = "guest_order_access_tokens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    order_id = Column(Integer, ForeignKey("orders.id", ondelete="CASCADE"), nullable=False, index=True)
+    token_hash = Column(String(64), nullable=False, unique=True, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    is_revoked = Column(Boolean, default=False, nullable=False)
+    revoked_at = Column(DateTime, nullable=True)
+
+    order = relationship("Order", back_populates="guest_tokens")
+

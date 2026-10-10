@@ -7,6 +7,9 @@ import OrderDetailPage from './pages/OrderDetailPage';
 import FinancePage from './pages/FinancePage';
 import ReturnsPage from './pages/ReturnsPage';
 import OccasionsPage from './pages/OccasionsPage';
+import ProductsPage from './pages/ProductsPage';
+import InventoryPage from './pages/InventoryPage';
+import CustomersPage from './pages/CustomersPage';
 import PlaceholderPage from './pages/PlaceholderPage';
 
 interface Props {
@@ -72,7 +75,13 @@ export default function AdminApp({ onExitAdmin }: Props) {
 
       {page === 'occasions' && <OccasionsPage />}
 
-      {(page === 'products' || page === 'inventory' || page === 'customers' || page === 'settings') && (
+      {page === 'products' && <ProductsPage />}
+
+      {page === 'inventory' && <InventoryPage />}
+
+      {page === 'customers' && <CustomersPage onSelectOrder={selectOrder} />}
+
+      {(page === 'settings') && (
         <PlaceholderPage page={page} />
       )}
     </AdminLayout>

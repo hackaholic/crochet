@@ -32,14 +32,14 @@ export default function AdminSidebar({ currentPage, onNavigate, onExitAdmin }: P
 
   return (
     <aside
-      className="flex flex-col bg-[#1A1108] text-white transition-all duration-300 shrink-0"
-      style={{ width: collapsed ? 64 : 220, minHeight: '100vh' }}
+      className={`flex w-16 shrink-0 flex-col bg-[#1A1108] text-white transition-all duration-300 ${collapsed ? 'md:w-16' : 'md:w-[220px]'}`}
+      style={{ minHeight: '100vh' }}
     >
       {/* Brand */}
       <div className={`flex items-center gap-2.5 px-4 py-5 border-b border-white/10 ${collapsed ? 'justify-center' : ''}`}>
         <YarnLogo size={30} />
         {!collapsed && (
-          <div className="overflow-hidden">
+          <div className="hidden overflow-hidden md:block">
             <p className="font-bold text-sm leading-tight text-white" style={{ fontFamily: 'var(--font-serif)' }}>Sulocraft</p>
             <p className="text-[10px] text-white/40 tracking-widest uppercase">Admin</p>
           </div>
@@ -66,7 +66,7 @@ export default function AdminSidebar({ currentPage, onNavigate, onExitAdmin }: P
 
               {!collapsed && (
                 <>
-                  <span className="text-sm font-medium flex-1">{item.label}</span>
+                  <span className="hidden text-sm font-medium flex-1 md:block">{item.label}</span>
                   {item.badge !== undefined && (
                     <span className="text-[10px] font-bold bg-[#C4622D] text-white rounded-full w-4 h-4 flex items-center justify-center shrink-0">
                       {item.badge}
@@ -91,7 +91,7 @@ export default function AdminSidebar({ currentPage, onNavigate, onExitAdmin }: P
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           <span>{collapsed ? '→' : '←'}</span>
-          {!collapsed && <span>Collapse</span>}
+          {!collapsed && <span className="hidden md:inline">Collapse</span>}
         </button>
         {/* Exit admin */}
         <button
@@ -100,7 +100,7 @@ export default function AdminSidebar({ currentPage, onNavigate, onExitAdmin }: P
           title="Back to store"
         >
           <span>🏪</span>
-          {!collapsed && <span>Back to Store</span>}
+          {!collapsed && <span className="hidden md:inline">Back to Store</span>}
         </button>
       </div>
     </aside>

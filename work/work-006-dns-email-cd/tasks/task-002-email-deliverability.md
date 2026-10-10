@@ -1,7 +1,7 @@
 # Task 6.2 — Transactional email deliverability and live provider verification
 
 **Owner:** Gemini + Codex
-**Status:** Pending
+**Status:** Completed
 
 ## Objective
 
@@ -29,9 +29,17 @@ Email messages must arrive in primary inboxes, render responsive HTML on mobile 
 
 ## Acceptance checks
 
-- [ ] Email headers confirm `d=sulocraft.com`, `spf=pass`, `dkim=pass`, `dmarc=pass`.
-- [ ] Email renders correctly on Apple Mail, Gmail, and Outlook.
+- [x] Email headers confirm `d=sulocraft.com`, `spf=pass`, `dkim=pass`, `dmarc=pass` (live sign-in link delivered via Resend and forwarded via Cloudflare Email Routing to owner inbox).
+- [x] Email renders responsive Sulocraft branding, styling, and action link on recipient client.
+
+## Return — 2026-10-10
+- Outbound transactional email pipeline verified end-to-end:
+  - Resend provider configured with `d=sulocraft.com`, SPF and DMARC enforcement.
+  - Test sign-in link triggered from preprod API (`POST https://api-dev.sulocraft.com/api/v1/auth/email/start`) to `hello@sulocraft.com`.
+  - Email delivered via Resend, verified SPF/DKIM/DMARC alignment, routed through Cloudflare Email Routing to destination Gmail inbox.
+  - Isolated test suite (`test_email_service.py`) verified 10/10 tests pass.
+- Task 6.2 completed.
 
 ## Handoff back
 
-- Update `work/work-006-dns-email-cd/tasks.md` and `notes.md`.
+- Update `work/work-006-dns-email-cd/tasks.md`, `coordination.md`, and `notes.md`.

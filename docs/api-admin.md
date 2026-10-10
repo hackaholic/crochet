@@ -125,7 +125,9 @@ export interface AdminProductOut {
   description?: string;
   status: string; // ACTIVE, DRAFT, ARCHIVED
   brand: string;
-  primaryImage: string;
+  primaryImage: string; // Storage key, preserved on edits
+  primaryImageUrl: string; // Backend-resolved display URL
+  galleryImageUrls: string[]; // Backend-resolved display URLs
   badge?: string;
   customizable: boolean;
   rating: number;
@@ -510,6 +512,41 @@ export interface AdminOccasionOut {
   createdAt?: string | null;
   updatedAt?: string | null;
 }
+
+// -----------------------------------------------------------------------------
+// Tags Administration
+// -----------------------------------------------------------------------------
+
+export interface AdminTagCreate {
+  name: string; // 1 to 50 chars, trimmed, non-empty
+}
+
+export interface AdminTagOut {
+  id: number;
+  name: string;
+}
+
+// -----------------------------------------------------------------------------
+// Customers (Task 1.9.1)
+// -----------------------------------------------------------------------------
+
+export interface AdminCustomerOut {
+  id: number;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  status: string;
+  createdAt: string | null;
+  lastLoginAt: string | null;
+  orderCount: number;
+}
+
+export interface AdminCustomerListOut {
+  items: AdminCustomerOut[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
 ```
 
 ---
@@ -546,7 +583,25 @@ export interface AdminOccasionOut {
 | `POST` | `/api/v1/admin/categories` | Create taxonomy category |
 | `PATCH` | `/api/v1/admin/categories/{id}` | Update taxonomy category |
 | `DELETE` | `/api/v1/admin/categories/{id}` | Delete taxonomy category |
+| `GET` | `/api/v1/admin/tags` | List all available tags ordered by name/id for admin product discovery |
+| `POST` | `/api/v1/admin/tags` | Create a new tag or return existing tag if duplicate (case-insensitive duplicate check, concurrency safe) |
+| `GET` | `/api/v1/admin/customers` | Paginated customer list (`q`, `page`, `pageSize`) with total order counts, excluding admin users |
+| `GET` | `/api/v1/admin/customers/{id}` | Customer profile details with order count; 404 for missing or non-customer user |
+| `GET` | `/api/v1/admin/customers/{id}/orders` | Paginated order history strictly linked to customer by user_id |
 | `GET` | `/api/v1/admin/orders` | List all orders across customers with extended filters (`from`, `to`, `paymentStatus`, `country`, `sku`, `minTotal`, `maxTotal`, `sortBy`) |
 | `GET` | `/api/v1/admin/orders/{orderNumber}` | Full order details with audit timeline |
 | `PATCH` | `/api/v1/admin/orders/{orderNumber}/status` | Controlled status transition (adds tracking, restores inventory on cancellation) |
 | `GET` | `/api/v1/admin/analytics` | Store KPI dashboard metrics, revenue, and stock alerts |
+
+### Customer Administration Rules (Task 1.9.1)
+- **Authentication**: `GET` on `/api/v1/admin/customers*` requires `ADMIN` role. Unauthenticated requests return `401`, non-admin users return `403`.
+- **Role Scope**: Only users with role `CUSTOMER` are returned; admins are excluded. Requests for missing IDs or non-customer accounts return `404 Not Found`.
+- **Search Bounds**: Parameterized case-insensitive matching across `name`, `email`, and `phone` with a 200-character maximum query bound (`422 Unprocessable Entity` for oversized queries).
+- **Strict Order Ownership**: Customer order history only returns orders where `Order.user_id == customer.id`. Guest orders remain in the general Orders screen and are never attached by matching email or phone.
+- **Privacy & Safety**: Passwords, sessions, auth identity subjects/tokens, magic links, and delivery addresses are never exposed in customer list or profile responses.
+
+### Tag Management & Product Association Rules
+- **Authentication**: `GET` and `POST` on `/api/v1/admin/tags` require `ADMIN` role. Unauthenticated requests return `401`, non-admin users return `403`.
+- **Validation**: Tag name must be trimmed, non-empty, and bounded between 1 and 50 characters (`422 Unprocessable Entity` for empty, whitespace-only, or oversized strings). Quotes and SQL-like characters are safely parameterized.
+- **Idempotency & Concurrency**: Creating an existing tag (case-insensitive comparison, e.g. `handmade` vs `Handmade`) returns the existing tag (`200 OK`) rather than creating a duplicate (`201 Created`). Handled concurrency-safely via database savepoints.
+- **Product Association Validation**: `POST /api/v1/admin/products` and `PATCH`/`PUT /api/v1/admin/products/{id}` strictly validate all `tagIds` against persisted tags. Any unknown tag ID triggers an immediate `400 Bad Request` (`detail: "Invalid tagIds: [...]"`). On failed save, existing product associations and attributes remain completely intact.

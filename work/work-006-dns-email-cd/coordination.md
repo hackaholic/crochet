@@ -1,13 +1,9 @@
 # Work 006 coordination
 
-**Current owner:** Gemini — Task 6.3 (remaining GitHub Actions workflow hardening)
-**Active cross-agent handoffs:** Task 6.3 remains in progress with Gemini; Task 6.3.5 is complete.
-**Handoff state:** Task 6.3.5 is complete. The backend suite passed, PREPROD release `f361a21b11c1` deployed, secrets bootstrapped, and both VPS and public API health checks passed in [run 37215074787](https://github.com/hackaholic/crochet/actions/runs/37215074787). No new Gemini handoff was sent.
+- **6.1 — Owner + Codex; Completed:** Verified live Cloudflare forwarding and Resend DNS (DMARC, SPF, DKIM, Email Routing).
+- **6.2 — Gemini + Codex; Completed:** Live transactional-email deliverability verification on preprod domain verified end-to-end (magic link sign-in dispatched, Resend delivered, DKIM/SPF/DMARC passed, Cloudflare Email Routing forwarded to Gmail inbox).
+- **6.4 — Owner + Codex; waiting:** Confirm development access policy; Workers storefront/API setup has historical completion evidence. Use [task 004](tasks/task-004-dev-storefront-access.md).
+- **6.7 — Codex; active, local implementation/tests passed; waiting for authorized push and preprod acceptance:** Current CI deployment alignment, [task 007](tasks/task-007-current-cd-alignment.md). No Gemini implementation is assigned for this gap.
+- **6.3 / 6.5 — Returned:** Initial CI and frontend/API configuration completion retained as historical evidence.
 
-## Ownership boundaries
-
-- Work 003 owns SOPS/age vault and secret lifecycle.
-- Work 012 owns VPS environment isolation and runtime contracts.
-- Work 006 configures CI triggers and GitHub Actions deployment execution.
-
-See [global active handoff registry](../../docs/handoffs.md).
+Work 003 owns secrets; Work 012 owns isolation; Work 006 owns CI integration/provider acceptance. Read `work/GEMINI_WORKFLOW_PROMPT.md` before Gemini pickup. Detailed status stays here and in the exact contracts.

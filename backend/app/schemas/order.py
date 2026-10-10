@@ -3,8 +3,9 @@
 Conforms to Sections 18, 20, 21, and 26 of the E-commerce Multi-Agent Specification.
 """
 
+import re
 from typing import Any
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class AddressBase(BaseModel):
@@ -146,6 +147,7 @@ class OrderOut(BaseModel):
     tracking_number: str | None = Field(default=None, serialization_alias="trackingNumber")
     courier_name: str | None = Field(default=None, serialization_alias="courierName")
     estimated_delivery: str | None = Field(default=None, serialization_alias="estimatedDelivery")
+    guest_tracking_token: str | None = Field(default=None, serialization_alias="guestTrackingToken")
     created_at: str = Field(..., serialization_alias="createdAt")
     updated_at: str = Field(..., serialization_alias="updatedAt")
 
@@ -162,3 +164,30 @@ class OrderTrackingOut(BaseModel):
     courier_name: str | None = Field(default=None, serialization_alias="courierName")
     estimated_delivery: str | None = Field(default=None, serialization_alias="estimatedDelivery")
     timeline: list[OrderStatusHistoryOut] = []
+
+
+class GuestTrackingLinkRequest(BaseModel):
+    """Request payload to issue a secure guest order tracking magic link."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    order_number: str = Field(..., min_length=1, max_length=50, alias="orderNumber", description="Order number (e.g. SLC-...)")
+    email: str = Field(..., min_length=3, max_length=255, description="Email address used during checkout")
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        clean = v.strip().lower()
+        if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", clean):
+            raise ValueError("Invalid email format.")
+        return clean
+
+
+class GuestTrackingLinkResponse(BaseModel):
+    """Generic non-enumerating response for tracking link request."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    message: str = Field(..., description="Status message indicating processing status")
+    dev_tracking_link: str | None = Field(default=None, alias="devTrackingLink", description="Included only in development/testing environments")
+

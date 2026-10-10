@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Any
 from app.core.images import build_image_url
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator, model_validator
 
 
 class AdminVariantCreate(BaseModel):
@@ -144,6 +144,17 @@ class AdminProductOut(BaseModel):
     min_price_paise: int = Field(default=0, alias="minPricePaise")
     created_at: datetime | None = Field(default=None, alias="createdAt")
     updated_at: datetime | None = Field(default=None, alias="updatedAt")
+
+
+    @computed_field(alias="primaryImageUrl")
+    @property
+    def primary_image_url(self) -> str:
+        return build_image_url(self.primary_image)
+
+    @computed_field(alias="galleryImageUrls")
+    @property
+    def gallery_image_urls(self) -> list[str]:
+        return [build_image_url(key) for key in self.gallery_images]
 
 
 class AdminProductListOut(BaseModel):
@@ -801,3 +812,61 @@ class AdminOccasionOut(BaseModel):
     product_ids: list[int] = Field(default_factory=list, alias="productIds", serialization_alias="productIds")
     created_at: datetime | None = Field(default=None, alias="createdAt", serialization_alias="createdAt")
     updated_at: datetime | None = Field(default=None, alias="updatedAt", serialization_alias="updatedAt")
+
+
+class AdminTagCreate(BaseModel):
+    """Payload to create or get an existing tag."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    name: str = Field(..., min_length=1, max_length=50, description="Tag name")
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v: str) -> str:
+        trimmed = v.strip()
+        if not trimmed:
+            raise ValueError("Tag name cannot be empty or whitespace only")
+        if len(trimmed) > 50:
+            raise ValueError("Tag name cannot exceed 50 characters")
+        return trimmed
+
+
+class AdminTagOut(BaseModel):
+    """Admin representation of a tag."""
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    id: int
+    name: str
+
+
+# -----------------------------------------------------------------------------
+# Customer Management (Task 1.9.1)
+# -----------------------------------------------------------------------------
+
+
+class AdminCustomerOut(BaseModel):
+    """Admin representation of a customer profile."""
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    id: int
+    name: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    status: str
+    created_at: datetime | None = Field(default=None, alias="createdAt")
+    last_login_at: datetime | None = Field(default=None, alias="lastLoginAt")
+    order_count: int = Field(default=0, alias="orderCount")
+
+
+class AdminCustomerListOut(BaseModel):
+    """Paginated list of customers for administration."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    items: list[AdminCustomerOut]
+    total: int
+    page: int
+    page_size: int = Field(alias="pageSize")

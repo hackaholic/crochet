@@ -8,3 +8,5 @@
 - Gemini receives the reusable repository workflow prompt once per context reset/new session, plus the selected work ID and exact contract. Never send only a broad global handoff or ask Gemini to infer its assignment from chat history.
 - Verified R2 asset uploads are complete inputs. A backend handoff updates the DB reference to the supplied object key; it must not copy or upload duplicate assets unless the contract explicitly reopens that scope.
 - **Release ownership:** Gemini implements and hands off backend subtasks; Codex owns the integrated release commit and push to `dev` after local frontend/API/database verification. Agents do not push separate partial builds, so each preview represents one tested contract.
+
+- Contract filenames follow the existing `task-NNN-description.md` convention. Logical IDs and historical status remain unchanged; completed contracts are retained. Nested work task directories retain their established structure.

@@ -11,7 +11,7 @@ try:
 except Exception:
     IST = timezone(timedelta(hours=5, minutes=30))
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, Response, UploadFile, status
 import sqlalchemy as sa
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
@@ -70,6 +70,8 @@ from app.schemas.admin import (
     AdminCollectionCreate,
     AdminCollectionOut,
     AdminCollectionUpdate,
+    AdminCustomerListOut,
+    AdminCustomerOut,
     AdminDashboardComparison,
     AdminDashboardSummaryOut,
     AdminFinanceSalesBucket,
@@ -100,10 +102,23 @@ from app.schemas.admin import (
     AdminSalesSeriesOut,
     AdminSearchResultItem,
     AdminSendWelcomeRequest,
+    AdminTagCreate,
+    AdminTagOut,
     AdminTopSellingProduct,
     AdminVariantCreate,
     AdminVariantOut,
     AdminVariantUpdate,
+)
+from app.services.admin_customers import (
+    get_admin_customer,
+    get_admin_customer_orders,
+    list_admin_customers,
+)
+from app.services.admin_inventory import adjust_variant_inventory_atomic
+from app.services.admin_tags import (
+    get_or_create_admin_tag,
+    list_admin_tags,
+    validate_and_get_tags_by_ids,
 )
 from app.schemas.promotion import (
     AdminCouponCreate,
@@ -482,9 +497,9 @@ def create_product(
                 )
             )
 
-    # Attach tags
+    # Attach tags (validates all tag IDs exist)
     if payload.tag_ids:
-        tags = db.query(Tag).filter(Tag.id.in_(payload.tag_ids)).all()
+        tags = validate_and_get_tags_by_ids(db, payload.tag_ids)
         product.tags.extend(tags)
 
     # Attach gallery images
@@ -565,6 +580,7 @@ def get_admin_product(
 
 
 @router.patch("/products/{product_id}", response_model=AdminProductOut)
+@router.put("/products/{product_id}", response_model=AdminProductOut)
 def update_product(
     product_id: int,
     payload: AdminProductUpdate,
@@ -587,6 +603,10 @@ def update_product(
     )
     if not product:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
+
+    new_tags = None
+    if payload.tag_ids is not None:
+        new_tags = validate_and_get_tags_by_ids(db, payload.tag_ids)
 
     if payload.name is not None:
         product.name = payload.name
@@ -636,8 +656,8 @@ def update_product(
                 )
             )
 
-    if payload.tag_ids is not None:
-        product.tags = db.query(Tag).filter(Tag.id.in_(payload.tag_ids)).all()
+    if new_tags is not None:
+        product.tags = new_tags
 
     if payload.gallery_images is not None:
         product.images.clear()
@@ -757,24 +777,8 @@ def adjust_variant_inventory(
     payload: AdminInventoryAdjustRequest,
     db: Session = Depends(get_db),
 ) -> AdminVariantOut:
-    """Adjust variant inventory level by absolute amount or delta."""
-    variant = db.query(ProductVariant).filter(ProductVariant.id == variant_id).first()
-    if not variant:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Variant not found")
-
-    if payload.stock_quantity is not None:
-        variant.stock_quantity = payload.stock_quantity
-    elif payload.adjustment is not None:
-        new_quantity = variant.stock_quantity + payload.adjustment
-        if new_quantity < 0:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Resulting stock quantity cannot be negative")
-        variant.stock_quantity = new_quantity
-    else:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Must provide stock_quantity or adjustment")
-
-    variant.updated_at = datetime.now(timezone.utc)
-    db.commit()
-    db.refresh(variant)
+    """Adjust variant inventory level by absolute amount or delta atomically."""
+    variant = adjust_variant_inventory_atomic(db=db, variant_id=variant_id, payload=payload)
     return _variant_to_admin_out(variant)
 
 
@@ -1056,6 +1060,35 @@ def assign_collection_products(
     col.updated_at = datetime.now(timezone.utc)
     db.commit()
     return {"status": "ok", "collectionId": collection_id, "productCount": len(payload.product_ids)}
+
+
+# -----------------------------------------------------------------------------
+# Tags Administration
+# -----------------------------------------------------------------------------
+
+
+@router.get("/tags", response_model=list[AdminTagOut])
+def get_admin_tags(
+    db: Session = Depends(get_db),
+) -> list[AdminTagOut]:
+    """List all available tags ordered by name/id for admin product management."""
+    tags = list_admin_tags(db)
+    return [AdminTagOut.model_validate(t) for t in tags]
+
+
+@router.post("/tags", response_model=AdminTagOut)
+def create_admin_tag(
+    payload: AdminTagCreate,
+    response: Response,
+    db: Session = Depends(get_db),
+) -> AdminTagOut:
+    """Create a new tag or return existing tag if duplicate (case-insensitive)."""
+    tag, is_new = get_or_create_admin_tag(db, payload.name)
+    if is_new:
+        response.status_code = status.HTTP_201_CREATED
+    else:
+        response.status_code = status.HTTP_200_OK
+    return AdminTagOut.model_validate(tag)
 
 
 # -----------------------------------------------------------------------------
@@ -3092,6 +3125,54 @@ def delete_admin_occasion(
     db.delete(occasion)
     db.commit()
     return {"status": "ok", "message": f"Occasion '{occasion_id}' deleted successfully"}
+
+
+# -----------------------------------------------------------------------------
+# Customer Administration (Task 1.9.1)
+# -----------------------------------------------------------------------------
+
+
+@router.get("/customers", response_model=AdminCustomerListOut)
+def list_customers(
+    q: str | None = Query(default=None, max_length=200, description="Search by name, email, or phone"),
+    page: int = Query(default=1, ge=1, description="Page number"),
+    page_size: int = Query(default=20, ge=1, le=100, alias="pageSize", description="Items per page"),
+    db: Session = Depends(get_db),
+) -> AdminCustomerListOut:
+    """List customers with search and pagination."""
+    items, total = list_admin_customers(db=db, q=q, page=page, page_size=page_size)
+    return AdminCustomerListOut(
+        items=items,
+        total=total,
+        page=page,
+        pageSize=page_size,
+    )
+
+
+@router.get("/customers/{customer_id}", response_model=AdminCustomerOut)
+def get_customer(
+    customer_id: int,
+    db: Session = Depends(get_db),
+) -> AdminCustomerOut:
+    """Retrieve detailed customer profile."""
+    return get_admin_customer(db=db, customer_id=customer_id)
+
+
+@router.get("/customers/{customer_id}/orders", response_model=AdminOrderListOut)
+def get_customer_orders(
+    customer_id: int,
+    page: int = Query(default=1, ge=1, description="Page number"),
+    page_size: int = Query(default=20, ge=1, le=100, alias="pageSize", description="Items per page"),
+    db: Session = Depends(get_db),
+) -> AdminOrderListOut:
+    """Retrieve order history strictly linked to a customer."""
+    orders, total = get_admin_customer_orders(db=db, customer_id=customer_id, page=page, page_size=page_size)
+    return AdminOrderListOut(
+        items=[_order_to_admin_detail(o) for o in orders],
+        total=total,
+        page=page,
+        pageSize=page_size,
+    )
 
 
 # -----------------------------------------------------------------------------

@@ -7,7 +7,7 @@ try:
 except Exception:
     IST = timezone(timedelta(hours=5, minutes=30))
 
-from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, JSON, String, Table, Text
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, JSON, String, Table, Text, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
@@ -173,6 +173,10 @@ class Tag(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(50), unique=True, index=True, nullable=False)
+
+    __table_args__ = (
+        Index("uq_tags_name_lower", func.lower(name), unique=True),
+    )
 
     products = relationship("Product", secondary=product_tags, back_populates="tags")
 

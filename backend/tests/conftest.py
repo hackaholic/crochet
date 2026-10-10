@@ -78,6 +78,7 @@ from app.models import (
     Wishlist,
     WishlistItem,
 )
+from app.models.catalogue import product_tags
 from app.models.user import MagicLinkToken
 
 SEEDED_PRODUCT_IDS: set[int] = set()
@@ -168,6 +169,7 @@ def clean_transactional_data():
 
         # Clean non-seeded products dynamically without arbitrary primary-key thresholds
         if SEEDED_PRODUCT_IDS:
+            db.execute(product_tags.delete().where(product_tags.c.product_id.not_in(SEEDED_PRODUCT_IDS)))
             db.query(Product).filter(Product.id.not_in(SEEDED_PRODUCT_IDS)).delete(synchronize_session=False)
 
         # Clean non-seeded categories

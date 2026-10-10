@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { YarnLogo } from './Icons';
 
-type Page = 'home' | 'shop' | 'product' | 'cart' | 'wishlist' | 'checkout' | 'about' | 'contact' | 'shipping' | 'returns' | 'privacy' | 'terms' | 'notFound';
+type Page = 'home' | 'shop' | 'product' | 'cart' | 'wishlist' | 'checkout' | 'about' | 'tracking' | 'contact' | 'shipping' | 'returns' | 'privacy' | 'terms' | 'notFound';
 
 interface FooterProps {
   onNavigate: (page: Page) => void;
@@ -109,6 +109,7 @@ export default function Footer({ onNavigate }: FooterProps) {
             <ul className="space-y-2.5">
               {[
                 { label: 'Contact Us', page: 'contact' as Page },
+                { label: 'Track your order', page: 'tracking' as Page },
                 { label: 'Shipping', page: 'shipping' as Page },
                 { label: 'Returns', page: 'returns' as Page },
                 { label: 'Privacy', page: 'privacy' as Page },

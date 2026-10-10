@@ -2,7 +2,7 @@
 
 **Objective:** Coordinate Codex and Gemini around small, verifiable subtasks while reducing repeated context reads.
 
-**Current state:** Completed. Every current work folder has a coordination entry point; global handoff/status files are short registries, with prior history preserved; Gemini has a reusable context/rules prompt.
+**Current state:** Completed. Task 4.8 naming consistency audit passed; existing contracts and handoffs preserved. Every current work folder has a coordination entry point; global handoff/status files are short registries, with prior history preserved; Gemini has a reusable context/rules prompt.
 
 **Architecture:** `work/INDEX.md` is navigation only. Each work folder contains concise scope, actionable tasks, decisions, notes, and `coordination.md` for current owner/agent handoffs. Every cross-agent subtask gets its own contract file based on `work/TASK_TEMPLATE.md`. Global `docs/handoffs.md` and `docs/coordination-status.md` are compact indexes; historical detail is archived, not copied into live status.
 
