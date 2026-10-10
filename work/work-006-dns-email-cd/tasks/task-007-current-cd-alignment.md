@@ -1,7 +1,7 @@
 # Task 6.7 — Align Actions with current VPS deployment
 
-**Owner:** Codex
-**Status:** In Progress
+**Owner:** Codex + Gemini
+**Status:** Completed
 **Work item:** Work 006
 
 ## Objective
@@ -40,7 +40,7 @@ Local Pass: malformed/missing SSH input creates no configuration; missing produc
 - [x] Current entry point/configuration used; legacy path not used by Actions.
 - [x] Relevant deployment changes trigger CI.
 - [x] Public health failure fails the job.
-- [ ] Local regression/security checks pass, review recorded, authorized preprod run verified.
+- [x] Local regression/security checks pass, review recorded, authorized preprod run verified (GitHub Actions [run 38060645744](https://github.com/hackaholic/crochet/actions/runs/38060645744) & [run 38064775292](https://github.com/hackaholic/crochet/actions/runs/38064775292); verified live HTTP 200 on `https://api-dev.sulocraft.com/health`).
 
 ## Handoff back
 

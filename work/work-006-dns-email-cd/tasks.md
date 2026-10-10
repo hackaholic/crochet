@@ -2,8 +2,6 @@
 
 ## In Progress
 
-- [ ] 6.7 Codex: Align backend Actions with the current configurable deployment command and fail-closed public health check per [task-007-current-cd-alignment.md](tasks/task-007-current-cd-alignment.md).
-
 ## Pending
 
 - [ ] 6.4 Owner + Codex: Cloudflare Workers dev access-policy verification (storefront setup already completed) per [task-004-dev-storefront-access.md](tasks/task-004-dev-storefront-access.md).
@@ -26,3 +24,4 @@
 - [x] 6.5 Cloudflare dev storefront bundle uses the dev API URL (`https://api-dev.sulocraft.com/api/v1`) and renders the live catalogue.
 
 - [x] 6.6 Codex: Repository/documentation alignment audit (2026-10-10). Historical records preserved; current infrastructure/provider state is not inferred from old evidence.
+- [x] 6.7 Codex + Gemini: Align backend Actions with the current configurable deployment command and fail-closed public health check per [task-007-current-cd-alignment.md](tasks/task-007-current-cd-alignment.md). Verified via successful preprod deployment in GitHub Actions [run 38060645744](https://github.com/hackaholic/crochet/actions/runs/38060645744) and [run 38064775292](https://github.com/hackaholic/crochet/actions/runs/38064775292).
