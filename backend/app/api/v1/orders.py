@@ -39,8 +39,10 @@ from app.schemas.order import (
     GuestTrackingLinkResponse,
     OrderCreate,
     OrderItemOut,
+    OrderMilestoneOut,
     OrderOut,
     OrderStatusHistoryOut,
+    OrderTerminalStateOut,
     OrderTrackingOut,
 )
 from app.services.guest_tracking import (
@@ -240,6 +242,16 @@ def update_address(
     update_data = address_in.model_dump(exclude_unset=True)
     if update_data.get("is_default") is True:
         db.query(Address).filter(Address.user_id == user.id).update({"is_default": False})
+    elif update_data.get("is_default") is False and address.is_default:
+        # If user unsets default on the current default address, promote another address to default
+        other_addr = (
+            db.query(Address)
+            .filter(Address.user_id == user.id, Address.id != address.id)
+            .order_by(Address.id.desc())
+            .first()
+        )
+        if other_addr:
+            other_addr.is_default = True
 
     for field, value in update_data.items():
         setattr(address, field, value)
@@ -672,6 +684,118 @@ def get_order_detail(
     return _to_order_out(order)
 
 
+def _compute_milestones_and_terminal_state(
+    order: Order,
+) -> tuple[list[OrderMilestoneOut], OrderTerminalStateOut | None]:
+    """Derive controlled milestone progress and terminal state from actual status history.
+
+    Follows DEC018-4:
+    - Standard progression: PLACED -> CONFIRMED -> PROCESSING -> READY_TO_SHIP -> SHIPPED -> OUT_FOR_DELIVERY -> DELIVERED.
+    - Terminal states (CANCELLED, REFUNDED) populate terminal_state with an honest explanation without falsely completing delivery.
+    - Missing historical timestamps stay unknown (None); no invented events are backfilled.
+    """
+    # 1. Map history timestamps by status code (earliest timestamp recorded)
+    history_timestamps: dict[str, str] = {}
+    if order.created_at:
+        history_timestamps["PLACED"] = order.created_at.isoformat()
+
+    for h in order.status_history:
+        if h.status and h.timestamp:
+            iso_ts = h.timestamp.isoformat()
+            if h.status not in history_timestamps:
+                history_timestamps[h.status] = iso_ts
+
+    # If first event was CONFIRMED or PENDING_PAYMENT on checkout, ensure PLACED timestamp exists
+    if "PLACED" not in history_timestamps:
+        if "CONFIRMED" in history_timestamps:
+            history_timestamps["PLACED"] = history_timestamps["CONFIRMED"]
+        elif "PENDING_PAYMENT" in history_timestamps:
+            history_timestamps["PLACED"] = history_timestamps["PENDING_PAYMENT"]
+
+    # 2. Check for terminal states
+    terminal_state: OrderTerminalStateOut | None = None
+    if order.status == OrderStatus.CANCELLED.value:
+        ts = history_timestamps.get("CANCELLED")
+        note = next((h.note for h in reversed(order.status_history) if h.status == "CANCELLED" and h.note), None)
+        explanation = note or "This order has been cancelled and will not be delivered."
+        terminal_state = OrderTerminalStateOut(
+            code="CANCELLED",
+            label="Order Cancelled",
+            explanation=explanation,
+            timestamp=ts,
+        )
+    elif order.status == OrderStatus.REFUNDED.value:
+        ts = history_timestamps.get("REFUNDED")
+        note = next((h.note for h in reversed(order.status_history) if h.status == "REFUNDED" and h.note), None)
+        explanation = note or "This order has been refunded."
+        terminal_state = OrderTerminalStateOut(
+            code="REFUNDED",
+            label="Order Refunded",
+            explanation=explanation,
+            timestamp=ts,
+        )
+
+    # 3. Controlled progression definitions
+    progression: list[tuple[str, str]] = [
+        ("PLACED", "Order Placed"),
+        ("CONFIRMED", "Confirmed"),
+        ("PROCESSING", "Processing"),
+        ("READY_TO_SHIP", "Ready for Shipment"),
+        ("SHIPPED", "Shipped"),
+        ("OUT_FOR_DELIVERY", "Out for Delivery"),
+        ("DELIVERED", "Delivered"),
+    ]
+
+    status_order_map = {code: idx for idx, (code, _) in enumerate(progression)}
+    current_status = order.status
+
+    # If order is in a terminal state, milestones freeze based on whatever history was reached prior
+    if terminal_state is not None:
+        milestones: list[OrderMilestoneOut] = []
+        for code, label in progression:
+            ts = history_timestamps.get(code)
+            milestones.append(
+                OrderMilestoneOut(
+                    code=code,
+                    label=label,
+                    state="COMPLETED" if ts is not None else "PENDING",
+                    timestamp=ts,
+                )
+            )
+        return milestones, terminal_state
+
+    # Normal progression
+    current_idx = status_order_map.get(current_status, -1)
+
+    milestones = []
+    for idx, (code, label) in enumerate(progression):
+        ts = history_timestamps.get(code)
+        if current_idx >= 0:
+            if idx < current_idx:
+                state = "COMPLETED"
+            elif idx == current_idx:
+                state = "CURRENT"
+            else:
+                state = "PENDING"
+        else:
+            # Current status not in forward progression (e.g. PENDING_PAYMENT)
+            if code == "PLACED" and "PLACED" in history_timestamps:
+                state = "CURRENT" if current_status == "PENDING_PAYMENT" else "COMPLETED"
+            else:
+                state = "PENDING"
+
+        milestones.append(
+            OrderMilestoneOut(
+                code=code,
+                label=label,
+                state=state,
+                timestamp=ts,
+            )
+        )
+
+    return milestones, None
+
+
 @router.get("/orders/{order_id_or_number}/tracking", response_model=OrderTrackingOut)
 def get_order_tracking(
     order_id_or_number: str,
@@ -731,6 +855,8 @@ def get_order_tracking(
         for h in order.status_history
     ]
 
+    milestones, terminal_state = _compute_milestones_and_terminal_state(order)
+
     return OrderTrackingOut(
         order_number=order.order_number,
         status=order.status,
@@ -739,6 +865,8 @@ def get_order_tracking(
         courier_name=order.courier_name,
         estimated_delivery=order.estimated_delivery.isoformat() if order.estimated_delivery else None,
         timeline=timeline_out,
+        milestones=milestones,
+        terminal_state=terminal_state,
     )
 
 

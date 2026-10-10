@@ -3,15 +3,52 @@
 Conforms to Sections 19 & 27 of the Specification.
 """
 
+import re
 from typing import Any
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class ProfileUpdate(BaseModel):
     """Payload to update customer profile fields."""
 
-    name: str | None = Field(default=None, min_length=2, max_length=100)
+    model_config = ConfigDict(extra="ignore")
+
+    name: str | None = Field(default=None, max_length=100)
     email: str | None = Field(default=None, max_length=255)
+    phone: str | None = Field(default=None, max_length=20)
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def validate_name(cls, v: Any) -> str | None:
+        if v is None:
+            return None
+        if not isinstance(v, str):
+            raise ValueError("Name must be a string")
+        trimmed = v.strip()
+        if not trimmed:
+            raise ValueError("Name cannot be empty or blank")
+        if len(trimmed) < 2:
+            raise ValueError("Name must be at least 2 characters")
+        if len(trimmed) > 100:
+            raise ValueError("Name cannot exceed 100 characters")
+        return trimmed
+
+    @field_validator("phone", mode="before")
+    @classmethod
+    def validate_phone(cls, v: Any) -> str | None:
+        if v is None:
+            return None
+        if not isinstance(v, str):
+            raise ValueError("Phone must be a string")
+        trimmed = v.strip()
+        if not trimmed:
+            return None  # clearing phone
+        # Normalize: allow optional leading '+' and digits, spaces, hyphens
+        cleaned = re.sub(r"[\s\-]", "", trimmed)
+        # Check standard format: e.g. 10-digit Indian mobile or +91 followed by 10 digits
+        if not re.match(r"^(\+?[1-9]\d{7,14}|\d{10})$", cleaned):
+            raise ValueError("Phone number must be a valid 10-digit or E.164 phone number")
+        return cleaned
 
 
 class ProfileOut(BaseModel):

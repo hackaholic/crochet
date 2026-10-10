@@ -49,3 +49,10 @@ it('constrains wrapping of long untrusted identifiers', () => {
   expect(screen.getByRole('region', { name: 'Shipment tracking' })).toHaveClass('min-w-0', '[overflow-wrap:anywhere]');
   expect(screen.getByText('X'.repeat(500))).toBeInTheDocument();
 });
+
+it('renders API milestones and terminal explanation without completing pending delivery', () => {
+  render(<ShipmentTracking tracking={{orderNumber:'TEST',status:'CANCELLED',paymentStatus:'PAID',trackingNumber:null,courierName:null,estimatedDelivery:null,timeline:[],milestones:[{code:'PLACED',label:'Order placed',state:'COMPLETED',timestamp:null},{code:'DELIVERED',label:'Delivered',state:'PENDING',timestamp:null}],terminalState:{code:'CANCELLED',label:'Cancelled',explanation:'This order was cancelled.',timestamp:null}}}/>);
+  expect(screen.getByRole('region',{name:'Package progress'})).toBeVisible();
+  expect(screen.getByText('This order was cancelled.')).toBeVisible();
+  expect(screen.getByText('pending')).toBeVisible();
+});

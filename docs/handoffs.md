@@ -16,3 +16,7 @@ Only list a handoff here when the work folder has a specific cross-agent task re
 - Work001 Customers: [coordination](../work/work-001-admin-dashboard/coordination.md), [Gemini1.9.1 contract](../work/work-001-admin-dashboard/tasks/task-010-customers-api.md).
 
 Work017: [coordination](../work/work-017-order-shipment-tracking/coordination.md); Gemini completed [17.1](../work/work-017-order-shipment-tracking/tasks/task-001-secure-tracking-api.md), [17.4](../work/work-017-order-shipment-tracking/tasks/task-004-courier-update-audit.md), and [17.7](../work/work-017-order-shipment-tracking/tasks/task-007-fragment-tracking-email-links.md); returned to Codex for final acceptance ([17.5](../work/work-017-order-shipment-tracking/tasks/task-005-local-tracking-acceptance.md)).
+
+Work018: [coordination](../work/work-018-customer-account-settings/coordination.md); Gemini returned/completed contracts [18.2 profile](../work/work-018-customer-account-settings/tasks/task-002-profile-contact-api.md), [18.3 addresses](../work/work-018-customer-account-settings/tasks/task-003-address-management-api.md), [18.4 lifecycle](../work/work-018-customer-account-settings/tasks/task-004-order-progress-api.md).
+
+Work001 Finance analytics: [coordination](../work/work-001-admin-dashboard/coordination.md); Gemini pickup-ready [1.14.1 metric contract](../work/work-001-admin-dashboard/tasks/task-021-analytics-metric-contract.md). Other API subtasks depend on its definitions.

@@ -109,19 +109,40 @@ def update_customer_profile(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ProfileOut:
-    """Update customer profile information."""
+    """Update customer profile information.
+
+    Conforms to DEC018-2 and DEC018-3:
+    - Delivery contact phone is editable; normalized and checked for conflicts.
+    - Login email is an authentication identifier: changing it through unverified PATCH
+      is prohibited; same-email no-op is allowed.
+    - Name is normalized and Unicode-safe.
+    """
     if payload.name is not None:
         user.name = payload.name
+
     if payload.email is not None:
-        # Check uniqueness if changing email
+        # DEC018-3: Prohibit changing login email through unverified profile PATCH
         if payload.email != user.email:
-            existing = db.query(User).filter(User.email == payload.email).first()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email address cannot be changed through profile settings. A verified email change flow is required.",
+            )
+
+    # Check and update phone if provided in payload fields
+    if "phone" in payload.model_fields_set:
+        new_phone = payload.phone
+        if new_phone is not None and new_phone != "":
+            # Check phone uniqueness without exposing other customer PII
+            existing = db.query(User).filter(User.phone == new_phone).first()
             if existing and existing.id != user.id:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="This email address is already associated with another account.",
+                    detail="This phone number is already associated with another account.",
                 )
-            user.email = payload.email
+            user.phone = new_phone
+        else:
+            # Explicitly clearing phone
+            user.phone = None
 
     user.updated_at = datetime.now(timezone.utc)
     db.commit()

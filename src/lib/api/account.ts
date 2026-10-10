@@ -1,3 +1,4 @@
+import { accountResponseError } from './validationErrors';
 import { apiUrl } from './client';
 
 export interface ProfileOut {
@@ -25,13 +26,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     headers: init?.body ? { 'Content-Type': 'application/json' } : undefined,
     ...init,
   });
-  if (!response.ok) throw new Error(String(response.status));
+  if (!response.ok) throw await accountResponseError(response);
   return response.json() as Promise<T>;
 }
 
 export const accountProfileApi = {
   overview: () => request<AccountOverviewOut>('/account/overview'),
-  updateProfile: (profile: Pick<ProfileOut, 'name' | 'email'>) => request<ProfileOut>('/account/profile', {
+  updateProfile: (profile: Partial<Pick<ProfileOut, 'name' | 'email' | 'phone'>>) => request<ProfileOut>('/account/profile', {
     method: 'PATCH',
     body: JSON.stringify(profile),
   }),

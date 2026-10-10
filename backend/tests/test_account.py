@@ -28,7 +28,7 @@ def _login_test_user(phone: str = "9999966001") -> dict[str, str]:
 
 
 def test_customer_profile_get_and_update():
-    """Verify viewing and updating customer profile information."""
+    """Verify viewing and updating customer profile information with phone and DEC018-3 policy."""
     cookies = _login_test_user("9999966001")
 
     # 1. Fetch initial profile
@@ -38,20 +38,136 @@ def test_customer_profile_get_and_update():
     assert profile["phone"] == "9999966001"
     assert "identities" in profile
 
-    # 2. Update profile
+    # 2. Update profile name and phone (18.2-TC01)
     update_res = client.patch(
         "/api/v1/account/profile",
-        json={"name": "Meera Patel", "email": "meera.patel@example.com"},
+        json={"name": "Meera Patel", "phone": "+919876543210"},
         cookies=cookies,
     )
     assert update_res.status_code == 200
     updated = update_res.json()
     assert updated["name"] == "Meera Patel"
-    assert updated["email"] == "meera.patel@example.com"
+    assert updated["phone"] == "+919876543210"
 
     # 3. Verify get returns new values
     res2 = client.get("/api/v1/account/profile", cookies=cookies)
     assert res2.json()["name"] == "Meera Patel"
+    assert res2.json()["phone"] == "+919876543210"
+
+
+def test_customer_profile_unicode_and_whitespace():
+    """18.2-TC02: Verify Unicode name and trimmed whitespace."""
+    cookies = _login_test_user("9999966011")
+
+    update_res = client.patch(
+        "/api/v1/account/profile",
+        json={"name": "  Meera Patel (మీరా)  ", "phone": " 9876543211 "},
+        cookies=cookies,
+    )
+    assert update_res.status_code == 200
+    data = update_res.json()
+    assert data["name"] == "Meera Patel (మీరా)"
+    assert data["phone"] == "9876543211"
+
+
+def test_customer_profile_clear_phone():
+    """18.2-TC03: Verify clearing optional phone deliberately."""
+    cookies = _login_test_user("9999966012")
+
+    update_res = client.patch(
+        "/api/v1/account/profile",
+        json={"phone": None},
+        cookies=cookies,
+    )
+    assert update_res.status_code == 200
+    assert update_res.json()["phone"] is None
+
+    # Verify cleared via GET
+    res = client.get("/api/v1/account/profile", cookies=cookies)
+    assert res.json()["phone"] is None
+
+
+def test_customer_profile_reject_blank_name():
+    """18.2-TC04: Verify rejection of empty/blank name."""
+    cookies = _login_test_user("9999966013")
+
+    update_res = client.patch(
+        "/api/v1/account/profile",
+        json={"name": "   "},
+        cookies=cookies,
+    )
+    assert update_res.status_code == 422
+
+
+def test_customer_profile_reject_malformed_phone():
+    """18.2-TC05: Verify rejection of malformed phone number."""
+    cookies = _login_test_user("9999966014")
+
+    for invalid_phone in ["123", "abcdefghij", "12345678901234567890"]:
+        res = client.patch(
+            "/api/v1/account/profile",
+            json={"phone": invalid_phone},
+            cookies=cookies,
+        )
+        assert res.status_code == 422
+
+
+def test_customer_profile_phone_uniqueness_conflict():
+    """18.2-TC06: Verify duplicate phone conflict safe response."""
+    # Ensure user A has phone 9999966015
+    _login_test_user("9999966015")
+    # User B tries to set phone to 9999966015
+    cookies_b = _login_test_user("9999966016")
+
+    res = client.patch(
+        "/api/v1/account/profile",
+        json={"phone": "9999966015"},
+        cookies=cookies_b,
+    )
+    assert res.status_code == 400
+    assert "already associated" in res.json()["detail"].lower()
+
+
+def test_customer_profile_prohibit_unverified_email_change():
+    """18.2-TC07 & 18.2-TC08: DEC018-3 prohibit unverified email mutation, permit same-email no-op."""
+    cookies = _login_test_user("9999966017")
+    email = "user_9999966017@example.com"
+
+    # Attempting to change email is rejected
+    res = client.patch(
+        "/api/v1/account/profile",
+        json={"email": "new_email@example.com"},
+        cookies=cookies,
+    )
+    assert res.status_code == 400
+    assert "cannot be changed" in res.json()["detail"]
+
+    # Same email no-op is accepted
+    res_noop = client.patch(
+        "/api/v1/account/profile",
+        json={"name": "Meera Same", "email": email},
+        cookies=cookies,
+    )
+    assert res_noop.status_code == 200
+    assert res_noop.json()["email"] == email
+
+
+def test_customer_profile_mass_assignment_protection():
+    """18.2-TC09: Forbidden fields like role/status/identities are ignored and not mass-assigned."""
+    cookies = _login_test_user("9999966018")
+
+    res = client.patch(
+        "/api/v1/account/profile",
+        json={"name": "Attacker", "role": "ADMIN", "status": "SUSPENDED"},
+        cookies=cookies,
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["status"] == "ACTIVE"
+    with SessionLocal() as db:
+        user = db.query(User).filter(User.phone == "9999966018").first()
+        assert user.role == "CUSTOMER"
+        assert user.status == "ACTIVE"
 
 
 def test_account_overview_metrics():

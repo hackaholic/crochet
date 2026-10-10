@@ -8,12 +8,12 @@ describe('account profile API', () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ id: 1, status: 'ACTIVE', identities: [], createdAt: '' }) });
     vi.stubGlobal('fetch', fetchMock);
 
-    await accountProfileApi.updateProfile({ name: 'Anu', email: 'anu@example.com' });
+    await accountProfileApi.updateProfile({ name: 'Anu', phone: '+919876543210' });
 
     expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('/api/v1/account/profile'), expect.objectContaining({
       method: 'PATCH',
       credentials: 'include',
-      body: JSON.stringify({ name: 'Anu', email: 'anu@example.com' }),
+      body: JSON.stringify({ name: 'Anu', phone: '+919876543210' }),
     }));
   });
 });

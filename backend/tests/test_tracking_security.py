@@ -373,3 +373,126 @@ def test_tc09_security_logging_and_cache_control():
     assert res_detail.status_code == 200
     assert "no-store" in res_detail.headers.get("cache-control", "")
     assert "private" in res_detail.headers.get("cache-control", "")
+
+
+def test_18_4_lifecycle_milestone_progression():
+    """18.4-TC01, 18.4-TC02, 18.4-TC03: Sequential and skipped lifecycle transitions update milestones truthfully."""
+    # Create order fixture with user
+    user_cookies = _login_test_user("9999988888")
+    with SessionLocal() as db:
+        user = db.query(User).filter(User.email == "user_9999988888@example.com").first()
+        assert user is not None
+        user_id = user.id
+
+    order = _create_order_fixture(user_id=user_id, order_number="SLC-PROG-001")
+
+    # 1. Initially CONFIRMED (18.4-TC01)
+    res = client.get(f"/api/v1/orders/{order.order_number}/tracking", cookies=user_cookies)
+    assert res.status_code == 200
+    data = res.json()
+    assert data["orderNumber"] == "SLC-PROG-001"
+    assert data["status"] == "CONFIRMED"
+    milestones = data["milestones"]
+    assert len(milestones) == 7
+    # PLACED should be COMPLETED, CONFIRMED should be CURRENT
+    m_map = {m["code"]: m for m in milestones}
+    assert m_map["PLACED"]["state"] == "COMPLETED"
+    assert m_map["PLACED"]["timestamp"] is not None
+    assert m_map["CONFIRMED"]["state"] == "CURRENT"
+    assert m_map["CONFIRMED"]["timestamp"] is not None
+    assert m_map["PROCESSING"]["state"] == "PENDING"
+    assert m_map["PROCESSING"]["timestamp"] is None
+    assert m_map["DELIVERED"]["state"] == "PENDING"
+    assert data["terminalState"] is None
+
+    # 2. Advance sequentially to PROCESSING -> READY_TO_SHIP (18.4-TC02)
+    with SessionLocal() as db:
+        o = db.query(Order).filter(Order.order_number == "SLC-PROG-001").first()
+        now = datetime.now(timezone.utc)
+        h1 = OrderStatusHistory(order_id=o.id, status="PROCESSING", note="Crafting item", timestamp=now)
+        o.status = "PROCESSING"
+        db.add(h1)
+        db.commit()
+
+    res2 = client.get(f"/api/v1/orders/{order.order_number}/tracking", cookies=user_cookies)
+    data2 = res2.json()
+    m_map2 = {m["code"]: m for m in data2["milestones"]}
+    assert m_map2["PLACED"]["state"] == "COMPLETED"
+    assert m_map2["CONFIRMED"]["state"] == "COMPLETED"
+    assert m_map2["PROCESSING"]["state"] == "CURRENT"
+    assert m_map2["READY_TO_SHIP"]["state"] == "PENDING"
+
+    # 3. Skip directly to SHIPPED (18.4-TC03) - READY_TO_SHIP has no timestamp but is marked COMPLETED
+    with SessionLocal() as db:
+        o = db.query(Order).filter(Order.order_number == "SLC-PROG-001").first()
+        now = datetime.now(timezone.utc)
+        h2 = OrderStatusHistory(order_id=o.id, status="SHIPPED", note="Dispatched", timestamp=now)
+        o.status = "SHIPPED"
+        db.add(h2)
+        db.commit()
+
+    res3 = client.get(f"/api/v1/orders/{order.order_number}/tracking", cookies=user_cookies)
+    data3 = res3.json()
+    m_map3 = {m["code"]: m for m in data3["milestones"]}
+    assert m_map3["PLACED"]["state"] == "COMPLETED"
+    assert m_map3["CONFIRMED"]["state"] == "COMPLETED"
+    assert m_map3["PROCESSING"]["state"] == "COMPLETED"
+    assert m_map3["READY_TO_SHIP"]["state"] == "COMPLETED"
+    assert m_map3["READY_TO_SHIP"]["timestamp"] is None  # Truthful: not backfilled!
+    assert m_map3["SHIPPED"]["state"] == "CURRENT"
+    assert m_map3["SHIPPED"]["timestamp"] is not None
+    assert m_map3["OUT_FOR_DELIVERY"]["state"] == "PENDING"
+    assert m_map3["DELIVERED"]["state"] == "PENDING"
+
+
+def test_18_4_terminal_state_cancelled_and_refunded():
+    """18.4-TC04, 18.4-TC05: Cancelled & Refunded terminal states provide honest explanations without false delivery."""
+    user_cookies = _login_test_user("9999988889")
+    with SessionLocal() as db:
+        user = db.query(User).filter(User.email == "user_9999988889@example.com").first()
+        assert user is not None
+        user_id = user.id
+
+    # 1. CANCELLED (18.4-TC04)
+    order_cancel = _create_order_fixture(user_id=user_id, order_number="SLC-TERM-CANCEL")
+    with SessionLocal() as db:
+        o = db.query(Order).filter(Order.order_number == "SLC-TERM-CANCEL").first()
+        now = datetime.now(timezone.utc)
+        h = OrderStatusHistory(order_id=o.id, status="CANCELLED", note="Customer requested cancellation", timestamp=now)
+        o.status = "CANCELLED"
+        db.add(h)
+        db.commit()
+
+    res_c = client.get(f"/api/v1/orders/{order_cancel.order_number}/tracking", cookies=user_cookies)
+    assert res_c.status_code == 200
+    data_c = res_c.json()
+    assert data_c["status"] == "CANCELLED"
+    assert data_c["terminalState"] is not None
+    assert data_c["terminalState"]["code"] == "CANCELLED"
+    assert "Customer requested cancellation" in data_c["terminalState"]["explanation"]
+    assert data_c["terminalState"]["timestamp"] is not None
+    m_map_c = {m["code"]: m for m in data_c["milestones"]}
+    assert m_map_c["DELIVERED"]["state"] == "PENDING"  # NEVER falsely marked COMPLETED
+    assert m_map_c["DELIVERED"]["timestamp"] is None
+
+    # 2. REFUNDED (18.4-TC05)
+    order_ref = _create_order_fixture(user_id=user_id, order_number="SLC-TERM-REFUND")
+    with SessionLocal() as db:
+        o = db.query(Order).filter(Order.order_number == "SLC-TERM-REFUND").first()
+        now = datetime.now(timezone.utc)
+        h = OrderStatusHistory(order_id=o.id, status="REFUNDED", note="Refund processed to original source", timestamp=now)
+        o.status = "REFUNDED"
+        o.payment_status = "REFUNDED"
+        db.add(h)
+        db.commit()
+
+    res_r = client.get(f"/api/v1/orders/{order_ref.order_number}/tracking", cookies=user_cookies)
+    assert res_r.status_code == 200
+    data_r = res_r.json()
+    assert data_r["status"] == "REFUNDED"
+    assert data_r["paymentStatus"] == "REFUNDED"
+    assert data_r["terminalState"] is not None
+    assert data_r["terminalState"]["code"] == "REFUNDED"
+    assert "Refund processed" in data_r["terminalState"]["explanation"]
+    m_map_r = {m["code"]: m for m in data_r["milestones"]}
+    assert m_map_r["DELIVERED"]["state"] == "PENDING"

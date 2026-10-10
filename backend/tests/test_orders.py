@@ -1,6 +1,8 @@
 """Integration tests for Orders, Addresses, and Checkout flow."""
 
 from fastapi.testclient import TestClient
+from app.db.session import SessionLocal
+from app.models.order import Order
 from app.main import app
 
 client = TestClient(app)
@@ -80,12 +82,127 @@ def test_address_management_lifecycle():
     assert res.status_code == 200
     assert res.json()["isDefault"] is True
 
-    # 6. Delete address
-    res = client.delete(f"/api/v1/addresses/{addr2_id}", cookies=cookies)
-    assert res.status_code == 204
+    # 6. Test PATCH address update (18.3-TC02)
+    patch_res = client.patch(
+        f"/api/v1/addresses/{addr1_id}",
+        json={"line1": "Flat 502, Updated Tower", "city": "Bengaluru Urban"},
+        cookies=cookies,
+    )
+    assert patch_res.status_code == 200
+    assert patch_res.json()["line1"] == "Flat 502, Updated Tower"
+    assert patch_res.json()["city"] == "Bengaluru Urban"
 
-    res = client.get("/api/v1/addresses", cookies=cookies)
-    assert len(res.json()) == 1
+    # 7. Delete default address and verify fallback promotion (18.3-TC04)
+    # At this point, we have addr1 (default) and addr2 (non-default)
+    del_res = client.delete(f"/api/v1/addresses/{addr1_id}", cookies=cookies)
+    assert del_res.status_code == 204
+    # Check that addr2 became default
+    rem_list = client.get("/api/v1/addresses", cookies=cookies).json()
+    assert len(rem_list) == 1
+    assert rem_list[0]["id"] == addr2_id
+    assert rem_list[0]["isDefault"] is True
+
+    # 8. Delete sole remaining address (18.3-TC05)
+    final_id = rem_list[0]["id"]
+    client.delete(f"/api/v1/addresses/{final_id}", cookies=cookies)
+    assert client.get("/api/v1/addresses", cookies=cookies).json() == []
+
+
+def test_address_validation_pin_phone_and_unicode():
+    """Verify 18.3 validation constraints: Indian PIN, phone, trimming, and Unicode text."""
+    cookies = _login_test_user("9999900010")
+
+    # 1. Unicode and whitespace trimming (18.3-TC06)
+    valid_unicode_payload = {
+        "name": "  Priya Sharma (శర్మ)  ",
+        "phone": " +91 99999 00010 ",
+        "line1": "  Plot 12, Lake View Colony  ",
+        "city": "  Hyderabad  ",
+        "state": "  Telangana  ",
+        "postalCode": " 500033 ",
+    }
+    res = client.post("/api/v1/addresses", json=valid_unicode_payload, cookies=cookies)
+    assert res.status_code == 201
+    addr = res.json()
+    assert addr["name"] == "Priya Sharma (శర్మ)"
+    assert addr["phone"] == "+919999900010"
+    assert addr["line1"] == "Plot 12, Lake View Colony"
+    assert addr["city"] == "Hyderabad"
+    assert addr["postalCode"] == "500033"
+
+    # 2. Reject invalid Indian PIN codes (18.3-TC07)
+    for bad_pin in ["123", "012345", "50003A", "5000330", "abcdef"]:
+        bad_pin_res = client.post(
+            "/api/v1/addresses",
+            json={**valid_unicode_payload, "postalCode": bad_pin},
+            cookies=cookies,
+        )
+        assert bad_pin_res.status_code == 422, f"Expected 422 for bad pin: {bad_pin}"
+
+    # 3. Reject invalid phone numbers (18.3-TC08)
+    for bad_phone in ["123", "abcdefghij", "12345"]:
+        bad_phone_res = client.post(
+            "/api/v1/addresses",
+            json={**valid_unicode_payload, "phone": bad_phone},
+            cookies=cookies,
+        )
+        assert bad_phone_res.status_code == 422, f"Expected 422 for bad phone: {bad_phone}"
+
+    # 4. Reject blank required fields (18.3-TC09)
+    bad_name_res = client.post(
+        "/api/v1/addresses",
+        json={**valid_unicode_payload, "name": "   "},
+        cookies=cookies,
+    )
+    assert bad_name_res.status_code == 422
+
+    bad_line_res = client.post(
+        "/api/v1/addresses",
+        json={**valid_unicode_payload, "line1": "  "},
+        cookies=cookies,
+    )
+    assert bad_line_res.status_code == 422
+
+
+def test_address_snapshot_immutability():
+    """18.3-TC11: Verify updating/deleting saved addresses does not mutate historical order snapshots."""
+    cookies = _login_test_user("9999900020")
+
+    # 1. Create initial address
+    addr_res = client.post(
+        "/api/v1/addresses",
+        json={
+            "name": "Original Recipient",
+            "phone": "9999900020",
+            "line1": "100 Original Street",
+            "city": "Mumbai",
+            "state": "Maharashtra",
+            "postalCode": "400001",
+        },
+        cookies=cookies,
+    )
+    assert addr_res.status_code == 201
+    addr_id = addr_res.json()["id"]
+
+    # 2. Add item to cart and checkout
+    client.post("/api/v1/cart/items", json={"product_id": 1, "quantity": 1}, cookies=cookies)
+    order_res = client.post("/api/v1/orders", json={"paymentMethod": "COD"}, cookies=cookies)
+    assert order_res.status_code == 201
+    order_id = order_res.json()["id"]
+
+    # 3. Update the address
+    client.patch(
+        f"/api/v1/addresses/{addr_id}",
+        json={"name": "Mutated Recipient", "line1": "999 Mutated Boulevard"},
+        cookies=cookies,
+    )
+
+    # 4. Check that order's snapshotted address remains the original
+    with SessionLocal() as db:
+        order = db.query(Order).filter(Order.id == order_id).first()
+        snapshot = order.shipping_address_json
+        assert snapshot["name"] == "Original Recipient"
+        assert snapshot["line1"] == "100 Original Street"
 
 
 def test_checkout_and_order_snapshots():
@@ -262,6 +379,12 @@ def test_order_tracking_and_cancellation():
     assert track_data["orderNumber"] == order_number
     assert len(track_data["timeline"]) >= 1
     assert track_data["timeline"][0]["status"] == "CONFIRMED"
+    # Check 18.4 milestones on placed order
+    assert len(track_data["milestones"]) == 7
+    m_map = {m["code"]: m for m in track_data["milestones"]}
+    assert m_map["PLACED"]["state"] == "COMPLETED"
+    assert m_map["CONFIRMED"]["state"] == "CURRENT"
+    assert track_data["terminalState"] is None
 
     # Cancel order
     cancel_res = client.post(f"/api/v1/orders/{order_number}/cancel", cookies=cookies)
@@ -274,9 +397,14 @@ def test_order_tracking_and_cancellation():
     restored_stock = p2_updated["variants"][0]["stockQuantity"]
     assert restored_stock == initial_stock
 
-    # Check tracking timeline has cancellation record
+    # Check tracking timeline has cancellation record and terminalState
     track_res2 = client.get(f"/api/v1/orders/{order_number}/tracking", cookies=cookies)
     assert track_res2.status_code == 200
-    timeline = track_res2.json()["timeline"]
+    track_data2 = track_res2.json()
+    timeline = track_data2["timeline"]
     assert len(timeline) == 2
     assert timeline[1]["status"] == "CANCELLED"
+    assert track_data2["terminalState"] is not None
+    assert track_data2["terminalState"]["code"] == "CANCELLED"
+    m_map2 = {m["code"]: m for m in track_data2["milestones"]}
+    assert m_map2["DELIVERED"]["state"] == "PENDING"

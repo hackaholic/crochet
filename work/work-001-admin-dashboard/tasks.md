@@ -16,6 +16,17 @@
 - [ ] 1.10 Codex: Define which Settings belong in V1 and audit existing admin APIs; write a separate Gemini contract before adding backend capability.
 - [ ] 1.12 Codex (delivery owner; user provides final acceptance): Prepare the local review and obtain user acceptance. The user reviews the locally verified admin experience and decides whether any additional sections or visual changes are required; only then consider a dev push/deploy.
 
+
+### 1.14 — Finance and sales analytics (Codex work lead)
+
+- [ ] 1.14.1 Gemini: [Define finance analytics contract](tasks/task-021-analytics-metric-contract.md).
+- [ ] 1.14.2 Gemini: [Sales by category](tasks/task-022-sales-category-api.md).
+- [ ] 1.14.3 Gemini: [Sales by country and Indian region](tasks/task-023-sales-country-api.md).
+- [ ] 1.14.4 Gemini: [Top-selling products and variants](tasks/task-024-top-products-api.md).
+- [ ] 1.14.5 Gemini: [Finance trends and operational indicators](tasks/task-025-finance-trends-api.md).
+- [ ] 1.14.6 Codex: [Finance analytics panels](tasks/task-026-finance-analytics-ui.md).
+- [ ] 1.14.7 Codex: [Local analytics reconciliation and acceptance](tasks/task-027-finance-local-acceptance.md).
+
 ## Completed
 
 - [x] 1.13 Codex: Repair workflow contract ID/status/link warnings; WorkWeave parser reports zero Work001 warnings.

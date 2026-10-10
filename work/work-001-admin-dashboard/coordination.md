@@ -36,3 +36,7 @@ Codex completed task1.7.10 (tasks/task-013-product-visibility.md); existing stat
 2026-10-10 Task1.8 Completed: Codex verified returned atomic API through local Inventory stock roundtrip and restoration, mobile validation, and5/5 Inventory tests. No active Inventory handoff or blocker. Next queued work:1.7.6 catalogue acceptance; no deployment performed.
 
 Workflow metadata repaired under1.13: checklist IDs/statuses now match dedicated contracts; zero Work001 parser warnings. Parent blueprint/return history remains preserved. Catalogue final acceptance1.7.6 remains Pending.
+
+## Finance analytics — 1.14
+
+Codex owns delivery. Gemini starts [1.14.1 metric contract](tasks/task-021-analytics-metric-contract.md); handoff Waiting, pickup-ready. After definitions return, Gemini picks one of1.14.2 category,1.14.3 country,1.14.4 products or1.14.5 trends from tasks.md. Codex1.14.6 UI waits for backend returns;1.14.7 local reconciliation follows. No live Gemini completion assumed. Exact contracts hold detailed acceptance/test state.

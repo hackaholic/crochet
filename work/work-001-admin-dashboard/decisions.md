@@ -10,3 +10,7 @@
 - Customers V1 is read-only registered CUSTOMER accounts plus order history by exact Order.user_id. Guest orders remain in Orders; no email/phone identity inference. Defer customer mutation/export and lifetime-value accounting until explicitly scoped. Dedicated list/profile/history APIs are required; global search is not the directory.
 
 - Product enable/disable reuses ACTIVE/DRAFT status through existing API; no second visibility flag. Archived products require separate deliberate handling.
+
+## Finance analytics scope — 2026-10-10
+
+1.14 uses existing supplied Finance design and shared date/eligibility/currency definitions. Category accounting counts each line once; historical destination comes from order snapshots. Tags/multiple categories must not multiply money. Profit/conversion/gateway-fee estimates are deferred without source data. Missing refund attribution and unknown destinations are explicit, never fabricated zeros. Frontend/backend tests required per subtask; local reconciliation precedes release.

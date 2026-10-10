@@ -19,6 +19,11 @@ export default function ShipmentTracking({ tracking }: { tracking: OrderTracking
       <div><dt className="text-[#8B6B4A]">Tracking number</dt><dd>{tracking.trackingNumber?.trim() || 'Not yet available'}</dd></div>
       <div><dt className="text-[#8B6B4A]">Estimated delivery</dt><dd>{delivery ? <time dateTime={tracking.estimatedDelivery!}>{delivery.toLocaleDateString()}</time> : 'Not yet available'}</dd></div>
     </dl>
+    {tracking.terminalState && <div role="status" className="rounded-xl border p-4"><h3 className="font-semibold">{tracking.terminalState.label}</h3><p>{tracking.terminalState.explanation}</p></div>}
+    {!!tracking.milestones?.length && <section aria-label="Package progress"><h3 className="font-serif text-xl">Package progress</h3><ol className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{tracking.milestones.map(milestone => {
+      const date = validDate(milestone.timestamp);
+      return <li key={milestone.code} aria-current={milestone.state === 'CURRENT' ? 'step' : undefined} className={`rounded-xl border p-3 ${milestone.state === 'CURRENT' ? 'border-[#C4622D] bg-[#FAF7F2]' : ''}`}><p className="font-semibold">{milestone.label}</p><p className="text-sm capitalize">{readableStatus(milestone.state)}</p>{date && <time className="text-sm text-[#8B6B4A]" dateTime={milestone.timestamp!}>{date.toLocaleString()}</time>}</li>;
+    })}</ol></section>}
     <div><h3 className="font-serif text-xl">Order updates</h3>
       {tracking.timeline.length ? <ol className="mt-3 space-y-4">{tracking.timeline.map(event => {
         const date = validDate(event.timestamp);

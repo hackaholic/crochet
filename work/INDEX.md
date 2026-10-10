@@ -19,3 +19,5 @@
 - **Work 016 — Product taxonomy and tagging audit** · Pending · [work folder](work-016-product-taxonomy-audit/)
 
 - **Work 017 — Customer and guest shipment tracking** · In Progress · [work folder](work-017-order-shipment-tracking/)
+
+- **Work 018 — Customer profile, addresses and order experience** · In Progress · [work folder](work-018-customer-account-settings/)

@@ -11,16 +11,77 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 class AddressBase(BaseModel):
     """Base address fields."""
 
-    name: str = Field(..., min_length=2, max_length=100, description="Recipient full name")
-    phone: str = Field(..., min_length=10, max_length=20, description="10-digit contact mobile number")
-    line1: str = Field(..., min_length=3, max_length=255, description="House/Flat number, building name, street")
+    name: str = Field(..., max_length=100, description="Recipient full name")
+    phone: str = Field(..., max_length=20, description="10-digit contact mobile number")
+    line1: str = Field(..., max_length=255, description="House/Flat number, building name, street")
     line2: str | None = Field(default=None, max_length=255, description="Apartment, suite, unit, etc.")
     landmark: str | None = Field(default=None, max_length=255, description="Nearby landmark")
-    city: str = Field(..., min_length=2, max_length=100, description="City/District")
-    state: str = Field(..., min_length=2, max_length=100, description="State/Province")
-    postal_code: str = Field(..., min_length=6, max_length=10, alias="postalCode", description="6-digit Indian PIN code")
+    city: str = Field(..., max_length=100, description="City/District")
+    state: str = Field(..., max_length=100, description="State/Province")
+    postal_code: str = Field(..., alias="postalCode", description="6-digit Indian PIN code")
     country: str = Field(default="IN", description="ISO 3166-1 alpha-2 country code")
     is_default: bool = Field(default=False, alias="isDefault", description="Set as default delivery address")
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def validate_name(cls, v: Any) -> str:
+        if not isinstance(v, str) or not v.strip():
+            raise ValueError("Name cannot be empty or blank")
+        trimmed = v.strip()
+        if len(trimmed) < 2 or len(trimmed) > 100:
+            raise ValueError("Name must be between 2 and 100 characters")
+        return trimmed
+
+    @field_validator("phone", mode="before")
+    @classmethod
+    def validate_phone(cls, v: Any) -> str:
+        if not isinstance(v, str) or not v.strip():
+            raise ValueError("Phone number cannot be empty or blank")
+        cleaned = re.sub(r"[\s\-]", "", v.strip())
+        if not re.match(r"^(\+?[1-9]\d{7,14}|\d{10})$", cleaned):
+            raise ValueError("Phone number must be a valid 10-digit or E.164 phone number")
+        return cleaned
+
+    @field_validator("line1", mode="before")
+    @classmethod
+    def validate_line1(cls, v: Any) -> str:
+        if not isinstance(v, str) or not v.strip():
+            raise ValueError("Address line 1 cannot be empty or blank")
+        trimmed = v.strip()
+        if len(trimmed) < 3 or len(trimmed) > 255:
+            raise ValueError("Address line 1 must be between 3 and 255 characters")
+        return trimmed
+
+    @field_validator("line2", "landmark", mode="before")
+    @classmethod
+    def validate_optional_text(cls, v: Any) -> str | None:
+        if v is None:
+            return None
+        if not isinstance(v, str):
+            return str(v)
+        trimmed = v.strip()
+        return trimmed if trimmed else None
+
+    @field_validator("city", "state", mode="before")
+    @classmethod
+    def validate_city_state(cls, v: Any) -> str:
+        if not isinstance(v, str) or not v.strip():
+            raise ValueError("City and State cannot be empty or blank")
+        trimmed = v.strip()
+        if len(trimmed) < 2 or len(trimmed) > 100:
+            raise ValueError("City and State must be between 2 and 100 characters")
+        return trimmed
+
+    @field_validator("postal_code", mode="before")
+    @classmethod
+    def validate_postal_code(cls, v: Any) -> str:
+        if not isinstance(v, str) or not v.strip():
+            raise ValueError("PIN code cannot be empty or blank")
+        cleaned = re.sub(r"\s+", "", v.strip())
+        # Indian PIN code: 6 digits starting with 1-9
+        if not re.match(r"^[1-9][0-9]{5}$", cleaned):
+            raise ValueError("PIN code must be a valid 6-digit Indian Postal PIN code")
+        return cleaned
 
 
 class AddressCreate(AddressBase):
@@ -34,16 +95,86 @@ class AddressUpdate(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    name: str | None = Field(default=None, min_length=2, max_length=100)
-    phone: str | None = Field(default=None, min_length=10, max_length=20)
-    line1: str | None = Field(default=None, min_length=3, max_length=255)
+    name: str | None = None
+    phone: str | None = None
+    line1: str | None = None
     line2: str | None = None
     landmark: str | None = None
     city: str | None = None
     state: str | None = None
-    postal_code: str | None = Field(default=None, min_length=6, max_length=10, alias="postalCode")
+    postal_code: str | None = Field(default=None, alias="postalCode")
     country: str | None = None
     is_default: bool | None = Field(default=None, alias="isDefault")
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def validate_update_name(cls, v: Any) -> str | None:
+        if v is None:
+            return None
+        if not isinstance(v, str) or not v.strip():
+            raise ValueError("Name cannot be empty or blank")
+        trimmed = v.strip()
+        if len(trimmed) < 2 or len(trimmed) > 100:
+            raise ValueError("Name must be between 2 and 100 characters")
+        return trimmed
+
+    @field_validator("phone", mode="before")
+    @classmethod
+    def validate_update_phone(cls, v: Any) -> str | None:
+        if v is None:
+            return None
+        if not isinstance(v, str) or not v.strip():
+            raise ValueError("Phone number cannot be empty or blank")
+        cleaned = re.sub(r"[\s\-]", "", v.strip())
+        if not re.match(r"^(\+?[1-9]\d{7,14}|\d{10})$", cleaned):
+            raise ValueError("Phone number must be a valid 10-digit or E.164 phone number")
+        return cleaned
+
+    @field_validator("line1", mode="before")
+    @classmethod
+    def validate_update_line1(cls, v: Any) -> str | None:
+        if v is None:
+            return None
+        if not isinstance(v, str) or not v.strip():
+            raise ValueError("Address line 1 cannot be empty or blank")
+        trimmed = v.strip()
+        if len(trimmed) < 3 or len(trimmed) > 255:
+            raise ValueError("Address line 1 must be between 3 and 255 characters")
+        return trimmed
+
+    @field_validator("line2", "landmark", mode="before")
+    @classmethod
+    def validate_update_optional_text(cls, v: Any) -> str | None:
+        if v is None:
+            return None
+        if not isinstance(v, str):
+            return str(v)
+        trimmed = v.strip()
+        return trimmed if trimmed else None
+
+    @field_validator("city", "state", mode="before")
+    @classmethod
+    def validate_update_city_state(cls, v: Any) -> str | None:
+        if v is None:
+            return None
+        if not isinstance(v, str) or not v.strip():
+            raise ValueError("City and State cannot be empty or blank")
+        trimmed = v.strip()
+        if len(trimmed) < 2 or len(trimmed) > 100:
+            raise ValueError("City and State must be between 2 and 100 characters")
+        return trimmed
+
+    @field_validator("postal_code", mode="before")
+    @classmethod
+    def validate_update_postal_code(cls, v: Any) -> str | None:
+        if v is None:
+            return None
+        if not isinstance(v, str) or not v.strip():
+            raise ValueError("PIN code cannot be empty or blank")
+        cleaned = re.sub(r"\s+", "", v.strip())
+        if not re.match(r"^[1-9][0-9]{5}$", cleaned):
+            raise ValueError("PIN code must be a valid 6-digit Indian Postal PIN code")
+        return cleaned
 
 
 class AddressOut(BaseModel):
@@ -152,6 +283,28 @@ class OrderOut(BaseModel):
     updated_at: str = Field(..., serialization_alias="updatedAt")
 
 
+class OrderMilestoneOut(BaseModel):
+    """Lifecycle progress milestone for order tracking."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    code: str
+    label: str
+    state: str  # "COMPLETED" | "CURRENT" | "PENDING"
+    timestamp: str | None = None
+
+
+class OrderTerminalStateOut(BaseModel):
+    """Explanation for terminal non-delivered orders (cancelled / refunded)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    code: str
+    label: str
+    explanation: str
+    timestamp: str | None = None
+
+
 class OrderTrackingOut(BaseModel):
     """Order tracking details and timeline."""
 
@@ -164,6 +317,8 @@ class OrderTrackingOut(BaseModel):
     courier_name: str | None = Field(default=None, serialization_alias="courierName")
     estimated_delivery: str | None = Field(default=None, serialization_alias="estimatedDelivery")
     timeline: list[OrderStatusHistoryOut] = []
+    milestones: list[OrderMilestoneOut] = []
+    terminal_state: OrderTerminalStateOut | None = Field(default=None, serialization_alias="terminalState")
 
 
 class GuestTrackingLinkRequest(BaseModel):
