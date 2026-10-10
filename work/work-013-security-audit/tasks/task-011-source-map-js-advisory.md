@@ -1,7 +1,7 @@
 # Task 13.11 — Patch frontend source-map-js high advisory & add local audit test verification
 
 **Owner:** Gemini
-**Status:** In Progress
+**Status:** Completed
 **Work item:** Work 013 / Automated security audit & release gate
 
 ## Objective
@@ -11,6 +11,7 @@ Remediate the high-severity frontend vulnerability in `source-map-js` (`GHSA-68f
 ## Context and contract
 
 - Failing CI Run: [Automated Security Release Gate run 38060645747](https://github.com/hackaholic/crochet/actions/runs/38060645747).
+- Successful CI Run: [Automated Security Release Gate run 38064775352](https://github.com/hackaholic/crochet/actions/runs/38064775352).
 - Failing Job: `Frontend Dependency Audit` (`pnpm audit --audit-level=high`).
 - Vulnerability: `source-map-js` (`>=1.0.0 <1.2.2`), High severity, path: `. > @tailwindcss/vite > @tailwindcss/node > source-map-js`.
 - Downstream Impact: `Master Security Release Gate` fails closed per DEC-009-1 / DEC-009-3 policy.
@@ -49,7 +50,7 @@ Remediate the high-severity frontend vulnerability in `source-map-js` (`GHSA-68f
 - [x] `pnpm audit --audit-level=high` passes locally with 0 vulnerabilities.
 - [x] Local test/script verification passes (`tests/test_dependency_audit.py` and `scripts/security/scan-dependencies.sh`).
 - [x] Frontend unit tests (120 tests) and builds pass.
-- [ ] Changes pushed to `origin/dev` and CI `Automated Security Release Gate` passes all jobs.
+- [x] Changes pushed to `origin/dev` and CI `Automated Security Release Gate` passes all jobs ([run 38064775352](https://github.com/hackaholic/crochet/actions/runs/38064775352)).
 
 ## Handoff back
 

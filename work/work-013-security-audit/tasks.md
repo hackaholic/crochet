@@ -2,9 +2,10 @@
 
 ## In Progress
 
-- [ ] 13.11 Gemini: Patch frontend source-map-js high advisory & add local audit test verification per [task-011-source-map-js-advisory.md](tasks/task-011-source-map-js-advisory.md).
+## Completed
 
-## Pending
+- [x] 13.11 Gemini: Patch frontend source-map-js high advisory & add local audit test verification per [task-011-source-map-js-advisory.md](tasks/task-011-source-map-js-advisory.md). CI run: [38064775352](https://github.com/hackaholic/crochet/actions/runs/38064775352).
+- [x] 13.10 Codex: Remediate the failed `dev` frontend dependency audit and verify a passing security workflow.
 
 - [ ] 13.9 Gemini: VPS deployment SSH key hardening, capability restriction & least-privilege runner isolation per [task-009-ssh-deployment-hardening.md](tasks/task-009-ssh-deployment-hardening.md).
   - [ ] 13.9.1 SSH Capability Restriction (`no-pty`, `no-port-forwarding`, `no-agent-forwarding`, `no-X11-forwarding`)
