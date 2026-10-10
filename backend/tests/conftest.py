@@ -82,6 +82,7 @@ from app.models.catalogue import product_tags
 from app.models.user import MagicLinkToken
 
 SEEDED_PRODUCT_IDS: set[int] = set()
+SEEDED_VARIANT_IDS: set[int] = set()
 SEEDED_REVIEW_IDS: set[int] = set()
 SEEDED_CATEGORY_IDS: set[int] = set()
 SEEDED_USER_IDS: set[int] = set()
@@ -114,8 +115,9 @@ def setup_test_database():
         seed_catalogue(db)
         reset_postgres_sequences(db)
 
-        global SEEDED_PRODUCT_IDS, SEEDED_REVIEW_IDS, SEEDED_CATEGORY_IDS, SEEDED_USER_IDS
+        global SEEDED_PRODUCT_IDS, SEEDED_VARIANT_IDS, SEEDED_REVIEW_IDS, SEEDED_CATEGORY_IDS, SEEDED_USER_IDS
         SEEDED_PRODUCT_IDS = {p[0] for p in db.query(Product.id).all()}
+        SEEDED_VARIANT_IDS = {v[0] for v in db.query(ProductVariant.id).all()}
         SEEDED_REVIEW_IDS = {r[0] for r in db.query(Review.id).all()}
         SEEDED_CATEGORY_IDS = {c[0] for c in db.query(Category.id).all()}
         SEEDED_USER_IDS = {u[0] for u in db.query(User.id).all()}
@@ -170,6 +172,7 @@ def clean_transactional_data():
         # Clean non-seeded products dynamically without arbitrary primary-key thresholds
         if SEEDED_PRODUCT_IDS:
             db.execute(product_tags.delete().where(product_tags.c.product_id.not_in(SEEDED_PRODUCT_IDS)))
+            db.query(ProductVariant).filter(ProductVariant.product_id.not_in(SEEDED_PRODUCT_IDS)).delete(synchronize_session=False)
             db.query(Product).filter(Product.id.not_in(SEEDED_PRODUCT_IDS)).delete(synchronize_session=False)
 
         # Clean non-seeded categories
@@ -179,7 +182,10 @@ def clean_transactional_data():
             db.query(Category).filter(Category.slug.like("test-%")).delete()
 
         db.query(Product).update({"status": "ACTIVE"})
-        db.query(ProductVariant).update({"stock_quantity": 50})
+        if SEEDED_VARIANT_IDS:
+            db.query(ProductVariant).filter(ProductVariant.id.in_(SEEDED_VARIANT_IDS)).update({"stock_quantity": 50}, synchronize_session=False)
+        else:
+            db.query(ProductVariant).update({"stock_quantity": 50})
         db.commit()
 
         reset_postgres_sequences(db)
