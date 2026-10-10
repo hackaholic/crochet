@@ -18,14 +18,16 @@ FRONTEND_REPORT="${REPORT_DIR}/frontend-audit.json"
 BACKEND_REPORT="${REPORT_DIR}/backend-audit.json"
 
 # 1. Frontend npm/pnpm audit
-echo "==> [DEPENDENCIES] Scanning frontend dependencies (npm audit)..."
+echo "==> [DEPENDENCIES] Scanning frontend dependencies (pnpm audit)..."
 cd "${REPO_ROOT}"
 if command -v pnpm >/dev/null 2>&1; then
     pnpm audit --audit-level=high --json > "${FRONTEND_REPORT}" 2>/dev/null || true
-elif command -v npm >/dev/null 2>&1; then
+elif docker ps --format '{{.Names}}' 2>/dev/null | grep -q "docker-frontend-1"; then
+    docker exec docker-frontend-1 pnpm audit --audit-level=high --json > "${FRONTEND_REPORT}" 2>/dev/null || true
+elif [ -f "package-lock.json" ] && command -v npm >/dev/null 2>&1; then
     npm audit --audit-level=high --json > "${FRONTEND_REPORT}" 2>/dev/null || true
 else
-    echo '{"error": "Neither pnpm nor npm found on host"}' > "${FRONTEND_REPORT}"
+    echo '{"error": "Neither pnpm nor a pnpm container found to audit pnpm-lock.yaml"}' > "${FRONTEND_REPORT}"
 fi
 
 # 2. Backend pip-audit

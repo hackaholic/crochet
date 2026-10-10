@@ -2,7 +2,7 @@
 
 ## In Progress
 
-- [ ] 13.10 Codex: Remediate the failed `dev` frontend dependency audit and verify a passing security workflow.
+- [ ] 13.11 Gemini: Patch frontend source-map-js high advisory & add local audit test verification per [task-011-source-map-js-advisory.md](tasks/task-011-source-map-js-advisory.md).
 
 ## Pending
 
