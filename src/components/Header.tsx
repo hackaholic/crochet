@@ -84,17 +84,10 @@ export default function Header({ currentPage, onNavigate, cartCount, wishlistCou
           {/* Logo */}
           <button
             onClick={() => onNavigate('home')}
+            aria-label="Sulocraft home"
             className="flex items-center gap-2.5 shrink-0"
           >
-            <YarnLogo size={38} />
-            <div className="leading-none">
-              <div className="font-bold text-[#2C1810] text-lg tracking-tight" style={{ fontFamily: 'var(--font-serif)' }}>
-                Sulocraft
-              </div>
-              <div className="text-[10px] text-[#8B6B4A] tracking-widest uppercase mt-0.5">
-                Handmade with love
-              </div>
-            </div>
+            <YarnLogo size={38} wordmark />
           </button>
 
           {/* Desktop nav */}

@@ -368,8 +368,9 @@ def test_20_2_tc04_negative_profit():
         db.add(exp)
         db.commit()
 
-    # Query single day range
-    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    # Query single day range in IST (API evaluates reporting boundaries in Asia/Kolkata)
+    from zoneinfo import ZoneInfo
+    today_str = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d")
     res = client.get(f"/api/v1/admin/finance/summary?from={today_str}&to={today_str}", cookies=admin_cookies)
     assert res.status_code == 200
     data = res.json()

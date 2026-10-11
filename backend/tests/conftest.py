@@ -68,6 +68,8 @@ from app.models import (
     Payment,
     Product,
     ProductImage,
+    ProductCollection,
+    ProductOccasion,
     ProductVariant,
     ReturnRequest,
     Review,
@@ -78,7 +80,7 @@ from app.models import (
     Wishlist,
     WishlistItem,
 )
-from app.models.catalogue import product_tags
+from app.models.catalogue import product_tags, product_collections, product_occasions
 from app.models.user import MagicLinkToken
 
 SEEDED_PRODUCT_IDS: set[int] = set()
@@ -86,6 +88,7 @@ SEEDED_VARIANT_IDS: set[int] = set()
 SEEDED_REVIEW_IDS: set[int] = set()
 SEEDED_CATEGORY_IDS: set[int] = set()
 SEEDED_USER_IDS: set[int] = set()
+SEEDED_IMAGE_IDS: set[int] = set()
 
 
 from app.db.seed import align_postgres_sequences, seed_catalogue
@@ -104,12 +107,13 @@ def setup_test_database():
     with SessionLocal() as db:
         seed_catalogue(db)
 
-        global SEEDED_PRODUCT_IDS, SEEDED_VARIANT_IDS, SEEDED_REVIEW_IDS, SEEDED_CATEGORY_IDS, SEEDED_USER_IDS
+        global SEEDED_PRODUCT_IDS, SEEDED_VARIANT_IDS, SEEDED_REVIEW_IDS, SEEDED_CATEGORY_IDS, SEEDED_USER_IDS, SEEDED_IMAGE_IDS
         SEEDED_PRODUCT_IDS = {p[0] for p in db.query(Product.id).all()}
         SEEDED_VARIANT_IDS = {v[0] for v in db.query(ProductVariant.id).all()}
         SEEDED_REVIEW_IDS = {r[0] for r in db.query(Review.id).all()}
         SEEDED_CATEGORY_IDS = {c[0] for c in db.query(Category.id).all()}
         SEEDED_USER_IDS = {u[0] for u in db.query(User.id).all()}
+        SEEDED_IMAGE_IDS = {i[0] for i in db.query(ProductImage.id).all()}
     yield
     # Cleanup SQLite test database file if created
     current_db = os.environ.get("DATABASE_URL", "")
@@ -162,7 +166,12 @@ def clean_transactional_data():
         if SEEDED_PRODUCT_IDS:
             db.execute(product_tags.delete().where(product_tags.c.product_id.not_in(SEEDED_PRODUCT_IDS)))
             db.query(ProductVariant).filter(ProductVariant.product_id.not_in(SEEDED_PRODUCT_IDS)).delete(synchronize_session=False)
+            db.query(ProductImage).filter(ProductImage.product_id.not_in(SEEDED_PRODUCT_IDS)).delete(synchronize_session=False)
+            db.query(ProductCollection).filter(ProductCollection.product_id.not_in(SEEDED_PRODUCT_IDS)).delete(synchronize_session=False)
+            db.query(ProductOccasion).filter(ProductOccasion.product_id.not_in(SEEDED_PRODUCT_IDS)).delete(synchronize_session=False)
             db.query(Product).filter(Product.id.not_in(SEEDED_PRODUCT_IDS)).delete(synchronize_session=False)
+        if SEEDED_IMAGE_IDS:
+            db.query(ProductImage).filter(ProductImage.id.not_in(SEEDED_IMAGE_IDS)).delete(synchronize_session=False)
 
         # Clean non-seeded categories
         if SEEDED_CATEGORY_IDS:

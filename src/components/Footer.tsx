@@ -138,11 +138,8 @@ export default function Footer({ onNavigate }: FooterProps) {
         {/* Bottom */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-8 border-t border-white/10">
           <div className="flex items-center gap-2">
-            <YarnLogo size={28} />
-            <div>
-              <div className="font-bold text-sm" style={{ fontFamily: 'var(--font-serif)' }}>Sulocraft</div>
-              <div className="text-white/40 text-xs">Handmade with love in India</div>
-            </div>
+            <YarnLogo size={28} wordmark />
+
           </div>
           <p className="text-white/40 text-xs text-center">
             © 2026 Sulocraft. All rights reserved. Made with ❤️ in India.

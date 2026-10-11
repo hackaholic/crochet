@@ -26,4 +26,4 @@
 
 - **Work 020 — Incremental finance improvements** · In Progress · [work folder](work-020-finance-incremental/)
 
-- **Work 021 — Official brand logo** · Completed · [work folder](work-021-brand-logo/)
+- **Work 021 — Official brand logo** · In Progress · [work folder](work-021-brand-logo/)
