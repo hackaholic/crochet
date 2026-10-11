@@ -90,33 +90,33 @@ case "${TARGET}" in
     case "${SUB}" in
       sast)
         echo "Running SAST Static Application Security Testing in container..."
-        "${DOCKER_COMPOSE[@]}" -f "${COMPOSE_FILE}" run --rm security ./scripts/security/scan-sast.sh "$@"
+        "${DOCKER_COMPOSE[@]}" -f "${COMPOSE_FILE}" run --rm -w /app security ./scripts/security/scan-sast.sh "$@"
         ;;
       secrets)
         echo "Running Secret Scanner in container..."
-        "${DOCKER_COMPOSE[@]}" -f "${COMPOSE_FILE}" run --rm security ./scripts/security/scan-secrets.sh "$@"
+        "${DOCKER_COMPOSE[@]}" -f "${COMPOSE_FILE}" run --rm -w /app security ./scripts/security/scan-secrets.sh "$@"
         ;;
       config)
         echo "Running Configuration & Architecture Scan in container..."
-        "${DOCKER_COMPOSE[@]}" -f "${COMPOSE_FILE}" run --rm security ./scripts/security/scan-config.sh "$@"
+        "${DOCKER_COMPOSE[@]}" -f "${COMPOSE_FILE}" run --rm -w /app security ./scripts/security/scan-config.sh "$@"
         ;;
       deps|dependencies)
         echo "Running Dependency Audit in container..."
-        "${DOCKER_COMPOSE[@]}" -f "${COMPOSE_FILE}" run --rm security ./scripts/security/scan-dependencies.sh "$@"
+        "${DOCKER_COMPOSE[@]}" -f "${COMPOSE_FILE}" run --rm -w /app security ./scripts/security/scan-dependencies.sh "$@"
         ;;
       auth|authorization)
         echo "Running Security Authorization & RBAC Tests in container..."
-        "${DOCKER_COMPOSE[@]}" -f "${COMPOSE_FILE}" run --rm security uv run pytest backend/tests/test_security_authorization.py backend/tests/test_security_business_logic.py backend/tests/test_config_secrets.py -v "$@"
+        "${DOCKER_COMPOSE[@]}" -f "${COMPOSE_FILE}" run --rm security uv run pytest tests/test_security_authorization.py tests/test_security_business_logic.py tests/test_config_secrets.py -v "$@"
         ;;
       audit|all)
         echo "Running Full Security Gate Suite in container..."
-        "${DOCKER_COMPOSE[@]}" -f "${COMPOSE_FILE}" run --rm security ./scripts/security/scan-sast.sh
-        "${DOCKER_COMPOSE[@]}" -f "${COMPOSE_FILE}" run --rm security ./scripts/security/scan-secrets.sh
-        "${DOCKER_COMPOSE[@]}" -f "${COMPOSE_FILE}" run --rm security ./scripts/security/scan-config.sh
-        "${DOCKER_COMPOSE[@]}" -f "${COMPOSE_FILE}" run --rm security uv run pytest backend/tests/test_security_authorization.py backend/tests/test_security_business_logic.py backend/tests/test_config_secrets.py -q
+        "${DOCKER_COMPOSE[@]}" -f "${COMPOSE_FILE}" run --rm -w /app security ./scripts/security/scan-sast.sh
+        "${DOCKER_COMPOSE[@]}" -f "${COMPOSE_FILE}" run --rm -w /app security ./scripts/security/scan-secrets.sh
+        "${DOCKER_COMPOSE[@]}" -f "${COMPOSE_FILE}" run --rm -w /app security ./scripts/security/scan-config.sh
+        "${DOCKER_COMPOSE[@]}" -f "${COMPOSE_FILE}" run --rm security uv run pytest tests/test_security_authorization.py tests/test_security_business_logic.py tests/test_config_secrets.py -q
         ;;
       *)
-        "${DOCKER_COMPOSE[@]}" -f "${COMPOSE_FILE}" run --rm security "${SUB}" "$@"
+        "${DOCKER_COMPOSE[@]}" -f "${COMPOSE_FILE}" run --rm -w /app security "${SUB}" "$@"
         ;;
     esac
     ;;
@@ -127,9 +127,9 @@ case "${TARGET}" in
     build_service frontend
     "${DOCKER_COMPOSE[@]}" -f "${COMPOSE_FILE}" run --rm frontend
     build_service security
-    "${DOCKER_COMPOSE[@]}" -f "${COMPOSE_FILE}" run --rm security ./scripts/security/scan-sast.sh
-    "${DOCKER_COMPOSE[@]}" -f "${COMPOSE_FILE}" run --rm security ./scripts/security/scan-secrets.sh
-    "${DOCKER_COMPOSE[@]}" -f "${COMPOSE_FILE}" run --rm security uv run pytest backend/tests/test_security_authorization.py backend/tests/test_security_business_logic.py backend/tests/test_config_secrets.py -q
+    "${DOCKER_COMPOSE[@]}" -f "${COMPOSE_FILE}" run --rm -w /app security ./scripts/security/scan-sast.sh
+    "${DOCKER_COMPOSE[@]}" -f "${COMPOSE_FILE}" run --rm -w /app security ./scripts/security/scan-secrets.sh
+    "${DOCKER_COMPOSE[@]}" -f "${COMPOSE_FILE}" run --rm security uv run pytest tests/test_security_authorization.py tests/test_security_business_logic.py tests/test_config_secrets.py -q
     ;;
   shell)
     SERVICE="${1:-backend}"

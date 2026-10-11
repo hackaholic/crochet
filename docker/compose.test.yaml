@@ -52,7 +52,7 @@ services:
   security:
     build:
       context: ..
-      dockerfile: docker/test-security.Dockerfile
+      dockerfile: docker/test-backend.Dockerfile
     container_name: sulocraft-test-security
     environment:
       APP_ENV: test
@@ -62,11 +62,11 @@ services:
     volumes:
       - ..:/app
       - backend-venv:/app/backend/.venv
-    working_dir: /app
+    working_dir: /app/backend
     depends_on:
       test-db:
         condition: service_healthy
-    command: ["./scripts/security/scan-sast.sh"]
+    command: ["../scripts/security/scan-sast.sh"]
 
 volumes:
   backend-venv:
