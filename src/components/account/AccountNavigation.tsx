@@ -5,11 +5,11 @@ const sections: { id: AccountSection; label: string }[] = [
   { id: 'orders', label: 'Orders' },
 ];
 
-export default function AccountNavigation({ selected, onSelect }: {
-  selected: AccountSection; onSelect: (section: AccountSection) => void;
+export default function AccountNavigation({ selected, onSelect, hideOrders = false }: {
+  hideOrders?: boolean; selected: AccountSection; onSelect: (section: AccountSection) => void;
 }) {
   return <nav aria-label="Account sections" className="flex flex-wrap gap-2 border-b border-[#EDE4D0] pb-4">
-    {sections.map(section => <button key={section.id} type="button"
+    {sections.filter(section => !hideOrders || section.id !== 'orders').map(section => <button key={section.id} type="button"
       aria-current={selected === section.id ? 'page' : undefined}
       aria-controls={`account-${section.id}`}
       onClick={() => onSelect(section.id)}

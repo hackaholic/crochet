@@ -1,6 +1,7 @@
 # Work 018 tasks
 
 ## Completed
+- [x] 18.9 — Admin account and sidebar sign-out — Codex. 12 tests/typecheck and Docker build passed; localhost admin profile/addresses/dashboard link and real sign-out to storefront verified. No push.
 - [x] 18.7 Codex — [Premium shipment progress](tasks/task-008-shipment-progress-visuals.md).17 focused tests/typecheck and local desktop/mobile verified.
 - [x] 18.8 Codex — [Premium account summary cards](tasks/task-009-account-summary-visuals.md).17 focused tests/typecheck and local desktop/mobile verified.
 - [x] 18.5 Codex — [Account editors and progress](tasks/task-005-account-experience-ui.md).35 frontend/transport tests, typecheck,44 backend tests; local profile/address/order persistence verified.

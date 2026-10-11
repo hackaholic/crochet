@@ -1598,18 +1598,12 @@ def align_postgres_sequences(session: Session) -> int:
     for table_name, col_name, seq_name in rows:
         if not seq_name:
             continue
-        # Set sequence to GREATEST(MAX(col), last_value) with is_called = true so nextval generates GREATEST + 1
-        align_sql = text(f"""
-            SELECT setval(
-                :seq,
-                GREATEST(
-                    COALESCE((SELECT MAX("{col_name}") FROM "{table_name}"), 0),
-                    (SELECT last_value FROM {seq_name})
-                ),
-                true
-            )
-        """)
-        session.execute(align_sql, {"seq": seq_name})
+        t = sa.table(table_name, sa.column(col_name))
+        max_val_query = sa.select(sa.func.coalesce(sa.func.max(t.c[col_name]), 0))
+        max_val = session.execute(max_val_query).scalar() or 0
+        align_sql = text("SELECT setval(cast(:seq as regclass), GREATEST(:max_val, (SELECT last_value FROM pg_sequences WHERE schemaname = 'public' AND sequencename = :seq_simple)), true)")
+        seq_simple = seq_name.split(".")[-1].strip('"')
+        session.execute(align_sql, {"seq": seq_name, "max_val": max_val, "seq_simple": seq_simple})
         aligned_count += 1
 
     return aligned_count

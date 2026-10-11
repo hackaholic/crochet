@@ -732,10 +732,9 @@ def test_static_image_redirect_resolver():
     assert "location" in res.headers
     assert "images.unsplash.com" in res.headers["location"]
 
-    # Unknown path falls back gracefully
+    # Unknown path returns 404
     fallback_res = client.get("/static/images/unknown/path.jpg", follow_redirects=False)
-    assert fallback_res.status_code == 307
-    assert "location" in fallback_res.headers
+    assert fallback_res.status_code == 404
 
 
 def test_amigurumi_homepage_collection_section():

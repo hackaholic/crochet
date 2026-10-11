@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { AdminPage } from '../types';
+import AdminSignOut from './AdminSignOut';
 import { YarnLogo } from '../../components/Icons';
 
 interface NavItem {
@@ -25,9 +26,10 @@ interface Props {
   currentPage: AdminPage;
   onNavigate: (page: AdminPage) => void;
   onExitAdmin: () => void;
+  onLogout?: () => Promise<void>;
 }
 
-export default function AdminSidebar({ currentPage, onNavigate, onExitAdmin }: Props) {
+export default function AdminSidebar({ currentPage, onNavigate, onExitAdmin, onLogout }: Props) {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
@@ -80,6 +82,7 @@ export default function AdminSidebar({ currentPage, onNavigate, onExitAdmin }: P
             </button>
           );
         })}
+        {onLogout && <AdminSignOut onLogout={onLogout} collapsed={collapsed} />}
       </nav>
 
       {/* Bottom actions */}

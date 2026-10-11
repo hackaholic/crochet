@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import OrderItems from '../components/account/OrderItems';
 import ProfileEditor from '../components/account/ProfileEditor';
 import AddressManager from '../components/account/AddressManager';
@@ -8,7 +9,7 @@ import { accountProfileApi, type AccountOverviewOut } from '../lib/api/account';
 import { accountApi, type AddressOut, type OrderOut } from '../lib/api/orders';
 import { LoadingState } from '../components/StorefrontState';
 
-export default function AccountPage({ onSignIn, onLogout }: { onSignIn: () => void; onLogout: () => Promise<void> }) {
+export default function AccountPage({ onSignIn, onLogout, isAdmin = false }: { onSignIn: () => void; onLogout: () => Promise<void>; isAdmin?: boolean }) {
   const [attempt,setAttempt] = useState(0);
   const [section, setSection] = useState<AccountSection>('profile');
   const [overview, setOverview] = useState<AccountOverviewOut | null>(null);
@@ -60,10 +61,11 @@ export default function AccountPage({ onSignIn, onLogout }: { onSignIn: () => vo
         {logoutMessage && <p className="text-sm text-red-700" role="alert">{logoutMessage}</p>}
       </div>
     </div>
-    <section className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Account overview">
+    {!isAdmin && <section className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Account overview">
       <Metric tone="rose" icon="orders" label="Orders" value={overview?.totalOrders ?? 0} /><Metric tone="sage" icon="active" label="Active orders" value={overview?.activeOrders ?? 0} /><Metric tone="sand" icon="address" label="Saved addresses" value={overview?.savedAddresses ?? 0} /><Metric tone="lavender" icon="wishlist" label="Wishlist items" value={overview?.wishlistItemsCount ?? 0} />
-    </section>
-    <div className="mt-8"><AccountNavigation selected={section} onSelect={next => { setSection(next); setTrackingOrder(undefined); }} /></div>
+    </section>}
+    {isAdmin && <Link to="/admin" className="mt-6 inline-flex rounded-full bg-[#C4622D] px-5 py-2.5 text-sm font-semibold text-white">Admin Dashboard</Link>}
+    <div className="mt-8"><AccountNavigation hideOrders={isAdmin} selected={section} onSelect={next => { setSection(next); setTrackingOrder(undefined); }} /></div>
     <div className="mt-6 grid gap-6">
       {section === 'profile' && overview && <ProfileEditor profile={overview.profile} onSaved={saved => setOverview(current => current ? {...current,profile:saved} : current)} />}
       {section === 'orders' && <section id="account-orders" aria-label="Orders" className="min-w-0 rounded-2xl border border-[#EDE4D0] bg-white p-6"><h2 className="text-xl font-semibold text-[#2C1810]">Order history</h2>{orders.length ? orders.map(order => <div key={order.id} className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#EDE4D0] pt-4 text-sm"><div><button type="button" className="break-all font-semibold text-[#2C1810] underline" onClick={()=>setTrackingOrder(order.orderNumber)} aria-label={`View order ${order.orderNumber}`}>{order.orderNumber}</button><p className="capitalize text-[#8B6B4A]">{order.status.replaceAll('_', ' ').toLowerCase()}</p></div><div><p className="font-semibold text-[#2C1810]">₹{order.totalAmount}</p><button type="button" aria-label={`Track shipment for ${order.orderNumber}`} aria-expanded={trackingOrder === order.orderNumber} className="mt-2 underline text-[#C4622D]" onClick={() => setTrackingOrder(order.orderNumber)}>Track shipment</button></div></div>) : <p className="mt-4 text-sm text-[#8B6B4A]">Your orders will appear here.</p>}</section>}

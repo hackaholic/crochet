@@ -1,3 +1,4 @@
+import { MemoryRouter } from 'react-router';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import AccountPage from './AccountPage';
@@ -71,4 +72,13 @@ it('renders accurate API summary counts in four distinct accent cards without in
   expect(new Set(cards.map(card => card.style.background)).size).toBe(4);
   expect(region.querySelectorAll('svg[aria-hidden],button,a')).toHaveLength(0);
   expect(region.querySelectorAll('[aria-hidden="true"] svg')).toHaveLength(4);
+});
+it('simplifies admin accounts without hiding profile, addresses or sign out',async()=>{
+ render(<MemoryRouter><AccountPage isAdmin onSignIn={vi.fn()} onLogout={vi.fn()}/></MemoryRouter>);
+ expect(await screen.findByRole('link',{name:'Admin Dashboard'})).toHaveAttribute('href','/admin');
+ expect(screen.queryByRole('region',{name:'Account overview'})).toBeNull();
+ expect(screen.queryByRole('button',{name:'Orders'})).toBeNull();
+ expect(screen.getByRole('button',{name:'Profile'})).toBeVisible();
+ expect(screen.getByRole('button',{name:'Addresses'})).toBeVisible();
+ expect(screen.getByRole('button',{name:'Sign out'})).toBeVisible();
 });

@@ -7,16 +7,17 @@ interface Props {
   currentPage: AdminPage;
   onNavigate: (page: AdminPage) => void;
   onExitAdmin: () => void;
+  onLogout?: () => Promise<void>;
   onSearch?: (q: string) => void;
   datePreset?: DateRangePreset;
   onDateChange?: (preset: DateRangePreset) => void;
   children: ReactNode;
 }
 
-export default function AdminLayout({ currentPage, onNavigate, onExitAdmin, onSearch, datePreset, onDateChange, children }: Props) {
+export default function AdminLayout({ currentPage, onNavigate, onExitAdmin, onLogout, onSearch, datePreset, onDateChange, children }: Props) {
   return (
     <div className="flex h-screen overflow-hidden bg-[#F8F4EF]" style={{ fontFamily: 'var(--font-sans)' }}>
-      <AdminSidebar currentPage={currentPage} onNavigate={onNavigate} onExitAdmin={onExitAdmin} />
+      <AdminSidebar currentPage={currentPage} onNavigate={onNavigate} onExitAdmin={onExitAdmin} onLogout={onLogout} />
       <div className="min-w-0 flex-1 flex flex-col overflow-hidden">
         <AdminTopBar
           currentPage={currentPage}

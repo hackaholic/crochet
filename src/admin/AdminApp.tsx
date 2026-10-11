@@ -18,9 +18,10 @@ import SettingsPage from './pages/SettingsPage';
 
 interface Props {
   onExitAdmin: () => void;
+  onLogout?: () => Promise<void>;
 }
 
-export default function AdminApp({ onExitAdmin }: Props) {
+export default function AdminApp({ onExitAdmin, onLogout }: Props) {
   const [page, setPage] = useState<AdminPage>('dashboard');
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [datePreset, setDatePreset] = useState<DateRangePreset>('30d');
@@ -45,7 +46,7 @@ export default function AdminApp({ onExitAdmin }: Props) {
     <AdminLayout
       currentPage={page}
       onNavigate={navigate}
-      onExitAdmin={onExitAdmin}
+      onExitAdmin={onExitAdmin} onLogout={onLogout}
       onSearch={setGlobalSearch}
       datePreset={datePreset}
       onDateChange={setDatePreset}

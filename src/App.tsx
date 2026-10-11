@@ -181,8 +181,8 @@ export default function App() {
           />
         )}
         {page === 'tracking' && <GuestTrackingPage key={location.pathname} />}
-        {page === 'account' && <AccountPage key={user?.id ?? 'guest'} onSignIn={openAuth} onLogout={signOut} />}
-        {page === 'admin' && <AdminPage key={user?.id ?? 'guest'} onSignIn={openAuth} onExitAdmin={() => navigate('home')} />}
+        {page === 'account' && <AccountPage key={user?.id ?? 'guest'} onSignIn={openAuth} onLogout={signOut} isAdmin={user?.role?.toUpperCase() === 'ADMIN'} />}
+        {page === 'admin' && <AdminPage key={user?.id ?? 'guest'} onSignIn={openAuth} onLogout={signOut} onExitAdmin={() => navigate('home')} />}
         {page === 'about' && (
           <AboutPage onNavigate={navigate} />
         )}
