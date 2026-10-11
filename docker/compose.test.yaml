@@ -17,3 +17,38 @@ services:
       interval: 2s
       timeout: 2s
       retries: 15
+
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/test-backend.Dockerfile
+    container_name: sulocraft-test-backend
+    environment:
+      APP_ENV: test
+      TESTING: "true"
+      DATABASE_URL: postgresql://sulocraft_test:sulocraft_test@test-db:5432/sulocraft_test
+      PYTHONPATH: /app/backend
+    volumes:
+      - ../backend:/app/backend
+      - ../public:/app/public:ro
+      - backend-venv:/app/backend/.venv
+    working_dir: /app/backend
+    depends_on:
+      test-db:
+        condition: service_healthy
+    command: ["uv", "run", "pytest", "tests", "-q"]
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/test-frontend.Dockerfile
+    container_name: sulocraft-test-frontend
+    volumes:
+      - ..:/app
+      - frontend-nodemodules:/app/node_modules
+    working_dir: /app
+    command: ["pnpm", "test"]
+
+volumes:
+  backend-venv:
+  frontend-nodemodules:
