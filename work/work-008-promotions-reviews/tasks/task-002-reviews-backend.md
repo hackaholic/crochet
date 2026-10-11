@@ -22,7 +22,8 @@ Refer to `docs/api-promotions.md`. Public product detail endpoints must return a
 
 ## Dependencies and relevant files
 
-- Depends on: Orders domain, Auth domain.
+- Depends on: None
+- Dependency context: Orders domain, Auth domain.
 - Inspect/edit:
   - `backend/app/models/`
   - `backend/app/api/v1/`

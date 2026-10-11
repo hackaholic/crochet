@@ -9,3 +9,5 @@
 ## 2026-10-10 — Task 4.8 naming audit
 Codex normalized eight nonconforming contract filenames in Works 001, 009 and 016. All 87 existing task contracts preserved, with exact content comparison allowing only reference-name substitutions; logical task IDs, owners, statuses and handoffs retained. All task filenames now match task-NNN-description.md. Updated task lists, coordination and global handoff links. Template and Gemini prompt now state the existing convention. Shared ai_skills files unchanged; application/runtime unchanged.
 Validation: 129 Markdown task links resolve; git diff --check required before delivery. No Docker rebuild needed for documentation-only renames.
+
+4.9 Completed:56 flagged contracts normalized using updated workflow-coordinator format. WorkWeave parse before/after preserved all task IDs/titles/owners/statuses/counts; zero dependency-prose warnings and no new reference/cycle warnings. Original narratives retained under Dependency context. No runtime change or push.

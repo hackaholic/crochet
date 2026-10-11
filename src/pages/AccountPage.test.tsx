@@ -59,3 +59,16 @@ it('keeps login email read-only and sends only editable profile data', async () 
 });
 
 it('retries account loading after a temporary failure',async()=>{api.overview.mockRejectedValueOnce(new Error('503'));render(<AccountPage onSignIn={vi.fn()} onLogout={vi.fn()}/>);fireEvent.click(await screen.findByRole('button',{name:'Retry account'}));expect(await screen.findByLabelText('Email')).toBeVisible();expect(api.overview).toHaveBeenCalledTimes(2);});
+
+
+it('renders accurate API summary counts in four distinct accent cards without interactive decoration', async () => {
+  api.overview.mockResolvedValue({ profile: { id: 7, name: 'Anupama', email: 'anupama@example.com' }, totalOrders: 12, activeOrders: 3, savedAddresses: 2, wishlistItemsCount: 0 });
+  render(<AccountPage onSignIn={vi.fn()} onLogout={vi.fn()} />);
+  const region = await screen.findByRole('region', { name: 'Account overview' });
+  expect(region).toHaveClass('grid-cols-2');
+  const cards = Array.from(region.children) as HTMLElement[];
+  expect(cards.map(card => card.textContent)).toEqual(['12Orders', '3Active orders', '2Saved addresses', '0Wishlist items']);
+  expect(new Set(cards.map(card => card.style.background)).size).toBe(4);
+  expect(region.querySelectorAll('svg[aria-hidden],button,a')).toHaveLength(0);
+  expect(region.querySelectorAll('[aria-hidden="true"] svg')).toHaveLength(4);
+});

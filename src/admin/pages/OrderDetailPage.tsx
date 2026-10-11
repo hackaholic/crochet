@@ -49,6 +49,7 @@ function InfoRow({ label, value, mono }: { label: string; value: string; mono?: 
 export default function OrderDetailPage({ orderId, onBack }: Props) {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [confirm, setConfirm] = useState<{ status: OrderStatus; label: string; danger?: boolean } | null>(null);
   const [updating, setUpdating] = useState(false);
   const [note, setNote] = useState('');
@@ -56,9 +57,18 @@ export default function OrderDetailPage({ orderId, onBack }: Props) {
   const [showTracking, setShowTracking] = useState(false);
 
   useEffect(() => {
-    if (!orderId) return;
-    setLoading(true);
-    api.getOrder(orderId).then(o => { setOrder(o); setLoading(false); });
+    let active = true;
+    setOrder(null);
+    setLoadError(false);
+    setLoading(Boolean(orderId));
+    if (orderId) api.getOrder(orderId).then(o => {
+      if (active) setOrder(o);
+    }).catch(() => {
+      if (active) setLoadError(true);
+    }).finally(() => {
+      if (active) setLoading(false);
+    });
+    return () => { active = false; };
   }, [orderId]);
 
   const handleStatusUpdate = async () => {
@@ -78,6 +88,13 @@ export default function OrderDetailPage({ orderId, onBack }: Props) {
         <div className="lg:col-span-2 h-80 bg-[#F5EDE0] rounded-xl" />
         <div className="h-80 bg-[#F5EDE0] rounded-xl" />
       </div>
+    </div>
+  );
+
+  if (loadError) return (
+    <div role="alert" className="bg-white rounded-xl border border-[#E8E0D8] p-10">
+      <EmptyState icon="❓" title="Order unavailable" desc="Unable to load this order. Please return to Orders and try again."
+        action={<button onClick={onBack} className="text-sm text-[#C4622D] font-semibold">← Back to Orders</button>} />
     </div>
   );
 

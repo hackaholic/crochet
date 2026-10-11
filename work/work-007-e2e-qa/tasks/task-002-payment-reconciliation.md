@@ -22,7 +22,8 @@ Refer to `docs/api-payment.md`. Razorpay signatures are HMAC-SHA256 authenticate
 
 ## Dependencies and relevant files
 
-- Depends on: Task 7.1.
+- Depends on: 7.1
+- Dependency context: Task 7.1.
 - Inspect/edit:
   - `backend/app/services/payment/`
   - `backend/tests/test_payments.py`

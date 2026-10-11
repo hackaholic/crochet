@@ -1,3 +1,4 @@
+import { orderStatusPresentation } from '../../lib/orderStatusPresentation';
 import type { OrderTracking } from '../../lib/api/orderTrackingTypes';
 
 function readableStatus(value: string) { return value.replaceAll('_', ' ').toLowerCase(); }
@@ -9,6 +10,7 @@ function validDate(value: string | null) {
 
 /** Presentation only: never fetches or grants access to an order. */
 export default function ShipmentTracking({ tracking }: { tracking: OrderTracking }) {
+  const terminalTone = orderStatusPresentation(tracking.terminalState?.code ?? tracking.status);
   const delivery = validDate(tracking.estimatedDelivery);
   return <section aria-label="Shipment tracking" className="min-w-0 space-y-5 rounded-2xl border border-[#EDE4D0] bg-white p-5 text-[#2C1810] [overflow-wrap:anywhere]">
     <header><h2 className="font-serif text-2xl">Shipment details</h2><p className="mt-1 text-sm">Order {tracking.orderNumber}</p></header>
@@ -19,10 +21,17 @@ export default function ShipmentTracking({ tracking }: { tracking: OrderTracking
       <div><dt className="text-[#8B6B4A]">Tracking number</dt><dd>{tracking.trackingNumber?.trim() || 'Not yet available'}</dd></div>
       <div><dt className="text-[#8B6B4A]">Estimated delivery</dt><dd>{delivery ? <time dateTime={tracking.estimatedDelivery!}>{delivery.toLocaleDateString()}</time> : 'Not yet available'}</dd></div>
     </dl>
-    {tracking.terminalState && <div role="status" className="rounded-xl border p-4"><h3 className="font-semibold">{tracking.terminalState.label}</h3><p>{tracking.terminalState.explanation}</p></div>}
+    {tracking.terminalState && <div role="status" className="rounded-xl border p-4" style={{ background: terminalTone.bg, color: terminalTone.text, borderColor: terminalTone.dot }}><h3 className="font-semibold">{tracking.terminalState.label}</h3><p>{tracking.terminalState.explanation}</p></div>}
     {!!tracking.milestones?.length && <section aria-label="Package progress"><h3 className="font-serif text-xl">Package progress</h3><ol className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{tracking.milestones.map(milestone => {
       const date = validDate(milestone.timestamp);
-      return <li key={milestone.code} aria-current={milestone.state === 'CURRENT' ? 'step' : undefined} className={`rounded-xl border p-3 ${milestone.state === 'CURRENT' ? 'border-[#C4622D] bg-[#FAF7F2]' : ''}`}><p className="font-semibold">{milestone.label}</p><p className="text-sm capitalize">{readableStatus(milestone.state)}</p>{date && <time className="text-sm text-[#8B6B4A]" dateTime={milestone.timestamp!}>{date.toLocaleString()}</time>}</li>;
+      const pending = milestone.state === 'PENDING';
+      const tone = orderStatusPresentation(milestone.code === 'PLACED' ? 'CONFIRMED' : milestone.code);
+      return <li key={milestone.code} aria-current={milestone.state === 'CURRENT' ? 'step' : undefined}
+        className={`min-w-0 rounded-2xl border p-4 ${milestone.state === 'CURRENT' ? 'shadow-sm ring-1' : ''}`}
+        style={{ background: pending ? '#FAFAF9' : tone.bg, color: pending ? '#57534E' : tone.text, borderColor: pending ? '#E7E5E4' : tone.dot, ...(milestone.state === 'CURRENT' ? { '--tw-ring-color': tone.dot } : {}) }}>
+        <div className="flex items-start gap-3"><span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm font-semibold" style={{ borderColor: pending ? '#D6D3D1' : tone.dot }}>{milestone.state === 'COMPLETED' ? '✓' : milestone.state === 'CURRENT' ? '●' : '○'}</span>
+          <div className="min-w-0"><p className="font-semibold">{milestone.label}</p><p className="mt-1 text-xs font-medium capitalize tracking-wide">{readableStatus(milestone.state)}</p></div></div>
+        {date && <time className="mt-3 block text-xs" dateTime={milestone.timestamp!}>{date.toLocaleString()}</time>}</li>;
     })}</ol></section>}
     <div><h3 className="font-serif text-xl">Order updates</h3>
       {tracking.timeline.length ? <ol className="mt-3 space-y-4">{tracking.timeline.map(event => {

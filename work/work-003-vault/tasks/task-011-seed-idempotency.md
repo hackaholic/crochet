@@ -22,7 +22,8 @@ Fix the local database seed failure caused by duplicate product/occasion associa
 
 ## Dependencies and relevant files
 
-- Depends on: none for the code fix. The integrated Docker verification in Task 3.9 still depends on Tasks 3.2 and 3.8.
+- Depends on: None
+- Dependency context: none for the code fix. The integrated Docker verification in Task 3.9 still depends on Tasks 3.2 and 3.8.
 - Inspect/edit: `backend/app/db/seed.py`, `backend/app/models/catalogue.py`, relevant seed/storefront tests under `backend/tests/`, and only the minimal supporting files needed.
 
 ## Acceptance checks

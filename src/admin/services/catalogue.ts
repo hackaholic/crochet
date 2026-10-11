@@ -1,6 +1,7 @@
+import type { ProductInformation } from '../../lib/products/information';
 import { adminRequest, type AdminProduct, type AdminProductVariant } from '../../lib/api/admin';
 
-export interface CatalogueProduct extends AdminProduct {
+export interface CatalogueProduct extends AdminProduct, ProductInformation {
   description?: string;
   shortDescription?: string;
   primaryCategoryId?: number;
@@ -11,7 +12,7 @@ export interface CatalogueProduct extends AdminProduct {
   galleryImageUrls?: string[];
 }
 export interface TaxonomyOption { id: number; name: string }
-export interface ProductDraft {
+export interface ProductDraft extends ProductInformation {
   name: string; description: string; primaryImage: string;
   galleryImages: string[]; categoryIds: number[]; tagIds: number[]; primaryCategoryId?: number;
 }
@@ -38,3 +39,6 @@ export async function uploadPhoto(file: File): Promise<{ key: string; url: strin
 export const setProductStatus = (id: number, status: 'ACTIVE' | 'DRAFT') => adminRequest<CatalogueProduct>(
   `/admin/products/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) },
 );
+
+export const getProductDefaults = () => adminRequest<ProductInformation>('/admin/storefront/product-defaults');
+export const saveProductDefaults = (value: ProductInformation) => adminRequest<ProductInformation>('/admin/storefront/product-defaults', {method:'PUT',body:JSON.stringify(value)});

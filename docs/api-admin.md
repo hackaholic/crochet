@@ -367,6 +367,105 @@ export interface AdminFinanceSeriesOut {
   buckets: AdminFinanceSalesBucket[];
 }
 
+export interface AdminCategorySalesItemOut {
+  categoryId: number | null;
+  categoryName: string;
+  categorySlug: string | null;
+  orderCount: number;
+  unitsSold: number;
+  grossSales: number;
+  grossSalesPaise: number;
+  salesSharePct: number;
+}
+
+export interface AdminCategorySalesOut {
+  effectiveRange: { from: string; to: string };
+  totalGrossSales: number;
+  totalGrossSalesPaise: number;
+  totalUnitsSold: number;
+  categories: AdminCategorySalesItemOut[];
+}
+
+export interface AdminIndianRegionSalesItemOut {
+  state: string;
+  orderCount: number;
+  unitsSold: number;
+  grossSales: number;
+  grossSalesPaise: number;
+  salesSharePct: number;
+}
+
+export interface AdminCountrySalesItemOut {
+  countryCode: string;
+  countryName: string;
+  orderCount: number;
+  unitsSold: number;
+  grossSales: number;
+  grossSalesPaise: number;
+  salesSharePct: number;
+  regions: AdminIndianRegionSalesItemOut[];
+}
+
+export interface AdminDestinationSalesOut {
+  effectiveRange: { from: string; to: string };
+  totalGrossSales: number;
+  totalGrossSalesPaise: number;
+  totalOrders: number;
+  countries: AdminCountrySalesItemOut[];
+}
+
+export interface AdminTopSellingProductItemOut {
+  productId: number | null;
+  productName: string;
+  sku: string | null;
+  variantName: string | null;
+  imageUrl: string | null;
+  unitsSold: number;
+  distinctOrders: number;
+  productRevenue: number;
+  productRevenuePaise: number;
+}
+
+export interface AdminTopProductsOut {
+  effectiveRange: { from: string; to: string };
+  rankingMetric: "revenue" | "units";
+  items: AdminTopSellingProductItemOut[];
+}
+
+export interface AdminPeriodComparisonMetric {
+  current: number;
+  currentPaise: number;
+  previous: number;
+  previousPaise: number;
+  growthPct: number | null;
+}
+
+export interface AdminPeriodComparisonCount {
+  current: number;
+  previous: number;
+  growthPct: number | null;
+}
+
+export interface AdminOperationalIndicatorsOut {
+  pendingPaymentCount: number;
+  pendingPaymentTotal: number;
+  pendingPaymentTotalPaise: number;
+  cancelledCount: number;
+  refundedCount: number;
+  fulfillmentStates: Record<string, number>;
+}
+
+export interface AdminFinanceTrendsOut {
+  effectiveRange: { from: string; to: string };
+  previousRange: { from: string; to: string };
+  grossSales: AdminPeriodComparisonMetric;
+  netRevenue: AdminPeriodComparisonMetric;
+  orders: AdminPeriodComparisonCount;
+  averageOrderValue: AdminPeriodComparisonMetric;
+  refunds: AdminPeriodComparisonMetric;
+  operationalIndicators: AdminOperationalIndicatorsOut;
+}
+
 export interface AdminAttentionItem {
   id: string;
   kind: "ORDER" | "RETURN" | "STOCK";
@@ -530,6 +629,20 @@ export interface AdminTagOut {
 // Customers (Task 1.9.1)
 // -----------------------------------------------------------------------------
 
+export interface AdminCustomerAddressOut {
+  id: number;
+  name: string;
+  phone: string;
+  line1: string;
+  line2: string | null;
+  landmark: string | null;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  isDefault: boolean;
+}
+
 export interface AdminCustomerOut {
   id: number;
   name: string | null;
@@ -539,6 +652,10 @@ export interface AdminCustomerOut {
   createdAt: string | null;
   lastLoginAt: string | null;
   orderCount: number;
+}
+
+export interface AdminCustomerDetailOut extends AdminCustomerOut {
+  addresses: AdminCustomerAddressOut[];
 }
 
 export interface AdminCustomerListOut {
@@ -559,6 +676,10 @@ export interface AdminCustomerListOut {
 | `GET` | `/api/v1/admin/dashboard/sales` | Ordered sales trend buckets (daily, weekly, monthly) in Asia/Kolkata timezone with zero-filled gaps |
 | `GET` | `/api/v1/admin/finance/summary` | Persisted gross sales, discounts, shipping, stored tax, refunds, and net revenue with explicit availability flags |
 | `GET` | `/api/v1/admin/finance/sales` | Finance sales trend series reconciling directly to finance summary definitions |
+| `GET` | `/api/v1/admin/finance/categories` | Accounting category sales breakdown with single-category attribution policy and Uncategorized bucket |
+| `GET` | `/api/v1/admin/finance/destinations` | Geographic sales breakdown derived from immutable shipping snapshots with Indian state details |
+| `GET` | `/api/v1/admin/finance/top-products` | Top selling products and variants filtered strictly by period and eligible order commitments |
+| `GET` | `/api/v1/admin/finance/trends` | Finance trends with prior equal-length period comparisons and operational indicators |
 | `GET` | `/api/v1/admin/dashboard/attention` | Persisted action items: unshipped orders, pending returns, and low stock variants |
 | `GET` | `/api/v1/admin/search` | Paginated global search across orders (number/customer), products (name/SKU), and customers |
 | `GET` | `/api/v1/admin/returns` | List returns with status, orderNumber, date range filters, and pagination |

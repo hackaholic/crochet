@@ -22,7 +22,8 @@ Read ../README.md, ../decisions.md, ../coordination.md and work/GEMINI_WORKFLOW_
 
 ## Dependencies and relevant files
 
-- Depends on: Task 16.2 returned with correction/test evidence; uncertain cases resolved or explicitly blocked.
+- Depends on: 16.2
+- Dependency context: Task 16.2 returned with correction/test evidence; uncertain cases resolved or explicitly blocked.
 - Inspect/edit: src/components storefront filters; local Docker services; this work report/notes
 - Readiness: Planning complete; implementation evidence pending.
 - Blocker protocol: Record exact missing input and owner here and in coordination.md; ask the user about ambiguous product/image classification.

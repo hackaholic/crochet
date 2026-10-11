@@ -29,7 +29,8 @@ Automated scanners do not understand multi-tenant business context. These tests 
 
 ## Dependencies and relevant files
 
-- Depends on: Backend test suite.
+- Depends on: None
+- Dependency context: Backend test suite.
 - Inspect/edit:
   - `backend/tests/test_security_authorization.py`
   - `backend/tests/test_security_business_logic.py`

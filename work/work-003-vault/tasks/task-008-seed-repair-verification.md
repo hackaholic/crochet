@@ -22,7 +22,8 @@ Follow the project working rule: never deploy to VPS or push to `dev` before ver
 
 ## Dependencies and relevant files
 
-- Depends on: Task 3.2 local decrypt helper, Task 3.8 encrypted groups, and Task 3.11 seed idempotency repair.
+- Depends on: 3.2, 3.8, 3.11
+- Dependency context: Task 3.2 local decrypt helper, Task 3.8 encrypted groups, and Task 3.11 seed idempotency repair.
 - Inspect/edit:
   - `backend/app/db/seed.py`
   - `docker/compose.yaml`

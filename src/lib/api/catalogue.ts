@@ -1,3 +1,4 @@
+import { informationValues, type ProductInformation } from '../products/information';
 import type { Product } from '../../data/products';
 import { apiUrl } from './client';
 
@@ -187,4 +188,10 @@ export interface Occasion {
 
 export function getOccasions(signal?: AbortSignal): Promise<Occasion[]> {
   return getJsonList<Occasion>('/occasions', signal);
+}
+
+export async function getProductInformation(id: string | number, signal?: AbortSignal): Promise<ProductInformation> {
+  const response = await fetch(apiUrl(`/products/${encodeURIComponent(id)}`), {signal});
+  if (!response.ok) throw new Error('Product information unavailable');
+  return informationValues(await response.json());
 }

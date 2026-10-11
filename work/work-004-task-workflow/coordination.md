@@ -9,3 +9,5 @@ This file is the work-local coordination entry point. The work folder is the sou
 ## Return protocol
 
 The assigned agent updates the exact contract, tasks.md, notes.md, and this file before returning the task. The global registry at docs/handoffs.md points here; it does not duplicate this work's status.
+
+Codex4.9 Returned/Completed:56 flagged dependency fields repaired; original prose retained, task state preserved, zero dependency-prose warnings and no new parser warnings.

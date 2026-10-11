@@ -23,7 +23,8 @@ Refer to `docs/api-cart.md` and `docs/api-auth.md`. The backend manages `guest_c
 
 ## Dependencies and relevant files
 
-- Depends on: Local Docker environment running.
+- Depends on: None
+- Dependency context: Local Docker environment running.
 - Inspect/edit:
   - `backend/tests/test_purchase_regression.py`
   - `src/lib/api/cart.ts`

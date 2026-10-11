@@ -27,7 +27,8 @@ Resolve the `dev` push workflow failures from the backend test gate through the 
 
 ## Dependencies and relevant files
 
-- Depends on: Work 003 secret bootstrap contract and Work 012 deployment entry point.
+- Depends on: Unknown
+- Dependency context: Work 003 secret bootstrap contract and Work 012 deployment entry point.
 - Inspect/edit: `backend/tests/test_notifications.py`, `backend/tests/test_vault_deploy.py`, relevant email/bootstrap implementation, `.github/workflows/deploy-dev-backend.yml`.
 
 ## Acceptance checks

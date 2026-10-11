@@ -22,7 +22,8 @@ Follow the project working rule: test and verify locally in Docker before pushin
 
 ## Dependencies and relevant files
 
-- Depends on: Task 8.3 UI integration.
+- Depends on: 8.3
+- Dependency context: Task 8.3 UI integration.
 - Inspect/edit:
   - `src/pages/CartPage.test.tsx`
   - `src/pages/ProductPage.test.tsx`

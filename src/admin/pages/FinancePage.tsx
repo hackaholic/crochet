@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react';
+import FinanceAnalytics from '../components/FinanceAnalytics';
+import { dateRange } from '../services/dateRange';
+import { useEffect, useMemo, useState } from 'react';
 import type { FinanceSummary, SalesDataPoint, DateRangePreset } from '../types';
 import * as api from '../services/api';
 import { inr, SectionHeader, TableSkeleton, MetricCard } from '../components/AdminShared';
@@ -11,6 +13,8 @@ function FinanceRow({ label, value, note, negative, bold }: { label: string; val
 }
 
 export default function FinancePage({ datePreset }: Props) {
+  const range = useMemo(()=>dateRange(datePreset),[datePreset]);
+  const [attempt,setAttempt] = useState(0);
   const [summary, setSummary] = useState<FinanceSummary | null>(null);
   const [chart, setChart] = useState<SalesDataPoint[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,13 +22,13 @@ export default function FinancePage({ datePreset }: Props) {
 
   useEffect(() => {
     let active = true;
-    setLoading(true); setError('');
-    Promise.all([api.getFinanceSummary(datePreset), api.getSalesChartFinance(datePreset === '7d' ? '7d' : '30d')])
+    setLoading(true); setError(''); setSummary(null); setChart([]);
+    Promise.all([api.getFinanceSummary(datePreset,range), api.getSalesChartFinance(datePreset,range)])
       .then(([nextSummary, nextChart]) => { if (active) { setSummary(nextSummary); setChart(nextChart); } })
       .catch(reason => { if (active) setError(reason instanceof Error ? reason.message : 'Could not load finance data.'); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [datePreset]);
+  }, [datePreset,range,attempt]);
 
   const metrics = summary ? [
     { label: 'Gross Sales', value: inr(summary.grossSales), icon: '↗' },
@@ -34,12 +38,14 @@ export default function FinancePage({ datePreset }: Props) {
   ] : [];
 
   return <div className="max-w-full space-y-5">
-    {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">Finance data could not be loaded. {error}</div>}
+    {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">Finance data could not be loaded.<button type="button" className="ml-3 underline" onClick={()=>setAttempt(value=>value+1)}>Retry finance</button></div>}
+    {!loading && !error && summary?.effectiveRange && <p className="text-sm text-[#6B5B4E]" aria-label="Reporting period">Reporting period: <time dateTime={summary.effectiveRange.from}>{summary.effectiveRange.from}</time> to <time dateTime={summary.effectiveRange.to}>{summary.effectiveRange.to}</time> (IST, inclusive)</p>}
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{loading ? Array.from({ length: 4 }).map((_, i) => <MetricCard key={i} label="" value="" icon="" loading />) : metrics.map(metric => <MetricCard key={metric.label} {...metric} />)}</div>
     <RevenueChart data={chart} loading={loading} />
     <div className="grid gap-5 lg:grid-cols-2">
-      <section className="rounded-xl border border-[#E8E0D8] bg-white p-5"><SectionHeader title="Recorded Finance" subtitle="Amounts are supplied by Sulocraft’s backend." />{loading ? <TableSkeleton rows={6} cols={2} /> : summary && <><FinanceRow label="Gross Sales" value={inr(summary.grossSales)} /><FinanceRow label="Discounts" value={`−${inr(summary.discounts)}`} negative /><FinanceRow label="Shipping Collected" value={inr(summary.shippingCollected)} /><FinanceRow label="Stored Tax" value={inr(summary.gstCollected)} note="Stored order tax total; tax components are not reported." /><FinanceRow label="Refunds" value={`−${inr(summary.refunds)}`} negative /><FinanceRow label="Net Revenue" value={inr(summary.netRevenue)} bold /><FinanceRow label="Gateway Fees" value={summary.gatewayFeesAvailable && summary.paymentFees !== null ? inr(summary.paymentFees) : 'Not available'} note={summary.gatewayFeesNote || 'No fee ledger is connected.'} /></>}</section>
+      <section className="rounded-xl border border-[#E8E0D8] bg-white p-5"><SectionHeader title="Recorded Finance" subtitle="Amounts are supplied by Sulocraft’s backend." />{loading ? <TableSkeleton rows={6} cols={2} /> : summary && <><FinanceRow label="Gross Sales" value={inr(summary.grossSales)} /><FinanceRow label="Discounts" value={`−${inr(summary.discounts)}`} negative /><FinanceRow label="Shipping Collected" value={inr(summary.shippingCollected)} /><FinanceRow label="Stored Tax" value={inr(summary.gstCollected)} note="Stored order tax total; tax components are not reported." /><FinanceRow label="Refunds" value={`−${inr(summary.refunds)}`} negative /><FinanceRow label="Net Revenue" value={inr(summary.netRevenue)} bold /><FinanceRow label="Gateway Fees" value={summary.gatewayFeesAvailable && summary.paymentFees !== null ? inr(summary.paymentFees) : 'Not available'} note={summary.gatewayFeesNote || (summary.gatewayFeesAvailable ? 'Recorded fees for this period.' : 'No fee ledger is connected.')} /></>}</section>
       <section className="rounded-xl border border-[#E8E0D8] bg-white p-5"><SectionHeader title="Order Totals" subtitle="Backend summary for the selected period." />{loading ? <TableSkeleton rows={3} cols={2} /> : summary && <><FinanceRow label="Orders" value={summary.orderCount.toLocaleString('en-IN')} /><FinanceRow label="Completed Refunds" value={summary.refundCount.toLocaleString('en-IN')} /><FinanceRow label="Taxable Sales" value={inr(summary.taxableSales)} note="Backend-reported amount; not recalculated here." /></>}</section>
     </div>
+    <FinanceAnalytics range={range}/>
   </div>;
 }

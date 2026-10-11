@@ -33,7 +33,8 @@ GitHub Actions secrets must only store SSH deployment credentials (`VPS_SSH_PRIV
 
 ## Dependencies and relevant files
 
-- Depends on: Work 003 SOPS/age vault and Work 012 VPS environment isolation.
+- Depends on: Unknown
+- Dependency context: Work 003 SOPS/age vault and Work 012 VPS environment isolation.
 - Inspect/edit:
   - `.github/workflows/deploy-dev-backend.yml`
   - `backend/scripts/deploy_vps.sh`

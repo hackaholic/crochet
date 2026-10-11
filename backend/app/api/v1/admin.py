@@ -29,6 +29,7 @@ from app.models.catalogue import (
     ProductCategory,
     ProductCollection,
     ProductImage,
+    ProductInformationDefaults,
     ProductOccasion,
     ProductVariant,
     Review,
@@ -39,6 +40,7 @@ from app.models.order import (
     OrderItem,
     OrderStatus,
     OrderStatusHistory,
+    PaymentMethod,
     PaymentStatus,
     RefundStatus,
     ReturnRequest,
@@ -65,29 +67,41 @@ from app.schemas.admin import (
     AdminAttentionListOut,
     AdminCategoryCreate,
     AdminCategoryOut,
+    AdminCategorySalesItemOut,
+    AdminCategorySalesOut,
     AdminCategoryUpdate,
     AdminCollectionAssignProducts,
     AdminCollectionCreate,
     AdminCollectionOut,
     AdminCollectionUpdate,
+    AdminCountrySalesItemOut,
+    AdminCustomerDetailOut,
     AdminCustomerListOut,
     AdminCustomerOut,
     AdminDashboardComparison,
     AdminDashboardSummaryOut,
+    AdminDestinationSalesOut,
     AdminFinanceSalesBucket,
     AdminFinanceSeriesOut,
     AdminFinanceSummaryOut,
+    AdminFinanceTrendsOut,
     AdminGlobalSearchOut,
+    AdminIndianRegionSalesItemOut,
     AdminInventoryAdjustRequest,
     AdminLowStockItem,
     AdminOccasionIn,
     AdminOccasionOut,
     AdminOccasionUpdateIn,
+    AdminOperationalIndicatorsOut,
     AdminOrderDetailOut,
     AdminOrderItemOut,
     AdminOrderListOut,
     AdminOrderStatusUpdate,
+    AdminPeriodComparisonCount,
+    AdminPeriodComparisonMetric,
     AdminProductCreate,
+    AdminProductInfoDefaultsOut,
+    AdminProductInfoDefaultsUpdate,
     AdminProductListOut,
     AdminProductOut,
     AdminProductUpdate,
@@ -104,7 +118,9 @@ from app.schemas.admin import (
     AdminSendWelcomeRequest,
     AdminTagCreate,
     AdminTagOut,
+    AdminTopProductsOut,
     AdminTopSellingProduct,
+    AdminTopSellingProductItemOut,
     AdminVariantCreate,
     AdminVariantOut,
     AdminVariantUpdate,
@@ -198,6 +214,12 @@ def _product_to_admin_out(p: Product) -> AdminProductOut:
         totalStock=total_stock,
         minPrice=min_price,
         minPricePaise=min_price * 100,
+        handmadeDetails=p.handmade_details,
+        materialsUsed=p.materials_used,
+        sizeDimensions=p.size_dimensions,
+        processingTime=p.processing_time,
+        careInstructions=p.care_instructions,
+        shippingDelivery=p.shipping_delivery,
         createdAt=p.created_at,
         updatedAt=p.updated_at,
     )
@@ -324,7 +346,7 @@ def _parse_ist_date_range(
             to_clean = to_str.strip().split("T")[0]
             to_d = datetime.strptime(to_clean, "%Y-%m-%d").date()
         except ValueError:
-            to_d = now_ist.date()
+            raise HTTPException(status_code=422, detail="Invalid reporting end date")
     else:
         to_d = now_ist.date()
 
@@ -333,7 +355,7 @@ def _parse_ist_date_range(
             from_clean = from_str.strip().split("T")[0]
             from_d = datetime.strptime(from_clean, "%Y-%m-%d").date()
         except ValueError:
-            from_d = to_d - timedelta(days=default_days)
+            raise HTTPException(status_code=422, detail="Invalid reporting start date")
     else:
         from_d = to_d - timedelta(days=default_days)
 
@@ -460,6 +482,8 @@ def create_product(
     if existing_slug:
         slug = f"{slug}-{int(datetime.now(timezone.utc).timestamp())}"
 
+    defaults = db.query(ProductInformationDefaults).order_by(ProductInformationDefaults.id.asc()).first()
+
     product = Product(
         name=payload.name,
         slug=slug,
@@ -471,6 +495,12 @@ def create_product(
         customizable=payload.customizable,
         status="ACTIVE",
         metadata_json=payload.metadata_json,
+        handmade_details=payload.handmade_details if payload.handmade_details is not None else (defaults.handmade_details if defaults else None),
+        materials_used=payload.materials_used if payload.materials_used is not None else (defaults.materials_used if defaults else None),
+        size_dimensions=payload.size_dimensions if payload.size_dimensions is not None else (defaults.size_dimensions if defaults else None),
+        processing_time=payload.processing_time if payload.processing_time is not None else (defaults.processing_time if defaults else None),
+        care_instructions=payload.care_instructions if payload.care_instructions is not None else (defaults.care_instructions if defaults else None),
+        shipping_delivery=payload.shipping_delivery if payload.shipping_delivery is not None else (defaults.shipping_delivery if defaults else None),
     )
 
     # Attach categories with primary indication
@@ -628,6 +658,18 @@ def update_product(
         product.customizable = payload.customizable
     if payload.metadata_json is not None:
         product.metadata_json = payload.metadata_json
+    if payload.handmade_details is not None:
+        product.handmade_details = payload.handmade_details
+    if payload.materials_used is not None:
+        product.materials_used = payload.materials_used
+    if payload.size_dimensions is not None:
+        product.size_dimensions = payload.size_dimensions
+    if payload.processing_time is not None:
+        product.processing_time = payload.processing_time
+    if payload.care_instructions is not None:
+        product.care_instructions = payload.care_instructions
+    if payload.shipping_delivery is not None:
+        product.shipping_delivery = payload.shipping_delivery
 
     if payload.category_ids is not None or payload.primary_category_id is not None:
         cat_ids = list(payload.category_ids) if payload.category_ids is not None else [c.id for c in product.categories]
@@ -660,16 +702,12 @@ def update_product(
         product.tags = new_tags
 
     if payload.gallery_images is not None:
-        product.images.clear()
         all_imgs = [product.primary_image] + [url for url in payload.gallery_images if url != product.primary_image]
-        for idx, url in enumerate(all_imgs):
-            product.images.append(
-                ProductImage(
-                    url=url,
-                    sort_order=idx,
-                    is_primary=(idx == 0),
-                )
-            )
+        existing_images = sorted(product.images, key=lambda image: (image.sort_order, image.id))
+        if all_imgs != [image.url for image in existing_images]:
+            product.images.clear()
+            for idx, url in enumerate(all_imgs):
+                product.images.append(ProductImage(url=url, sort_order=idx, is_primary=(idx == 0)))
 
     product.updated_at = datetime.now(timezone.utc)
     db.commit()
@@ -1671,7 +1709,7 @@ def _build_finance_buckets(
             ts = datetime(curr.year, curr.month, curr.day, 0, 0, 0, tzinfo=IST).isoformat()
             label = curr.isoformat()
 
-        gross = sum(o.subtotal + o.discount_amount for o in b_orders)
+        gross = sum(o.subtotal for o in b_orders)
         discounts = sum(o.discount_amount for o in b_orders)
         refunds = sum(r.refund_amount for r in b_returns)
         shipping = sum(o.shipping_fee for o in b_orders)
@@ -1866,14 +1904,9 @@ def get_admin_finance_summary(
 ) -> AdminFinanceSummaryOut:
     """Financial accounting summary reconciling gross sales, discounts, shipping, stored tax, and refunds."""
     from_utc, to_utc, eff_from, eff_to = _parse_ist_date_range(from_date, to_date)
+    orders = _get_eligible_finance_orders(db, from_utc, to_utc)
 
-    orders = (
-        db.query(Order)
-        .filter(Order.created_at >= from_utc, Order.created_at <= to_utc, Order.status != OrderStatus.CANCELLED.value)
-        .all()
-    )
-
-    gross_sales = sum(o.subtotal + o.discount_amount for o in orders)
+    gross_sales = sum(o.subtotal for o in orders)
     discounts = sum(o.discount_amount for o in orders)
     shipping_collected = sum(o.shipping_fee for o in orders)
     stored_tax = sum(o.tax_amount for o in orders)
@@ -1927,16 +1960,7 @@ def get_admin_finance_sales(
 ) -> AdminFinanceSeriesOut:
     """Finance trend series reconciling with summary."""
     from_utc, to_utc, eff_from, eff_to = _parse_ist_date_range(from_date, to_date)
-    orders = (
-        db.query(Order)
-        .filter(
-            Order.created_at >= from_utc,
-            Order.created_at <= to_utc,
-            Order.status != OrderStatus.CANCELLED.value,
-        )
-        .order_by(Order.created_at.asc())
-        .all()
-    )
+    orders = _get_eligible_finance_orders(db, from_utc, to_utc)
     returns = (
         db.query(ReturnRequest)
         .filter(
@@ -1952,6 +1976,466 @@ def get_admin_finance_sales(
         interval=interval,
         effectiveRange={"from": eff_from, "to": eff_to},
         buckets=buckets,
+    )
+
+
+def _get_eligible_finance_orders(db: Session, from_utc: datetime, to_utc: datetime) -> list[Order]:
+    """Retrieve orders qualifying for finance reporting per contract 1.14.8.
+
+    Excludes CANCELLED orders.
+    Active COD orders qualify (regardless of payment_status).
+    Prepaid orders (UPI, CARD, NETBANKING, etc.) qualify only if payment_status is PAID, PARTIALLY_REFUNDED, or REFUNDED.
+    Unpaid prepaid orders (PENDING, FAILED) are excluded from recognized sales.
+    """
+    eligible_paid_statuses = (PaymentStatus.PAID.value, "PARTIALLY_REFUNDED", PaymentStatus.REFUNDED.value)
+    return (
+        db.query(Order)
+        .options(joinedload(Order.items))
+        .filter(
+            Order.created_at >= from_utc,
+            Order.created_at <= to_utc,
+            Order.status != OrderStatus.CANCELLED.value,
+            (Order.payment_method == PaymentMethod.COD.value) | (Order.payment_status.in_(eligible_paid_statuses)),
+        )
+        .order_by(Order.created_at.asc())
+        .all()
+    )
+
+
+@router.get("/finance/categories", response_model=AdminCategorySalesOut)
+def get_admin_finance_categories(
+    from_date: str | None = Query(default=None, alias="from", description="Start date (YYYY-MM-DD)"),
+    to_date: str | None = Query(default=None, alias="to", description="End date (YYYY-MM-DD)"),
+    sort_by: str = Query(default="sales", pattern="^(sales|units|orders|name)$", alias="sortBy"),
+    limit: int = Query(default=50, ge=1, le=200),
+    db: Session = Depends(get_db),
+) -> AdminCategorySalesOut:
+    """Category sales breakdown per single-accounting contract DEC001-14.
+
+    Every order item is attributed to exactly one category:
+    1. Primary category of product (`is_primary=True`)
+    2. Fallback to lowest category_id assigned to product
+    3. 'Uncategorized' bucket if no category or deleted/missing product
+    """
+    from_utc, to_utc, eff_from, eff_to = _parse_ist_date_range(from_date, to_date)
+    orders = _get_eligible_finance_orders(db, from_utc, to_utc)
+
+    # Pre-fetch all products with categories to avoid N+1 queries
+    product_ids = {
+        item.product_id
+        for order in orders
+        for item in order.items
+        if item.product_id is not None
+    }
+    
+    product_cat_map: dict[int, tuple[int, str, str | None]] = {}
+    if product_ids:
+        # Query product categories joined with category details
+        pc_rows = (
+            db.query(
+                ProductCategory.product_id,
+                ProductCategory.category_id,
+                ProductCategory.is_primary,
+                Category.name,
+                Category.slug,
+            )
+            .join(Category, ProductCategory.category_id == Category.id)
+            .filter(ProductCategory.product_id.in_(product_ids))
+            .all()
+        )
+        # Choose primary category or lowest category_id
+        # Group by product_id
+        grouped: dict[int, list[Any]] = {}
+        for r in pc_rows:
+            grouped.setdefault(r[0], []).append(r)
+
+        for pid, rows in grouped.items():
+            primary = next((r for r in rows if r[2] is True), None)
+            chosen = primary or sorted(rows, key=lambda x: x[1])[0]
+            product_cat_map[pid] = (chosen[1], chosen[3], chosen[4])
+
+    # Category buckets aggregation
+    # Key: (category_id, category_name, category_slug)
+    cat_stats: dict[tuple[int | None, str, str | None], dict[str, Any]] = {}
+
+    total_gross_sales = 0
+    total_units_sold = 0
+
+    for order in orders:
+        # To avoid double-counting order count per category within same order:
+        order_cats_seen = set()
+        for item in order.items:
+            cat_info = product_cat_map.get(item.product_id) if item.product_id else None
+            if cat_info is None:
+                cat_key = (None, "Uncategorized", None)
+            else:
+                cat_key = (cat_info[0], cat_info[1], cat_info[2])
+
+            if cat_key not in cat_stats:
+                cat_stats[cat_key] = {
+                    "order_count": 0,
+                    "units_sold": 0,
+                    "gross_sales": 0,
+                }
+
+            if cat_key not in order_cats_seen:
+                cat_stats[cat_key]["order_count"] += 1
+                order_cats_seen.add(cat_key)
+
+            cat_stats[cat_key]["units_sold"] += item.quantity
+            cat_stats[cat_key]["gross_sales"] += item.line_total
+
+            total_gross_sales += item.line_total
+            total_units_sold += item.quantity
+
+    items: list[AdminCategorySalesItemOut] = []
+    for (cid, cname, cslug), stats in cat_stats.items():
+        sales = stats["gross_sales"]
+        share = round((sales / total_gross_sales * 100), 2) if total_gross_sales > 0 else 0.0
+        items.append(
+            AdminCategorySalesItemOut(
+                categoryId=cid,
+                categoryName=cname,
+                categorySlug=cslug,
+                orderCount=stats["order_count"],
+                unitsSold=stats["units_sold"],
+                grossSales=sales,
+                grossSalesPaise=sales * 100,
+                salesSharePct=share,
+            )
+        )
+
+    # Sort items
+    if sort_by == "units":
+        items.sort(key=lambda x: (-x.units_sold, -x.gross_sales, x.category_name))
+    elif sort_by == "orders":
+        items.sort(key=lambda x: (-x.order_count, -x.gross_sales, x.category_name))
+    elif sort_by == "name":
+        items.sort(key=lambda x: x.category_name.lower())
+    else:  # sales
+        items.sort(key=lambda x: (-x.gross_sales, -x.units_sold, x.category_name))
+
+    paged_items = items[:limit]
+
+    return AdminCategorySalesOut(
+        effectiveRange={"from": eff_from, "to": eff_to},
+        totalGrossSales=total_gross_sales,
+        totalGrossSalesPaise=total_gross_sales * 100,
+        totalUnitsSold=total_units_sold,
+        categories=paged_items,
+    )
+
+
+@router.get("/finance/destinations", response_model=AdminDestinationSalesOut)
+def get_admin_finance_destinations(
+    from_date: str | None = Query(default=None, alias="from", description="Start date (YYYY-MM-DD)"),
+    to_date: str | None = Query(default=None, alias="to", description="End date (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+) -> AdminDestinationSalesOut:
+    """Geographic sales breakdown derived strictly from immutable shipping snapshots.
+
+    Does not infer identity, geolocate, or modify records.
+    """
+    from_utc, to_utc, eff_from, eff_to = _parse_ist_date_range(from_date, to_date)
+    orders = _get_eligible_finance_orders(db, from_utc, to_utc)
+
+    # Aggregate by country code, with sub-aggregation for Indian states
+    country_data: dict[str, dict[str, Any]] = {}
+    total_gross_sales = 0
+
+    for order in orders:
+        order_gross = order.subtotal
+        order_units = sum(item.quantity for item in order.items)
+        total_gross_sales += order_gross
+
+        addr = order.shipping_address_json or {}
+        raw_country = str(addr.get("country") or "").strip().upper()
+        raw_state = str(addr.get("state") or "").strip()
+
+        # Normalize country
+        if not raw_country or raw_country in ("UNKNOWN", "NONE", "NULL"):
+            c_code = "UNKNOWN"
+            c_name = "Unknown Destination"
+        elif raw_country in ("IN", "IND", "INDIA"):
+            c_code = "IN"
+            c_name = "India"
+        else:
+            c_code = raw_country
+            c_name = raw_country.title()
+
+        if c_code not in country_data:
+            country_data[c_code] = {
+                "country_code": c_code,
+                "country_name": c_name,
+                "order_count": 0,
+                "units_sold": 0,
+                "gross_sales": 0,
+                "states": {},
+            }
+
+        c_entry = country_data[c_code]
+        c_entry["order_count"] += 1
+        c_entry["units_sold"] += order_units
+        c_entry["gross_sales"] += order_gross
+
+        if c_code == "IN":
+            st_key = raw_state if raw_state else "Unknown State"
+            if st_key not in c_entry["states"]:
+                c_entry["states"][st_key] = {
+                    "state": st_key,
+                    "order_count": 0,
+                    "units_sold": 0,
+                    "gross_sales": 0,
+                }
+            st_entry = c_entry["states"][st_key]
+            st_entry["order_count"] += 1
+            st_entry["units_sold"] += order_units
+            st_entry["gross_sales"] += order_gross
+
+    countries_out: list[AdminCountrySalesItemOut] = []
+    for c_code, c_dict in country_data.items():
+        c_sales = c_dict["gross_sales"]
+        c_share = round((c_sales / total_gross_sales * 100), 2) if total_gross_sales > 0 else 0.0
+
+        # State regions
+        regions_out: list[AdminIndianRegionSalesItemOut] = []
+        for s_name, s_dict in c_dict["states"].items():
+            s_sales = s_dict["gross_sales"]
+            s_share = round((s_sales / c_sales * 100), 2) if c_sales > 0 else 0.0
+            regions_out.append(
+                AdminIndianRegionSalesItemOut(
+                    state=s_name,
+                    orderCount=s_dict["order_count"],
+                    unitsSold=s_dict["units_sold"],
+                    grossSales=s_sales,
+                    grossSalesPaise=s_sales * 100,
+                    salesSharePct=s_share,
+                )
+            )
+        regions_out.sort(key=lambda x: (-x.gross_sales, -x.units_sold, x.state))
+
+        countries_out.append(
+            AdminCountrySalesItemOut(
+                countryCode=c_code,
+                countryName=c_dict["country_name"],
+                orderCount=c_dict["order_count"],
+                unitsSold=c_dict["units_sold"],
+                grossSales=c_sales,
+                grossSalesPaise=c_sales * 100,
+                salesSharePct=c_share,
+                regions=regions_out,
+            )
+        )
+
+    countries_out.sort(key=lambda x: (-x.gross_sales, -x.units_sold, x.country_code))
+
+    return AdminDestinationSalesOut(
+        effectiveRange={"from": eff_from, "to": eff_to},
+        totalGrossSales=total_gross_sales,
+        totalGrossSalesPaise=total_gross_sales * 100,
+        totalOrders=len(orders),
+        countries=countries_out,
+    )
+
+
+@router.get("/finance/top-products", response_model=AdminTopProductsOut)
+def get_admin_finance_top_products(
+    from_date: str | None = Query(default=None, alias="from", description="Start date (YYYY-MM-DD)"),
+    to_date: str | None = Query(default=None, alias="to", description="End date (YYYY-MM-DD)"),
+    metric: str = Query(default="revenue", pattern="^(revenue|units)$"),
+    limit: int = Query(default=10, ge=1, le=100),
+    db: Session = Depends(get_db),
+) -> AdminTopProductsOut:
+    """Top-selling products and variants filtered strictly by selected period and eligible orders."""
+    from_utc, to_utc, eff_from, eff_to = _parse_ist_date_range(from_date, to_date)
+    orders = _get_eligible_finance_orders(db, from_utc, to_utc)
+
+    # Aggregate by (product_id, sku, variant_name)
+    prod_stats: dict[tuple[int | None, str | None, str | None], dict[str, Any]] = {}
+    for order in orders:
+        for item in order.items:
+            key = (item.product_id, item.sku or "", item.variant_name or "")
+            if key not in prod_stats:
+                img_url = (
+                    build_image_url(item.product_image)
+                    if item.product_image and not item.product_image.startswith(("http://", "https://"))
+                    else item.product_image
+                )
+                prod_stats[key] = {
+                    "product_id": item.product_id,
+                    "product_name": item.product_name,
+                    "sku": item.sku,
+                    "variant_name": item.variant_name,
+                    "image_url": img_url,
+                    "units_sold": 0,
+                    "orders_seen": set(),
+                    "product_revenue": 0,
+                }
+            entry = prod_stats[key]
+            entry["units_sold"] += item.quantity
+            entry["orders_seen"].add(order.id)
+            entry["product_revenue"] += item.line_total
+
+    items: list[AdminTopSellingProductItemOut] = []
+    for entry in prod_stats.values():
+        items.append(
+            AdminTopSellingProductItemOut(
+                productId=entry["product_id"],
+                productName=entry["product_name"],
+                sku=entry["sku"] or None,
+                variantName=entry["variant_name"] or None,
+                imageUrl=entry["image_url"] or None,
+                unitsSold=entry["units_sold"],
+                distinctOrders=len(entry["orders_seen"]),
+                productRevenue=entry["product_revenue"],
+                productRevenuePaise=entry["product_revenue"] * 100,
+            )
+        )
+
+    # Sort with deterministic tie-breaks
+    if metric == "units":
+        items.sort(key=lambda x: (-x.units_sold, -x.product_revenue, x.product_id or 0, x.product_name))
+    else:  # revenue
+        items.sort(key=lambda x: (-x.product_revenue, -x.units_sold, x.product_id or 0, x.product_name))
+
+    return AdminTopProductsOut(
+        effectiveRange={"from": eff_from, "to": eff_to},
+        rankingMetric=metric,
+        items=items[:limit],
+    )
+
+
+@router.get("/finance/trends", response_model=AdminFinanceTrendsOut)
+def get_admin_finance_trends(
+    from_date: str | None = Query(default=None, alias="from", description="Start date (YYYY-MM-DD)"),
+    to_date: str | None = Query(default=None, alias="to", description="End date (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+) -> AdminFinanceTrendsOut:
+    """Finance trends comparing current period with equal-length previous period."""
+    from_utc, to_utc, eff_from, eff_to = _parse_ist_date_range(from_date, to_date)
+    curr_from_d = datetime.strptime(eff_from, "%Y-%m-%d").date()
+    curr_to_d = datetime.strptime(eff_to, "%Y-%m-%d").date()
+
+    period_len = (curr_to_d - curr_from_d).days + 1
+    prev_to_d = curr_from_d - timedelta(days=1)
+    prev_from_d = prev_to_d - timedelta(days=period_len - 1)
+
+    prev_from_utc, prev_to_utc, prev_eff_from, prev_eff_to = _parse_ist_date_range(
+        prev_from_d.isoformat(), prev_to_d.isoformat()
+    )
+
+    # Current period metrics
+    curr_orders = _get_eligible_finance_orders(db, from_utc, to_utc)
+    curr_gross = sum(o.subtotal for o in curr_orders)
+    curr_discounts = sum(o.discount_amount for o in curr_orders)
+    curr_shipping = sum(o.shipping_fee for o in curr_orders)
+    curr_tax = sum(o.tax_amount for o in curr_orders)
+
+    curr_returns = (
+        db.query(ReturnRequest)
+        .filter(
+            ReturnRequest.refund_status == RefundStatus.COMPLETED.value,
+            ReturnRequest.updated_at >= from_utc,
+            ReturnRequest.updated_at <= to_utc,
+        )
+        .all()
+    )
+    curr_refunds = sum(r.refund_amount for r in curr_returns)
+    curr_net = curr_gross - curr_discounts + curr_shipping + curr_tax - curr_refunds
+    curr_order_count = len(curr_orders)
+    curr_receipts = curr_gross - curr_discounts + curr_shipping + curr_tax
+    curr_aov = round(curr_receipts / curr_order_count) if curr_order_count > 0 else 0
+
+    # Previous period metrics
+    prev_orders = _get_eligible_finance_orders(db, prev_from_utc, prev_to_utc)
+    prev_gross = sum(o.subtotal for o in prev_orders)
+    prev_discounts = sum(o.discount_amount for o in prev_orders)
+    prev_shipping = sum(o.shipping_fee for o in prev_orders)
+    prev_tax = sum(o.tax_amount for o in prev_orders)
+
+    prev_returns = (
+        db.query(ReturnRequest)
+        .filter(
+            ReturnRequest.refund_status == RefundStatus.COMPLETED.value,
+            ReturnRequest.updated_at >= prev_from_utc,
+            ReturnRequest.updated_at <= prev_to_utc,
+        )
+        .all()
+    )
+    prev_refunds = sum(r.refund_amount for r in prev_returns)
+    prev_net = prev_gross - prev_discounts + prev_shipping + prev_tax - prev_refunds
+    prev_order_count = len(prev_orders)
+    prev_receipts = prev_gross - prev_discounts + prev_shipping + prev_tax
+    prev_aov = round(prev_receipts / prev_order_count) if prev_order_count > 0 else 0
+
+    def _calc_growth(curr: int, prev: int) -> float | None:
+        if prev > 0:
+            return round(((curr - prev) / prev) * 100, 1)
+        return None
+
+    # Operational indicators for current period
+    # Unpaid prepaid orders tracked separately from recognized revenue
+    all_period_orders = (
+        db.query(Order)
+        .filter(Order.created_at >= from_utc, Order.created_at <= to_utc)
+        .all()
+    )
+    pending_payment_orders = [
+        o for o in all_period_orders
+        if o.payment_method != PaymentMethod.COD.value and o.payment_status in (PaymentStatus.PENDING.value, PaymentStatus.FAILED.value)
+    ]
+    pending_total = sum(o.total_amount for o in pending_payment_orders)
+    cancelled_count = sum(1 for o in all_period_orders if o.status == OrderStatus.CANCELLED.value)
+
+    fulfillment_counts: dict[str, int] = {}
+    for o in curr_orders:
+        st = o.status.value if hasattr(o.status, "value") else str(o.status)
+        fulfillment_counts[st] = fulfillment_counts.get(st, 0) + 1
+
+    return AdminFinanceTrendsOut(
+        effectiveRange={"from": eff_from, "to": eff_to},
+        previousRange={"from": prev_eff_from, "to": prev_eff_to},
+        grossSales=AdminPeriodComparisonMetric(
+            current=curr_gross,
+            currentPaise=curr_gross * 100,
+            previous=prev_gross,
+            previousPaise=prev_gross * 100,
+            growthPct=_calc_growth(curr_gross, prev_gross),
+        ),
+        netRevenue=AdminPeriodComparisonMetric(
+            current=curr_net,
+            currentPaise=curr_net * 100,
+            previous=prev_net,
+            previousPaise=prev_net * 100,
+            growthPct=_calc_growth(curr_net, prev_net),
+        ),
+        orders=AdminPeriodComparisonCount(
+            current=curr_order_count,
+            previous=prev_order_count,
+            growthPct=_calc_growth(curr_order_count, prev_order_count),
+        ),
+        averageOrderValue=AdminPeriodComparisonMetric(
+            current=curr_aov,
+            currentPaise=curr_aov * 100,
+            previous=prev_aov,
+            previousPaise=prev_aov * 100,
+            growthPct=_calc_growth(curr_aov, prev_aov),
+        ),
+        refunds=AdminPeriodComparisonMetric(
+            current=curr_refunds,
+            currentPaise=curr_refunds * 100,
+            previous=prev_refunds,
+            previousPaise=prev_refunds * 100,
+            growthPct=_calc_growth(curr_refunds, prev_refunds),
+        ),
+        operationalIndicators=AdminOperationalIndicatorsOut(
+            pendingPaymentCount=len(pending_payment_orders),
+            pendingPaymentTotal=pending_total,
+            pendingPaymentTotalPaise=pending_total * 100,
+            cancelledCount=cancelled_count,
+            refundedCount=len(curr_returns),
+            fulfillmentStates=fulfillment_counts,
+        ),
     )
 
 
@@ -2594,18 +3078,15 @@ def get_admin_brand_settings(
     db: Session = Depends(get_db),
     admin_user: User = Depends(get_current_admin),
 ) -> BrandSettingsOut:
-    """Retrieve storewide brand settings."""
+    """Retrieve storewide brand settings (read-only, no write side effects)."""
     brand = db.query(BrandSettings).order_by(BrandSettings.id.asc()).first()
     if not brand:
-        brand = BrandSettings(
+        return BrandSettingsOut(
             name="Sulocraft",
             owner_name="Anupama Sharma",
-            instagram_url="https://instagram.com/sulocraft",
-            whatsapp_url="https://wa.me/919876543210",
+            instagram_url=None,
+            whatsapp_url=None,
         )
-        db.add(brand)
-        db.commit()
-        db.refresh(brand)
     return BrandSettingsOut.model_validate(brand)
 
 
@@ -2615,25 +3096,90 @@ def update_admin_brand_settings(
     db: Session = Depends(get_db),
     admin_user: User = Depends(get_current_admin),
 ) -> BrandSettingsOut:
-    """Update storewide brand settings."""
+    """Update storewide brand settings.
+    
+    Fields set explicitly (including None) are updated; omitted fields are preserved.
+    """
     brand = db.query(BrandSettings).order_by(BrandSettings.id.asc()).first()
     if not brand:
-        brand = BrandSettings(id=1)
+        brand = BrandSettings(
+            id=1,
+            name="Sulocraft",
+            owner_name="Anupama Sharma",
+            instagram_url=None,
+            whatsapp_url=None,
+        )
         db.add(brand)
 
-    if payload.name is not None:
-        brand.name = payload.name
-    if payload.owner_name is not None:
-        brand.owner_name = payload.owner_name
-    if payload.instagram_url is not None:
-        brand.instagram_url = payload.instagram_url
-    if payload.whatsapp_url is not None:
-        brand.whatsapp_url = payload.whatsapp_url
+    update_data = payload.model_dump(exclude_unset=True)
+    if "name" in update_data:
+        brand.name = update_data["name"]
+    if "owner_name" in update_data:
+        brand.owner_name = update_data["owner_name"]
+    if "instagram_url" in update_data:
+        brand.instagram_url = update_data["instagram_url"]
+    if "whatsapp_url" in update_data:
+        brand.whatsapp_url = update_data["whatsapp_url"]
 
     brand.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(brand)
     return BrandSettingsOut.model_validate(brand)
+
+
+@router.get("/storefront/product-defaults", response_model=AdminProductInfoDefaultsOut)
+def get_admin_product_defaults(
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> AdminProductInfoDefaultsOut:
+    """Retrieve storewide configurable product information defaults."""
+    defaults = db.query(ProductInformationDefaults).order_by(ProductInformationDefaults.id.asc()).first()
+    if not defaults:
+        return AdminProductInfoDefaultsOut(
+            handmade_details="Handcrafted with traditional crochet techniques. Each piece is made by hand with attention to detail; subtle variations are natural and make each item unique.",
+            materials_used="Quality yarn and secure stitching tailored for crochet heirlooms.",
+            size_dimensions="Dimensions vary by design; please refer to the product specifications.",
+            processing_time="Processing time is confirmed for each order.",
+            care_instructions="Gently spot clean or dust with a dry soft cloth. Keep away from excessive moisture and direct prolonged sunlight.",
+            shipping_delivery="Shipping availability and delivery details are confirmed for each order.",
+            updated_at=None,
+        )
+    return AdminProductInfoDefaultsOut.model_validate(defaults)
+
+
+@router.put("/storefront/product-defaults", response_model=AdminProductInfoDefaultsOut)
+def update_admin_product_defaults(
+    payload: AdminProductInfoDefaultsUpdate,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> AdminProductInfoDefaultsOut:
+    """Update storewide configurable product information defaults.
+
+    Explicit fields (including None/null) are updated; omitted fields are preserved.
+    """
+    defaults = db.query(ProductInformationDefaults).order_by(ProductInformationDefaults.id.asc()).first()
+    if not defaults:
+        defaults = ProductInformationDefaults(id=1)
+        db.add(defaults)
+
+    update_data = payload.model_dump(exclude_unset=True)
+    if "handmade_details" in update_data:
+        defaults.handmade_details = update_data["handmade_details"]
+    if "materials_used" in update_data:
+        defaults.materials_used = update_data["materials_used"]
+    if "size_dimensions" in update_data:
+        defaults.size_dimensions = update_data["size_dimensions"]
+    if "processing_time" in update_data:
+        defaults.processing_time = update_data["processing_time"]
+    if "care_instructions" in update_data:
+        defaults.care_instructions = update_data["care_instructions"]
+    if "shipping_delivery" in update_data:
+        defaults.shipping_delivery = update_data["shipping_delivery"]
+
+    defaults.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(defaults)
+    return AdminProductInfoDefaultsOut.model_validate(defaults)
 
 
 @router.get("/storefront/campaigns", response_model=list[AdminHomepageCampaignOut])
@@ -3149,12 +3695,12 @@ def list_customers(
     )
 
 
-@router.get("/customers/{customer_id}", response_model=AdminCustomerOut)
+@router.get("/customers/{customer_id}", response_model=AdminCustomerDetailOut)
 def get_customer(
     customer_id: int,
     db: Session = Depends(get_db),
-) -> AdminCustomerOut:
-    """Retrieve detailed customer profile."""
+) -> AdminCustomerDetailOut:
+    """Retrieve detailed customer profile including saved addresses."""
     return get_admin_customer(db=db, customer_id=customer_id)
 
 

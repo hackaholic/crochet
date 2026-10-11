@@ -1,11 +1,7 @@
 # Work 001 tasks
 
 ## In Progress
-
-
-
-
-
+No active Codex subtask.
 
 ## Pending
 
@@ -13,21 +9,33 @@
 
 - [ ] 1.6 Codex: Verify the integrated admin in local Docker/browser, including API-backed data, error/empty/mutation states, and desktop/mobile rendering; record defects before marking the integration accepted.
 
-- [ ] 1.10 Codex: Define which Settings belong in V1 and audit existing admin APIs; write a separate Gemini contract before adding backend capability.
 - [ ] 1.12 Codex (delivery owner; user provides final acceptance): Prepare the local review and obtain user acceptance. The user reviews the locally verified admin experience and decides whether any additional sections or visual changes are required; only then consider a dev push/deploy.
 
 
 ### 1.14 — Finance and sales analytics (Codex work lead)
 
-- [ ] 1.14.1 Gemini: [Define finance analytics contract](tasks/task-021-analytics-metric-contract.md).
-- [ ] 1.14.2 Gemini: [Sales by category](tasks/task-022-sales-category-api.md).
-- [ ] 1.14.3 Gemini: [Sales by country and Indian region](tasks/task-023-sales-country-api.md).
-- [ ] 1.14.4 Gemini: [Top-selling products and variants](tasks/task-024-top-products-api.md).
-- [ ] 1.14.5 Gemini: [Finance trends and operational indicators](tasks/task-025-finance-trends-api.md).
-- [ ] 1.14.6 Codex: [Finance analytics panels](tasks/task-026-finance-analytics-ui.md).
-- [ ] 1.14.7 Codex: [Local analytics reconciliation and acceptance](tasks/task-027-finance-local-acceptance.md).
 
 ## Completed
+- [x] 1.16 Codex: [Activity Feed order navigation](tasks/task-039-activity-order-navigation.md) — seven focused cases/typecheck; rebuilt local desktop/mobile verified.
+- [x] 1.15 Codex: [Clickable pipeline status filters](tasks/task-038-dashboard-pipeline-navigation.md) — six focused tests/typecheck; rebuilt local desktop/mobile verified.
+- [x] 1.9.3 Codex: [Clickable customer names/full profile](tasks/task-036-customer-profile-navigation.md) —8 tests/typecheck, local desktop/mobile verified.
+- [x] 1.9.3 Codex: [Clickable customer names/full profile](tasks/task-036-customer-profile-navigation.md) — Customer name opens profile, Actions column removed, saved addresses rendered with default badge, 6/6 tests pass.
+- [x] 1.14.7 Codex: [Local analytics reconciliation and acceptance](tasks/task-027-finance-local-acceptance.md) —21 PostgreSQL checks pass; rebuilt API and local desktop/mobile verified.
+- [x] 1.14.8 Gemini: [Finance accounting reconciliation](tasks/task-040-finance-accounting-reconciliation.md). (Unpaid prepaid and failed payments excluded from recognized sales, gross sales corrected to subtotal without double discount addition, 19/19 tests pass in test_admin_dashboard.py).
+- [x] 1.9.4 Gemini: [Customer saved-address detail API](tasks/task-037-admin-customer-addresses-api.md). (Saved addresses in customer profile detail, deterministic default-first order, distinct account phone, 6/6 tests pass).
+- [x] 1.10.2 Codex: [Settings brand profile UI](tasks/task-033-brand-settings-ui.md) — 12 focused tests/typecheck and real local save/clear/restore/mobile verified; server edge follow-up1.10.3 stays pending.
+- [x] 1.11.1 Codex: [Orders error/race regression coverage](tasks/task-034-orders-resilience-tests.md) — 3 regressions/typecheck passed, local empty search verified.
+- [x] 1.10.3 Gemini: [Brand name edge validation](tasks/task-035-brand-settings-edge-validation.md). (Explicit null names and internal control characters including tab/newline/DEL rejected 422, unchanged brand row verified, 3/3 tests pass).
+- [x] 1.10.1 Gemini: [Brand settings validation](tasks/task-032-brand-settings-validation.md). (Strict name/owner length and control char checks, safe http/https URL validation, clear/preserve semantics via exclude_unset, forbid extra fields, 3/3 tests pass).
+- [x] 1.10 Codex: [Settings scope/API audit](tasks/task-031-settings-scope-audit.md).
+- [x] 1.14.6 Codex: [Finance analytics panels](tasks/task-026-finance-analytics-ui.md). 19 frontend tests/typecheck, 10 backend tests and local desktop/mobile verified; final reconciliation remains 1.14.7.
+- [x] 1.14.2 Gemini: [Sales by category](tasks/task-022-sales-category-api.md). (Single-accounting category allocation via primary category/fallback/Uncategorized, shares and order counts, 2/2 tests pass).
+- [x] 1.14.3 Gemini: [Sales by country and Indian region](tasks/task-023-sales-country-api.md). (Immutable shipping address snapshot aggregation, Indian state breakdown, UNKNOWN fallback, 2/2 tests pass).
+- [x] 1.14.4 Gemini: [Top-selling products and variants](tasks/task-024-top-products-api.md). (Date/eligible status filtered top products by revenue or units with deterministic tie-breaks, 2/2 tests pass).
+- [x] 1.14.5 Gemini: [Finance trends and operational indicators](tasks/task-025-finance-trends-api.md). (Equal-length prior period comparison, null baseline growth on 0 prior sales, operational counts for pending payments/cancellations/fulfillment, 2/2 tests pass).
+- [x] 1.14.6.2 Codex — [Finance summary contract UI](tasks/task-030-finance-summary-contract-ui.md). 13 targeted tests/typecheck passed; Docker rebuilt and local Finance reporting dates verified.
+- [x] 1.14.1 Gemini: [Define finance analytics contract](tasks/task-021-analytics-metric-contract.md). (Shared IST date window, gross product sales vs order receipts vs net revenue without double discount deduction, cancellation & unpaid exclusion, zero-order AOV, null baseline comparison, untracked gateway fees explicit, 8 backend/security/frontend contract checks pass).
+- [x] 1.14.6.1 Codex — [Finance period alignment](tasks/task-028-finance-period-alignment.md).40 admin tests/typecheck,8 backend tests, local desktop/mobile verified.
 
 - [x] 1.13 Codex: Repair workflow contract ID/status/link warnings; WorkWeave parser reports zero Work001 warnings.
 
@@ -60,10 +68,11 @@
 - [x] 1.5 Gemini: [Core admin backend return](tasks/task-020-core-backend-return.md) — returned original API scope; historical evidence retained.
 - [x] 1.7.5 Gemini: [Tag-management API](tasks/task-006-tags-api.md) — Completed. GET /admin/tags, POST /admin/tags, and product tagIds validation implemented, tested (6/6 tests passing), documented in `docs/api-admin.md`, verified against live local API. Returned to Codex for 1.7.6.
 
-## Blocked
+## Pending test coverage
 
-
-
-- [ ] 1.11 Codex: Add screen-level UI tests for the dashboard, order list/detail, finance, returns, and any newly implemented pages; run the suite in the supported Node/Docker environment. Catalogue/admin tests run successfully in Docker; broader dashboard/finance/returns coverage remains pending.
+- [ ] 1.11 Codex: Add screen-level UI tests for the dashboard, order list/detail, finance, returns, and any newly implemented pages; run the suite in the supported Node/Docker environment. Catalogue, customers, inventory, finance, occasions, Settings and Orders have scoped coverage; dashboard/order-detail/returns coverage remains pending.
 - The previous host Node blocker is resolved for current work by running checks in the supported Node Docker image.
-- A direct run of `backend/tests/test_admin_dashboard.py` produced no result before it was interrupted; backend tests need rerunning in the project Docker/test environment before acceptance.
+- Superseded backend test blocker:10 dashboard/finance tests passed in isolated Docker on2026-10-11.
+
+## Blocked
+None.

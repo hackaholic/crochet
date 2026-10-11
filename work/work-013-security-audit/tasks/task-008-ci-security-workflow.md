@@ -22,7 +22,8 @@ Workflow runs on pull requests, pushes to `dev`, and manual workflow dispatch. R
 
 ## Dependencies and relevant files
 
-- Depends on: Tasks 9.2 through 9.7.
+- Depends on: [9.2](task-002-secrets-audit.md), [9.3](task-003-sast-deps.md), [9.4](task-004-container-infra.md), [9.5](task-005-auth-business-tests.md), [9.6](task-006-dast-tls.md), [9.7](task-007-prepush-full-audit.md)
+- Dependency context: Tasks 9.2 through 9.7.
 - Inspect/edit:
   - `.github/workflows/security.yml`
 

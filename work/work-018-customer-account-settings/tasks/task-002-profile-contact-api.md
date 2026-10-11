@@ -11,7 +11,8 @@ Extend existing PATCH /account/profile with editable delivery phone; validate no
 In scope: existing account/order feature enhancement and its frontend/backend contract tests. Out of scope: architecture redesign, carrier integration, production deployment, password/OTP authentication, deleting completed work.
 
 ## Dependencies and relevant files
-Depends on: Existing authenticated account API; profile email policy DEC018-3.
+Depends on: None
+Dependency context: Existing authenticated account API; profile email policy DEC018-3.
 Inspect/edit: backend/app/schemas/account.py; backend/app/api/v1/account.py; account service/validation; backend/tests/test_account*.py
 
 ## Test cases (define before implementation)

@@ -200,6 +200,14 @@ class Product(Base):
     reviews_count = Column(Integer, default=0)
     metadata_json = Column(JSON().with_variant(JSONB, "postgresql"), default=dict)
 
+    # Six product-information accordion sections (Work 019)
+    handmade_details = Column(Text, nullable=True)
+    materials_used = Column(Text, nullable=True)
+    size_dimensions = Column(Text, nullable=True)
+    processing_time = Column(Text, nullable=True)
+    care_instructions = Column(Text, nullable=True)
+    shipping_delivery = Column(Text, nullable=True)
+
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     published_at = Column(DateTime, nullable=True)
@@ -401,3 +409,23 @@ class Occasion(Base):
                 return False
 
         return True
+
+
+class ProductInformationDefaults(Base):
+    """Storewide configurable default templates for the six product information sections."""
+
+    __tablename__ = "product_information_defaults"
+
+    id = Column(Integer, primary_key=True, index=True)
+    handmade_details = Column(Text, nullable=True)
+    materials_used = Column(Text, nullable=True)
+    size_dimensions = Column(Text, nullable=True)
+    processing_time = Column(Text, nullable=True)
+    care_instructions = Column(Text, nullable=True)
+    shipping_delivery = Column(Text, nullable=True)
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+

@@ -22,7 +22,8 @@ Refer to `docs/api-promotions.md`. The UI must display clear error messages for 
 
 ## Dependencies and relevant files
 
-- Depends on: Tasks 8.1 and 8.2 backend contracts.
+- Depends on: 8.1, 8.2
+- Dependency context: Tasks 8.1 and 8.2 backend contracts.
 - Inspect/edit:
   - `src/pages/CartPage.tsx`
   - `src/pages/ProductPage.tsx`

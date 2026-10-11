@@ -1,3 +1,4 @@
+import ProductInformationDefaults from '../components/ProductInformationDefaults';
 import { useEffect, useState } from 'react';
 import { getAdminProducts, type AdminProductList } from '../../lib/api/admin';
 import { getCategories, getProduct, type CatalogueProduct, type TaxonomyOption } from '../services/catalogue';
@@ -42,6 +43,7 @@ export default function ProductsPage() {
   }} />;
   return <div className="space-y-5">
     <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="font-serif text-2xl font-bold">Products</h1><p className="mt-1 text-sm text-[#6B5B4E]">Manage your Sulocraft catalogue, prices, photos, tags and variants.</p></div><button className={actionClass} disabled={!categoriesReady || detailBusy} onClick={() => { setProduct(undefined); setEditing(true); setNotice(''); }}>Add product</button></div>
+    <details><summary className="cursor-pointer text-sm underline">Configure product information defaults</summary><ProductInformationDefaults /></details>
     {notice && <p role="status" className="text-sm text-emerald-700">{notice}</p>}
     {!categoriesReady && !categoriesLoading && <p role="status" className="text-sm">Category data is unavailable; editing is paused to protect existing associations. <button className="underline" onClick={() => setRetry(x => x + 1)}>Retry categories</button></p>}
     <div className="flex flex-wrap gap-3"><label className="grow text-sm">Search products or SKU<input type="search" className={controlClass} value={query} onChange={e => { setQuery(e.target.value); setPage(1); }} /></label>

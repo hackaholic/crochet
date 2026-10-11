@@ -163,23 +163,32 @@ def test_storefront_active_and_schedule_filtering():
 
 
 def test_admin_get_and_update_brand_settings():
-    """Verify admin can view and update brand settings."""
+    """Verify admin can view, validate, and harden brand settings (Task 1.10.1: TC01-TC05)."""
+    # TC04: Unauthenticated & non-admin authorization checks
+    client.cookies.clear()
+    unauth = client.get("/api/v1/admin/storefront/brand")
+    assert unauth.status_code == 401
+    unauth_put = client.put("/api/v1/admin/storefront/brand", json={"name": "Hacked"})
+    assert unauth_put.status_code == 401
+
+    cust_cookies = _login_customer("9999911111")
+    forbidden = client.get("/api/v1/admin/storefront/brand", cookies=cust_cookies)
+    assert forbidden.status_code == 403
+    forbidden_put = client.put("/api/v1/admin/storefront/brand", cookies=cust_cookies, json={"name": "Hacked"})
+    assert forbidden_put.status_code == 403
+
+    client.cookies.clear()
     admin_cookies = _login_admin("9999900000")
 
-    # GET
-    res = client.get("/api/v1/admin/storefront/brand", cookies=admin_cookies)
-    assert res.status_code == 200
-    assert res.json()["name"] == "Sulocraft"
-    assert res.json()["ownerName"] == "Anupama Sharma"
-
-    # PUT
+    # TC01: Valid update persists trimmed values and reflects across admin and public storefront
     update_res = client.put(
         "/api/v1/admin/storefront/brand",
         cookies=admin_cookies,
         json={
-            "name": "Sulocraft Artisans",
-            "ownerName": "Anupama Roy",
+            "name": "  Sulocraft Artisans  ",
+            "ownerName": "  Anupama Roy  ",
             "instagramUrl": "https://instagram.com/sulocraft.artisans",
+            "whatsappUrl": "https://wa.me/919876543210",
         },
     )
     assert update_res.status_code == 200
@@ -187,12 +196,117 @@ def test_admin_get_and_update_brand_settings():
     assert data["name"] == "Sulocraft Artisans"
     assert data["ownerName"] == "Anupama Roy"
     assert data["instagramUrl"] == "https://instagram.com/sulocraft.artisans"
+    assert data["whatsappUrl"] == "https://wa.me/919876543210"
+
+    # Public storefront reflection
+    public_res = client.get("/api/v1/storefront/home")
+    assert public_res.status_code == 200
+    assert public_res.json()["brand"]["name"] == "Sulocraft Artisans"
+
+    # TC02: Blank/null optional clears; omitted preserves
+    # Clear whatsappUrl with null, omit instagramUrl
+    clear_res = client.put(
+        "/api/v1/admin/storefront/brand",
+        cookies=admin_cookies,
+        json={"whatsappUrl": None},
+    )
+    assert clear_res.status_code == 200
+    clear_data = clear_res.json()
+    assert clear_data["whatsappUrl"] is None
+    assert clear_data["instagramUrl"] == "https://instagram.com/sulocraft.artisans"  # Preserved
+
+    # Clear instagramUrl with whitespace/empty string
+    clear_insta = client.put(
+        "/api/v1/admin/storefront/brand",
+        cookies=admin_cookies,
+        json={"instagramUrl": "   "},
+    )
+    assert clear_insta.status_code == 200
+    assert clear_insta.json()["instagramUrl"] is None
+
+    # TC01 / 1.10.3: Explicit null name/ownerName rejected with 422, no writes
+    null_name = client.put(
+        "/api/v1/admin/storefront/brand",
+        cookies=admin_cookies,
+        json={"name": None},
+    )
+    assert null_name.status_code == 422
+
+    null_owner = client.put(
+        "/api/v1/admin/storefront/brand",
+        cookies=admin_cookies,
+        json={"ownerName": None},
+    )
+    assert null_owner.status_code == 422
+
+    # Verify brand row remains completely unchanged
+    check_row = client.get("/api/v1/admin/storefront/brand", cookies=admin_cookies)
+    assert check_row.status_code == 200
+    assert check_row.json()["name"] == "Sulocraft Artisans"
+
+    # Invalid empty or oversized names rejected with 422
+    empty_name = client.put(
+        "/api/v1/admin/storefront/brand",
+        cookies=admin_cookies,
+        json={"name": "   "},
+    )
+    assert empty_name.status_code == 422
+
+    long_name = client.put(
+        "/api/v1/admin/storefront/brand",
+        cookies=admin_cookies,
+        json={"name": "A" * 105},
+    )
+    assert long_name.status_code == 422
+
+    # Control characters in name rejected (null byte, tab, newline, carriage-return, DEL \x7f)
+    for bad_ctrl in ("Anupama\x00Sharma", "Sulocraft\tStore", "Sulocraft\nStore", "Sulocraft\rStore", "Sulocraft\x7fStore"):
+        ctrl_res = client.put(
+            "/api/v1/admin/storefront/brand",
+            cookies=admin_cookies,
+            json={"name": bad_ctrl},
+        )
+        assert ctrl_res.status_code == 422
+
+    # TC03: Unsafe URLs, user credentials, relative paths, extra fields rejected
+    bad_scheme = client.put(
+        "/api/v1/admin/storefront/brand",
+        cookies=admin_cookies,
+        json={"instagramUrl": "javascript:alert(1)"},
+    )
+    assert bad_scheme.status_code == 422
+
+    relative_url = client.put(
+        "/api/v1/admin/storefront/brand",
+        cookies=admin_cookies,
+        json={"instagramUrl": "/relative/path"},
+    )
+    assert relative_url.status_code == 422
+
+    user_cred_url = client.put(
+        "/api/v1/admin/storefront/brand",
+        cookies=admin_cookies,
+        json={"instagramUrl": "https://admin:secret@instagram.com/test"},
+    )
+    assert user_cred_url.status_code == 422
+
+    extra_field = client.put(
+        "/api/v1/admin/storefront/brand",
+        cookies=admin_cookies,
+        json={"name": "Sulocraft", "unexpectedKey": "malicious"},
+    )
+    assert extra_field.status_code == 422
 
     # Reset back to default
     client.put(
         "/api/v1/admin/storefront/brand",
         cookies=admin_cookies,
-        json={"name": "Sulocraft", "ownerName": "Anupama Sharma", "instagramUrl": "https://instagram.com/sulocraft"},
+        json={
+            "name": "Sulocraft",
+            "ownerName": "Anupama Sharma",
+            "instagramUrl": "https://instagram.com/sulocraft",
+            "whatsappUrl": "https://wa.me/919876543210",
+        },
     )
 
 

@@ -26,7 +26,8 @@ Refer to `docs/SPECIFICATION.md` and user security requirements. Security infras
 
 ## Dependencies and relevant files
 
-- Depends on: None.
+- Depends on: None
+- Dependency context: None.
 - Inspect/edit:
   - `work/work-013-security-audit/`
   - `work/INDEX.md`

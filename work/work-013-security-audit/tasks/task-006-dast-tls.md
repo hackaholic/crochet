@@ -24,7 +24,8 @@ Never run destructive or aggressive scans against production. Allowed scan targe
 
 ## Dependencies and relevant files
 
-- Depends on: Deployed dev environment.
+- Depends on: None
+- Dependency context: Deployed dev environment.
 - Inspect/edit:
   - `scripts/security/scan-dast.sh`
   - `scripts/security/scan-tls.sh`

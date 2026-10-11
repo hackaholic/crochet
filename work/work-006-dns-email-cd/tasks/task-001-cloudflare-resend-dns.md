@@ -23,7 +23,8 @@ Refer to `docs/email-architecture.md` for the exact DNS record list (SPF, DKIM, 
 
 ## Dependencies and relevant files
 
-- Depends on: Cloudflare DNS access, Resend account.
+- Depends on: None
+- Dependency context: Cloudflare DNS access, Resend account.
 - Inspect/edit:
   - `docs/email-architecture.md`
 

@@ -22,7 +22,8 @@ Read ../README.md, ../decisions.md, ../coordination.md and work/GEMINI_WORKFLOW_
 
 ## Dependencies and relevant files
 
-- Depends on: No implementation prerequisite; existing search endpoint available.
+- Depends on: None
+- Dependency context: No implementation prerequisite; existing search endpoint available.
 - Inspect/edit: backend/app/api/v1/catalogue.py; backend/tests; docs/api-catalogue.md
 - Readiness: Planning complete; implementation evidence pending.
 - Blocker protocol: Record exact missing input and owner here and in coordination.md; ask the user about ambiguous product/image classification.

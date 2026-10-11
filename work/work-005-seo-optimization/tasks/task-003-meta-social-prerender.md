@@ -22,7 +22,8 @@ Social platforms and search bots do not always execute JavaScript. Pre-rendering
 
 ## Dependencies and relevant files
 
-- Depends on: Task 5.2.
+- Depends on: 5.2
+- Dependency context: Task 5.2.
 - Inspect/edit:
   - `scripts/prerender.mjs`
   - `src/components/SeoManager.tsx`

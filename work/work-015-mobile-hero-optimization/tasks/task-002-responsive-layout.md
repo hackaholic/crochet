@@ -19,7 +19,8 @@ Follow Task 15.1 audit and Work 015 decisions. Target approximately 460–520px 
 
 ## Dependencies and relevant files
 
-- Depends on: Task 15.1.
+- Depends on: 15.1
+- Dependency context: Task 15.1.
 - Inspect/edit: `src/components/HeroCarousel.tsx` and its component styles; add meaningful component/CSS tests as needed.
 
 ## Acceptance checks

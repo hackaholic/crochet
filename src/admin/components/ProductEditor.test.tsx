@@ -2,11 +2,11 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ProductEditor from './ProductEditor';
 import * as api from '../services/catalogue';
-vi.mock('../services/catalogue', () => ({ getTags: vi.fn(), saveProduct: vi.fn(), createTag: vi.fn(), uploadPhoto: vi.fn(), saveVariant: vi.fn() }));
+vi.mock('../services/catalogue', () => ({ getProductDefaults: vi.fn(), getTags: vi.fn(), saveProduct: vi.fn(), createTag: vi.fn(), uploadPhoto: vi.fn(), saveVariant: vi.fn() }));
 const product = { id: 42, name: 'Test bunny', slug: 'test', status: 'ACTIVE', primaryImage: '/test.webp', totalStock: 3, minPrice: 100, categoryNames: ['Animals'], categoryIds: [8], tagIds: [7], tagNames: ['Soft toy'], galleryImages: [], variants: [] };
 afterEach(cleanup);
 describe('Product editor', () => {
-  beforeEach(() => { vi.resetAllMocks(); vi.mocked(api.getTags).mockRejectedValue(new Error('no endpoint')); });
+  beforeEach(() => { vi.resetAllMocks(); vi.mocked(api.getProductDefaults).mockResolvedValue({handmadeDetails: 'Default handmade text'}); vi.mocked(api.getTags).mockRejectedValue(new Error('no endpoint')); });
   it('preserves existing tags when unavailable and saves selected categories and edits', async () => {
     const onSaved = vi.fn(); vi.mocked(api.saveProduct).mockResolvedValue(product);
     render(<ProductEditor product={product} categories={[{ id: 8, name: 'Animals' }]} onClose={vi.fn()} onSaved={onSaved} />);
@@ -68,4 +68,16 @@ describe('Product editor', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save variant' }));
     await waitFor(() => expect(api.saveVariant).toHaveBeenCalledWith(42, { name: 'Standard', sku: 'BUNNY', price: 250, stockQuantity: 3 }, 5));
   });
+});
+it('loads new-product defaults and allows explicit per-field override and reset',async()=>{
+ vi.mocked(api.getProductDefaults).mockResolvedValue({materialsUsed:'Default yarn'});
+ render(<ProductEditor categories={[]} onSaved={()=>{}} onClose={()=>{}}/>);
+ const field=await screen.findByLabelText('Materials Used');await waitFor(()=>expect(field).toHaveValue('Default yarn'));
+ fireEvent.change(field,{target:{value:'Product-specific yarn'}});expect(field).toHaveValue('Product-specific yarn');
+ fireEvent.click(screen.getByRole('button',{name:'Reset Materials Used to default'}));expect(field).toHaveValue('Default yarn');
+});
+it('retains existing product information even when defaults differ',async()=>{
+ vi.mocked(api.getProductDefaults).mockResolvedValue({materialsUsed:'New defaults'});
+ render(<ProductEditor product={{...product,materialsUsed:'Saved material'}} categories={[]} onSaved={()=>{}} onClose={()=>{}}/>);
+ await screen.findByRole('button',{name:'Reset Materials Used to default'});expect(screen.getByLabelText('Materials Used')).toHaveValue('Saved material');
 });

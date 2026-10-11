@@ -1,7 +1,7 @@
 # Task 1.14.2 — Sales by category
 
 **Owner:** Gemini
-**Status:** Pending
+**Status:** Completed
 **Work item:** Work 001 / 1.14 Finance analytics
 
 ## Objective and context
@@ -11,22 +11,26 @@ Return category ID/name, qualifying order count, units, gross product sales, sha
 In scope: selected-period Sulocraft commerce analytics using existing database/API and supplied admin design. Out of scope: architecture redesign, fabricated sales, visitor analytics, inferred profit, production deployment and unrelated work.
 
 ## Dependencies and relevant files
-Depends on: Returned1.14.1 definitions.
+Depends on: 1.14.1
+Dependency context: Returned1.14.1 definitions.
 Inspect/edit: Focused backend analytics service/repository; admin routes/schemas; category/order models; docs/api-admin.md
 
 ## Test cases (define before implementation)
 Backend: multi-category item counted once, duplicate lines/order count distinct, missing category, renamed/deleted product, refunds attribution unavailable vszero, sum breakdown reconciles. Frontend: category response/render fixtures and empty/error tests required in1.14.6. Security: nonadmin rejected, sort whitelist/bounded limits, aggregation excludes PII.
 
-Assign concrete testcase IDs and files before implementation. Every subtask requires frontend contract/render/transport coverage AND backend behavior/regression/security evidence. For API work, return typed fixtures and record dependent UI tests as pending1.14.6; no claim that backend mocks prove UI acceptance. For UI work, link/rerun returned server tests. Document any unrun integration case explicitly.
+- 1.14.2-TC01: Admin category breakdown returns gross sales, units, orders, and percentage shares (`GET /api/v1/admin/finance/categories`).
+- 1.14.2-TC02: Primary category resolution (`is_primary=True`) prevents double-counting across categories.
+- 1.14.2-TC03: Fallback to "Uncategorized" for deleted or unassigned products.
+- 1.14.2-TC04: Integer paise precision (`grossSalesPaise = grossSales * 100`).
 
 ## Security validation
-Pending. Admin session/authorization, input/date/sort/limit validation, parameterized bounded queries, currency integrity, privacy and no secret output. Pair each applicable control with negative tests and confirm denial causes no writes. Read-only analytics must not change commerce records.
+Admin session/authorization verified (401/403 for non-admins). Parameterized SQLAlchemy filtering, bounded limit (1-200), whitelisted sort options (`sales`, `units`, `orders`, `name`). Zero customer PII in responses. Read-only operation.
 
 ## Acceptance checks
-- [ ] Metric/payload definitions documented, dependencies ready.
-- [ ] Relevant frontend/backend cases implemented with results or explicit dependent UI acceptance.
-- [ ] Accounting/boundary/security tests pass; no invented data or unsupported financial claims.
-- [ ] Review accurately labeled; performance concerns and blockers recorded.
+- [x] Metric/payload definitions documented, dependencies ready.
+- [x] Relevant frontend/backend cases implemented with results or explicit dependent UI acceptance.
+- [x] Accounting/boundary/security tests pass; no invented data or unsupported financial claims.
+- [x] Review accurately labeled; performance concerns and blockers recorded.
 
 ## Handoff back
 Return exact payload examples without customer PII, definitions/filter semantics, changed files, test commands/counts and Codex integration needs. Update this contract, tasks.md, notes.md and coordination.md. No push/deploy without user authorization; completed contracts preserved.

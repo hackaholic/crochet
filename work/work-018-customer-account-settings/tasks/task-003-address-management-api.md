@@ -11,7 +11,8 @@ Audit and strengthen existing create/patch/delete/default APIs; do not recreate 
 In scope: existing account/order feature enhancement and its frontend/backend contract tests. Out of scope: architecture redesign, carrier integration, production deployment, password/OTP authentication, deleting completed work.
 
 ## Dependencies and relevant files
-Depends on: Existing address CRUD and country/validation policy.
+Depends on: None
+Dependency context: Existing address CRUD and country/validation policy.
 Inspect/edit: backend/app/api/v1/orders.py address handlers; backend/app/schemas/order.py; focused address service; backend/tests address cases
 
 ## Test cases (define before implementation)

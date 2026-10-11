@@ -22,7 +22,8 @@ Read ../README.md, ../decisions.md, ../coordination.md and work/GEMINI_WORKFLOW_
 
 ## Dependencies and relevant files
 
-- Depends on: Existing local database and schema; use current taxonomy, not a new invented taxonomy.
+- Depends on: None
+- Dependency context: Existing local database and schema; use current taxonomy, not a new invented taxonomy.
 - Inspect/edit: backend/app/models/catalogue.py; backend/app/db/seed.py; backend/tests/test_taxonomy.py; this work notes/report
 - Readiness: Planning complete; implementation evidence pending.
 - Blocker protocol: Record exact missing input and owner here and in coordination.md; ask the user about ambiguous product/image classification.

@@ -1,5 +1,6 @@
+import { dateRange } from './services/dateRange';
 import { useState, useCallback } from 'react';
-import type { AdminPage, DateRangePreset } from './types';
+import type { AdminPage, OrderStatus, DateRangePreset } from './types';
 import AdminLayout from './layout/AdminLayout';
 import DashboardPage from './pages/DashboardPage';
 import OrdersPage from './pages/OrdersPage';
@@ -10,7 +11,7 @@ import OccasionsPage from './pages/OccasionsPage';
 import ProductsPage from './pages/ProductsPage';
 import InventoryPage from './pages/InventoryPage';
 import CustomersPage from './pages/CustomersPage';
-import PlaceholderPage from './pages/PlaceholderPage';
+import SettingsPage from './pages/SettingsPage';
 
 interface Props {
   onExitAdmin: () => void;
@@ -21,9 +22,12 @@ export default function AdminApp({ onExitAdmin }: Props) {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [datePreset, setDatePreset] = useState<DateRangePreset>('30d');
   const [globalSearch, setGlobalSearch] = useState('');
+  const [orderFilter, setOrderFilter] = useState<{status: OrderStatus; range: {from: string; to: string}}>();
+  const [orderView, setOrderView] = useState(0);
 
   const navigate = useCallback((p: AdminPage) => {
     setPage(p);
+    if (p === 'orders') { setOrderFilter(undefined); setOrderView(v => v + 1); }
     if (p !== 'order-detail') setSelectedOrderId(null);
   }, []);
 
@@ -46,11 +50,15 @@ export default function AdminApp({ onExitAdmin }: Props) {
           onNavigate={(p) => navigate(p)}
           onSelectOrder={selectOrder}
           datePreset={datePreset}
+          onFilterOrders={status => { setOrderFilter({status, range: dateRange(datePreset)}); setOrderView(v => v + 1); setGlobalSearch(''); setPage('orders'); }}
         />
       )}
 
       {page === 'orders' && (
         <OrdersPage
+          key={orderView}
+          initialStatus={orderFilter?.status}
+          reportingRange={orderFilter?.range}
           onSelectOrder={selectOrder}
           initialSearch={globalSearch}
         />
@@ -59,7 +67,7 @@ export default function AdminApp({ onExitAdmin }: Props) {
       {page === 'order-detail' && (
         <OrderDetailPage
           orderId={selectedOrderId}
-          onBack={() => navigate('orders')}
+          onBack={() => { setSelectedOrderId(null); setPage('orders'); }}
         />
       )}
 
@@ -81,9 +89,7 @@ export default function AdminApp({ onExitAdmin }: Props) {
 
       {page === 'customers' && <CustomersPage onSelectOrder={selectOrder} />}
 
-      {(page === 'settings') && (
-        <PlaceholderPage page={page} />
-      )}
+      {page === 'settings' && <SettingsPage />}
     </AdminLayout>
   );
 }

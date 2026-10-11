@@ -22,7 +22,8 @@ Make secret decryption and deployment select the target environment at runtime. 
 
 ## Dependencies and relevant files
 
-- Depends on: Tasks 3.3, 3.8, 3.12, and 3.13.
+- Depends on: 3.3, 3.8, 3.12, 3.13
+- Dependency context: Tasks 3.3, 3.8, 3.12, and 3.13.
 - Inspect/edit: `scripts/decrypt_preprod_secrets.py`, `scripts/decrypt_secrets.py`, `docker/compose.preprod.yaml`, `backend/scripts/bootstrap_secrets.sh`, `backend/scripts/deploy_vps.sh`, `backend/scripts/rotate_vps_key.sh`, `.gitignore`, `docs/secrets.md`, and focused tests.
 
 ## Acceptance checks

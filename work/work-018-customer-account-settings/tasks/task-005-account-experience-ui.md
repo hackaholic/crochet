@@ -11,7 +11,8 @@ Implement Profile, Addresses and Orders navigation styled from references using 
 In scope: existing account/order feature enhancement and its frontend/backend contract tests. Out of scope: architecture redesign, carrier integration, production deployment, password/OTP authentication, deleting completed work.
 
 ## Dependencies and relevant files
-Depends on: Returned18.2/18.3/18.4; reuse Work017 components.
+Depends on: 18.2, 18.3, 18.4
+Dependency context: Returned18.2/18.3/18.4; reuse Work017 components.
 Inspect/edit: src/pages/AccountPage.tsx; src/components/account/; src/lib/api/account.ts and orders.ts; shared validation; account and tracking component tests
 
 ## Test cases (define before implementation)

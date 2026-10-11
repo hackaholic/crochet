@@ -1056,6 +1056,12 @@ def get_product_detail(
         customizable=product.customizable,
         attributes=product.metadata_json or {},
         customer_reviews=customer_reviews,
+        handmade_details=product.handmade_details,
+        materials_used=product.materials_used,
+        size_dimensions=product.size_dimensions,
+        processing_time=product.processing_time,
+        care_instructions=product.care_instructions,
+        shipping_delivery=product.shipping_delivery,
     )
 
 

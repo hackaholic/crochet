@@ -10,6 +10,8 @@ None.
 
 ## Completed
 
+- [x] 4.9 Codex — [Dependency metadata repair](tasks/task-009-dependency-metadata-repair.md).56 flagged contracts repaired; parser verifies zero dependency-prose warnings and unchanged task state.
+
 - [x] 4.8 Codex: Audit task filenames, normalize deviations to `task-NNN-description.md`, update all repository references, and verify contract contents/counts and links are preserved.
 
 - [x] 4.1 Create a small `work/INDEX.md` and dedicated folders for current major work.

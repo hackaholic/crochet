@@ -22,7 +22,8 @@ Read ../README.md, ../decisions.md, ../coordination.md and work/GEMINI_WORKFLOW_
 
 ## Dependencies and relevant files
 
-- Depends on: Task 16.1 returned; user answers required for ambiguous products. Confirmed products can proceed independently; unresolved ones remain documented.
+- Depends on: 16.1
+- Dependency context: Task 16.1 returned; user answers required for ambiguous products. Confirmed products can proceed independently; unresolved ones remain documented.
 - Inspect/edit: backend/app/db/seed.py or existing maintenance mechanism; backend/tests/test_taxonomy.py; task 16.1 report
 - Readiness: Planning complete; implementation evidence pending.
 - Blocker protocol: Record exact missing input and owner here and in coordination.md; ask the user about ambiguous product/image classification.

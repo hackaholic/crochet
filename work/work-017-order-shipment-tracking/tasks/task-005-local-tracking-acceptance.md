@@ -28,3 +28,6 @@ Order access and shipment/customer data are sensitive. Enforce exact ownership o
 Read work/GEMINI_WORKFLOW_PROMPT.md if Gemini, then selected work docs and this contract. Mark only assigned task In Progress. Return exact files/contracts, executed tests, remaining risks and blockers in this task and work-local tasks/notes/coordination. Report contract changes before expanding scope. No credentials or duplicate global contract.
 
 Dependency update:17.2/17.3 implemented; before release acceptance requires returned Gemini17.7 emailed-link/response security checks. Full checkout→tracking link browser flow and email handoff remain in this task.
+
+
+2026-10-11 related18.6 evidence: actual local API request-link→anonymous guest UI renders scoped QA-W018-GUEST order; removing token removes shipment details. Full checkout/email-provider path and Firefox remain unverified;17.5 stays Pending. See Work01818.6 contract. No raw tokens recorded.

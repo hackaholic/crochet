@@ -1,17 +1,6 @@
+import { orderStatusPresentation } from '../../lib/orderStatusPresentation';
 import type { OrderStatus, PaymentStatus, ReturnStatus } from '../types';
 
-const ORDER_STATUS_CONFIG: Record<OrderStatus, { label: string; bg: string; text: string; dot: string }> = {
-  PENDING_PAYMENT: { label: 'Pending payment', bg: '#FFFBEB', text: '#92400E', dot: '#F59E0B' },
-  PAID: { label: 'Paid', bg: '#DCFCE7', text: '#166534', dot: '#16A34A' },
-  CONFIRMED: { label: 'Confirmed', bg: '#EDE9FE', text: '#5B21B6', dot: '#7C3AED' },
-  PROCESSING: { label: 'Processing', bg: '#FFFBEB', text: '#92400E', dot: '#F59E0B' },
-  READY_TO_SHIP: { label: 'Ready to Ship', bg: '#FDF4FF', text: '#6B21A8', dot: '#A855F7' },
-  SHIPPED: { label: 'Shipped', bg: '#E0F2FE', text: '#0C4A6E', dot: '#0EA5E9' },
-  OUT_FOR_DELIVERY: { label: 'Out for Delivery', bg: '#F0FDF4', text: '#14532D', dot: '#22C55E' },
-  DELIVERED: { label: 'Delivered', bg: '#DCFCE7', text: '#166534', dot: '#16A34A' },
-  CANCELLED: { label: 'Cancelled', bg: '#FEF2F2', text: '#991B1B', dot: '#EF4444' },
-  REFUNDED: { label: 'Refunded', bg: '#F9FAFB', text: '#374151', dot: '#6B7280' },
-};
 
 const PAYMENT_CONFIG: Record<PaymentStatus, { label: string; bg: string; text: string }> = {
   PENDING: { label: 'Pending', bg: '#FFFBEB', text: '#92400E' },
@@ -39,7 +28,7 @@ function Badge({ label, bg, text, size = 'md', dot }: Props & { label: string; b
 }
 
 export function OrderStatusBadge({ status, size = 'md' }: Props & { status: OrderStatus }) {
-  const cfg = ORDER_STATUS_CONFIG[status];
+  const cfg = orderStatusPresentation(status);
   return <Badge {...cfg} size={size} />;
 }
 export function PaymentStatusBadge({ status, size = 'md' }: Props & { status: PaymentStatus }) {

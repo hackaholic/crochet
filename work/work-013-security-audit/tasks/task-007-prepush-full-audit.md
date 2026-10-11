@@ -39,7 +39,8 @@ Production eligibility: PASS / FAIL
 
 ## Dependencies and relevant files
 
-- Depends on: Tasks 9.2 through 9.6.
+- Depends on: [9.2](task-002-secrets-audit.md), [9.3](task-003-sast-deps.md), [9.4](task-004-container-infra.md), [9.5](task-005-auth-business-tests.md), [9.6](task-006-dast-tls.md)
+- Dependency context: Tasks 9.2 through 9.6.
 - Inspect/edit:
   - `scripts/security/pre-push.sh`
   - `scripts/security/full-audit.sh`

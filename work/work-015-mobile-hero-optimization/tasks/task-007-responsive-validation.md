@@ -19,7 +19,8 @@ Local implementation and browser verification are required before any push or de
 
 ## Dependencies and relevant files
 
-- Depends on: Tasks 15.2–15.6.
+- Depends on: 15.2, 15.3, 15.4, 15.5, 15.6
+- Dependency context: Tasks 15.2–15.6.
 - Inspect: `http://localhost:8080`, relevant API response at `http://localhost:8000`, hero component tests, and local Compose configuration.
 
 ## Acceptance checks

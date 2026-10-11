@@ -23,7 +23,8 @@ Make backend tests run only against a disposable test database so test setup and
 
 ## Dependencies and relevant files
 
-- Depends on: Task 3.9 handback and Task 3.11.
+- Depends on: 3.9, 3.11
+- Dependency context: Task 3.9 handback and Task 3.11.
 - Inspect/edit: `backend/tests/conftest.py`, `backend/tests/`, `backend/pyproject.toml`, Compose test configuration/scripts, and this work folder's notes/task records.
 
 ## Acceptance checks

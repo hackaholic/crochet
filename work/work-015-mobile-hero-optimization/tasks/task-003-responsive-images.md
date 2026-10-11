@@ -24,7 +24,8 @@ Task 15.1 confirmed that the initial campaign table and public/admin schemas exp
 
 ## Dependencies and relevant files
 
-- Depends on: Task 15.1.
+- Depends on: 15.1
+- Dependency context: Task 15.1.
 - Modified files: `src/lib/api/storefront.ts`, `src/components/HeroCarousel.tsx`, `backend/app/models/storefront.py`, `backend/app/schemas/storefront.py`, `backend/app/api/v1/admin.py`, `backend/alembic/versions/e1b2c3d4e5f6_add_campaign_mobile_image_fields.py`, and `backend/tests/test_storefront.py`.
 
 ## Acceptance checks

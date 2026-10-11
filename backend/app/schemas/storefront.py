@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from typing import Annotated, Any, Literal, Union
+from urllib.parse import urlparse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.core.images import build_image_url
@@ -19,15 +20,67 @@ class BrandSettingsOut(BaseModel):
     whatsapp_url: str | None = Field(default=None, serialization_alias="whatsappUrl", alias="whatsappUrl")
 
 
+def _validate_safe_url(url: str | None) -> str | None:
+    if url is None:
+        return None
+    val = url.strip()
+    if not val:
+        return None
+    if len(val) > 255:
+        raise ValueError("URL cannot exceed 255 characters")
+    parsed = urlparse(val)
+    if parsed.scheme.lower() not in ("http", "https"):
+        raise ValueError("URL must use http or https scheme")
+    if not parsed.netloc:
+        raise ValueError("URL must have a valid host")
+    if parsed.username or parsed.password:
+        raise ValueError("URL must not contain embedded user credentials")
+    return val
+
+
+def _validate_name_field(name: str | None, field_label: str) -> str:
+    if name is None:
+        raise ValueError(f"{field_label} cannot be null")
+    val = name.strip()
+    if not val:
+        raise ValueError(f"{field_label} cannot be empty")
+    if len(val) > 100:
+        raise ValueError(f"{field_label} cannot exceed 100 characters")
+    # Check for all control characters including tab, newline, carriage-return, and DEL
+    if any(ord(c) < 32 or ord(c) == 127 for c in val):
+        raise ValueError(f"{field_label} contains invalid control characters")
+    return val
+
+
 class BrandSettingsUpdate(BaseModel):
     """Payload to update storewide brand settings."""
 
-    model_config = ConfigDict(populate_by_name=True)
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
 
     name: str | None = None
     owner_name: str | None = Field(default=None, alias="ownerName")
     instagram_url: str | None = Field(default=None, alias="instagramUrl")
     whatsapp_url: str | None = Field(default=None, alias="whatsappUrl")
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v: str | None) -> str | None:
+        return _validate_name_field(v, "Brand name")
+
+    @field_validator("owner_name")
+    @classmethod
+    def validate_owner_name(cls, v: str | None) -> str | None:
+        return _validate_name_field(v, "Owner name")
+
+    @field_validator("instagram_url")
+    @classmethod
+    def validate_instagram(cls, v: str | None) -> str | None:
+        return _validate_safe_url(v)
+
+    @field_validator("whatsapp_url")
+    @classmethod
+    def validate_whatsapp(cls, v: str | None) -> str | None:
+        return _validate_safe_url(v)
 
 
 class CampaignImagePosition(BaseModel):

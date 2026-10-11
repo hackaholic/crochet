@@ -22,7 +22,8 @@ Read ../README.md, ../decisions.md, ../coordination.md and work/GEMINI_WORKFLOW_
 
 ## Dependencies and relevant files
 
-- Depends on: Task 9.11 returned with API tests passing; do not fake pagination client-side.
+- Depends on: 9.11
+- Dependency context: Task 9.11 returned with API tests passing; do not fake pagination client-side.
 - Inspect/edit: src/lib/api/catalogue.ts; src/components/SearchOverlay.tsx; associated tests
 - Readiness: Planning complete; implementation evidence pending.
 - Blocker protocol: Record exact missing input and owner here and in coordination.md; ask the user about ambiguous product/image classification.

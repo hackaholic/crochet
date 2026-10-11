@@ -1,3 +1,4 @@
+import ProductInformationAccordion from '../components/ProductInformationAccordion';
 import { useState } from 'react';
 import { reviews } from '../data/products';
 import ProductCard from '../components/ProductCard';
@@ -15,33 +16,6 @@ interface ProductPageProps {
   onNavigate: (page: 'home' | 'shop' | 'product' | 'cart' | 'wishlist' | 'checkout' | 'about') => void;
 }
 
-const infoSections = [
-  {
-    title: 'Handmade Details',
-    content: 'This piece is 100% handcrafted using traditional crochet techniques. Each stitch is placed with care and attention to detail, resulting in a unique creation that may vary slightly from the images shown — that\'s what makes it truly yours.',
-  },
-  {
-    title: 'Materials Used',
-    content: 'Premium mercerized cotton yarn (100% cotton), non-toxic stuffing (for amigurumi), and stainless steel wire for shape support where needed. All materials are child-safe and tested.',
-  },
-  {
-    title: 'Size & Dimensions',
-    content: 'Bouquet: approximately 30–35 cm height. Stems are wrapped in floral tape with crochet overlay. Each piece ships with a care card listing exact dimensions.',
-  },
-  {
-    title: 'Processing Time',
-    content: 'Standard orders: 3–5 working days. Custom orders: 7–10 working days. Bulk orders above 5 units may take up to 14 working days.',
-  },
-  {
-    title: 'Care Instructions',
-    content: 'Gently dust with a soft dry cloth. Avoid prolonged direct sunlight to prevent colour fading. Keep away from moisture. Do not machine wash.',
-  },
-  {
-    title: 'Shipping & Delivery',
-    content: 'Ships across India via reputable courier partners. Free shipping on orders above ₹999. Express delivery available at checkout. Estimated delivery: 5–7 working days.',
-  },
-];
-
 export default function ProductPage({ product: initialProduct, onAddToCart, onToggleWishlist, wishlist, onProductClick, onNavigate }: ProductPageProps) {
   const { products } = useCatalogue();
   const product = initialProduct || products[0];
@@ -56,7 +30,6 @@ export default function ProductPage({ product: initialProduct, onAddToCart, onTo
   const [reviewMessage, setReviewMessage] = useState('');
   const [reviewBusy, setReviewBusy] = useState(false);
   const sendReview = async () => { if (!reviewText.trim()) { setReviewMessage('Please write a short review first.'); return; } setReviewBusy(true); try { await submitReview(product.slug ?? product.id, { rating: reviewRating, text: reviewText.trim() }); setReviewText(''); setReviewMessage('Thank you — your review has been submitted.'); } catch { setReviewMessage('Please sign in before submitting a review.'); } finally { setReviewBusy(false); } };
-  const [openSection, setOpenSection] = useState<string | null>('Handmade Details');
   const [added, setAdded] = useState(false);
 
   const isWishlisted = wishlist.includes(product.id);
@@ -247,23 +220,7 @@ export default function ProductPage({ product: initialProduct, onAddToCart, onTo
               </p>
             </div>
 
-            {/* Info accordion */}
-            <div className="space-y-0">
-              {infoSections.map(({ title, content }) => (
-                <div key={title} className="border-b border-[#EDE4D0]">
-                  <button
-                    onClick={() => setOpenSection(openSection === title ? null : title)}
-                    className="flex items-center justify-between w-full py-4 text-left"
-                  >
-                    <span className="font-semibold text-[#2C1810] text-sm">{title}</span>
-                    <span className="text-[#8B6B4A] text-xl leading-none">{openSection === title ? '−' : '+'}</span>
-                  </button>
-                  {openSection === title && (
-                    <p className="pb-4 text-sm text-[#5C3D2E] leading-relaxed">{content}</p>
-                  )}
-                </div>
-              ))}
-            </div>
+            <ProductInformationAccordion productId={product.slug ?? product.id} />
           </div>
         </div>
 

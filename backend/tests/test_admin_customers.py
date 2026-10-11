@@ -18,7 +18,7 @@ from fastapi.testclient import TestClient
 
 from app.db.session import SessionLocal
 from app.main import app
-from app.models.order import Order, OrderStatus, PaymentMethod, PaymentStatus
+from app.models.order import Address, Order, OrderStatus, PaymentMethod, PaymentStatus
 from app.models.user import User, UserIdentity
 
 client = TestClient(app)
@@ -407,6 +407,107 @@ def test_tc05_nullable_fields_and_order_status_aggregation():
                 o = db.query(Order).filter(Order.id == oid).first()
                 if o:
                     db.delete(o)
+            for uid in created_user_ids:
+                u = db.query(User).filter(User.id == uid).first()
+                if u:
+                    db.delete(u)
+            db.commit()
+
+
+def test_admin_customer_saved_addresses_detail():
+    """Verify Task 1.9.4: Saved address detail in customer profile (TC01-TC04)."""
+    admin_cookies = _login_admin("9999900000")
+    cust_cookies = _login_customer("9999911009")
+
+    created_user_ids = []
+
+    with SessionLocal() as db:
+        # Customer 1 with 2 addresses: 1 default, 1 non-default
+        c1 = _create_customer_fixture(db, name="Address Tester", phone="9988776655")
+        c1_id = c1.id
+        created_user_ids.append(c1_id)
+
+        # Address 1 (non-default, created first)
+        addr1 = Address(
+            user_id=c1_id,
+            name="Office Desk",
+            phone="9123456789",  # Address phone distinct from account phone
+            line1="Tower B, Tech Park",
+            line2="Floor 4",
+            landmark="Near Metro",
+            city="Bengaluru",
+            state="Karnataka",
+            postal_code="560100",
+            country="IN",
+            is_default=False,
+        )
+        # Address 2 (default, created second)
+        addr2 = Address(
+            user_id=c1_id,
+            name="Home Delivery",
+            phone="9876543210",
+            line1="123 Rose Garden",
+            line2=None,
+            landmark=None,
+            city="Bengaluru",
+            state="Karnataka",
+            postal_code="560034",
+            country="IN",
+            is_default=True,
+        )
+        db.add_all([addr1, addr2])
+
+        # Customer 2 with NO addresses
+        c2 = _create_customer_fixture(db, name="Zero Address Tester")
+        c2_id = c2.id
+        created_user_ids.append(c2_id)
+        db.commit()
+
+    try:
+        # TC01: Customer with multiple addresses returns deterministic default-first order
+        res1 = client.get(f"/api/v1/admin/customers/{c1_id}", cookies=admin_cookies)
+        assert res1.status_code == 200
+        data1 = res1.json()
+        assert data1["name"] == "Address Tester"
+        assert data1["phone"] == "9988776655"  # Account phone preserved separately
+        assert len(data1["addresses"]) == 2
+
+        # First address must be default
+        first_addr = data1["addresses"][0]
+        assert first_addr["isDefault"] is True
+        assert first_addr["name"] == "Home Delivery"
+        assert first_addr["phone"] == "9876543210"
+        assert first_addr["line1"] == "123 Rose Garden"
+        assert first_addr["line2"] is None
+        assert first_addr["postalCode"] == "560034"
+
+        # Second address is non-default
+        second_addr = data1["addresses"][1]
+        assert second_addr["isDefault"] is False
+        assert second_addr["name"] == "Office Desk"
+        assert second_addr["phone"] == "9123456789"
+        assert second_addr["line2"] == "Floor 4"
+        assert second_addr["landmark"] == "Near Metro"
+
+        # TC02: Customer without addresses returns empty list []
+        res2 = client.get(f"/api/v1/admin/customers/{c2_id}", cookies=admin_cookies)
+        assert res2.status_code == 200
+        data2 = res2.json()
+        assert data2["addresses"] == []
+
+        # TC03: Cross-customer isolation - c2 cannot see c1's addresses
+        assert len(data2["addresses"]) == 0
+
+        # TC04: Security - Unauthenticated 401, customer 403
+        client.cookies.clear()
+        unauth = client.get(f"/api/v1/admin/customers/{c1_id}")
+        assert unauth.status_code == 401
+
+        forbidden = client.get(f"/api/v1/admin/customers/{c1_id}", cookies=cust_cookies)
+        assert forbidden.status_code == 403
+
+    finally:
+        with SessionLocal() as db:
             for uid in created_user_ids:
                 u = db.query(User).filter(User.id == uid).first()
                 if u:

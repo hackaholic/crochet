@@ -22,7 +22,8 @@ The dev storefront allows stakeholders to review integrated features in a live w
 
 ## Dependencies and relevant files
 
-- Depends on: Cloudflare Workers Static Assets dashboard access.
+- Depends on: None
+- Dependency context: Cloudflare Workers Static Assets dashboard access.
 - Inspect/edit:
   - `docs/cloudflare-deployment.md`, `wrangler.jsonc`
 

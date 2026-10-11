@@ -22,7 +22,8 @@ Rules must cover SQLi, command injection, path traversal, XSS, SSRF, hardcoded c
 
 ## Dependencies and relevant files
 
-- Depends on: Task 9.1.
+- Depends on: [9.1](task-001-threat-model-policy.md)
+- Dependency context: Task 9.1.
 - Inspect/edit:
   - `scripts/security/scan-sast.sh`
   - `scripts/security/scan-dependencies.sh`

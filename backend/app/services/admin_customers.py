@@ -9,9 +9,9 @@ from fastapi import HTTPException, status
 import sqlalchemy as sa
 from sqlalchemy.orm import Session
 
-from app.models.order import Order
+from app.models.order import Address, Order
 from app.models.user import User
-from app.schemas.admin import AdminCustomerOut
+from app.schemas.admin import AdminCustomerAddressOut, AdminCustomerDetailOut, AdminCustomerOut
 
 logger = logging.getLogger(__name__)
 
@@ -86,10 +86,11 @@ def list_admin_customers(
     return items, total
 
 
-def get_admin_customer(db: Session, customer_id: int) -> AdminCustomerOut:
-    """Retrieve detailed customer profile by ID.
+def get_admin_customer(db: Session, customer_id: int) -> AdminCustomerDetailOut:
+    """Retrieve detailed customer profile by ID including saved addresses.
 
     Returns 404 if the customer does not exist or has role other than CUSTOMER.
+    Addresses are ordered deterministically: default-first (is_default desc), then by id asc.
     """
     customer = (
         db.query(User)
@@ -109,7 +110,31 @@ def get_admin_customer(db: Session, customer_id: int) -> AdminCustomerOut:
         or 0
     )
 
-    return AdminCustomerOut(
+    addresses = (
+        db.query(Address)
+        .filter(Address.user_id == customer.id)
+        .order_by(Address.is_default.desc(), Address.id.asc())
+        .all()
+    )
+
+    address_items = [
+        AdminCustomerAddressOut(
+            id=a.id,
+            name=a.name,
+            phone=a.phone,
+            line1=a.line1,
+            line2=a.line2,
+            landmark=a.landmark,
+            city=a.city,
+            state=a.state,
+            postalCode=a.postal_code,
+            country=a.country or "IN",
+            isDefault=bool(a.is_default),
+        )
+        for a in addresses
+    ]
+
+    return AdminCustomerDetailOut(
         id=customer.id,
         name=customer.name,
         email=customer.email,
@@ -118,6 +143,7 @@ def get_admin_customer(db: Session, customer_id: int) -> AdminCustomerOut:
         createdAt=customer.created_at,
         lastLoginAt=customer.last_login_at,
         orderCount=order_count,
+        addresses=address_items,
     )
 
 

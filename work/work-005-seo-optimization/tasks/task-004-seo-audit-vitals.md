@@ -22,7 +22,8 @@ Follow the project working rule: add automated tests and verify locally in Docke
 
 ## Dependencies and relevant files
 
-- Depends on: Task 5.3.
+- Depends on: 5.3
+- Dependency context: Task 5.3.
 - Inspect/edit:
   - `src/components/SeoManager.test.tsx`
   - `backend/tests/test_seo.py`

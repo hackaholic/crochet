@@ -22,7 +22,8 @@ Multi-region e-commerce requires explicit canonicalization, `hreflang` tags (inc
 
 ## Dependencies and relevant files
 
-- Depends on: Task 5.1.
+- Depends on: 5.1
+- Dependency context: Task 5.1.
 - Inspect/edit:
   - `src/components/SeoManager.tsx`
   - `backend/app/services/seo.py`

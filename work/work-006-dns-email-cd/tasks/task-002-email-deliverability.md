@@ -22,7 +22,8 @@ Email messages must arrive in primary inboxes, render responsive HTML on mobile 
 
 ## Dependencies and relevant files
 
-- Depends on: Task 6.1 DNS verification.
+- Depends on: 6.1
+- Dependency context: Task 6.1 DNS verification.
 - Inspect/edit:
   - `backend/app/services/notification/service.py`
   - `backend/app/services/notification/templates.py`

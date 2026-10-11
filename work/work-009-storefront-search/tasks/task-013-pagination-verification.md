@@ -22,7 +22,8 @@ Read ../README.md, ../decisions.md, ../coordination.md and work/GEMINI_WORKFLOW_
 
 ## Dependencies and relevant files
 
-- Depends on: Tasks 9.11 and 9.12 completed.
+- Depends on: 9.11, 9.12
+- Dependency context: Tasks 9.11 and 9.12 completed.
 - Inspect/edit: Docker configuration; SearchOverlay tests; work-local notes
 - Readiness: Planning complete; implementation evidence pending.
 - Blocker protocol: Record exact missing input and owner here and in coordination.md; ask the user about ambiguous product/image classification.

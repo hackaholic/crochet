@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { DashboardSummary, OrderStatusCount, AttentionItem, ActivityItem, InventoryAlert, SalesDataPoint, Order, DateRangePreset } from '../types';
+import type { DashboardSummary, OrderStatusCount, AttentionItem, ActivityItem, InventoryAlert, SalesDataPoint, Order, OrderStatus, DateRangePreset } from '../types';
 import * as api from '../services/api';
 import { MetricCard, SectionHeader, SeverityBadge, inr, pct, EmptyState, TableSkeleton } from '../components/AdminShared';
 import { OrderStatusBadge } from '../components/StatusBadge';
@@ -9,13 +9,14 @@ interface Props {
   onNavigate: (page: 'orders' | 'order-detail') => void;
   onSelectOrder: (id: string) => void;
   datePreset: DateRangePreset;
+  onFilterOrders: (status: OrderStatus) => void;
 }
 
 // ─── Status pipeline ──────────────────────────────────────────────────────────
 const PIPELINE_STATUSES = ['PENDING_PAYMENT','PAID','CONFIRMED','PROCESSING','READY_TO_SHIP','SHIPPED','OUT_FOR_DELIVERY','DELIVERED'] as const;
 const EXCEPTION_STATUSES = ['CANCELLED','REFUNDED'] as const;
 
-function StatusPipeline({ counts }: { counts: OrderStatusCount[] }) {
+export function StatusPipeline({ counts, onSelect }: { counts: OrderStatusCount[]; onSelect: (status: OrderStatus) => void }) {
   const byStatus = Object.fromEntries(counts.map(c => [c.status, c.count]));
   return (
     <div className="bg-white rounded-xl border border-[#E8E0D8] p-5">
@@ -25,10 +26,10 @@ function StatusPipeline({ counts }: { counts: OrderStatusCount[] }) {
         {PIPELINE_STATUSES.map(status => {
           const count = byStatus[status] ?? 0;
           return (
-            <div key={status} className="text-center p-2 rounded-lg bg-[#F8F4EF] border border-[#F0EAE3]">
+            <button type="button" aria-label={`View ${status.replaceAll('_', ' ').toLowerCase()} orders`} onClick={() => onSelect(status)} key={status} className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C4622D] hover:shadow-sm text-center p-2 rounded-lg bg-[#F8F4EF] border border-[#F0EAE3]">
               <p className="text-2xl font-bold text-[#1A1108]" style={{ fontFamily: 'var(--font-serif)' }}>{count}</p>
               <OrderStatusBadge status={status} size="sm" />
-            </div>
+            </button>
           );
         })}
       </div>
@@ -38,10 +39,10 @@ function StatusPipeline({ counts }: { counts: OrderStatusCount[] }) {
         {EXCEPTION_STATUSES.map(status => {
           const count = byStatus[status] ?? 0;
           return (
-            <div key={status} className={`text-center p-2 rounded-lg border ${count > 0 ? 'bg-[#FFF7F5] border-[#F2C4CE]' : 'bg-[#F8F4EF] border-[#F0EAE3]'}`}>
+            <button type="button" aria-label={`View ${status.toLowerCase()} orders`} onClick={() => onSelect(status)} key={status} className={`focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C4622D] hover:shadow-sm text-center p-2 rounded-lg border ${count > 0 ? 'bg-[#FFF7F5] border-[#F2C4CE]' : 'bg-[#F8F4EF] border-[#F0EAE3]'}`}>
               <p className={`text-xl font-bold ${count > 0 ? 'text-[#C4622D]' : 'text-[#9C8B7E]'}`} style={{ fontFamily: 'var(--font-serif)' }}>{count}</p>
               <OrderStatusBadge status={status} size="sm" />
-            </div>
+            </button>
           );
         })}
       </div>
@@ -130,7 +131,7 @@ const ACTIVITY_ICONS: Record<string, string> = {
   order_placed: '🛒', order_updated: '↻', order_shipped: '🚚', return_requested: '↩',
   refund_completed: '💸', low_stock: '📦', payment_failed: '❌', order_delivered: '✅',
 };
-function ActivityFeed({ items }: { items: ActivityItem[] }) {
+export function ActivityFeed({ items, onView }: { items: ActivityItem[]; onView: (id: string) => void }) {
   function relTime(ts: string) {
     const diff = (Date.now() - new Date(ts).getTime()) / 1000;
     if (diff < 60) return 'just now';
@@ -147,7 +148,12 @@ function ActivityFeed({ items }: { items: ActivityItem[] }) {
             <span className="text-sm shrink-0 mt-0.5">{ACTIVITY_ICONS[item.type] ?? '•'}</span>
             <div className="flex-1 min-w-0">
               <p className="text-xs text-[#1A1108] leading-snug">{item.message}</p>
-              {item.orderNumber && <p className="text-[10px] font-mono text-[#C4622D] mt-0.5">{item.orderNumber}</p>}
+              {item.orderNumber && (item.orderId && item.type !== 'low_stock' ? (
+                <button type="button" onClick={() => onView(item.orderId!)} aria-label={`View order ${item.orderNumber}`}
+                  className="text-[10px] font-mono text-[#C4622D] mt-0.5 text-left break-all hover:underline focus-visible:outline-2 focus-visible:outline-offset-2">
+                  {item.orderNumber}
+                </button>
+              ) : <p className="text-[10px] font-mono text-[#C4622D] mt-0.5 break-all">{item.orderNumber}</p>)}
             </div>
             <span className="text-[10px] text-[#9C8B7E] shrink-0 mt-0.5">{relTime(item.timestamp)}</span>
           </div>
@@ -207,7 +213,7 @@ function RecentOrders({ orders, onView, onViewAll }: { orders: Order[]; onView: 
 }
 
 // ─── Dashboard Page ───────────────────────────────────────────────────────────
-export default function DashboardPage({ onNavigate, onSelectOrder, datePreset }: Props) {
+export default function DashboardPage({ onNavigate, onSelectOrder, datePreset, onFilterOrders }: Props) {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [counts, setCounts] = useState<OrderStatusCount[]>([]);
   const [attention, setAttention] = useState<AttentionItem[]>([]);
@@ -267,7 +273,7 @@ export default function DashboardPage({ onNavigate, onSelectOrder, datePreset }:
       <RevenueChart data={chartData} loading={loading} />
 
       {/* Status pipeline */}
-      {!loading && <StatusPipeline counts={counts} />}
+      {!loading && <StatusPipeline counts={counts} onSelect={onFilterOrders} />}
 
       {/* Attention + Activity */}
       <div className="grid lg:grid-cols-3 gap-5">
@@ -275,7 +281,7 @@ export default function DashboardPage({ onNavigate, onSelectOrder, datePreset }:
           <NeedsAttention items={attention} onView={handleViewOrder} />
         </div>
         <div>
-          <ActivityFeed items={activity} />
+          <ActivityFeed items={activity} onView={handleViewOrder} />
         </div>
       </div>
 

@@ -14,3 +14,5 @@
 ## Finance analytics scope — 2026-10-10
 
 1.14 uses existing supplied Finance design and shared date/eligibility/currency definitions. Category accounting counts each line once; historical destination comes from order snapshots. Tags/multiple categories must not multiply money. Profit/conversion/gateway-fee estimates are deferred without source data. Missing refund attribution and unknown destinations are explicit, never fabricated zeros. Frontend/backend tests required per subtask; local reconciliation precedes release.
+
+Settings V1 edits persisted brand/owner/social profile only through existing admin API. Provider keys, roles, payment/shipping rules remain separately scoped. Frontend length limits follow actual schema/DB100 names and255 links; optional links clear without invented defaults.

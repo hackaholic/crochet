@@ -19,7 +19,8 @@ Mobile display should prioritize one headline, one short supporting line, and on
 
 ## Dependencies and relevant files
 
-- Depends on: Task 15.1 and Task 15.2.
+- Depends on: 15.1, 15.2
+- Dependency context: Task 15.1 and Task 15.2.
 - Inspect/edit: `src/components/HeroCarousel.tsx`, component styles, and hero tests.
 
 ## Acceptance checks

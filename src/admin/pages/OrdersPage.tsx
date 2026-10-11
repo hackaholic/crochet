@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import type { Order, OrderStatus } from '../types';
 import * as api from '../services/api';
 import { OrderStatusBadge, PaymentStatusBadge } from '../components/StatusBadge';
@@ -7,6 +7,8 @@ import { inr, EmptyState, TableSkeleton, Pagination } from '../components/AdminS
 interface Props {
   onSelectOrder: (id: string) => void;
   initialSearch?: string;
+  initialStatus?: OrderStatus;
+  reportingRange?: {from: string; to: string};
 }
 
 type FilterStatus = 'ALL' | OrderStatus;
@@ -14,6 +16,9 @@ type FilterStatus = 'ALL' | OrderStatus;
 const FILTER_TABS: { id: FilterStatus; label: string }[] = [
   { id: 'ALL', label: 'All Orders' },
   { id: 'PENDING_PAYMENT', label: 'Pending Payment' },
+  { id: 'PAID', label: 'Paid' },
+  { id: 'CONFIRMED', label: 'Confirmed' },
+  { id: 'OUT_FOR_DELIVERY', label: 'Out for Delivery' },
   { id: 'PROCESSING', label: 'Processing' },
   { id: 'READY_TO_SHIP', label: 'Ready to Ship' },
   { id: 'SHIPPED', label: 'Shipped' },
@@ -29,35 +34,29 @@ const SORT_OPTIONS = [
   { value: 'total-asc',  label: 'Value: Low to High' },
 ];
 
-export default function OrdersPage({ onSelectOrder, initialSearch = '' }: Props) {
+export default function OrdersPage({ onSelectOrder, initialSearch = '', initialStatus, reportingRange }: Props) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState<FilterStatus>('ALL');
+  const [statusFilter, setStatusFilter] = useState<FilterStatus>(initialStatus ?? 'ALL');
   const [search, setSearch] = useState(initialSearch);
   const [sort, setSort] = useState('date-desc');
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 20;
-
-  const load = useCallback(() => {
-    setLoading(true);
-    const [sortBy, sortDir] = sort.split('-') as [string, 'asc' | 'desc'];
-    api.getOrders({
-      status: statusFilter === 'ALL' ? 'ALL' : statusFilter,
-      search: search.trim() || undefined,
-      sortBy,
-      sortDir,
-      page,
-      pageSize: PAGE_SIZE,
-    }).then(res => {
-      setOrders(res.orders);
-      setTotal(res.total);
-      setLoading(false);
-    });
-  }, [statusFilter, search, sort, page]);
+  const [error,setError] = useState(false);
+  const [attempt,setAttempt] = useState(0);
 
   useEffect(() => { setPage(1); }, [statusFilter, search, sort]);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    let active = true;
+    setLoading(true); setError(false); setOrders([]); setTotal(0);
+    const [sortBy, sortDir] = sort.split('-') as [string, 'asc' | 'desc'];
+    api.getOrders({ status: statusFilter, dateFrom: reportingRange?.from, dateTo: reportingRange?.to, search: search.trim() || undefined, sortBy, sortDir, page, pageSize: PAGE_SIZE })
+      .then(res => { if (active) { setOrders(res.orders); setTotal(res.total); } })
+      .catch(() => { if (active) setError(true); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [statusFilter, search, sort, page, attempt, reportingRange?.from, reportingRange?.to]);
 
   function relDate(ts: string) {
     const d = new Date(ts);
@@ -66,11 +65,14 @@ export default function OrdersPage({ onSelectOrder, initialSearch = '' }: Props)
 
   return (
     <div className="space-y-4">
+      {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm">Orders could not be loaded. <button className="underline" onClick={()=>setAttempt(v=>v+1)}>Retry orders</button></div>}
+      {reportingRange && <p className="text-sm text-[#6B5B4E]">Reporting period: {reportingRange.from} to {reportingRange.to} (IST, inclusive). Open Orders from the sidebar to view all dates.</p>}
       {/* Filter tabs */}
       <div className="flex gap-1 bg-white rounded-xl border border-[#E8E0D8] p-1 overflow-x-auto">
         {FILTER_TABS.map(tab => (
           <button
             key={tab.id}
+            aria-pressed={statusFilter === tab.id}
             onClick={() => setStatusFilter(tab.id)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${statusFilter === tab.id ? 'bg-[#C4622D] text-white shadow-sm' : 'text-[#6B5B4E] hover:text-[#1A1108] hover:bg-[#F5F0EA]'}`}
           >
@@ -92,7 +94,7 @@ export default function OrdersPage({ onSelectOrder, initialSearch = '' }: Props)
           />
           {search && <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9C8B7E] text-xs">✕</button>}
         </div>
-        <select
+        <select aria-label="Sort orders"
           value={sort}
           onChange={e => setSort(e.target.value)}
           className="px-3 py-2 text-sm border border-[#E8E0D8] rounded-lg bg-white focus:outline-none focus:border-[#C4622D] text-[#6B5B4E]"
@@ -123,6 +125,8 @@ export default function OrdersPage({ onSelectOrder, initialSearch = '' }: Props)
             <tbody>
               {loading ? (
                 <tr><td colSpan={9} className="p-4"><TableSkeleton rows={8} cols={8} /></td></tr>
+              ) : error ? (
+                <tr><td colSpan={9} className="p-4">Orders unavailable.</td></tr>
               ) : orders.length === 0 ? (
                 <tr><td colSpan={9}><EmptyState icon="📋" title="No orders found" desc="Try adjusting your filters or search term." /></td></tr>
               ) : orders.map(order => (

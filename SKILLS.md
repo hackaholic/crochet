@@ -6,6 +6,7 @@ Change only the root above if the shared folder moves. Resolve the paths below r
 
 | When needed | Skill entry point |
 | --- | --- |
+| Task pickup, dependency metadata and handoffs | `workflow-coordinator/SKILL.md` |
 | Task design and dependencies | `architect/SKILL.md` |
 | Implementation | `engineer/SKILL.md` |
 | Test cases | `testcase-skill/SKILL.md` |

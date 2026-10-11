@@ -28,7 +28,8 @@ The scanner must detect committed API keys, OAuth secrets, R2 credentials, DB pa
 
 ## Dependencies and relevant files
 
-- Depends on: Task 9.1.
+- Depends on: [9.1](task-001-threat-model-policy.md)
+- Dependency context: Task 9.1.
 - Inspect/edit:
   - `scripts/security/scan-secrets.sh`
   - `scripts/security/scan-config.sh`

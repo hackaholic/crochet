@@ -22,7 +22,8 @@ Ensure every SKU has approved retail pricing, material costs, and accurate photo
 
 ## Dependencies and relevant files
 
-- Depends on: Tasks 7.1, 7.2, 7.3.
+- Depends on: 7.1, 7.2, 7.3
+- Dependency context: Tasks 7.1, 7.2, 7.3.
 - Inspect/edit:
   - `docs/TODO.md`
 

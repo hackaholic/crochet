@@ -24,3 +24,12 @@ Frontend rebuilt/restarted; backend image from prior pass remains current. Self-
 Fixtures: reserved local customer.demo@example.com; QA-W018-SHIPPED and QA-W018-CANCELLED; one address named QA Work018; separate reserved QA customer for ownership checks (temporary session revoked). No payment/shipping/email to real recipients. Fixtures retained locally for user review; no automatic seed or deployment integration. Do not purge any unrelated records. Screenshot /tmp/sulocraft-work018-progress.png.
 
 18.5 Completed.18.6 account checks performed; full acceptance Blocked by unavailable Firefox browser surface and Work01717.5 checkout→guest emailed tracking-link acceptance still Pending. Chromium-family IAB desktop/mobile checked; do not claim Firefox/real mobile device passed. No courier automation claimed. No push/deployment.
+
+## Blocker recheck 2026-10-11
+Codex rechecked available browser surfaces: only Chromium-family IAB and MCP Apps; Firefox is not connected.18.6 remains Blocked, not silently waived.
+Additional local acceptance passed: a disposable QA-W018-GUEST order's request-link API returned202 with fragment token; anonymous browser opening the link rendered real order status/milestones and missing-courier states. Removing the token via navigation removed all shipment details and showed only the request-link form. This verifies request-link→guest UI, not a complete checkout/email-provider journey. No application code changed, so no rebuild/repeated unit suite required for this evidence-only pass.
+Remaining: Firefox rendering; Work01717.5 full checkout→email-link acceptance. Prior35 frontend/44 backend tests, profile/address persistence and owner security evidence retained. No Gemini backend task needed. No push.
+
+2026-10-11: User-requested premium profile visual work defined as18.7 shipment progress and18.8 account metrics. Planning only; no runtime changes or push. No Gemini API requirement identified.
+
+2026-10-11:18.7/18.8 completed; shared admin/customer status palette, accessible shipment cards and premium account accents.17 tests/typecheck passed in frontend container; real local demo account cards/shipped/cancelled/mobile verified. Screenshots under/tmp/sulocraft-account-premium.png and /tmp/sulocraft-shipment-premium.png. Firefox unavailable; no backend changes/push.

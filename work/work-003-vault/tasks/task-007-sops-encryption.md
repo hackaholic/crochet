@@ -22,7 +22,8 @@ Never commit plaintext credentials, private age keys, or unencrypted secret file
 
 ## Dependencies and relevant files
 
-- Depends on: Task 3.5 local developer age key provisioning.
+- Depends on: 3.5
+- Dependency context: Task 3.5 local developer age key provisioning.
 - Inspect/edit:
   - `.sops.yaml`
   - `secrets/`

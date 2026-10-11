@@ -22,7 +22,8 @@ Refer to `docs/api-promotions.md`. Money calculations must use integer paise. Co
 
 ## Dependencies and relevant files
 
-- Depends on: Cart engine.
+- Depends on: None
+- Dependency context: Cart engine.
 - Inspect/edit:
   - `backend/app/api/v1/promotions.py`
   - `backend/tests/test_promotions.py`

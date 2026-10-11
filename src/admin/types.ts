@@ -121,6 +121,7 @@ export interface OrdersListResponse {
 }
 
 export interface FinanceSummary {
+  effectiveRange?: { from: string; to: string };
   grossSales: number;
   discounts: number;
   shippingCollected: number;
@@ -185,6 +186,7 @@ export interface InventoryAlert {
 
 export interface ActivityItem {
   id: string;
+  orderId?: string;
   type: 'order_placed' | 'order_updated' | 'order_shipped' | 'return_requested' | 'refund_completed' | 'low_stock' | 'payment_failed' | 'order_delivered';
   message: string;
   timestamp: string;

@@ -11,7 +11,8 @@ Audit current Work017 tracking/history and admin lifecycle transitions. Return a
 In scope: existing account/order feature enhancement and its frontend/backend contract tests. Out of scope: architecture redesign, carrier integration, production deployment, password/OTP authentication, deleting completed work.
 
 ## Dependencies and relevant files
-Depends on: Work017 existing secure tracking API; inspect returned 17.1/17.7; no repetition of guest auth setup.
+Depends on: 17.1, 17.7
+Dependency context: Work017 existing secure tracking API; inspect returned 17.1/17.7; no repetition of guest auth setup.
 Inspect/edit: `backend/app/api/v1/orders.py`; `backend/app/schemas/order.py`; `backend/app/models/order.py`; `src/lib/api/orderTrackingTypes.ts`; `backend/tests/test_tracking_security.py`; `backend/tests/test_orders.py`; `src/lib/api/tracking.test.ts`
 
 ## Milestone Schema Design (DEC018-4)

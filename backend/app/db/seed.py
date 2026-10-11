@@ -20,6 +20,7 @@ from app.models.catalogue import (
     ProductCategory,
     ProductCollection,
     ProductImage,
+    ProductInformationDefaults,
     ProductOccasion,
     ProductVariant,
     Review,
@@ -1240,6 +1241,19 @@ def seed_storefront_content(db: Session) -> None:
     else:
         brand.name = "Sulocraft"
         brand.owner_name = "Anupama Sharma"
+
+    info_defaults = db.query(ProductInformationDefaults).first()
+    if not info_defaults:
+        info_defaults = ProductInformationDefaults(
+            id=1,
+            handmade_details="Handcrafted with traditional crochet techniques. Each piece is made by hand with attention to detail; subtle variations are natural and make each item unique.",
+            materials_used="Quality yarn and secure stitching tailored for crochet heirlooms.",
+            size_dimensions="Dimensions vary by design; please refer to the product specifications.",
+            processing_time="Processing time is confirmed for each order.",
+            care_instructions="Gently spot clean or dust with a dry soft cloth. Keep away from excessive moisture and direct prolonged sunlight.",
+            shipping_delivery="Shipping availability and delivery details are confirmed for each order.",
+        )
+        db.add(info_defaults)
 
     if db.query(HomepageCampaign).count() == 0:
         campaigns_data = [

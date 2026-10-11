@@ -340,6 +340,12 @@ class ProductDetail(BaseModel):
     customizable: bool = False
     attributes: dict[str, Any] = Field(default_factory=dict, alias="metadata_json")
     customer_reviews: list[ReviewOut] = Field(default_factory=list, serialization_alias="customerReviews")
+    handmade_details: str | None = Field(default=None, serialization_alias="handmadeDetails", alias="handmadeDetails")
+    materials_used: str | None = Field(default=None, serialization_alias="materialsUsed", alias="materialsUsed")
+    size_dimensions: str | None = Field(default=None, serialization_alias="sizeDimensions", alias="sizeDimensions")
+    processing_time: str | None = Field(default=None, serialization_alias="processingTime", alias="processingTime")
+    care_instructions: str | None = Field(default=None, serialization_alias="careInstructions", alias="careInstructions")
+    shipping_delivery: str | None = Field(default=None, serialization_alias="shippingDelivery", alias="shippingDelivery")
 
     @field_validator("images", mode="after")
     @classmethod

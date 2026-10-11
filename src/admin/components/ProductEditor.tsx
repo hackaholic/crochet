@@ -1,12 +1,14 @@
+import ProductInformationFields from './ProductInformationFields';
+import {informationValues,validInformation,type ProductInformation} from '../../lib/products/information';
 import { useEffect, useState } from 'react';
-import { createTag, getTags, saveProduct, type CatalogueProduct, type ProductDraft, type TaxonomyOption, type VariantDraft } from '../services/catalogue';
+import { createTag, getProductDefaults, getTags, saveProduct, type CatalogueProduct, type ProductDraft, type TaxonomyOption, type VariantDraft } from '../services/catalogue';
 import { actionClass, controlClass, Field, TaxonomySelect } from './CatalogueFields';
 import ProductPhotos from './ProductPhotos';
 import VariantEditor, { VariantFields } from './VariantEditor';
 export default function ProductEditor({ product, categories, onSaved, onClose }: {
   product?: CatalogueProduct; categories: TaxonomyOption[]; onSaved: (product: CatalogueProduct) => void; onClose: () => void;
 }) {
-  const [draft, setDraft] = useState<ProductDraft>({ name: product?.name || '', description: product?.description || '', primaryImage: product?.primaryImage || '', galleryImages: product?.galleryImages || [], primaryCategoryId: product?.primaryCategoryId ?? product?.categoryIds[0], categoryIds: product?.categoryIds || [], tagIds: product?.tagIds || [] });
+  const [draft, setDraft] = useState<ProductDraft>({ ...informationValues(product ?? {}), name: product?.name || '', description: product?.description || '', primaryImage: product?.primaryImage || '', galleryImages: product?.galleryImages || [], primaryCategoryId: product?.primaryCategoryId ?? product?.categoryIds[0], categoryIds: product?.categoryIds || [], tagIds: product?.tagIds || [] });
   const [variant, setVariant] = useState<VariantDraft>({ sku: '', name: '', price: 0, stockQuantity: 0 });
   const [tags, setTags] = useState<TaxonomyOption[]>([]);
   const [tagsState, setTagsState] = useState<'loading' | 'ready' | 'error'>('loading');
@@ -21,11 +23,21 @@ export default function ProductEditor({ product, categories, onSaved, onClose }:
     getTags().then(data => { if (active) { setTags(data); setTagsState('ready'); } }).catch(() => { if (active) setTagsState('error'); });
     return () => { active = false; };
   }, [tagRetry]);
+  const [defaults,setDefaults] = useState<ProductInformation>();
+  const [defaultsError,setDefaultsError] = useState(false);
+  const [defaultsRetry,setDefaultsRetry] = useState(0);
+  useEffect(()=>{let active=true;setDefaultsError(false);
+    getProductDefaults().then(values=>{if(active){setDefaults(informationValues(values));if(!product)setDraft(current=>({...current,...informationValues(values)}));}})
+      .catch(()=>{if(active)setDefaultsError(true);});
+    return()=>{active=false;};
+  },[defaultsRetry]);
   const disabled = busy || photoBusy || tagBusy;
+
   return <section className="rounded-xl border border-[#E8E0D8] bg-white p-5" aria-label="Product editor">
     <div className="mb-5 flex items-center justify-between"><h2 className="font-serif text-xl">{product ? 'Edit product' : 'Add product'}</h2><button type="button" disabled={disabled} onClick={onClose} className="text-sm underline">Back to catalogue</button></div>
     <form className="space-y-5" onSubmit={async event => {
-      event.preventDefault(); if (disabled) return;
+      event.preventDefault(); if (disabled || (!product && !defaults)) return;
+      if (!validInformation(draft)) {setError('Product information must be no more than 5,000 characters per field.');return;}
       if (!draft.categoryIds.length) { setError('Select at least one product category before saving.'); return; }
       if (!draft.primaryImage) { setError('Upload a primary product photo before saving.'); return; }
       setBusy(true); setError('');
@@ -47,10 +59,13 @@ export default function ProductEditor({ product, categories, onSaved, onClose }:
         try { const tag = await createTag(newTag.trim()); setTags(current => [...current.filter(t => t.id !== tag.id), tag]); setDraft(current => ({ ...current, tagIds: [...new Set([...current.tagIds, tag.id])] })); setNewTag(''); }
         catch { setError('Tag could not be created. Try again.'); } finally { setTagBusy(false); }
       }}>Add tag</button></div>}
+      <ProductInformationFields value={draft} onChange={values=>setDraft(current=>({...current,...values}))} defaults={defaults} disabled={disabled || (!product && !defaults)}/>
+      {!defaults && !defaultsError && <p role="status">Loading product defaults…</p>}
+      {defaultsError && <p role="alert">Defaults are unavailable. Your existing values are preserved. <button type="button" className="underline" onClick={()=>setDefaultsRetry(x=>x+1)}>Retry product defaults</button></p>}
       <fieldset disabled={busy || tagBusy}><ProductPhotos primary={draft.primaryImage} gallery={draft.galleryImages} urls={{ ...(product ? Object.fromEntries(product.galleryImages.map((key, index) => [key, product.galleryImageUrls?.[index] || ''])) : {}), ...(product?.primaryImageUrl ? { [product.primaryImage]: product.primaryImageUrl } : {}) }} onBusy={setPhotoBusy} onChange={(primaryImage, galleryImages) => setDraft(current => ({ ...current, primaryImage, galleryImages }))} /></fieldset>
       {!product && <fieldset disabled={disabled}><legend className="mb-3 font-semibold">First variant</legend><VariantFields draft={variant} onChange={setVariant} /></fieldset>}
       {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
-      <button className={actionClass} disabled={disabled}>{busy ? 'Saving…' : 'Save product'}</button>
+      <button className={actionClass} disabled={disabled || (!product && !defaults)}>{busy ? 'Saving…' : 'Save product'}</button>
     </form>
     {product && <VariantEditor productId={product.id} variants={product.variants} onSaved={() => onSaved(product)} />}
   </section>;

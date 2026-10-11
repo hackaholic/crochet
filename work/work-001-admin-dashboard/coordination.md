@@ -2,12 +2,12 @@
 
 This file is the work-local coordination entry point. The work folder is the source of truth: read this file with README.md, tasks.md, decisions.md, and only the assigned task contract.
 
-**Current owner:** Codex — Work001; Customers1.9.2 completed, awaiting local user review
-**Active cross-agent handoffs:** None active (Task 1.9.1 completed and returned to Codex)
-**Handoff state:** Returned — Gemini completed Task 1.9.1; Codex completed Task 1.9.2
+**Current owner:** Codex — Task 1.16 Completed.
+**Active cross-agent handoffs:** None.
+**Handoff state:** Completed — Task 1.16 locally verified; no backend dependency.
 
-Dependencies: existing User and Order models available. Customer API implemented and verified.
-Blockers: None. Customers API ready for UI integration.
+Dependencies: existing User, Order, ReturnRequest, Product models available.
+Blockers: None.
 
 ## Current handoffs
 
@@ -39,4 +39,40 @@ Workflow metadata repaired under1.13: checklist IDs/statuses now match dedicated
 
 ## Finance analytics — 1.14
 
-Codex owns delivery. Gemini starts [1.14.1 metric contract](tasks/task-021-analytics-metric-contract.md); handoff Waiting, pickup-ready. After definitions return, Gemini picks one of1.14.2 category,1.14.3 country,1.14.4 products or1.14.5 trends from tasks.md. Codex1.14.6 UI waits for backend returns;1.14.7 local reconciliation follows. No live Gemini completion assumed. Exact contracts hold detailed acceptance/test state.
+Codex owns delivery. Gemini completed [1.14.1 metric contract](tasks/task-021-analytics-metric-contract.md); handoff Returned; Completed.
+Definitions specify:
+- Asia/Kolkata (IST) date boundaries with single-day preset handling.
+- Unified revenue formula: Gross Product Sales - Discounts + Shipping + Stored Tax - Refunds (no double discount subtraction).
+- Cancelled and unpaid order exclusion from recognized sales.
+- Zero-order AOV handling ($AOV=0$) and null growth baseline comparison without fake zeroes/infinity.
+- Unclassified category handling (single category per line, no duplicate counting).
+- Immutable shipping address snapshot derivation for country & state analytics.
+- Strict date & status filtering on top-selling products.
+
+Gemini 1.14.2–1.14.5 returned; Codex 1.14.6 completed local UI integration. 19 frontend checks/typecheck and 10 backend tests passed. Next: 1.14.7 final PostgreSQL reconciliation/performance and browser acceptance. No additional Gemini blocker for the delivered UI; no push/deploy.
+
+## Settings current handoff
+Codex1.10 audit Completed;1.10.2 UI Active. Gemini1.10.1 [backend validation contract](tasks/task-032-brand-settings-validation.md) Waiting pickup; can start immediately, using GEMINI_WORKFLOW_PROMPT.md. Final UI acceptance waits for return; existing valid API supports independent frontend development.
+
+Codex Settings frontend locally verified;1.10.2 awaits Gemini1.10.1 acceptance. Codex picked independent1.11.1 Orders errors/race coverage.
+
+Gemini1.10.1 returned; Codex reviewed limits100/255 and aligned UI. Follow-up1.10.3 Waiting pickup: reject explicit null names and internal control characters, with unchanged-row regressions. Existing valid Settings save/clear semantics usable; no backend takeover.
+
+Latest state2026-10-11:1.10.1 returned;1.10.2 frontend Completed after local clear/restore/limits/mobile verification.1.11.1 Completed with3 Orders tests and local verification. Earlier waiting/active Settings statements are superseded. Only Settings backend follow-up1.10.3 is pickup-ready. Remaining Codex:1.14.7, catalogue1.7.6, broader1.11/1.6, owner acceptance1.12. No push/deploy.
+
+## Customer/navigation additions — 2026-10-11
+Gemini1.9.4 pickup-ready: extend exact customer detail with owned saved addresses; existing API/service reused. Codex1.9.3 waits for return. Codex1.15 pipeline and1.16 activity links are independently ready using existing APIs. All exact contracts include tests and local/security acceptance. User requested task definition; no runtime implementation in this planning update.
+
+Codex1.14.7 Active: isolated PostgreSQL accounting acceptance. Gemini1.10.3 return acknowledged; no repeated Settings setup.
+
+Finance handoff 1.14.8: Gemini Completed, [exact contract](tasks/task-040-finance-accounting-reconciliation.md). Corrected shared finance recognition (excluding unpaid prepaid/failed orders) and gross sales (`subtotal` without double counting discounts). 19/19 tests in `test_admin_dashboard.py` passed against disposable PostgreSQL. Codex 1.14.7 Unblocked for local analytics reconciliation and acceptance.
+
+Latest finance state:1.14.7 Returned/Completed;21 PostgreSQL tests pass and rebuilt local API/browser desktop/mobile reconciled. No finance Gemini blocker; broader admin/browser/user acceptance stays separate. No push.
+
+Codex1.15 Active: dashboard status navigation plus selected-period server filtering, pagination and sidebar reset. Existing API supports date/status; no Gemini dependency.
+
+2026-10-11: Codex1.15 Completed. Exact return evidence in task-038; no Gemini dependency, no push/deployment. Task1.16 remains Pending.
+
+Codex1.16 In Progress: preserve source order ID and connect activity references to existing detail navigation; no Gemini dependency.
+
+Codex1.16 Completed: exact evidence in task-039; no push/deploy.

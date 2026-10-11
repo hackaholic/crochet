@@ -21,7 +21,8 @@ Make SOPS dotenv ciphertext decrypt consistently in the local helper, VPS bootst
 
 ## Dependencies and relevant files
 
-- Depends on: Tasks 3.1, 3.3, 3.4, 3.8.
+- Depends on: 3.1, 3.3, 3.4, 3.8
+- Dependency context: Tasks 3.1, 3.3, 3.4, 3.8.
 - Inspect/edit: `scripts/decrypt_preprod_secrets.py`, `backend/scripts/bootstrap_secrets.sh`, `backend/scripts/rotate_vps_key.sh`, `backend/app/core/config.py`, `backend/alembic/env.py`, and focused tests.
 
 ## Acceptance checks

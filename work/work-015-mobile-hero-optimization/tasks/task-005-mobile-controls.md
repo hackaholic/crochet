@@ -19,7 +19,8 @@ Preserve the current focused slide count. Prefer swipe support, small pagination
 
 ## Dependencies and relevant files
 
-- Depends on: Task 15.1; coordinate styling with Task 15.2.
+- Depends on: 15.1
+- Dependency context: Task 15.1; coordinate styling with Task 15.2.
 - Inspect/edit: `src/components/HeroCarousel.tsx`, `src/components/HeroCarousel.test.tsx`, and component styles.
 
 ## Acceptance checks

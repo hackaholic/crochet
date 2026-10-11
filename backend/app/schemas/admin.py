@@ -69,6 +69,28 @@ class AdminInventoryAdjustRequest(BaseModel):
     reason: str | None = Field(default=None, description="Optional audit reason")
 
 
+import re
+
+def _validate_product_info_text(v: str | None, max_length: int = 5000) -> str | None:
+    """Validate bounded plain text; allow newlines/Unicode, disallow raw HTML injection and control characters."""
+    if v is None:
+        return None
+    val = v.strip()
+    if not val:
+        return ""
+    if len(val) > max_length:
+        raise ValueError(f"Product information field cannot exceed {max_length} characters")
+    # Check for disallowed control chars (allow standard whitespace: \t=9, \n=10, \r=13)
+    for c in val:
+        code = ord(c)
+        if (code < 32 and code not in (9, 10, 13)) or code == 127:
+            raise ValueError("Product information field contains invalid control characters")
+    # Disallow raw HTML tags (e.g., <script>, <div>, etc.)
+    if re.search(r"<\s*\/?[a-zA-Z][^>]*>", val):
+        raise ValueError("Product information field must be plain text without HTML tags")
+    return val
+
+
 class AdminProductCreate(BaseModel):
     """Payload to create a new product."""
 
@@ -89,6 +111,19 @@ class AdminProductCreate(BaseModel):
     gallery_images: list[str] = Field(default_factory=list, alias="galleryImages")
     variants: list[AdminVariantCreate] = Field(default_factory=list)
     metadata_json: dict[str, Any] = Field(default_factory=dict, alias="metadata")
+    handmade_details: str | None = Field(default=None, alias="handmadeDetails")
+    materials_used: str | None = Field(default=None, alias="materialsUsed")
+    size_dimensions: str | None = Field(default=None, alias="sizeDimensions")
+    processing_time: str | None = Field(default=None, alias="processingTime")
+    care_instructions: str | None = Field(default=None, alias="careInstructions")
+    shipping_delivery: str | None = Field(default=None, alias="shippingDelivery")
+
+    @field_validator("handmade_details", "materials_used", "size_dimensions", "processing_time", "care_instructions", "shipping_delivery", mode="before")
+    @classmethod
+    def validate_info_fields(cls, v: Any) -> str | None:
+        if v is None:
+            return None
+        return _validate_product_info_text(str(v))
 
 
 class AdminProductUpdate(BaseModel):
@@ -111,6 +146,19 @@ class AdminProductUpdate(BaseModel):
     tag_ids: list[int] | None = Field(default=None, alias="tagIds")
     gallery_images: list[str] | None = Field(default=None, alias="galleryImages")
     metadata_json: dict[str, Any] | None = Field(default=None, alias="metadata")
+    handmade_details: str | None = Field(default=None, alias="handmadeDetails")
+    materials_used: str | None = Field(default=None, alias="materialsUsed")
+    size_dimensions: str | None = Field(default=None, alias="sizeDimensions")
+    processing_time: str | None = Field(default=None, alias="processingTime")
+    care_instructions: str | None = Field(default=None, alias="careInstructions")
+    shipping_delivery: str | None = Field(default=None, alias="shippingDelivery")
+
+    @field_validator("handmade_details", "materials_used", "size_dimensions", "processing_time", "care_instructions", "shipping_delivery", mode="before")
+    @classmethod
+    def validate_info_fields(cls, v: Any) -> str | None:
+        if v is None:
+            return None
+        return _validate_product_info_text(str(v))
 
 
 class AdminProductOut(BaseModel):
@@ -142,6 +190,12 @@ class AdminProductOut(BaseModel):
     total_stock: int = Field(default=0, alias="totalStock")
     min_price: int = Field(default=0, alias="minPrice")
     min_price_paise: int = Field(default=0, alias="minPricePaise")
+    handmade_details: str | None = Field(default=None, serialization_alias="handmadeDetails", alias="handmadeDetails")
+    materials_used: str | None = Field(default=None, serialization_alias="materialsUsed", alias="materialsUsed")
+    size_dimensions: str | None = Field(default=None, serialization_alias="sizeDimensions", alias="sizeDimensions")
+    processing_time: str | None = Field(default=None, serialization_alias="processingTime", alias="processingTime")
+    care_instructions: str | None = Field(default=None, serialization_alias="careInstructions", alias="careInstructions")
+    shipping_delivery: str | None = Field(default=None, serialization_alias="shippingDelivery", alias="shippingDelivery")
     created_at: datetime | None = Field(default=None, alias="createdAt")
     updated_at: datetime | None = Field(default=None, alias="updatedAt")
 
@@ -166,6 +220,40 @@ class AdminProductListOut(BaseModel):
     total: int
     page: int
     page_size: int = Field(alias="pageSize")
+
+
+class AdminProductInfoDefaultsOut(BaseModel):
+    """Configurable storewide default copy for new products."""
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    handmade_details: str | None = Field(default=None, serialization_alias="handmadeDetails", alias="handmadeDetails")
+    materials_used: str | None = Field(default=None, serialization_alias="materialsUsed", alias="materialsUsed")
+    size_dimensions: str | None = Field(default=None, serialization_alias="sizeDimensions", alias="sizeDimensions")
+    processing_time: str | None = Field(default=None, serialization_alias="processingTime", alias="processingTime")
+    care_instructions: str | None = Field(default=None, serialization_alias="careInstructions", alias="careInstructions")
+    shipping_delivery: str | None = Field(default=None, serialization_alias="shippingDelivery", alias="shippingDelivery")
+    updated_at: datetime | None = Field(default=None, serialization_alias="updatedAt", alias="updatedAt")
+
+
+class AdminProductInfoDefaultsUpdate(BaseModel):
+    """Payload to update storewide product information defaults."""
+
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
+
+    handmade_details: str | None = Field(default=None, alias="handmadeDetails")
+    materials_used: str | None = Field(default=None, alias="materialsUsed")
+    size_dimensions: str | None = Field(default=None, alias="sizeDimensions")
+    processing_time: str | None = Field(default=None, alias="processingTime")
+    care_instructions: str | None = Field(default=None, alias="careInstructions")
+    shipping_delivery: str | None = Field(default=None, alias="shippingDelivery")
+
+    @field_validator("handmade_details", "materials_used", "size_dimensions", "processing_time", "care_instructions", "shipping_delivery", mode="before")
+    @classmethod
+    def validate_info_fields(cls, v: Any) -> str | None:
+        if v is None:
+            return None
+        return _validate_product_info_text(str(v))
 
 
 class AdminCategoryCreate(BaseModel):
@@ -608,6 +696,149 @@ class AdminFinanceSeriesOut(BaseModel):
     buckets: list[AdminFinanceSalesBucket]
 
 
+class AdminCategorySalesItemOut(BaseModel):
+    """Category sales breakdown item."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    category_id: int | None = Field(default=None, alias="categoryId")
+    category_name: str = Field(alias="categoryName")
+    category_slug: str | None = Field(default=None, alias="categorySlug")
+    order_count: int = Field(alias="orderCount")
+    units_sold: int = Field(alias="unitsSold")
+    gross_sales: int = Field(alias="grossSales")
+    gross_sales_paise: int = Field(alias="grossSalesPaise")
+    sales_share_pct: float = Field(alias="salesSharePct")
+
+
+class AdminCategorySalesOut(BaseModel):
+    """Category sales breakdown response."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    effective_range: dict[str, str] = Field(alias="effectiveRange")
+    total_gross_sales: int = Field(alias="totalGrossSales")
+    total_gross_sales_paise: int = Field(alias="totalGrossSalesPaise")
+    total_units_sold: int = Field(alias="totalUnitsSold")
+    categories: list[AdminCategorySalesItemOut]
+
+
+class AdminIndianRegionSalesItemOut(BaseModel):
+    """Indian state sales breakdown item."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    state: str
+    order_count: int = Field(alias="orderCount")
+    units_sold: int = Field(alias="unitsSold")
+    gross_sales: int = Field(alias="grossSales")
+    gross_sales_paise: int = Field(alias="grossSalesPaise")
+    sales_share_pct: float = Field(alias="salesSharePct")
+
+
+class AdminCountrySalesItemOut(BaseModel):
+    """Country sales breakdown item."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    country_code: str = Field(alias="countryCode")
+    country_name: str = Field(alias="countryName")
+    order_count: int = Field(alias="orderCount")
+    units_sold: int = Field(alias="unitsSold")
+    gross_sales: int = Field(alias="grossSales")
+    gross_sales_paise: int = Field(alias="grossSalesPaise")
+    sales_share_pct: float = Field(alias="salesSharePct")
+    regions: list[AdminIndianRegionSalesItemOut] = Field(default_factory=list)
+
+
+class AdminDestinationSalesOut(BaseModel):
+    """Geographic sales breakdown response."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    effective_range: dict[str, str] = Field(alias="effectiveRange")
+    total_gross_sales: int = Field(alias="totalGrossSales")
+    total_gross_sales_paise: int = Field(alias="totalGrossSalesPaise")
+    total_orders: int = Field(alias="totalOrders")
+    countries: list[AdminCountrySalesItemOut]
+
+
+class AdminTopSellingProductItemOut(BaseModel):
+    """Top selling product item with variant details."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    product_id: int | None = Field(default=None, alias="productId")
+    product_name: str = Field(alias="productName")
+    sku: str | None = None
+    variant_name: str | None = Field(default=None, alias="variantName")
+    image_url: str | None = Field(default=None, alias="imageUrl")
+    units_sold: int = Field(alias="unitsSold")
+    distinct_orders: int = Field(alias="distinctOrders")
+    product_revenue: int = Field(alias="productRevenue")
+    product_revenue_paise: int = Field(alias="productRevenuePaise")
+
+
+class AdminTopProductsOut(BaseModel):
+    """Top selling products response."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    effective_range: dict[str, str] = Field(alias="effectiveRange")
+    ranking_metric: str = Field(alias="rankingMetric")
+    items: list[AdminTopSellingProductItemOut]
+
+
+class AdminPeriodComparisonMetric(BaseModel):
+    """Metric comparison between current and previous period."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    current: int
+    current_paise: int = Field(alias="currentPaise")
+    previous: int
+    previous_paise: int = Field(alias="previousPaise")
+    growth_pct: float | None = Field(default=None, alias="growthPct")
+
+
+class AdminPeriodComparisonCount(BaseModel):
+    """Count comparison between current and previous period."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    current: int
+    previous: int
+    growth_pct: float | None = Field(default=None, alias="growthPct")
+
+
+class AdminOperationalIndicatorsOut(BaseModel):
+    """Operational indicators tracked alongside finance."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    pending_payment_count: int = Field(alias="pendingPaymentCount")
+    pending_payment_total: int = Field(alias="pendingPaymentTotal")
+    pending_payment_total_paise: int = Field(alias="pendingPaymentTotalPaise")
+    cancelled_count: int = Field(alias="cancelledCount")
+    refunded_count: int = Field(alias="refundedCount")
+    fulfillment_states: dict[str, int] = Field(alias="fulfillmentStates")
+
+
+class AdminFinanceTrendsOut(BaseModel):
+    """Finance trends with prior period comparison and operational indicators."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    effective_range: dict[str, str] = Field(alias="effectiveRange")
+    previous_range: dict[str, str] = Field(alias="previousRange")
+    gross_sales: AdminPeriodComparisonMetric = Field(alias="grossSales")
+    net_revenue: AdminPeriodComparisonMetric = Field(alias="netRevenue")
+    orders: AdminPeriodComparisonCount
+    average_order_value: AdminPeriodComparisonMetric = Field(alias="averageOrderValue")
+    refunds: AdminPeriodComparisonMetric
+    operational_indicators: AdminOperationalIndicatorsOut = Field(alias="operationalIndicators")
+
+
 class AdminAttentionItem(BaseModel):
     """Actionable alert item requiring admin intervention."""
 
@@ -846,8 +1077,26 @@ class AdminTagOut(BaseModel):
 # -----------------------------------------------------------------------------
 
 
+class AdminCustomerAddressOut(BaseModel):
+    """Saved customer address representation."""
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    id: int
+    name: str
+    phone: str
+    line1: str
+    line2: str | None = None
+    landmark: str | None = None
+    city: str
+    state: str
+    postal_code: str = Field(alias="postalCode")
+    country: str = "IN"
+    is_default: bool = Field(default=False, alias="isDefault")
+
+
 class AdminCustomerOut(BaseModel):
-    """Admin representation of a customer profile."""
+    """Admin representation of a customer profile in listings."""
 
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
@@ -859,6 +1108,12 @@ class AdminCustomerOut(BaseModel):
     created_at: datetime | None = Field(default=None, alias="createdAt")
     last_login_at: datetime | None = Field(default=None, alias="lastLoginAt")
     order_count: int = Field(default=0, alias="orderCount")
+
+
+class AdminCustomerDetailOut(AdminCustomerOut):
+    """Detailed customer profile including saved addresses."""
+
+    addresses: list[AdminCustomerAddressOut] = Field(default_factory=list)
 
 
 class AdminCustomerListOut(BaseModel):

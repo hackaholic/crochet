@@ -23,7 +23,8 @@ All structured data must be valid JSON-LD rendered in the `<head>` of HTML pages
 
 ## Dependencies and relevant files
 
-- Depends on: Catalogue schemas.
+- Depends on: None
+- Dependency context: Catalogue schemas.
 - Inspect/edit:
   - `backend/app/services/seo.py`
   - `src/components/SeoManager.tsx`

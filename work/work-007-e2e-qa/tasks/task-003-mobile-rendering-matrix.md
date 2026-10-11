@@ -23,7 +23,8 @@ Pages to verify: Home, Shop (with filters and sort), Product Detail (with galler
 
 ## Dependencies and relevant files
 
-- Depends on: Local Docker frontend running at `http://localhost:8080`.
+- Depends on: None
+- Dependency context: Local Docker frontend running at `http://localhost:8080`.
 - Inspect/edit:
   - `docs/testing-plan.md`
   - `src/`

@@ -22,7 +22,8 @@ Audit criteria: non-root users, non-privileged containers, no Docker socket moun
 
 ## Dependencies and relevant files
 
-- Depends on: Docker setup.
+- Depends on: None
+- Dependency context: Docker setup.
 - Inspect/edit:
   - `scripts/security/scan-container.sh`
   - `backend/docker-compose.yml`

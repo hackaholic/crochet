@@ -56,3 +56,19 @@ it('renders API milestones and terminal explanation without completing pending d
   expect(screen.getByText('This order was cancelled.')).toBeVisible();
   expect(screen.getByText('pending')).toBeVisible();
 });
+
+
+it('distinguishes current, completed and upcoming milestones with text cues and shared status colors', () => {
+  const { container } = render(<ShipmentTracking tracking={{ ...tracking, milestones: [
+    { code: 'CONFIRMED', label: 'Order confirmed', state: 'COMPLETED', timestamp: null },
+    { code: 'SHIPPED', label: 'Parcel shipped', state: 'CURRENT', timestamp: null },
+    { code: 'DELIVERED', label: 'Delivery pending', state: 'PENDING', timestamp: null },
+  ] }} />);
+  const current = screen.getByText('Parcel shipped').closest('li')!;
+  expect(current).toHaveAttribute('aria-current', 'step');
+  expect(current).toHaveStyle({ background: '#E0F2FE', color: '#0C4A6E' });
+  expect(screen.getByText('completed')).toBeVisible();
+  expect(screen.getByText('pending')).toBeVisible();
+  expect(screen.getByText('Delivery pending').closest('li')).not.toHaveAttribute('aria-current');
+  expect(container.querySelectorAll('section[aria-label="Package progress"] time')).toHaveLength(0);
+});

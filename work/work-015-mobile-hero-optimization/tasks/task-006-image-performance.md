@@ -19,7 +19,8 @@ The first visible slide is likely the homepage LCP image. Prioritize only that i
 
 ## Dependencies and relevant files
 
-- Depends on: Tasks 15.2 and 15.3.
+- Depends on: 15.2, 15.3
+- Dependency context: Tasks 15.2 and 15.3.
 - Inspect/edit: `src/components/HeroCarousel.tsx`, image utility/components if present, and performance-related tests.
 
 ## Acceptance checks

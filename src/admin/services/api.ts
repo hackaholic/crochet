@@ -1,3 +1,5 @@
+import { dateRange } from './dateRange';
+import type { DateRangePreset } from '../types';
 import { apiUrl } from '../../lib/api/client';
 import type {
   ActivityItem, AdminOccasion, AttentionItem, DashboardSummary, FinanceSummary, InventoryAlert,
@@ -17,21 +19,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-function dateRange(preset: string) {
-  const today = new Date();
-  const end = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
-  const start = new Date(end);
-  if (preset === 'today') { /* same day */ }
-  else if (preset === 'yesterday') start.setUTCDate(start.getUTCDate() - 1);
-  else if (preset === '7d') start.setUTCDate(start.getUTCDate() - 6);
-  else if (preset === 'this_month') start.setUTCDate(1);
-  else if (preset === 'prev_month') {
-    start.setUTCMonth(start.getUTCMonth() - 1, 1);
-    end.setUTCDate(0);
-  } else start.setUTCDate(start.getUTCDate() - 29);
-  const iso = (value: Date) => value.toISOString().slice(0, 10);
-  return { from: iso(start), to: iso(end) };
-}
 
 const status = (value: string): OrderStatus => value as OrderStatus;
 
@@ -78,7 +65,7 @@ export interface OrdersQuery {
   sortDir?: 'asc' | 'desc';
 }
 
-export async function getDashboardSummary(preset = '30d'): Promise<DashboardSummary> {
+export async function getDashboardSummary(preset: DateRangePreset = '30d'): Promise<DashboardSummary> {
   const range = dateRange(preset);
   const previousStart = new Date(`${range.from}T00:00:00Z`);
   const previousEnd = new Date(`${range.to}T00:00:00Z`);
@@ -103,7 +90,7 @@ export async function getOrderStatusCounts(): Promise<OrderStatusCount[]> {
   return getOrderStatusCountsForPeriod('30d');
 }
 
-export async function getOrderStatusCountsForPeriod(period: string): Promise<OrderStatusCount[]> {
+export async function getOrderStatusCountsForPeriod(period: DateRangePreset): Promise<OrderStatusCount[]> {
   const { from, to } = dateRange(period);
   const raw = await request<Json>(`/admin/dashboard/summary?from=${from}&to=${to}`);
   return Object.entries(raw.statusCounts || {}).map(([key, count]) => ({ status: status(key), count: Number(count) }));
@@ -127,6 +114,8 @@ export async function getActivityFeed(): Promise<ActivityItem[]> {
     id: `${order.id}-${event.id}`, type: 'order_updated' as const,
     message: `Order status recorded: ${String(event.status).replaceAll('_', ' ').toLowerCase()}`,
     timestamp: event.timestamp || order.updatedAt, orderNumber: order.orderNumber,
+    orderId: typeof order.id === 'number' && Number.isSafeInteger(order.id) && order.id > 0
+      ? String(order.id) : typeof order.id === 'string' && order.id.trim() ? order.id : undefined,
   }))).slice(0, 12);
 }
 
@@ -141,7 +130,7 @@ export async function getInventoryAlerts(): Promise<InventoryAlert[]> {
   }));
 }
 
-export async function getSalesChart(period: '7d' | '30d' = '30d'): Promise<SalesDataPoint[]> {
+export async function getSalesChart(period: DateRangePreset = '30d'): Promise<SalesDataPoint[]> {
   const range = dateRange(period);
   const params = new URLSearchParams({ ...range, interval: 'daily' });
   const raw = await request<Json>(`/admin/dashboard/sales?${params}`);
@@ -182,10 +171,11 @@ export async function updateOrderStatus(id: string, nextStatus: OrderStatus, not
   });
 }
 
-export async function getFinanceSummary(preset = '30d'): Promise<FinanceSummary> {
-  const params = new URLSearchParams(dateRange(preset));
+export async function getFinanceSummary(preset: DateRangePreset = '30d', range = dateRange(preset)): Promise<FinanceSummary> {
+  const params = new URLSearchParams(range);
   const raw = await request<Json>(`/admin/finance/summary?${params}`);
   return {
+    effectiveRange: raw.effectiveRange,
     grossSales: raw.grossSales, discounts: raw.discounts, shippingCollected: raw.shippingCollected,
     gstCollected: raw.storedTax, refunds: raw.refunds,
     paymentFees: raw.gatewayFees, netRevenue: raw.netRevenue, taxableSales: raw.taxableSales,
@@ -194,8 +184,8 @@ export async function getFinanceSummary(preset = '30d'): Promise<FinanceSummary>
   };
 }
 
-export async function getSalesChartFinance(period: '7d' | '30d' = '30d'): Promise<SalesDataPoint[]> {
-  const params = new URLSearchParams({ ...dateRange(period), interval: 'daily' });
+export async function getSalesChartFinance(period: DateRangePreset = '30d', range = dateRange(period)): Promise<SalesDataPoint[]> {
+  const params = new URLSearchParams({ ...range, interval: 'daily' });
   const raw = await request<Json>(`/admin/finance/sales?${params}`);
   return (raw.buckets || []).map((bucket: Json) => ({
     label: bucket.date, revenue: bucket.netRevenue, orders: bucket.orderCount,
