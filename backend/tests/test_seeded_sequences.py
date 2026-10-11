@@ -158,3 +158,51 @@ def test_unauthenticated_and_customer_create_denied():
     cust_cookies = _login_customer()
     res_cust = client.post("/api/v1/admin/products", json=payload, cookies=cust_cookies)
     assert res_cust.status_code == 403
+
+
+# =============================================================================
+# 1.7.11-TC05: Empty tables sequence alignment prevention test (PostgreSQL)
+# =============================================================================
+
+def test_sequence_alignment_on_empty_tables():
+    """1.7.11-TC05: Empty tables (count == 0) never trigger NumericValueOutOfRange setval(0) on Postgres."""
+    with SessionLocal() as db:
+        bind = db.get_bind()
+        if not bind or bind.dialect.name != "postgresql":
+            pytest.skip("PostgreSQL specific test")
+
+        # Truncate addresses to guarantee 0 rows
+        db.execute(text("TRUNCATE TABLE addresses RESTART IDENTITY CASCADE"))
+        db.commit()
+
+        # align_postgres_sequences must succeed without throwing NumericValueOutOfRange
+        aligned = align_postgres_sequences(db)
+        db.commit()
+
+        # Verify inserting a new address gets sequence 1
+        addr_id = db.execute(
+            text(
+                "INSERT INTO addresses (user_id, name, phone, line1, city, state, postal_code, country) "
+                "VALUES (1, 'Test User', '9999999999', '123 St', 'City', 'State', '110001', 'India') RETURNING id"
+            )
+        ).scalar()
+        db.commit()
+        assert addr_id >= 1, f"Expected positive sequence id, got {addr_id}"
+
+
+# =============================================================================
+# 1.7.11-TC06: Cold-boot application lifespan startup test
+# =============================================================================
+
+def test_cold_boot_lifespan_startup():
+    """1.7.11-TC06: Cold-boot application lifespan completes cleanly without exception."""
+    import asyncio
+    from app.main import lifespan
+
+    async def _run_startup():
+        async with lifespan(app):
+            with SessionLocal() as db:
+                prod_count = db.query(Product).count()
+                assert prod_count > 0, "Catalogue products should be seeded on startup"
+
+    asyncio.run(_run_startup())
