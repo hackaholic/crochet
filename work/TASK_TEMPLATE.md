@@ -19,8 +19,14 @@ Relevant design/API/deployment decisions and expected behavior. Link only the do
 
 ## Dependencies and relevant files
 
-- Depends on:
+- Depends on: None
+- Dependency context: <Narrative explanation, infrastructure prerequisites, or non-task prerequisites>
+- Blocked by: None
+- Blocker reason: None
+- Next action: None
 - Inspect/edit:
+
+> **Guidance for `Depends on:`**: Use only `None`, comma-separated task IDs (e.g. `18.2, 18.3`), or markdown links to contained task contract files (e.g. `[18.2](tasks/task-002.md)`). Do not add trailing punctuation (periods) or narrative prose here; place any explanatory context or infrastructure requirements under `Dependency context:`.
 
 ## Test cases (define before implementation)
 
