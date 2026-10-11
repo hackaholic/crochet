@@ -475,6 +475,10 @@ class AdminOrderItemOut(BaseModel):
     product_image: str | None = Field(default=None, alias="productImage")
     unit_price: int = Field(alias="unitPrice")
     unit_price_paise: int = Field(alias="unitPricePaise")
+    unit_cost: int | None = Field(default=None, alias="unitCost")
+    unit_cost_paise: int | None = Field(default=None, alias="unitCostPaise")
+    total_cost: int | None = Field(default=None, alias="totalCost")
+    total_cost_paise: int | None = Field(default=None, alias="totalCostPaise")
     quantity: int
     line_total: int = Field(alias="lineTotal")
     line_total_paise: int = Field(alias="lineTotalPaise")
@@ -488,6 +492,7 @@ class AdminOrderDetailOut(BaseModel):
 
     id: int
     order_number: str = Field(alias="orderNumber")
+    customer_id: int | None = Field(default=None, alias="customerId")
     customer_name: str = Field(alias="customerName")
     customer_phone: str = Field(alias="customerPhone")
     customer_email: str | None = Field(default=None, alias="customerEmail")
@@ -644,6 +649,78 @@ class AdminSalesSeriesOut(BaseModel):
     buckets: list[AdminSalesBucket]
 
 
+class AdminPaymentStatusBucket(BaseModel):
+    """Payment status count and volume."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    count: int
+    amount: int
+    amount_paise: int = Field(alias="amountPaise")
+
+
+class AdminPaymentOverviewOut(BaseModel):
+    """Payment status overview matching visual design reference."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    paid: AdminPaymentStatusBucket
+    pending: AdminPaymentStatusBucket
+    refunded: AdminPaymentStatusBucket
+
+
+class AdminExpenseCreate(BaseModel):
+    """Payload to record an expense."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    category: str = Field(..., description="GATEWAY_FEE, FULFILMENT, PACKAGING, MARKETING, OPERATING, OTHER")
+    amount: int = Field(..., ge=0, description="Expense amount in INR rupees")
+    expense_date: str = Field(..., alias="expenseDate", description="Expense date YYYY-MM-DD or ISO timestamp")
+    order_id: int | None = Field(default=None, alias="orderId")
+    description: str | None = Field(default=None, max_length=255)
+    notes: str | None = None
+
+
+class AdminExpenseOut(BaseModel):
+    """Recorded expense representation."""
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    id: int
+    category: str
+    amount: int
+    amount_paise: int = Field(alias="amountPaise")
+    currency: str = "INR"
+    order_id: int | None = Field(default=None, alias="orderId")
+    description: str | None = None
+    notes: str | None = None
+    expense_date: str = Field(alias="expenseDate")
+    created_at: str = Field(alias="createdAt")
+    updated_at: str = Field(alias="updatedAt")
+
+
+class AdminExpenseListOut(BaseModel):
+    """Paginated list of expenses."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    items: list[AdminExpenseOut]
+    total: int
+    page: int
+    page_size: int = Field(alias="pageSize")
+    total_amount: int = Field(alias="totalAmount")
+    total_amount_paise: int = Field(alias="totalAmountPaise")
+
+
+class AdminOrderItemCostUpdate(BaseModel):
+    """Payload to record or backfill cost for an order item."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    unit_cost: int = Field(..., ge=0, alias="unitCost", description="Cost of goods per unit in INR rupees")
+
+
 class AdminFinanceSummaryOut(BaseModel):
     """Detailed financial breakdown and reconciliation."""
 
@@ -670,6 +747,28 @@ class AdminFinanceSummaryOut(BaseModel):
     taxable_sales_paise: int = Field(alias="taxableSalesPaise")
     order_count: int = Field(alias="orderCount")
     refund_count: int = Field(alias="refundCount")
+
+    # Additive Profit & Expense reporting per DEC-020-002 and Task 20.2
+    cogs: int | None = Field(default=None, alias="cogs")
+    cogs_paise: int | None = Field(default=None, alias="cogsPaise")
+    gross_profit: int | None = Field(default=None, alias="grossProfit")
+    gross_profit_paise: int | None = Field(default=None, alias="grossProfitPaise")
+    gross_margin_pct: float | None = Field(default=None, alias="grossMarginPct")
+
+    operating_expenses: int = Field(default=0, alias="operatingExpenses")
+    operating_expenses_paise: int = Field(default=0, alias="operatingExpensesPaise")
+    expense_breakdown: dict[str, int] = Field(default_factory=dict, alias="expenseBreakdown")
+
+    net_profit: int | None = Field(default=None, alias="netProfit")
+    net_profit_paise: int | None = Field(default=None, alias="netProfitPaise")
+    net_margin_pct: float | None = Field(default=None, alias="netMarginPct")
+
+    profit_available: bool = Field(default=False, alias="profitAvailable")
+    cost_coverage_pct: float = Field(default=0.0, alias="costCoveragePct")
+    unavailability_reason: str | None = Field(default=None, alias="unavailabilityReason")
+
+    payment_overview: AdminPaymentOverviewOut | None = Field(default=None, alias="paymentOverview")
+
 
 
 class AdminFinanceSalesBucket(BaseModel):
@@ -961,6 +1060,7 @@ class AdminReturnDetailOut(BaseModel):
     return_number: str = Field(alias="returnNumber")
     order_id: int = Field(alias="orderId")
     order_number: str = Field(alias="orderNumber")
+    customer_id: int | None = Field(default=None, alias="customerId")
     customer_name: str = Field(alias="customerName")
     customer_email: str | None = Field(default=None, alias="customerEmail")
     customer_phone: str = Field(alias="customerPhone")

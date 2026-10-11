@@ -382,3 +382,142 @@ def test_admin_store_analytics():
     assert "lowStockItems" in data
     assert "recentOrders" in data
     assert "topSellingProducts" in data
+
+
+def test_admin_order_and_return_customer_identity_linkage():
+    """Verify orders and returns expose customerId for registered accounts and None for guests."""
+    admin_client = TestClient(app)
+    admin_email = "admin@sulocraft.com"
+    with SessionLocal() as db:
+        admin = db.query(User).filter(User.email == admin_email).first()
+        if not admin:
+            admin = User(
+                name="Store Admin",
+                phone="9999900000",
+                email=admin_email,
+                role="ADMIN",
+                status="ACTIVE",
+            )
+            db.add(admin)
+            db.flush()
+            db.add(UserIdentity(user_id=admin.id, provider="email", provider_subject=admin_email))
+            db.commit()
+    admin_auth = admin_client.post("/api/v1/auth/google", json={
+        "credential": "mock_admin_token_admin",
+        "email": admin_email,
+        "name": "Store Admin",
+        "sub": "admin_sub_admin",
+    })
+    assert admin_auth.status_code == 200
+
+    # 1. Registered customer client
+    cust_client = TestClient(app)
+    cust_auth = cust_client.post("/api/v1/auth/google", json={
+        "credential": "mock_cust_9999911005",
+        "email": "customer_9999911005@example.com",
+        "name": "Registered User",
+        "sub": "sub_9999911005",
+    })
+    assert cust_auth.status_code == 200
+    expected_user_id = cust_auth.json()["user"]["id"]
+
+    cust_client.post(
+        "/api/v1/cart/items",
+        json={"product_variant_id": 1, "quantity": 1},
+    )
+    reg_order_res = cust_client.post(
+        "/api/v1/orders",
+        json={
+            "customerName": "Registered Customer",
+            "customerPhone": "9999911005",
+            "customerEmail": "reg@example.com",
+            "paymentMethod": "COD",
+            "shippingAddress": {
+                "name": "Registered Customer",
+                "phone": "9999911005",
+                "line1": "456 Reg Street",
+                "city": "Bengaluru",
+                "state": "Karnataka",
+                "postalCode": "560001",
+                "country": "India",
+            },
+        },
+    )
+    assert reg_order_res.status_code == 201
+    reg_order_num = reg_order_res.json()["orderNumber"]
+
+    # 2. Guest client
+    guest_client = TestClient(app)
+    guest_cart_res = guest_client.post(
+        "/api/v1/cart/items",
+        json={"product_variant_id": 1, "quantity": 1},
+    )
+    assert guest_cart_res.status_code == 201
+    guest_order_res = guest_client.post(
+        "/api/v1/orders",
+        json={
+            "customerName": "Guest Customer",
+            "customerPhone": "9999911006",
+            "customerEmail": "guest@example.com",
+            "paymentMethod": "COD",
+            "shippingAddress": {
+                "name": "Guest Customer",
+                "phone": "9999911006",
+                "line1": "789 Guest Street",
+                "city": "Mumbai",
+                "state": "Maharashtra",
+                "postalCode": "400001",
+                "country": "India",
+            },
+        },
+    )
+    assert guest_order_res.status_code == 201
+    guest_order_num = guest_order_res.json()["orderNumber"]
+
+    # 3. Check admin order detail & list
+    admin_reg_res = admin_client.get(f"/api/v1/admin/orders/{reg_order_num}")
+    assert admin_reg_res.status_code == 200
+    reg_data = admin_reg_res.json()
+    assert "customerId" in reg_data
+    assert reg_data["customerId"] == expected_user_id
+
+    admin_guest_res = admin_client.get(f"/api/v1/admin/orders/{guest_order_num}")
+    assert admin_guest_res.status_code == 200
+    guest_data = admin_guest_res.json()
+    assert "customerId" in guest_data
+    assert guest_data["customerId"] is None
+
+    # Check order list payload
+    orders_list_res = admin_client.get("/api/v1/admin/orders?page=1&pageSize=10")
+    assert orders_list_res.status_code == 200
+    items = orders_list_res.json()["items"]
+    reg_in_list = next((it for it in items if it["orderNumber"] == reg_order_num), None)
+    assert reg_in_list is not None
+    assert reg_in_list["customerId"] == expected_user_id
+
+    guest_in_list = next((it for it in items if it["orderNumber"] == guest_order_num), None)
+    assert guest_in_list is not None
+    assert guest_in_list["customerId"] is None
+
+    # 4. Check admin returns endpoint
+    ret_res = admin_client.post(
+        "/api/v1/admin/returns",
+        json={
+            "orderNumber": reg_order_num,
+            "reason": "Damaged in transit",
+            "reasonDetails": "Box was squashed",
+            "adminNotes": "Approved return for customer",
+        },
+    )
+    assert ret_res.status_code == 201
+    ret_data = ret_res.json()
+    assert "customerId" in ret_data
+    assert ret_data["customerId"] == expected_user_id
+
+    # Check return list
+    returns_list_res = admin_client.get("/api/v1/admin/returns?page=1&pageSize=10")
+    assert returns_list_res.status_code == 200
+    ret_items = returns_list_res.json()["items"]
+    created_ret = next((it for it in ret_items if it["returnNumber"] == ret_data["returnNumber"]), None)
+    assert created_ret is not None
+    assert created_ret["customerId"] == expected_user_id

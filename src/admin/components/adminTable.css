@@ -1,0 +1,60 @@
+.admin-data-table > thead {
+  background-color: #e8efe7;
+}
+.admin-data-table > thead > tr > th {
+  background-color: #e8efe7;
+  color: #304b39;
+  font-weight: 700;
+  border-bottom: 1px solid #cbd9cb;
+}
+.admin-data-table > tbody > tr {
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+.admin-data-table > tbody > tr:hover,
+.admin-data-table > tbody > tr:has(:focus-visible) {
+  transform: translateY(-2px);
+  filter: drop-shadow(0 3px 3px rgb(74 48 30 / 12%));
+}
+.admin-data-table > tbody > tr:has(:focus-visible) {
+  box-shadow: inset 3px 0 #c4622d;
+}
+.admin-data-table .admin-entity-link {
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  border-radius: 4px;
+}
+.admin-data-table .admin-entity-link:focus-visible {
+  outline: 2px solid #c4622d;
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-data-table > tbody > tr { transition: none; }
+}
+
+.admin-data-table .admin-entity-link:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+.admin-data-table > tbody > tr > :is(td, th) {
+  transition: background-color 160ms ease;
+}
+.admin-data-table > tbody > tr:hover > :is(td, th),
+.admin-data-table > tbody > tr:has(:focus-visible) > :is(td, th) {
+  background-color: #f3e0c9;
+}
+.admin-data-table > tbody > tr > :is(td, th):first-child {
+  border-radius: 8px 0 0 8px;
+}
+.admin-data-table > tbody > tr > :is(td, th):last-child {
+  border-radius: 0 8px 8px 0;
+}
+.admin-data-table > tbody > tr > :is(td, th):only-child {
+  border-radius: 8px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-data-table > tbody > tr:hover,
+  .admin-data-table > tbody > tr:has(:focus-visible) { transform: none; }
+  .admin-data-table > tbody > tr > :is(td, th) { transition: none; }
+}

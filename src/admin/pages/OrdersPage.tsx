@@ -1,3 +1,5 @@
+import CustomerPopup, {type CustomerPreviewInput} from '../components/CustomerPopup';
+import AdminTable from '../components/AdminTable';
 import { useEffect, useState } from 'react';
 import type { Order, OrderStatus } from '../types';
 import * as api from '../services/api';
@@ -37,6 +39,7 @@ const SORT_OPTIONS = [
 export default function OrdersPage({ onSelectOrder, initialSearch = '', initialStatus, reportingRange }: Props) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [total, setTotal] = useState(0);
+  const [previewCustomer,setPreviewCustomer]=useState<CustomerPreviewInput>();
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<FilterStatus>(initialStatus ?? 'ALL');
   const [search, setSearch] = useState(initialSearch);
@@ -65,6 +68,7 @@ export default function OrdersPage({ onSelectOrder, initialSearch = '', initialS
 
   return (
     <div className="space-y-4">
+      {previewCustomer && <CustomerPopup customer={previewCustomer} onClose={()=>setPreviewCustomer(undefined)} onSelectOrder={id=>{setPreviewCustomer(undefined);onSelectOrder?.(id);}}/>}
       {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm">Orders could not be loaded. <button className="underline" onClick={()=>setAttempt(v=>v+1)}>Retry orders</button></div>}
       {reportingRange && <p className="text-sm text-[#6B5B4E]">Reporting period: {reportingRange.from} to {reportingRange.to} (IST, inclusive). Open Orders from the sidebar to view all dates.</p>}
       {/* Filter tabs */}
@@ -108,7 +112,7 @@ export default function OrdersPage({ onSelectOrder, initialSearch = '', initialS
       {/* Table */}
       <div className="bg-white rounded-xl border border-[#E8E0D8] overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-xs min-w-[900px]">
+          <AdminTable className="w-full text-xs min-w-[900px]">
             <thead className="bg-[#F8F4EF] border-b border-[#E8E0D8] sticky top-0">
               <tr>
                 {[
@@ -116,7 +120,7 @@ export default function OrdersPage({ onSelectOrder, initialSearch = '', initialS
                   { label: 'Items', w: 50 }, { label: 'Total', w: 80 }, { label: 'Payment', w: 100 },
                   { label: 'Status', w: 130 }, { label: 'Issue', w: 150 }, { label: '', w: 60 },
                 ].map(({ label, w }) => (
-                  <th key={label} className="text-left py-2.5 px-3 text-[#9C8B7E] font-semibold uppercase tracking-wider text-[10px] whitespace-nowrap" style={{ width: w }}>
+                  <th scope="col" key={label} className="text-left py-2.5 px-3 text-[#9C8B7E] font-semibold uppercase tracking-wider text-[10px] whitespace-nowrap" style={{ width: w }}>
                     {label}
                   </th>
                 ))}
@@ -132,16 +136,14 @@ export default function OrdersPage({ onSelectOrder, initialSearch = '', initialS
               ) : orders.map(order => (
                 <tr
                   key={order.id}
-                  className={`border-b border-[#F8F4EF] hover:bg-[#FDFAF7] transition-colors cursor-pointer ${order.issueFlag ? 'border-l-2 border-l-[#F59E0B]' : ''}`}
-                  onClick={() => onSelectOrder(order.id)}
+                  className={`border-b border-[#F8F4EF] hover:bg-[#FDFAF7] transition-colors ${order.issueFlag ? 'border-l-2 border-l-[#F59E0B]' : ''}`}
                 >
                   <td className="py-2.5 px-3">
-                    <span className="font-mono font-bold text-[#1A1108]">{order.orderNumber}</span>
+                    <button type="button" className="admin-entity-link block w-full font-mono font-bold" onClick={()=>onSelectOrder(order.id)}>{order.orderNumber}</button>
                   </td>
                   <td className="py-2.5 px-3 text-[#6B5B4E] whitespace-nowrap">{relDate(order.date)}</td>
                   <td className="py-2.5 px-3">
-                    <p className="font-medium text-[#1A1108] truncate max-w-[140px]">{order.customer.name}</p>
-                    <p className="text-[#9C8B7E] truncate max-w-[140px]">{order.customer.email}</p>
+                    <button type="button" className="admin-entity-link block w-full" aria-label={`View customer ${order.customer.name}`} onClick={()=>setPreviewCustomer(order.customer)}><span className="block font-medium">{order.customer.name}</span><span className="block text-[#9C8B7E]">{order.customer.email}</span></button>
                   </td>
                   <td className="py-2.5 px-3 text-center text-[#6B5B4E] font-medium">{order.items.length}</td>
                   <td className="py-2.5 px-3 font-bold text-[#1A1108] whitespace-nowrap">{inr(order.total)}</td>
@@ -171,7 +173,7 @@ export default function OrdersPage({ onSelectOrder, initialSearch = '', initialS
                 </tr>
               ))}
             </tbody>
-          </table>
+          </AdminTable>
         </div>
 
         {/* Pagination */}

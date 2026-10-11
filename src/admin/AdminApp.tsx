@@ -1,3 +1,6 @@
+import AdminPreviewDialog from './components/AdminPreviewDialog';
+import ProductPreview from './components/ProductPreview';
+import OrderPreview from './components/OrderPreview';
 import { dateRange } from './services/dateRange';
 import { useState, useCallback } from 'react';
 import type { AdminPage, OrderStatus, DateRangePreset } from './types';
@@ -24,16 +27,18 @@ export default function AdminApp({ onExitAdmin }: Props) {
   const [globalSearch, setGlobalSearch] = useState('');
   const [orderFilter, setOrderFilter] = useState<{status: OrderStatus; range: {from: string; to: string}}>();
   const [orderView, setOrderView] = useState(0);
+  const [selectedProductId,setSelectedProductId]=useState<number>();
+  const [preview,setPreview]=useState<{type:'product';id:number}|{type:'order';id:string}>();
 
   const navigate = useCallback((p: AdminPage) => {
     setPage(p);
+    if(p==='products') setSelectedProductId(undefined);
     if (p === 'orders') { setOrderFilter(undefined); setOrderView(v => v + 1); }
     if (p !== 'order-detail') setSelectedOrderId(null);
   }, []);
 
   const selectOrder = useCallback((id: string) => {
-    setSelectedOrderId(id);
-    setPage('order-detail');
+    setPreview({type:'order',id});
   }, []);
 
   return (
@@ -72,24 +77,25 @@ export default function AdminApp({ onExitAdmin }: Props) {
       )}
 
       {page === 'finance' && (
-        <FinancePage datePreset={datePreset} />
+        <FinancePage datePreset={datePreset} onSelectProduct={id=>setPreview({type:'product',id})} onFilterOrders={(status,range)=>{setOrderFilter({status,range});setOrderView(v=>v+1);setGlobalSearch('');setPage('orders');}} />
       )}
 
       {page === 'returns' && (
         <ReturnsPage
-          onSelectOrder={(id) => { setSelectedOrderId(id); navigate('order-detail'); }}
+          onSelectOrder={selectOrder}
         />
       )}
 
       {page === 'occasions' && <OccasionsPage />}
 
-      {page === 'products' && <ProductsPage />}
+      {page === 'products' && <ProductsPage initialProductId={selectedProductId} onPreviewProduct={id=>setPreview({type:'product',id})} />}
 
-      {page === 'inventory' && <InventoryPage />}
+      {page === 'inventory' && <InventoryPage onSelectProduct={id=>setPreview({type:'product',id})} />}
 
       {page === 'customers' && <CustomersPage onSelectOrder={selectOrder} />}
 
       {page === 'settings' && <SettingsPage />}
+      {preview && <AdminPreviewDialog key={`${preview.type}-${preview.id}`} title={preview.type==='product'?'Product preview':'Order summary'} onClose={()=>setPreview(undefined)}>{preview.type==='product'?<ProductPreview id={preview.id} onEdit={id=>{setPreview(undefined);setSelectedProductId(id);setPage('products');}}/>:<OrderPreview id={preview.id} onView={id=>{setPreview(undefined);setSelectedOrderId(id);setPage('order-detail');}}/>}</AdminPreviewDialog>}
     </AdminLayout>
   );
 }

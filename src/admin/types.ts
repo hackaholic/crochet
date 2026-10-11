@@ -42,6 +42,7 @@ export interface AttentionItem {
 }
 
 export interface OrderCustomer {
+  id?:number;
   name: string;
   email: string;
   phone: string;
@@ -147,7 +148,7 @@ export interface Return {
   id: string;
   orderId: string;
   orderNumber: string;
-  customer: { name: string; email: string };
+  customer: { id?:number; name: string; email: string };
   productName: string;
   reason: string;
   requestedDate: string;

@@ -48,3 +48,6 @@ __pycache__/
 *.pyd
 *.db
 .pytest_cache/
+
+# Generated local code intelligence cache
+/.claude/cache/codebase-index/

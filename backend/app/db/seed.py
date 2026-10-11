@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 import re
 import sys
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -1566,7 +1567,52 @@ def seed_catalogue(db: Session, force: bool = False) -> None:
                 db.add(UserIdentity(user_id=admin_user.id, provider="email", provider_subject=a_email))
 
     seed_storefront_content(db)
+    align_postgres_sequences(db)
     db.commit()
+
+
+def align_postgres_sequences(session: Session) -> int:
+    """Synchronize all PostgreSQL serial/identity sequences to max(id) without rewinding.
+
+    Prevents primary key collisions when explicit integer IDs are inserted during seeding.
+    Safe no-op on SQLite and non-PostgreSQL engines.
+    """
+    bind = session.get_bind()
+    if not bind or bind.dialect.name != "postgresql":
+        return 0
+
+    query = text("""
+        SELECT
+            c.table_name,
+            c.column_name,
+            pg_get_serial_sequence('"' || c.table_name || '"', c.column_name) AS seq_name
+        FROM information_schema.columns c
+        JOIN information_schema.tables t ON t.table_name = c.table_name AND t.table_schema = c.table_schema
+        WHERE c.table_schema = 'public'
+          AND t.table_type = 'BASE TABLE'
+          AND (c.column_default LIKE 'nextval%' OR c.identity_generation IS NOT NULL)
+        ORDER BY c.table_name
+    """)
+    rows = session.execute(query).fetchall()
+    aligned_count = 0
+    for table_name, col_name, seq_name in rows:
+        if not seq_name:
+            continue
+        # Set sequence to GREATEST(MAX(col), last_value) with is_called = true so nextval generates GREATEST + 1
+        align_sql = text(f"""
+            SELECT setval(
+                :seq,
+                GREATEST(
+                    COALESCE((SELECT MAX("{col_name}") FROM "{table_name}"), 0),
+                    (SELECT last_value FROM {seq_name})
+                ),
+                true
+            )
+        """)
+        session.execute(align_sql, {"seq": seq_name})
+        aligned_count += 1
+
+    return aligned_count
 
 
 if __name__ == "__main__":

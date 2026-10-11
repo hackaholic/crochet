@@ -9,9 +9,11 @@ interface MetricCardProps {
   change?: number; // positive = up, negative = down
   icon: string;
   accent?: string;
+  bgClass?: string;
+  borderClass?: string;
   loading?: boolean;
 }
-export function MetricCard({ label, value, prev, change, icon, accent = '#C4622D', loading }: MetricCardProps) {
+export function MetricCard({ label, value, prev, change, icon, accent = '#C4622D', bgClass, borderClass, loading }: MetricCardProps) {
   if (loading) return (
     <div className="bg-white rounded-xl border border-[#E8E0D8] p-5 animate-pulse">
       <div className="h-3 bg-[#F5EDE0] rounded w-24 mb-4" />
@@ -23,12 +25,14 @@ export function MetricCard({ label, value, prev, change, icon, accent = '#C4622D
   const isUp = change !== undefined && change > 0;
   const isDown = change !== undefined && change < 0;
   const absChange = change !== undefined ? Math.abs(change).toFixed(1) : null;
+  const bg = bgClass || 'bg-white';
+  const border = borderClass || 'border-[#E8E0D8]';
 
   return (
-    <div className="bg-white rounded-xl border border-[#E8E0D8] p-5 hover:shadow-sm transition-shadow">
+    <div className={`${bg} rounded-xl border ${border} p-5 shadow-none hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-default group`}>
       <div className="flex items-start justify-between mb-3">
         <p className="text-xs font-medium text-[#6B5B4E] uppercase tracking-wider">{label}</p>
-        <span className="text-lg" style={{ color: accent }}>{icon}</span>
+        <span className="text-lg transition-transform duration-200 group-hover:scale-110" style={{ color: accent }}>{icon}</span>
       </div>
       <p className="text-2xl font-bold text-[#1A1108] mb-1.5" style={{ fontFamily: 'var(--font-serif)' }}>{value}</p>
       {prev && change !== undefined && (
@@ -93,26 +97,30 @@ interface ConfirmDialogProps {
   message: string;
   confirmLabel?: string;
   danger?: boolean;
+  busy?: boolean;
+  error?: string;
   onConfirm: () => void;
   onCancel: () => void;
 }
-export function ConfirmDialog({ open, title, message, confirmLabel = 'Confirm', danger, onConfirm, onCancel }: ConfirmDialogProps) {
+export function ConfirmDialog({ open, title, message, confirmLabel = 'Confirm', danger, busy = false, error, onConfirm, onCancel }: ConfirmDialogProps) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
-      <div className="absolute inset-0 bg-black/40" onClick={onCancel} />
-      <div className="relative bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full">
+      <div className="absolute inset-0 bg-black/40" onClick={busy ? undefined : onCancel} />
+      <div role="dialog" aria-modal="true" aria-label={title} className="relative bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full">
         <h3 className="font-bold text-[#1A1108] text-base mb-2">{title}</h3>
         <p className="text-sm text-[#6B5B4E] mb-6 leading-relaxed">{message}</p>
+        {error && <p role="alert" className="mb-3 text-sm text-red-700">{error}</p>}
         <div className="flex gap-3">
-          <button onClick={onCancel} className="flex-1 py-2.5 border border-[#E8E0D8] rounded-lg text-sm font-medium text-[#6B5B4E] hover:bg-[#F5F0EA] transition-colors">
+          <button disabled={busy} onClick={onCancel} className="flex-1 py-2.5 border border-[#E8E0D8] rounded-lg text-sm font-medium text-[#6B5B4E] hover:bg-[#F5F0EA] transition-colors">
             Cancel
           </button>
           <button
+            disabled={busy}
             onClick={onConfirm}
             className={`flex-1 py-2.5 rounded-lg text-sm font-semibold text-white transition-colors ${danger ? 'bg-red-600 hover:bg-red-700' : 'bg-[#C4622D] hover:bg-[#D4795A]'}`}
           >
-            {confirmLabel}
+            {busy ? 'Saving…' : confirmLabel}
           </button>
         </div>
       </div>

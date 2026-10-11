@@ -88,23 +88,13 @@ SEEDED_CATEGORY_IDS: set[int] = set()
 SEEDED_USER_IDS: set[int] = set()
 
 
+from app.db.seed import align_postgres_sequences, seed_catalogue
+
+
 def reset_postgres_sequences(session):
-    """Synchronize PostgreSQL sequences to max(id) + 1 to prevent unique constraint collisions."""
-    if session.bind and session.bind.dialect.name == "postgresql":
-        from sqlalchemy import text
-        query = text("""
-            SELECT table_name, column_name, pg_get_serial_sequence(table_name, column_name) as seq
-            FROM information_schema.columns
-            WHERE table_schema = 'public' AND column_default LIKE 'nextval%'
-        """)
-        rows = session.execute(query).fetchall()
-        for row in rows:
-            table_name, col_name, seq_name = row[0], row[1], row[2]
-            if seq_name:
-                session.execute(text(f"""
-                    SELECT setval('{seq_name}', COALESCE((SELECT MAX({col_name}) FROM "{table_name}"), 0) + 1, false)
-                """))
-        session.commit()
+    """Synchronize PostgreSQL sequences without rewinding using seed.align_postgres_sequences."""
+    align_postgres_sequences(session)
+    session.commit()
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -113,7 +103,6 @@ def setup_test_database():
     init_db()
     with SessionLocal() as db:
         seed_catalogue(db)
-        reset_postgres_sequences(db)
 
         global SEEDED_PRODUCT_IDS, SEEDED_VARIANT_IDS, SEEDED_REVIEW_IDS, SEEDED_CATEGORY_IDS, SEEDED_USER_IDS
         SEEDED_PRODUCT_IDS = {p[0] for p in db.query(Product.id).all()}

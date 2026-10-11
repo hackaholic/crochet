@@ -24,3 +24,11 @@ Work001 handoffs: [coordination](../work/work-001-admin-dashboard/coordination.m
 - Work001 / 1.14.8 — Gemini Completed / Returned: [finance accounting contract](../work/work-001-admin-dashboard/tasks/task-040-finance-accounting-reconciliation.md); Codex Completed / Returned [1.14.7](../work/work-001-admin-dashboard/tasks/task-027-finance-local-acceptance.md); [work coordination](../work/work-001-admin-dashboard/coordination.md).
 
 - Work019 / 19.1 — Gemini Completed / Returned: [product information/defaults API](../work/work-019-product-information/tasks/task-001-product-information-api.md); Codex Ready for pickup [19.2 UI](../work/work-019-product-information/tasks/task-002-product-information-ui.md); [coordination](../work/work-019-product-information/coordination.md).
+
+- Work001 / 1.7.11 — Gemini Completed / Returned: [catalogue sequence repair](../work/work-001-admin-dashboard/tasks/task-041-seeded-catalogue-sequences.md); Codex unblocked for [1.7.6 local acceptance](../work/work-001-admin-dashboard/tasks/task-018-catalogue-local-acceptance.md); [work coordination](../work/work-001-admin-dashboard/coordination.md).
+
+- Work001 / 1.7.12 — Gemini Completed / Returned: [upload persistence](../work/work-001-admin-dashboard/tasks/task-044-upload-persistence.md); Codex unblocked for [1.7.6 local acceptance](../work/work-001-admin-dashboard/tasks/task-018-catalogue-local-acceptance.md); [work coordination](../work/work-001-admin-dashboard/coordination.md).
+
+- Work020 — Gemini pickup ready: [work coordination](../work/work-020-finance-incremental/coordination.md); start [20.9 chart bug](../work/work-020-finance-incremental/tasks/task-009-sales-chart-boundaries.md), then independent incremental UI tasks.
+
+- Work020 customer identity enhancement: [work-local coordination](../work/work-020-finance-incremental/coordination.md), [20.25 contract](../work/work-020-finance-incremental/tasks/task-025-customer-identity-links.md).

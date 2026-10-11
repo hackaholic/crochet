@@ -144,8 +144,10 @@ def health_check() -> dict[str, str]:
 def get_mock_static_image(image_path: str):
     """Serve local static assets or redirect to high-res photography during development."""
     from pathlib import Path
+    from fastapi import HTTPException
     from fastapi.responses import FileResponse, RedirectResponse
     from app.core.images import LOCAL_IMAGE_ASSET_MAP, resolve_mock_image_source
+
 
     clean_path = image_path.lstrip("/")
     # Check if file exists locally on disk in public/images/
@@ -172,7 +174,11 @@ def get_mock_static_image(image_path: str):
                 return FileResponse(candidate)
 
     upstream_url = resolve_mock_image_source(image_path)
-    return RedirectResponse(url=upstream_url, status_code=307)
+    if upstream_url:
+        return RedirectResponse(url=upstream_url, status_code=307)
+
+    raise HTTPException(status_code=404, detail="Image not found")
+
 
 
 @app.get("/sitemap.xml", tags=["seo"])

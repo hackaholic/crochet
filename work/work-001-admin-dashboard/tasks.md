@@ -1,13 +1,16 @@
 # Work 001 tasks
 
 ## In Progress
-No active Codex subtask.
+*(None)*
 
 ## Pending
+- [ ] 1.7.6 Codex: [Catalogue final local acceptance](tasks/task-018-catalogue-local-acceptance.md) — unblocked by 1.7.12 for real browser upload/save/reopen verification.
+- [ ] 1.17 Codex: Audit API support and define scoped integration for private internal notes and real shipment creation; UI controls explicitly disabled until implemented.
+- [ ] 1.6.1 Codex: Firefox rendering verification — Pending; Firefox is not available through current enabled browser tools.
 
-- [ ] 1.7.6 Codex: [Tag integration and local acceptance](tasks/task-018-catalogue-local-acceptance.md) — live tag discovery verified; tag tests and final local acceptance pending; temporarily queued while 1.8 is implemented.
 
-- [ ] 1.6 Codex: Verify the integrated admin in local Docker/browser, including API-backed data, error/empty/mutation states, and desktop/mobile rendering; record defects before marking the integration accepted.
+
+
 
 - [ ] 1.12 Codex (delivery owner; user provides final acceptance): Prepare the local review and obtain user acceptance. The user reviews the locally verified admin experience and decides whether any additional sections or visual changes are required; only then consider a dev push/deploy.
 
@@ -16,6 +19,10 @@ No active Codex subtask.
 
 
 ## Completed
+- [x] 1.7.12 Gemini: [Upload persistence](tasks/task-044-upload-persistence.md) — durable LocalStorageProvider, honest 404s on missing keys, 5/5 storage and 2/2 media tests passing.
+- [x] 1.6 Codex: [Local admin verification](tasks/task-043-local-admin-verification.md) — desktop/mobile audit done; findings recorded in1.7.12 and1.17; Firefox follow-up1.6.1 remains Pending.
+- [x] 1.7.11 Gemini: [Seeded catalogue ID sequences](tasks/task-041-seeded-catalogue-sequences.md) — durable PostgreSQL sequence alignment via align_postgres_sequences in seed_catalogue, 4/4 tests pass in test_seeded_sequences.py.
+
 - [x] 1.16 Codex: [Activity Feed order navigation](tasks/task-039-activity-order-navigation.md) — seven focused cases/typecheck; rebuilt local desktop/mobile verified.
 - [x] 1.15 Codex: [Clickable pipeline status filters](tasks/task-038-dashboard-pipeline-navigation.md) — six focused tests/typecheck; rebuilt local desktop/mobile verified.
 - [x] 1.9.3 Codex: [Clickable customer names/full profile](tasks/task-036-customer-profile-navigation.md) —8 tests/typecheck, local desktop/mobile verified.
@@ -70,9 +77,9 @@ No active Codex subtask.
 
 ## Pending test coverage
 
-- [ ] 1.11 Codex: Add screen-level UI tests for the dashboard, order list/detail, finance, returns, and any newly implemented pages; run the suite in the supported Node/Docker environment. Catalogue, customers, inventory, finance, occasions, Settings and Orders have scoped coverage; dashboard/order-detail/returns coverage remains pending.
+- [x] 1.11 Codex: [Admin screen regressions](tasks/task-042-screen-regression-acceptance.md) —91 admin tests/typecheck pass; safe async failures and working tracking Save.
 - The previous host Node blocker is resolved for current work by running checks in the supported Node Docker image.
 - Superseded backend test blocker:10 dashboard/finance tests passed in isolated Docker on2026-10-11.
 
 ## Blocked
-None.
+- [ ] 1.7.6 Codex: [Catalogue/tag local acceptance](tasks/task-018-catalogue-local-acceptance.md) — frontend checks passed; sequence fix returned; final acceptance waits for Gemini1.7.12 actual upload persistence.

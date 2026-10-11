@@ -32,6 +32,7 @@ from app.models.order import (
     ReturnStatus,
 )
 from app.models.account import Wishlist, WishlistItem
+from app.models.expense import AdminExpense, ExpenseCategory
 from app.models.notification import NotificationLog
 from app.models.payment import Payment, PaymentProviderName, PaymentRecordStatus
 from app.models.promotion import Coupon
@@ -41,8 +42,10 @@ from app.models.user import OtpVerification, User, UserIdentity, UserSession
 
 __all__ = [
     "Address",
+    "AdminExpense",
     "BrandSettings",
     "Cart",
+
     "CartItem",
     "Category",
     "Collection",

@@ -1,0 +1,12 @@
+import { useEffect,useState } from 'react';
+import { getOrder } from '../services/api';
+import type { Order } from '../types';
+import { inr } from './AdminShared';
+import {OrderStatusBadge,PaymentStatusBadge} from './StatusBadge';
+export default function OrderPreview({id,onView}:{id:string;onView:(id:string)=>void}) {
+  const [order,setOrder]=useState<Order|null>();const [error,setError]=useState(false);const [attempt,setAttempt]=useState(0);
+  useEffect(()=>{let active=true;setOrder(undefined);setError(false);getOrder(id).then(v=>{if(active)setOrder(v);}).catch(()=>{if(active)setError(true);});return()=>{active=false;};},[id,attempt]);
+  if(error || order===null)return <p role="alert">Order unavailable. <button className="underline" onClick={()=>setAttempt(x=>x+1)}>Retry order</button></p>;
+  if(!order)return <p role="status">Loading order…</p>;
+  return <div className="space-y-4"><div className="rounded-xl border border-[#DDD0C3] bg-white p-5"><p className="text-xs font-semibold uppercase tracking-wider text-[#8A6850]">Order overview</p><h3 className="mt-2 font-mono text-lg font-bold">{order.orderNumber}</h3><div className="mt-3 flex flex-wrap items-center gap-3"><OrderStatusBadge status={order.orderStatus}/><PaymentStatusBadge status={order.paymentStatus}/><span className="ml-auto text-xl font-bold">{inr(order.total)}</span></div></div><div className="grid gap-4 sm:grid-cols-2"><section className="rounded-xl border bg-white p-4"><h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#8A6850]">Customer</h3><p className="font-semibold">{order.customer.name}</p><p className="break-all text-sm text-[#6B5B4E]">{order.customer.email}</p></section><section className="rounded-xl border bg-white p-4"><h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#8A6850]">Shipping address</h3><p className="text-sm">{order.shippingAddress.line1}, {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.pinCode}</p></section></div><section className="rounded-xl border bg-white p-4"><h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-[#8A6850]">Items</h3><ul className="space-y-2 text-sm">{order.items.map(item=><li key={item.id}>{item.productName} × {item.quantity}</li>)}</ul></section><button className="rounded bg-[#C4622D] px-4 py-2 text-white" onClick={()=>onView(order.id)}>View full order</button></div>;
+}

@@ -46,6 +46,7 @@ from app.models.order import (
     ReturnRequest,
     ReturnStatus,
 )
+from app.models.expense import AdminExpense, ExpenseCategory
 from app.models.payment import Payment, PaymentRecordStatus
 from app.models.promotion import Coupon
 from app.models.storefront import BrandSettings, HomepageCampaign, HomepageSection
@@ -81,6 +82,9 @@ from app.schemas.admin import (
     AdminDashboardComparison,
     AdminDashboardSummaryOut,
     AdminDestinationSalesOut,
+    AdminExpenseCreate,
+    AdminExpenseListOut,
+    AdminExpenseOut,
     AdminFinanceSalesBucket,
     AdminFinanceSeriesOut,
     AdminFinanceSummaryOut,
@@ -94,6 +98,7 @@ from app.schemas.admin import (
     AdminOccasionUpdateIn,
     AdminOperationalIndicatorsOut,
     AdminOrderDetailOut,
+    AdminOrderItemCostUpdate,
     AdminOrderItemOut,
     AdminOrderListOut,
     AdminOrderStatusUpdate,
@@ -284,6 +289,10 @@ def _order_to_admin_detail(order: Order) -> AdminOrderDetailOut:
             productImage=item.product_image,
             unitPrice=item.unit_price,
             unitPricePaise=item.unit_price * 100,
+            unitCost=item.unit_cost,
+            unitCostPaise=item.unit_cost * 100 if item.unit_cost is not None else None,
+            totalCost=item.total_cost,
+            totalCostPaise=item.total_cost * 100 if item.total_cost is not None else None,
             quantity=item.quantity,
             lineTotal=item.line_total,
             lineTotalPaise=item.line_total * 100,
@@ -305,6 +314,7 @@ def _order_to_admin_detail(order: Order) -> AdminOrderDetailOut:
     return AdminOrderDetailOut(
         id=order.id,
         orderNumber=order.order_number,
+        customerId=order.user_id,
         customerName=order.customer_name,
         customerPhone=order.customer_phone,
         customerEmail=order.customer_email,
@@ -386,11 +396,13 @@ def _return_to_admin_out(r: ReturnRequest) -> AdminReturnDetailOut:
             )
         )
     order = r.order
+    customer_id = r.user_id if r.user_id is not None else (order.user_id if order else None)
     return AdminReturnDetailOut(
         id=r.id,
         returnNumber=r.return_number,
         orderId=r.order_id,
         orderNumber=order.order_number if order else "",
+        customerId=customer_id,
         customerName=order.customer_name if order else "Customer",
         customerEmail=order.customer_email if order else None,
         customerPhone=order.customer_phone if order else "",
@@ -1926,6 +1938,123 @@ def get_admin_finance_summary(
     net_revenue = gross_sales - discounts + shipping_collected + stored_tax - refunds
     taxable_sales = gross_sales - discounts
 
+    # 1. Operating Expenses query
+    expenses = (
+        db.query(AdminExpense)
+        .filter(
+            AdminExpense.expense_date >= from_utc,
+            AdminExpense.expense_date <= to_utc,
+        )
+        .all()
+    )
+    operating_expenses = sum(e.amount for e in expenses)
+    expense_breakdown: dict[str, int] = {}
+    for e in expenses:
+        expense_breakdown[e.category] = expense_breakdown.get(e.category, 0) + e.amount
+
+    # 2. Cost of Goods Sold (COGS) & Profit Completeness Policy
+    # Inspect all items in recognized orders
+    all_order_items = [item for o in orders for item in o.items]
+    total_item_count = len(all_order_items)
+    items_with_cost = [item for item in all_order_items if item.unit_cost is not None]
+    cost_covered_count = len(items_with_cost)
+    cost_coverage_pct = round((cost_covered_count / total_item_count) * 100, 1) if total_item_count > 0 else 100.0
+
+    all_costs_present = (cost_covered_count == total_item_count)
+
+    cogs: int | None = None
+    gross_profit: int | None = None
+    gross_margin_pct: float | None = None
+    net_profit: int | None = None
+    net_margin_pct: float | None = None
+    profit_available: bool = False
+    unavailability_reason: str | None = None
+
+    if total_item_count == 0:
+        profit_available = True
+        cogs = 0
+        net_sales = gross_sales - discounts - refunds
+        gross_profit = net_sales - cogs
+        gross_margin_pct = 0.0
+        net_profit = gross_profit + shipping_collected + stored_tax - operating_expenses
+        net_margin_pct = 0.0
+    elif all_costs_present:
+        profit_available = True
+        raw_cogs = sum((item.total_cost or (item.unit_cost * item.quantity)) for item in all_order_items)
+
+        # Reverse COGS for completed restocked returns
+        # For each item returned in completed_returns, if unit_cost is present on the order item, deduct restocked COGS
+        # Build lookup for order items by id
+        order_item_cost_map = {item.id: item.unit_cost for item in all_order_items if item.unit_cost is not None}
+        reversed_cogs = 0
+        for ret in completed_returns:
+            for ret_item in (ret.items_json or []):
+                oi_id = ret_item.get("order_item_id") or ret_item.get("orderItemId")
+                qty = ret_item.get("quantity") or 0
+                if oi_id and oi_id in order_item_cost_map:
+                    unit_c = order_item_cost_map[oi_id]
+                    reversed_cogs += unit_c * qty
+
+        cogs = max(0, raw_cogs - reversed_cogs)
+        net_sales = gross_sales - discounts - refunds
+        gross_profit = net_sales - cogs
+        gross_margin_pct = round((gross_profit / net_sales) * 100, 1) if net_sales != 0 else 0.0
+
+        net_profit = gross_profit + shipping_collected + stored_tax - operating_expenses
+        net_margin_pct = round((net_profit / net_revenue) * 100, 1) if net_revenue != 0 else 0.0
+    else:
+        profit_available = False
+        unavailability_reason = "INCOMPLETE_PRODUCT_COSTS"
+
+    # 3. Payment Overview
+    # Query all orders created in the reporting window (regardless of eligibility) to classify payment state
+    all_period_orders = (
+        db.query(Order)
+        .filter(Order.created_at >= from_utc, Order.created_at <= to_utc)
+        .all()
+    )
+
+    paid_orders = [
+        o for o in all_period_orders
+        if (o.status != OrderStatus.CANCELLED.value)
+        and (
+            o.payment_status in (PaymentStatus.PAID.value, "PARTIALLY_REFUNDED", PaymentStatus.REFUNDED.value)
+            or (o.payment_method == PaymentMethod.COD.value and o.status == OrderStatus.DELIVERED.value)
+        )
+    ]
+    paid_count = len(paid_orders)
+    paid_amount = sum(o.total_amount for o in paid_orders)
+
+    pending_orders = [
+        o for o in all_period_orders
+        if (o.status != OrderStatus.CANCELLED.value)
+        and (
+            (o.payment_method != PaymentMethod.COD.value and o.payment_status in (PaymentStatus.PENDING.value, PaymentStatus.FAILED.value))
+            or (o.payment_method == PaymentMethod.COD.value and o.status != OrderStatus.DELIVERED.value)
+        )
+    ]
+    pending_count = len(pending_orders)
+    pending_amount = sum(o.total_amount for o in pending_orders)
+
+    from app.schemas.admin import AdminPaymentOverviewOut, AdminPaymentStatusBucket
+    payment_overview = AdminPaymentOverviewOut(
+        paid=AdminPaymentStatusBucket(
+            count=paid_count,
+            amount=paid_amount,
+            amountPaise=paid_amount * 100,
+        ),
+        pending=AdminPaymentStatusBucket(
+            count=pending_count,
+            amount=pending_amount,
+            amountPaise=pending_amount * 100,
+        ),
+        refunded=AdminPaymentStatusBucket(
+            count=refund_count,
+            amount=refunds,
+            amountPaise=refunds * 100,
+        ),
+    )
+
     return AdminFinanceSummaryOut(
         effectiveRange={"from": eff_from, "to": eff_to},
         grossSales=gross_sales,
@@ -1938,8 +2067,8 @@ def get_admin_finance_summary(
         storedTaxPaise=stored_tax * 100,
         refunds=refunds,
         refundsPaise=refunds * 100,
-        gatewayFees=None,
-        gatewayFeesAvailable=False,
+        gatewayFees=expense_breakdown.get("GATEWAY_FEE"),
+        gatewayFeesAvailable="GATEWAY_FEE" in expense_breakdown,
         adjustments=0,
         adjustmentsPaise=0,
         netRevenue=net_revenue,
@@ -1948,6 +2077,21 @@ def get_admin_finance_summary(
         taxableSalesPaise=taxable_sales * 100,
         orderCount=len(orders),
         refundCount=refund_count,
+        cogs=cogs,
+        cogsPaise=cogs * 100 if cogs is not None else None,
+        grossProfit=gross_profit,
+        grossProfitPaise=gross_profit * 100 if gross_profit is not None else None,
+        grossMarginPct=gross_margin_pct,
+        operatingExpenses=operating_expenses,
+        operatingExpensesPaise=operating_expenses * 100,
+        expenseBreakdown=expense_breakdown,
+        netProfit=net_profit,
+        netProfitPaise=net_profit * 100 if net_profit is not None else None,
+        netMarginPct=net_margin_pct,
+        profitAvailable=profit_available,
+        costCoveragePct=cost_coverage_pct,
+        unavailabilityReason=unavailability_reason,
+        paymentOverview=payment_overview,
     )
 
 
@@ -2027,7 +2171,7 @@ def get_admin_finance_categories(
         for item in order.items
         if item.product_id is not None
     }
-    
+
     product_cat_map: dict[int, tuple[int, str, str | None]] = {}
     if product_ids:
         # Query product categories joined with category details
@@ -2437,6 +2581,157 @@ def get_admin_finance_trends(
             fulfillmentStates=fulfillment_counts,
         ),
     )
+
+
+# -----------------------------------------------------------------------------
+# Admin Expenses & Cost Tracking
+# -----------------------------------------------------------------------------
+
+
+def _expense_to_out(e: AdminExpense) -> AdminExpenseOut:
+    """Format AdminExpense ORM to AdminExpenseOut."""
+    exp_date_str = e.expense_date.strftime("%Y-%m-%d") if e.expense_date else ""
+    created_at_str = e.created_at.isoformat() if e.created_at else ""
+    updated_at_str = e.updated_at.isoformat() if e.updated_at else ""
+    return AdminExpenseOut(
+        id=e.id,
+        category=e.category,
+        amount=e.amount,
+        amountPaise=e.amount_paise,
+        currency=e.currency or "INR",
+        orderId=e.order_id,
+        description=e.description,
+        notes=e.notes,
+        expenseDate=exp_date_str,
+        createdAt=created_at_str,
+        updatedAt=updated_at_str,
+    )
+
+
+@router.get("/finance/expenses", response_model=AdminExpenseListOut)
+def list_admin_expenses(
+    category: str | None = Query(default=None, description="Optional category filter"),
+    from_date: str | None = Query(default=None, alias="from", description="Start date (YYYY-MM-DD)"),
+    to_date: str | None = Query(default=None, alias="to", description="End date (YYYY-MM-DD)"),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=200, alias="pageSize"),
+    db: Session = Depends(get_db),
+) -> AdminExpenseListOut:
+    """List recorded operating expenses with optional category and date filters."""
+    query = db.query(AdminExpense)
+    if category:
+        query = query.filter(AdminExpense.category == category.upper())
+
+    if from_date or to_date:
+        from_utc, to_utc, _, _ = _parse_ist_date_range(from_date, to_date)
+        query = query.filter(AdminExpense.expense_date >= from_utc, AdminExpense.expense_date <= to_utc)
+
+    total = query.count()
+    items = query.order_by(AdminExpense.expense_date.desc(), AdminExpense.id.desc()).offset((page - 1) * page_size).limit(page_size).all()
+
+    # Calculate total amount across all matching records (unpaginated)
+    total_amount = sum(e.amount for e in query.all())
+
+    return AdminExpenseListOut(
+        items=[_expense_to_out(e) for e in items],
+        total=total,
+        page=page,
+        pageSize=page_size,
+        totalAmount=total_amount,
+        totalAmountPaise=total_amount * 100,
+    )
+
+
+@router.post("/finance/expenses", response_model=AdminExpenseOut, status_code=status.HTTP_201_CREATED)
+def create_admin_expense(
+    payload: AdminExpenseCreate,
+    db: Session = Depends(get_db),
+) -> AdminExpenseOut:
+    """Record an operating, payment gateway, shipping, or fulfillment expense."""
+    # Validate category against ExpenseCategory enum
+    valid_categories = {c.value for c in ExpenseCategory}
+    cat_upper = payload.category.strip().upper()
+    if cat_upper not in valid_categories:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Invalid expense category '{payload.category}'. Valid categories: {sorted(list(valid_categories))}",
+        )
+
+    # Parse expense date
+    try:
+        raw_date = payload.expense_date.strip().split("T")[0]
+        parsed_d = datetime.strptime(raw_date, "%Y-%m-%d").date()
+        expense_dt = datetime(parsed_d.year, parsed_d.month, parsed_d.day, 12, 0, 0, tzinfo=timezone.utc).replace(tzinfo=None)
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid expenseDate format (expected YYYY-MM-DD)")
+
+    if payload.order_id:
+        order = db.query(Order).filter(Order.id == payload.order_id).first()
+        if not order:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Referenced order {payload.order_id} not found")
+
+    expense = AdminExpense(
+        category=cat_upper,
+        amount=payload.amount,
+        amount_paise=payload.amount * 100,
+        currency="INR",
+        order_id=payload.order_id,
+        description=payload.description,
+        notes=payload.notes,
+        expense_date=expense_dt,
+    )
+    db.add(expense)
+    db.commit()
+    db.refresh(expense)
+
+    return _expense_to_out(expense)
+
+
+@router.delete("/finance/expenses/{expense_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_admin_expense(
+    expense_id: int,
+    db: Session = Depends(get_db),
+) -> Response:
+    """Delete a recorded expense by ID."""
+    expense = db.query(AdminExpense).filter(AdminExpense.id == expense_id).first()
+    if not expense:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found")
+
+    db.delete(expense)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.patch("/orders/{order_id}/items/{item_id}/cost", response_model=AdminOrderDetailOut)
+def update_order_item_cost(
+    order_id: int,
+    item_id: int,
+    payload: AdminOrderItemCostUpdate,
+    db: Session = Depends(get_db),
+) -> AdminOrderDetailOut:
+    """Record or backfill unit cost for an order item, updating total_cost."""
+    order = (
+        db.query(Order)
+        .options(
+            joinedload(Order.items),
+            joinedload(Order.status_history),
+        )
+        .filter(Order.id == order_id)
+        .first()
+    )
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Order {order_id} not found")
+
+    target_item = next((it for it in order.items if it.id == item_id), None)
+    if not target_item:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Order item {item_id} not found on order {order_id}")
+
+    target_item.unit_cost = payload.unit_cost
+    target_item.total_cost = payload.unit_cost * target_item.quantity
+    db.commit()
+    db.refresh(order)
+
+    return _order_to_admin_detail(order)
 
 
 # -----------------------------------------------------------------------------
@@ -3097,7 +3392,7 @@ def update_admin_brand_settings(
     admin_user: User = Depends(get_current_admin),
 ) -> BrandSettingsOut:
     """Update storewide brand settings.
-    
+
     Fields set explicitly (including None) are updated; omitted fields are preserved.
     """
     brand = db.query(BrandSettings).order_by(BrandSettings.id.asc()).first()
@@ -3740,4 +4035,3 @@ def prune_admin_search_events(
         "pruned_count": pruned,
         "retention_days": retention_days,
     }
-

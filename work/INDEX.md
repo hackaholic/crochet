@@ -23,3 +23,5 @@
 - **Work 018 — Customer profile, addresses and order experience** · In Progress · [work folder](work-018-customer-account-settings/)
 
 - **Work 019 — Editable product information and defaults** · Completed · [work folder](work-019-product-information/)
+
+- **Work 020 — Incremental finance improvements** · In Progress · [work folder](work-020-finance-incremental/)

@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import CustomersPage from './CustomersPage';
 import * as api from '../services/customers';
@@ -60,11 +60,12 @@ it('shows nullable profile fields, empty addresses, and empty history then retur
 
   expect(await screen.findByText('No linked orders')).toBeInTheDocument();
   expect(await screen.findByText('No saved addresses')).toBeInTheDocument();
-  expect(screen.getAllByText('Not provided')).toHaveLength(2); // email and account phone
+  expect(within(screen.getByRole('dialog')).getAllByText('Not provided')).toHaveLength(2); // email and account phone
   expect(api.getCustomer).toHaveBeenCalledWith(2, expect.any(AbortSignal));
   expect(api.getCustomerOrders).toHaveBeenCalledWith(2, 1, expect.any(AbortSignal));
 
-  fireEvent.click(screen.getByRole('button', { name: 'Back to customers' }));
+  expect(screen.queryByRole('button', { name: 'Close customer profile' })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Close Customer profile' }));
   expect(await screen.findByRole('searchbox')).toBeInTheDocument();
 });
 
@@ -145,10 +146,11 @@ it('navigates using the linked order number and pages history', async () => {
   const select = vi.fn();
   render(<CustomersPage onSelectOrder={select} />);
   fireEvent.click(await screen.findByRole('button', { name: 'View customer Test customer' }));
+  await screen.findByRole('button', { name: 'View order ORDER-1' });
+  fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Next' }));
+  await waitFor(() => expect(api.getCustomerOrders).toHaveBeenLastCalledWith(2, 2, expect.any(AbortSignal)));
   fireEvent.click(await screen.findByRole('button', { name: 'View order ORDER-1' }));
   expect(select).toHaveBeenCalledWith('ORDER-1');
-  fireEvent.click(screen.getByRole('button', { name: 'Next' }));
-  await waitFor(() => expect(api.getCustomerOrders).toHaveBeenLastCalledWith(2, 2, expect.any(AbortSignal)));
 });
 
 it('does not retain profile data when history fails and allows retry', async () => {
@@ -156,7 +158,7 @@ it('does not retain profile data when history fails and allows retry', async () 
   render(<CustomersPage onSelectOrder={vi.fn()} />);
   fireEvent.click(await screen.findByRole('button', { name: 'View customer Test customer' }));
   expect(await screen.findByRole('alert')).toHaveTextContent('details could not be loaded');
-  expect(screen.queryByText('Test customer')).not.toBeInTheDocument();
+  expect(within(screen.getByRole('dialog')).queryByText('Test customer')).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
   expect(await screen.findByText('No linked orders')).toBeInTheDocument();
 });

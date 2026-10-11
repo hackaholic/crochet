@@ -1,9 +1,10 @@
+import AdminTable from './AdminTable';
 import { useEffect, useState } from 'react';
 import { getCustomer, getCustomerOrders, type CustomerDetail } from '../services/customers';
 import type { AdminOrderList } from '../../lib/api/admin';
 import { EmptyState, TableSkeleton } from './AdminShared';
 import AdminPagination from './AdminPagination';
-export default function CustomerProfile({ id, onBack, onSelectOrder }: { id: number; onBack: () => void; onSelectOrder: (number: string) => void }) {
+export default function CustomerProfile({ id, onBack, onSelectOrder, backLabel = 'Back to customers', hideBack = false }: { id: number; backLabel?:string; hideBack?:boolean; onBack: () => void; onSelectOrder: (number: string) => void }) {
   const [customer, setCustomer] = useState<CustomerDetail>();
   const [orders, setOrders] = useState<AdminOrderList>();
   const [page, setPage] = useState(1);
@@ -19,7 +20,7 @@ export default function CustomerProfile({ id, onBack, onSelectOrder }: { id: num
     return () => controller.abort();
   }, [id, page, retry]);
   return <div className="min-w-0 space-y-5 [overflow-wrap:anywhere]">
-    <button className="underline text-sm" onClick={onBack}>Back to customers</button>
+    {!hideBack && <button className="underline text-sm" onClick={onBack}>{backLabel}</button>}
     {loading ? <TableSkeleton /> : error ? <div role="alert">Customer details could not be loaded. <button className="underline" onClick={() => setRetry(x => x + 1)}>Try again</button></div> : customer && <>
       <section className="rounded-xl border border-[#E8E0D8] bg-white p-5">
         <h2 className="font-serif text-xl">{customer.name || 'Unnamed customer'}</h2>
@@ -72,7 +73,7 @@ export default function CustomerProfile({ id, onBack, onSelectOrder }: { id: num
         )}
       </section>
       <section className="rounded-xl border border-[#E8E0D8] bg-white p-4"><h2 className="mb-4 font-serif text-xl">Order history</h2>
-        {!orders?.items.length ? <EmptyState title="No linked orders" desc="This account has no linked orders yet." /> : <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr><th className="p-3">Order</th><th className="p-3">Status</th><th className="p-3">Payment</th><th className="p-3">Actions</th></tr></thead><tbody>{orders.items.map(order => <tr key={order.id} className="border-t border-[#E8E0D8]"><td className="p-3">{order.orderNumber}</td><td className="p-3">{order.status}</td><td className="p-3">{order.paymentStatus}</td><td className="p-3"><button className="underline" aria-label={`View order ${order.orderNumber}`} onClick={() => onSelectOrder(order.orderNumber)}>View</button></td></tr>)}</tbody></table></div>}
+        {!orders?.items.length ? <EmptyState title="No linked orders" desc="This account has no linked orders yet." /> : <div className="overflow-x-auto"><AdminTable className="w-full text-left text-sm"><thead><tr><th scope="col" className="p-3">Order</th><th scope="col" className="p-3">Status</th><th scope="col" className="p-3">Payment</th><th scope="col" className="p-3">Actions</th></tr></thead><tbody>{orders.items.map(order => <tr key={order.id} className="border-t border-[#E8E0D8]"><td className="p-3">{order.orderNumber}</td><td className="p-3">{order.status}</td><td className="p-3">{order.paymentStatus}</td><td className="p-3"><button className="underline" aria-label={`View order ${order.orderNumber}`} onClick={() => onSelectOrder(order.orderNumber)}>View</button></td></tr>)}</tbody></AdminTable></div>}
         {orders && <AdminPagination data={orders} onPage={setPage} label="Customer order pages" />}
       </section>
     </>}

@@ -35,3 +35,23 @@ it('keeps recorded zero fees distinct from missing fees and does not invent date
  expect(screen.queryByText('Not available')).not.toBeInTheDocument();
  expect(screen.queryByLabelText('Reporting period')).not.toBeInTheDocument();
 });
+
+it('applies restrained semantic card background and border styling to KPI cards',async()=>{
+ api.getFinanceSummary.mockResolvedValue(summary);api.getSalesChartFinance.mockResolvedValue([]);
+ render(<FinancePage datePreset="this_month"/>);
+
+ const grossLabels = await screen.findAllByText('Gross Sales');
+ const grossCard = grossLabels[0].closest('.rounded-xl');
+ expect(grossCard).toHaveClass('bg-[#FDF9F6]');
+ expect(grossCard).toHaveClass('border-[#EADCCF]');
+
+ const netLabels = screen.getAllByText('Net Revenue');
+ const netCard = netLabels[0].closest('.rounded-xl');
+ expect(netCard).toHaveClass('bg-[#F6FAF6]');
+ expect(netCard).toHaveClass('border-[#D2E2D5]');
+
+ const refundsLabels = screen.getAllByText('Refunds');
+ const refundsCard = refundsLabels[0].closest('.rounded-xl');
+ expect(refundsCard).toHaveClass('bg-[#FDF6F6]');
+ expect(refundsCard).toHaveClass('border-[#F0D5D5]');
+});

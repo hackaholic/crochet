@@ -31,7 +31,7 @@ function mapOrder(raw: Json): Order {
     id: String(raw.id),
     orderNumber: raw.orderNumber,
     date: raw.createdAt,
-    customer: { name: customerName, email: raw.customerEmail || '', phone: raw.customerPhone || '' },
+    customer: { id: raw.customerId ?? undefined, name: customerName, email: raw.customerEmail || '', phone: raw.customerPhone || '' },
     shippingAddress: {
       line1: [address.line1, address.addressLine1, address.street].find(Boolean) || '',
       line2: [address.line2, address.addressLine2].find(Boolean) || undefined,
@@ -50,7 +50,10 @@ function mapOrder(raw: Json): Order {
     gst: raw.taxAmount, total: raw.totalAmount,
     paymentStatus: raw.paymentStatus, paymentMethod: raw.paymentMethod,
     orderStatus: status(raw.status), shippingStatus: raw.trackingNumber ? 'Tracking recorded' : undefined,
-    shipment: undefined,
+    shipment: raw.trackingNumber ? {
+      id: String(raw.id), courier: raw.courierName || '', trackingId: raw.trackingNumber,
+      createdDate: '', currentState: raw.status, history: [],
+    } : undefined,
     timeline: history.map((event: Json) => ({
       id: String(event.id), timestamp: event.timestamp, status: event.status,
       label: String(event.status).replaceAll('_', ' '), actor: 'Recorded order history', note: event.note || undefined,
@@ -165,10 +168,10 @@ export async function getOrder(id: string): Promise<Order | null> {
   catch (error) { if (error instanceof Error && /404/.test(error.message)) return null; throw error; }
 }
 
-export async function updateOrderStatus(id: string, nextStatus: OrderStatus, note?: string, trackingNumber?: string): Promise<void> {
-  await request(`/admin/orders/${encodeURIComponent(id)}/status`, {
+export async function updateOrderStatus(id: string, nextStatus: OrderStatus, note?: string, trackingNumber?: string): Promise<Order> {
+  return mapOrder(await request<Json>(`/admin/orders/${encodeURIComponent(id)}/status`, {
     method: 'PATCH', body: JSON.stringify({ status: nextStatus, note, trackingNumber }),
-  });
+  }));
 }
 
 export async function getFinanceSummary(preset: DateRangePreset = '30d', range = dateRange(preset)): Promise<FinanceSummary> {
@@ -199,7 +202,7 @@ function mapReturn(raw: Json): Return {
   const returnStatus = raw.refundStatus === 'COMPLETED' ? 'REFUNDED' : (mapStatus[raw.status] || raw.status);
   return {
     id: String(raw.returnNumber), orderId: String(raw.orderId), orderNumber: raw.orderNumber,
-    customer: { name: raw.customerName, email: raw.customerEmail || '' },
+    customer: { id: raw.customerId ?? undefined, name: raw.customerName, email: raw.customerEmail || '' },
     productName: firstItem?.productName || 'Multiple items', reason: raw.reasonDetails || raw.reason,
     requestedDate: raw.createdAt, status: returnStatus,
     refundAmount: raw.refundAmount, notes: raw.adminNotes || undefined,

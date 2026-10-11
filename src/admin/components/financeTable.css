@@ -1,0 +1,18 @@
+.finance-table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid #dce4dc;
+  border-radius: 8px;
+}
+.finance-table-header {
+  background: #e8efe7;
+  color: #304b39;
+}
+.finance-table-header th {
+  padding: 12px 10px;
+  border-bottom: 1px solid #cbd9cb;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: left;
+}

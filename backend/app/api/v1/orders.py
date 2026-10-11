@@ -552,10 +552,13 @@ def checkout(
             unit_price=variant.price,
             quantity=cart_item.quantity,
             line_total=variant.price * cart_item.quantity,
+            unit_cost=variant.cost,
+            total_cost=(variant.cost * cart_item.quantity) if variant.cost is not None else None,
             personalization_json=cart_item.personalization_json or {},
             created_at=now,
         )
         db.add(order_item)
+
         # Decrement stock
         variant.stock_quantity = max(0, variant.stock_quantity - cart_item.quantity)
 

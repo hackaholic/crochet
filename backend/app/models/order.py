@@ -166,11 +166,14 @@ class OrderItem(Base):
     unit_price = Column(Integer, nullable=False)  # Rupees at time of purchase
     quantity = Column(Integer, nullable=False)
     line_total = Column(Integer, nullable=False)  # unit_price * quantity
+    unit_cost = Column(Integer, nullable=True)  # Snapshotted COGS per unit in Rupees
+    total_cost = Column(Integer, nullable=True)  # unit_cost * quantity
     personalization_json = Column(JSON().with_variant(JSONB, "postgresql"), default=dict)
 
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     order = relationship("Order", back_populates="items")
+
 
 
 class OrderStatusHistory(Base):
@@ -234,4 +237,3 @@ class GuestOrderAccessToken(Base):
     revoked_at = Column(DateTime, nullable=True)
 
     order = relationship("Order", back_populates="guest_tokens")
-

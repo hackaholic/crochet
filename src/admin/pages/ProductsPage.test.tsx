@@ -4,13 +4,14 @@ import ProductsPage from './ProductsPage';
 import * as api from '../../lib/api/admin';
 import * as catalogue from '../services/catalogue';
 vi.mock('../../lib/api/admin', () => ({ getAdminProducts: vi.fn() }));
-vi.mock('../services/catalogue', () => ({ getCategories: vi.fn(), getProduct: vi.fn() }));
+vi.mock('../services/catalogue', () => ({ getCategories: vi.fn(), getProduct: vi.fn(), getProductDefaults: vi.fn(), saveProductDefaults: vi.fn() }));
 vi.mock('../components/ProductEditor', () => ({ default: () => <div>Editor opened</div> }));
 const product = { id: 42, name: 'Test bunny', slug: 'test-bunny', status: 'ACTIVE', primaryImage: '/test.webp', totalStock: 3, minPrice: 100, variants: [], categoryNames: ['Animals'] };
 afterEach(cleanup);
 describe('Products catalogue', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.mocked(catalogue.getProductDefaults).mockResolvedValue({});
     vi.mocked(catalogue.getCategories).mockResolvedValue([{ id: 8, name: 'Animals' }]);
     vi.mocked(api.getAdminProducts).mockResolvedValue({ items: [product], total: 21, page: 1, pageSize: 20 });
   });
@@ -33,6 +34,13 @@ describe('Products catalogue', () => {
     vi.mocked(catalogue.getProduct).mockResolvedValue({ ...product, categoryIds: [8], tagIds: [], tagNames: [], galleryImages: [] });
     render(<ProductsPage />);
     fireEvent.click(await screen.findByRole('button', { name: 'Edit Test bunny' }));
+    expect(await screen.findByText('Editor opened')).toBeInTheDocument();
+    expect(catalogue.getProduct).toHaveBeenCalledWith(42);
+  });
+  it('opens persisted details from the product name', async () => {
+    vi.mocked(catalogue.getProduct).mockResolvedValue({ ...product, categoryIds: [8], tagIds: [], tagNames: [], galleryImages: [] });
+    render(<ProductsPage />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Open product Test bunny' }));
     expect(await screen.findByText('Editor opened')).toBeInTheDocument();
     expect(catalogue.getProduct).toHaveBeenCalledWith(42);
   });

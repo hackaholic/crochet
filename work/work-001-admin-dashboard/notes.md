@@ -171,3 +171,17 @@ Settings1.10 scope audit completed;1.10.1 Gemini pickup-ready.1.10.2 frontend im
 2026-10-11 — Task1.15 completed: pipeline status/date navigation with server pagination and sidebar reset; six focused cases and typecheck passed, Docker frontend rebuilt and actual desktop/390px local behavior verified. Return evidence in task-038. Next1.16; nothing pushed.
 
 2026-10-11 — 1.16 completed: activity-to-order navigation, real numeric IDs, safe missing/denied detail feedback. Seven focused tests/typecheck passed; rebuilt frontend and actual desktop/mobile verified. See task-039. Nothing pushed.
+
+2026-10-11 — 1.7.6 acceptance:16 focused tests/typecheck pass, actual upload/tag/create/reopen/mobile verified after local ID-sequence repair. Found durable seed sequence bug; pickup-ready Gemini1.7.11 in task-041. QA listing archived. No push.
+
+2026-10-11 — 1.7.11 completed: Gemini implemented durable PostgreSQL sequence synchronization via align_postgres_sequences in backend/app/db/seed.py, executed automatically at the end of seed_catalogue. Dynamically queries all serial/identity columns and sets each sequence to GREATEST(MAX(col), last_value) with is_called=true to prevent rewinding or primary key collisions. Safe no-op on SQLite/non-PostgreSQL. Added 4 regression tests in backend/tests/test_seeded_sequences.py (4/4 pass against PostgreSQL sulocraft_test; 3 pass/1 skip on SQLite). Rebuilt/restarted docker-api-1 and verified all live sequences aligned. Task 1.7.6 unblocked for Codex local acceptance. No push.
+
+2026-10-11 —1.11/1.6 Completed: added dashboard/returns/order-detail failure/retry/confirmation coverage and fixed caught async failures, stale dashboard responses, tracking persistence/response rendering.91admin suite checks passed; additional transport/access6and detail4checks/typecheck passed. Rebuilt API/frontend, desktop9pages and390px9pages verified; storefront still renders. Actual upload fallback defect handed to Gemini1.7.12;1.7.6Blocked. Inert shipment/private note controls now explicitly disabled; follow-up1.17. Firefox1.6.1Pending; owner1.12Pending. No push/deployment.
+
+2026-10-11 — 1.7.12 Completed (Gemini):
+- Implemented durable `LocalStorageProvider` in `backend/app/services/storage/local.py` ensuring uploaded files are persisted to `public/images/` and survive service recreation without relying on ephemeral in-memory dicts. Included path traversal containment checks.
+- Updated storage factory `backend/app/services/storage/factory.py` so uncredentialed environments default to durable `LocalStorageProvider` instead of `MockStorageProvider`.
+- Eliminated silent Unsplash fallback: updated `resolve_mock_image_source()` in `backend/app/core/images.py` to return `None` for unmapped keys; updated `/static/images/{image_path:path}` in `backend/app/main.py` to raise HTTP 404 (`Image not found`) when images are not on disk and not in `MOCK_IMAGE_MAP`.
+- Automated test suite: `backend/tests/test_storage.py` verified (5/5 tests passing for 1.7.12-TC01 to TC04 and Cache-Control headers). `backend/tests/test_admin_product_media.py` (2/2) and regression suites `test_admin.py` (7/7) and `test_occasions_admin.py` (15/15) all pass cleanly.
+- Live Docker verification: Rebuilt and restarted `docker-api-1`. Verified live `/health` (200), nonexistent image keys returning 404, seeded images returning 200, and authenticated admin upload returning live URL with exact matching binary bytes.
+- Task 1.7.6 unblocked and returned to Codex for real browser upload/save/reopen verification. No push/deployment.

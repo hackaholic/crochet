@@ -10,6 +10,15 @@ const data = { items: [{ id: 1, name: 'Test product', slug: 'test', primaryImage
 afterEach(cleanup);
 beforeEach(() => { vi.resetAllMocks(); vi.mocked(getAdminProducts).mockResolvedValue(data); vi.mocked(adjustStock).mockResolvedValue(variant); });
 describe('Inventory integration', () => {
+  it('opens only the product cell and keeps stock adjustment independent', async () => {
+    const open=vi.fn(); render(<InventoryPage onSelectProduct={open}/>);
+    const button=await screen.findByRole('button',{name:'Open product Test product'});
+    fireEvent.click(button);expect(open).toHaveBeenCalledWith(1);
+    fireEvent.click(screen.getByRole('cell',{name:'4'}));expect(open).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button',{name:'Adjust TEST-SKU'}));
+    expect(await screen.findByLabelText('Stock adjustment')).toBeInTheDocument();
+    expect(open).toHaveBeenCalledTimes(1);expect(adjustStock).not.toHaveBeenCalled();
+  });
   it('shows the backend image and retains identification when its loading fails', async () => {
     vi.mocked(getAdminProducts).mockResolvedValue({ ...data, items: [{ ...data.items[0], primaryImage: 'products/key.webp', primaryImageUrl: 'https://images.example/product.webp' }] });
     render(<InventoryPage />);

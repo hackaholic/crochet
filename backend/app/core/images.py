@@ -173,10 +173,9 @@ def build_image_url(relative_path: str) -> str:
     return f"{base}/{clean_path}"
 
 
-def resolve_mock_image_source(relative_path: str) -> str:
+def resolve_mock_image_source(relative_path: str) -> str | None:
     """Lookup the upstream high-resolution mock photo URL for local serving/redirect."""
     clean_path = relative_path.lstrip("/")
     if clean_path in MOCK_IMAGE_MAP:
         return MOCK_IMAGE_MAP[clean_path]
-    # Fallback to high-res crochet photo
-    return _unsplash("photo-1700171518313-5dd219beaaa6")
+    return None

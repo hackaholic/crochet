@@ -32,15 +32,17 @@ export default function RevenueChart({ data, loading }: RevenueChartProps) {
 
   const cfg = METRIC_CONFIG[metric];
   const values = data.map(d => d[metric] as number);
-  const max = Math.max(...values) * 1.15 || 1;
-  const min = 0;
+  const highest = Math.max(0, ...values);
+  const lowest = Math.min(0, ...values);
+  const max = highest > 0 ? highest * 1.15 : lowest < 0 ? 0 : 1;
+  const min = lowest < 0 ? lowest * 1.15 : 0;
   const W = 800;
   const H = 200;
   const PAD = { top: 12, right: 16, bottom: 32, left: 56 };
   const innerW = W - PAD.left - PAD.right;
   const innerH = H - PAD.top - PAD.bottom;
 
-  const xScale = (i: number) => PAD.left + (i / (data.length - 1)) * innerW;
+  const xScale = (i: number) => PAD.left + (data.length === 1 ? 0.5 : i / (data.length - 1)) * innerW;
   const yScale = (v: number) => PAD.top + innerH - ((v - min) / (max - min)) * innerH;
 
   // Y grid lines
@@ -56,7 +58,7 @@ export default function RevenueChart({ data, loading }: RevenueChartProps) {
   // Area fill
   const areaPath = `M ${xScale(0)},${yScale(values[0])} ` +
     data.slice(1).map((d, i) => `L ${xScale(i + 1)},${yScale(d[metric] as number)}`).join(' ') +
-    ` L ${xScale(data.length - 1)},${PAD.top + innerH} L ${xScale(0)},${PAD.top + innerH} Z`;
+    ` L ${xScale(data.length - 1)},${yScale(0)} L ${xScale(0)},${yScale(0)} Z`;
 
   // X labels (every 5th if >14 points)
   const labelStep = data.length > 14 ? 5 : data.length > 7 ? 2 : 1;
@@ -116,15 +118,15 @@ export default function RevenueChart({ data, loading }: RevenueChartProps) {
               <g key={i}>
                 {/* Invisible hit zone */}
                 <rect
-                  x={i === 0 ? cx : (cx + xScale(i - 1)) / 2}
+                  x={data.length === 1 ? PAD.left : i === 0 ? cx : (cx + xScale(i - 1)) / 2}
                   y={PAD.top}
-                  width={innerW / (data.length - 1)}
+                  width={innerW / Math.max(1, data.length - 1)}
                   height={innerH}
                   fill="transparent"
                   onMouseEnter={() => setTooltip({ x: cx, y: cy, point: d })}
                 />
                 {/* Dot (only on hover) */}
-                {tooltip?.point === d && (
+                {(data.length === 1 || tooltip?.point === d) && (
                   <>
                     <line x1={cx} y1={PAD.top} x2={cx} y2={PAD.top + innerH} stroke={cfg.color} strokeWidth="1" strokeDasharray="4,4" opacity="0.4" />
                     <circle cx={cx} cy={cy} r="5" fill={cfg.color} stroke="white" strokeWidth="2" />

@@ -1,8 +1,9 @@
+import AdminTable from '../components/AdminTable';
 import { useEffect, useState } from 'react';
 import { getCustomers, type CustomerList } from '../services/customers';
 import { controlClass } from '../components/CatalogueFields';
 import { EmptyState, TableSkeleton } from '../components/AdminShared';
-import CustomerProfile from '../components/CustomerProfile';
+import CustomerPopup from '../components/CustomerPopup';
 import AdminPagination from '../components/AdminPagination';
 export default function CustomersPage({ onSelectOrder }: { onSelectOrder: (number: string) => void }) {
   const [query, setQuery] = useState('');
@@ -22,8 +23,9 @@ export default function CustomersPage({ onSelectOrder }: { onSelectOrder: (numbe
     }, 275);
     return () => { window.clearTimeout(timer); controller.abort(); };
   }, [query, page, retry]);
-  if (selected !== undefined) return <CustomerProfile key={selected} id={selected} onBack={() => setSelected(undefined)} onSelectOrder={onSelectOrder} />;
+
   return <div className="space-y-5">
+    {selected !== undefined && <CustomerPopup customer={{id:selected}} onClose={()=>setSelected(undefined)} onSelectOrder={id=>{setSelected(undefined);onSelectOrder(id);}}/>}
     <div><h1 className="font-serif text-2xl font-bold">Customers</h1><p className="mt-1 text-sm text-[#6B5B4E]">View customer profiles and linked order history.</p></div>
     <label className="block text-sm">Search customers<input type="search" maxLength={200} className={controlClass} value={query} onChange={e => { setQuery(e.target.value); setPage(1); }} /></label>
     <section className="rounded-xl border border-[#E8E0D8] bg-white p-4">
@@ -40,13 +42,13 @@ export default function CustomersPage({ onSelectOrder }: { onSelectOrder: (numbe
         <EmptyState title="No customers found" desc="Try another search." />
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+          <AdminTable className="w-full text-left text-sm">
             <thead>
               <tr>
-                <th className="p-3">Customer</th>
-                <th className="p-3">Email / phone</th>
-                <th className="p-3">Status</th>
-                <th className="p-3">Orders</th>
+                <th scope="col" className="p-3">Customer</th>
+                <th scope="col" className="p-3">Email / phone</th>
+                <th scope="col" className="p-3">Status</th>
+                <th scope="col" className="p-3">Orders</th>
               </tr>
             </thead>
             <tbody>
@@ -57,7 +59,7 @@ export default function CustomersPage({ onSelectOrder }: { onSelectOrder: (numbe
                     <td className="p-3">
                       <button
                         type="button"
-                        className="text-left font-medium underline hover:text-[#5B3E2B] focus:outline-none focus:ring-2 focus:ring-[#8C7A6B] focus:ring-offset-1 rounded"
+                        className="admin-entity-link w-full text-left font-medium hover:text-[#5B3E2B]"
                         aria-label={`View customer ${displayName}`}
                         onClick={() => setSelected(customer.id)}
                       >
@@ -74,7 +76,7 @@ export default function CustomersPage({ onSelectOrder }: { onSelectOrder: (numbe
                 );
               })}
             </tbody>
-          </table>
+          </AdminTable>
         </div>
       )}
       {data && !loading && <AdminPagination data={data} onPage={setPage} label="Customer pages" />}

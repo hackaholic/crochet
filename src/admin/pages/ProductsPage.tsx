@@ -1,3 +1,4 @@
+import AdminTable from '../components/AdminTable';
 import ProductInformationDefaults from '../components/ProductInformationDefaults';
 import { useEffect, useState } from 'react';
 import { getAdminProducts, type AdminProductList } from '../../lib/api/admin';
@@ -7,7 +8,7 @@ import ProductVisibility from '../components/ProductVisibility';
 import { actionClass, controlClass } from '../components/CatalogueFields';
 import { EmptyState, TableSkeleton } from '../components/AdminShared';
 
-export default function ProductsPage() {
+export default function ProductsPage({initialProductId,onPreviewProduct}:{initialProductId?:number;onPreviewProduct?:(id:number)=>void} = {}) {
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('');
   const [category, setCategory] = useState('');
@@ -38,6 +39,19 @@ export default function ProductsPage() {
     }, 275);
     return () => { window.clearTimeout(timer); controller.abort(); };
   }, [query, status, category, page, retry]);
+  const openProduct = async (id:number) => {
+    if (!categoriesReady || detailBusy) return;
+    setDetailBusy(true); setError('');
+    try { setProduct(await getProduct(id)); setEditing(true); setNotice(''); }
+    catch { setError('Product details could not be loaded. Try again.'); }
+    finally { setDetailBusy(false); }
+  };
+  useEffect(()=>{
+    if(initialProductId === undefined || !categoriesReady) return;
+    let active=true; setDetailBusy(true);
+    getProduct(initialProductId).then(value=>{if(active){setProduct(value);setEditing(true);}}).catch(()=>{if(active)setError('Product details could not be loaded. Try again.');}).finally(()=>{if(active)setDetailBusy(false);});
+    return ()=>{active=false;};
+  },[initialProductId,categoriesReady]);
   if (editing) return <ProductEditor key={product?.id ?? 'new'} product={product} categories={categories} onClose={() => { setEditing(false); setProduct(undefined); }} onSaved={() => {
     setEditing(false); setProduct(undefined); setNotice('Product saved.'); setRetry(value => value + 1);
   }} />;
@@ -51,10 +65,7 @@ export default function ProductsPage() {
       <label className="text-sm">Category<select className={controlClass} value={category} onChange={e => { setCategory(e.target.value); setPage(1); }}><option value="">All categories</option>{categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
     </div>
     <div className="rounded-xl border border-[#E8E0D8] bg-white p-4">
-      {loading ? <TableSkeleton /> : error ? <div role="alert"><p>{error}</p><button className="mt-3 underline" onClick={() => setRetry(value => value + 1)}>Try again</button></div> : !data?.items.length ? <EmptyState title="No products found" desc="Try another search or add your first listing." /> : <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b border-[#E8E0D8]"><th className="p-3">Product</th><th className="p-3">Categories</th><th className="p-3">Price from</th><th className="p-3">Stock</th><th className="p-3">Status</th><th className="p-3">Actions</th></tr></thead><tbody>{data.items.map(p => <tr key={p.id} className="border-b border-[#F5F0EA]"><td className="p-3"><div className="flex items-center gap-3"><img src={p.primaryImageUrl || (/^https?:\/\//.test(p.primaryImage) ? p.primaryImage : undefined)} alt={p.name} className="h-14 w-14 rounded-lg object-cover" /><span>{p.name}</span></div></td><td className="p-3">{p.categoryNames.join(', ')}</td><td className="p-3">₹{p.minPrice}</td><td className="p-3">{p.totalStock}</td><td className="p-3">{p.status}</td><td className="p-3"><button disabled={!categoriesReady || detailBusy} className="underline disabled:opacity-50" onClick={async () => {
-        setDetailBusy(true); setError('');
-        try { setProduct(await getProduct(p.id)); setEditing(true); setNotice(''); } catch { setError('Product details could not be loaded. Try again.'); } finally { setDetailBusy(false); }
-      }} aria-label={`Edit ${p.name}`}>Edit</button><ProductVisibility product={p} onSaved={() => { setNotice('Product visibility updated.'); setRetry(value => value + 1); }} /></td></tr>)}</tbody></table></div>}
+      {loading ? <TableSkeleton /> : error ? <div role="alert"><p>{error}</p><button className="mt-3 underline" onClick={() => setRetry(value => value + 1)}>Try again</button></div> : !data?.items.length ? <EmptyState title="No products found" desc="Try another search or add your first listing." /> : <div className="overflow-x-auto"><AdminTable className="w-full text-left text-sm"><thead><tr className="border-b border-[#E8E0D8]"><th scope="col" className="p-3">Product</th><th scope="col" className="p-3">Categories</th><th scope="col" className="p-3">Price from</th><th scope="col" className="p-3">Stock</th><th scope="col" className="p-3">Status</th><th scope="col" className="p-3">Actions</th></tr></thead><tbody>{data.items.map(p => <tr key={p.id} className="border-b border-[#F5F0EA]"><td className="p-3"><button type="button" disabled={!categoriesReady || detailBusy} onClick={()=>onPreviewProduct ? onPreviewProduct(p.id) : openProduct(p.id)} aria-label={`Open product ${p.name}`} className="admin-entity-link flex w-full items-center gap-3 disabled:opacity-50"><img src={p.primaryImageUrl || (/^https?:\/\//.test(p.primaryImage) ? p.primaryImage : undefined)} alt={p.name} className="h-14 w-14 rounded-lg object-cover" /><span>{p.name}</span></button></td><td className="p-3">{p.categoryNames.join(', ')}</td><td className="p-3">₹{p.minPrice}</td><td className="p-3">{p.totalStock}</td><td className="p-3">{p.status}</td><td className="p-3"><button disabled={!categoriesReady || detailBusy} className="underline disabled:opacity-50" onClick={()=>openProduct(p.id)} aria-label={`Edit ${p.name}`}>Edit</button><ProductVisibility product={p} onSaved={() => { setNotice('Product visibility updated.'); setRetry(value => value + 1); }} /></td></tr>)}</tbody></AdminTable></div>}
       {data && !loading && <nav aria-label="Catalogue pages" className="mt-4 flex items-center justify-between text-sm"><button disabled={page === 1} className="underline disabled:opacity-50" onClick={() => setPage(value => value - 1)}>Previous</button><span>Page {data.page} · {data.total} products</span><button disabled={data.page * data.pageSize >= data.total} className="underline disabled:opacity-50" onClick={() => setPage(value => value + 1)}>Next</button></nav>}
     </div>
   </div>;

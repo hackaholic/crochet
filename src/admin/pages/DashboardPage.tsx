@@ -1,3 +1,5 @@
+import CustomerPopup, {type CustomerPreviewInput} from '../components/CustomerPopup';
+import AdminTable from '../components/AdminTable';
 import { useEffect, useState } from 'react';
 import type { DashboardSummary, OrderStatusCount, AttentionItem, ActivityItem, InventoryAlert, SalesDataPoint, Order, OrderStatus, DateRangePreset } from '../types';
 import * as api from '../services/api';
@@ -164,7 +166,7 @@ export function ActivityFeed({ items, onView }: { items: ActivityItem[]; onView:
 }
 
 // ─── Recent orders ────────────────────────────────────────────────────────────
-function RecentOrders({ orders, onView, onViewAll }: { orders: Order[]; onView: (id: string) => void; onViewAll: () => void }) {
+export function RecentOrders({ orders, onView, onViewAll, onCustomer }: { orders: Order[]; onCustomer:(customer:CustomerPreviewInput)=>void; onView: (id: string) => void; onViewAll: () => void }) {
   return (
     <div className="bg-white rounded-xl border border-[#E8E0D8] p-5">
       <SectionHeader
@@ -176,22 +178,23 @@ function RecentOrders({ orders, onView, onViewAll }: { orders: Order[]; onView: 
         }
       />
       <div className="overflow-x-auto">
-        <table className="w-full text-xs">
+        <AdminTable className="w-full text-xs">
           <thead>
             <tr className="border-b border-[#F0EAE3]">
               {['Order', 'Customer', 'Amount', 'Status', 'Time', ''].map(h => (
-                <th key={h} className="text-left py-2 px-2 text-[#9C8B7E] font-semibold text-[10px] uppercase tracking-wider whitespace-nowrap">{h}</th>
+                <th scope="col" key={h} className="text-left py-2 px-2 text-[#9C8B7E] font-semibold text-[10px] uppercase tracking-wider whitespace-nowrap">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
+            {orders.length === 0 && <tr><td colSpan={6}><EmptyState icon="📦" title="No orders yet" /></td></tr>}
             {orders.slice(0, 8).map(order => (
               <tr key={order.id} className="border-b border-[#F8F4EF] hover:bg-[#FDFAF7] transition-colors">
                 <td className="py-2 px-2">
-                  <span className="font-mono font-semibold text-[#1A1108]">{order.orderNumber}</span>
+                  <button type="button" onClick={()=>onView(order.id)} className="admin-entity-link block w-full font-mono font-semibold text-[#1A1108]" aria-label={`View order ${order.orderNumber}`}>{order.orderNumber}</button>
                 </td>
                 <td className="py-2 px-2">
-                  <span className="text-[#6B5B4E] truncate max-w-[100px] block">{order.customer.name}</span>
+                  <button type="button" className="admin-entity-link block w-full text-[#6B5B4E]" aria-label={`View customer ${order.customer.name}`} onClick={()=>onCustomer(order.customer)}>{order.customer.name}</button>
                 </td>
                 <td className="py-2 px-2 font-semibold text-[#1A1108] whitespace-nowrap">{inr(order.total)}</td>
                 <td className="py-2 px-2">
@@ -206,7 +209,7 @@ function RecentOrders({ orders, onView, onViewAll }: { orders: Order[]; onView: 
               </tr>
             ))}
           </tbody>
-        </table>
+        </AdminTable>
       </div>
     </div>
   );
@@ -220,11 +223,15 @@ export default function DashboardPage({ onNavigate, onSelectOrder, datePreset, o
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [inventory, setInventory] = useState<InventoryAlert[]>([]);
   const [chartData, setChartData] = useState<SalesDataPoint[]>([]);
+  const [previewCustomer,setPreviewCustomer]=useState<CustomerPreviewInput>();
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [loadError,setLoadError] = useState(false);
+  const [retry,setRetry] = useState(0);
   useEffect(() => {
-    setLoading(true);
+    let active = true;
+    setLoading(true);setLoadError(false);
     Promise.all([
       api.getDashboardSummary(datePreset),
       api.getOrderStatusCountsForPeriod(datePreset),
@@ -234,6 +241,7 @@ export default function DashboardPage({ onNavigate, onSelectOrder, datePreset, o
       api.getSalesChart(datePreset === '7d' ? '7d' : '30d'),
       api.getOrders({ pageSize: 10, sortBy: 'date' }),
     ]).then(([s, c, a, act, inv, chart, orders]) => {
+      if (!active) return;
       setSummary(s);
       setCounts(c);
       setAttention(a);
@@ -241,31 +249,86 @@ export default function DashboardPage({ onNavigate, onSelectOrder, datePreset, o
       setInventory(inv);
       setChartData(chart);
       setRecentOrders(orders.orders);
-      setLoading(false);
-    });
-  }, [datePreset]);
+    }).catch(() => { if(active) setLoadError(true); }).finally(() => {if(active) setLoading(false);});
+    return () => {active=false;};
+  }, [datePreset,retry]);
+
+  if (loadError) return <div role="alert" className="rounded-xl border bg-white p-5">
+      Dashboard could not be loaded. <button className="underline" onClick={()=>setRetry(x=>x+1)}>Retry dashboard</button></div>;
 
   const kpis = summary ? [
-    { label: 'Total Sales', value: inr(summary.totalRevenue), icon: '₹', change: summary.comparison?.salesGrowthPercent ?? undefined, prev: summary.comparison ? 'previous period' : undefined },
-    { label: 'Net Revenue', value: inr(summary.netRevenue), icon: '💰', prev: summary.period },
-    { label: 'Orders', value: String(summary.orders), icon: '📋', change: summary.comparison?.orderGrowthPercent ?? undefined, prev: summary.comparison ? 'previous period' : undefined },
-    { label: 'Average Order Value', value: inr(summary.avgOrderValue), icon: '📊', prev: summary.period },
-    { label: 'Refunds', value: inr(summary.refunds), icon: '↩', accent: '#EF4444' },
+    {
+      label: 'Total Sales',
+      value: inr(summary.totalRevenue),
+      icon: '₹',
+      accent: '#C25E00',
+      bgClass: 'bg-[#FFF7ED]', // Amber / Warm Orange tint
+      borderClass: 'border-[#FED7AA]',
+      change: summary.comparison?.salesGrowthPercent ?? undefined,
+      prev: summary.comparison ? 'previous period' : undefined,
+    },
+    {
+      label: 'Net Revenue',
+      value: inr(summary.netRevenue),
+      icon: '💰',
+      accent: '#15803D',
+      bgClass: 'bg-[#F0FDF4]', // Emerald / Fresh Green tint
+      borderClass: 'border-[#BBF7D0]',
+      prev: summary.period,
+    },
+    {
+      label: 'Orders',
+      value: String(summary.orders),
+      icon: '📋',
+      accent: '#1D4ED8',
+      bgClass: 'bg-[#EFF6FF]', // Sky / Crisp Blue tint
+      borderClass: 'border-[#BFDBFE]',
+      change: summary.comparison?.orderGrowthPercent ?? undefined,
+      prev: summary.comparison ? 'previous period' : undefined,
+    },
+    {
+      label: 'Average Order Value',
+      value: inr(summary.avgOrderValue),
+      icon: '📊',
+      accent: '#6D28D9',
+      bgClass: 'bg-[#FAF5FF]', // Purple / Royal Violet tint
+      borderClass: 'border-[#E9D5FF]',
+      prev: summary.period,
+    },
+    {
+      label: 'Refunds',
+      value: inr(summary.refunds),
+      icon: '↩',
+      accent: '#BE123C',
+      bgClass: 'bg-[#FFF1F2]', // Rose / Coral tint
+      borderClass: 'border-[#FECDD3]',
+    },
   ] : [];
 
   const handleViewOrder = (id: string) => {
     onSelectOrder(id);
-    onNavigate('order-detail');
+
   };
 
   return (
     <div className="space-y-5 max-w-full">
+      {previewCustomer && <CustomerPopup customer={previewCustomer} onClose={()=>setPreviewCustomer(undefined)} onSelectOrder={id=>{setPreviewCustomer(undefined);onSelectOrder(id);}}/>}
       {/* KPI row */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         {loading
           ? Array.from({ length: 5 }).map((_, i) => <MetricCard key={i} label="" value="" icon="" loading />)
           : kpis.map(k => (
-              <MetricCard key={k.label} label={k.label} value={k.value} icon={k.icon} change={k.change} prev={k.prev} accent={k.accent} />
+              <MetricCard
+                key={k.label}
+                label={k.label}
+                value={k.value}
+                icon={k.icon}
+                change={k.change}
+                prev={k.prev}
+                accent={k.accent}
+                bgClass={k.bgClass}
+                borderClass={k.borderClass}
+              />
             ))}
       </div>
 
@@ -289,7 +352,7 @@ export default function DashboardPage({ onNavigate, onSelectOrder, datePreset, o
       <div className="grid lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2">
           {loading ? <div className="bg-white rounded-xl border border-[#E8E0D8] p-5"><TableSkeleton rows={6} cols={5} /></div>
-            : <RecentOrders orders={recentOrders} onView={handleViewOrder} onViewAll={() => onNavigate('orders')} />
+            : <RecentOrders orders={recentOrders} onView={handleViewOrder} onViewAll={() => onNavigate('orders')} onCustomer={setPreviewCustomer} />
           }
         </div>
         <div>

@@ -53,6 +53,7 @@ export default function OrderDetailPage({ orderId, onBack }: Props) {
   const [confirm, setConfirm] = useState<{ status: OrderStatus; label: string; danger?: boolean } | null>(null);
   const [updating, setUpdating] = useState(false);
   const [note, setNote] = useState('');
+  const [actionError,setActionError] = useState('');
   const [trackingInput, setTrackingInput] = useState('');
   const [showTracking, setShowTracking] = useState(false);
 
@@ -72,13 +73,14 @@ export default function OrderDetailPage({ orderId, onBack }: Props) {
   }, [orderId]);
 
   const handleStatusUpdate = async () => {
-    if (!confirm || !order) return;
-    setUpdating(true);
-    await api.updateOrderStatus(order.id, confirm.status, note || undefined);
-    setOrder(prev => prev ? { ...prev, orderStatus: confirm.status } : prev);
-    setConfirm(null);
-    setNote('');
-    setUpdating(false);
+    if (!confirm || !order || updating) return;
+    setUpdating(true);setActionError('');
+    try {
+      const updated=await api.updateOrderStatus(order.id, confirm.status, note || undefined);
+      setOrder(updated);setConfirm(null);setNote('');
+    } catch {setActionError('Order could not be updated. Your changes are still here. Try again.');}
+    finally {setUpdating(false);}
+
   };
 
   if (loading) return (
@@ -138,7 +140,7 @@ export default function OrderDetailPage({ orderId, onBack }: Props) {
             {STATUS_ACTIONS.filter(a => a.status !== order.orderStatus).slice(0, 3).map(action => (
               <button
                 key={action.status}
-                onClick={() => setConfirm(action)}
+                onClick={() => {setActionError('');setConfirm(action);}}
                 className={`px-3 py-2 text-xs font-semibold rounded-lg border transition-colors ${action.danger ? 'border-[#FECACA] text-[#991B1B] hover:bg-[#FEF2F2]' : 'border-[#E8E0D8] text-[#6B5B4E] hover:bg-[#F5F0EA] hover:text-[#1A1108]'}`}
               >
                 {action.label}
@@ -146,7 +148,7 @@ export default function OrderDetailPage({ orderId, onBack }: Props) {
             ))}
             <div className="relative">
               <button
-                onClick={() => setShowTracking(!showTracking)}
+                onClick={() => {setActionError('');setShowTracking(!showTracking);}}
                 className="px-3 py-2 text-xs font-semibold rounded-lg border border-[#C4622D] text-[#C4622D] hover:bg-[#C4622D] hover:text-white transition-colors"
               >
                 + Add Tracking
@@ -156,14 +158,22 @@ export default function OrderDetailPage({ orderId, onBack }: Props) {
                   <p className="text-xs font-semibold text-[#1A1108] mb-2">Add Tracking</p>
                   <input
                     type="text"
+                    aria-label="Tracking ID"
+                    maxLength={100}
                     value={trackingInput}
                     onChange={e => setTrackingInput(e.target.value)}
                     placeholder="Tracking ID"
                     className="w-full px-3 py-2 text-sm border border-[#E8E0D8] rounded-lg mb-2 focus:outline-none focus:border-[#C4622D]"
                   />
+                  {actionError && <p role="alert" className="mb-2 text-xs text-red-700">{actionError}</p>}
                   <div className="flex gap-2">
-                    <button onClick={() => setShowTracking(false)} className="flex-1 py-2 text-xs border border-[#E8E0D8] rounded-lg text-[#6B5B4E] hover:bg-[#F5F0EA]">Cancel</button>
-                    <button onClick={() => setShowTracking(false)} className="flex-1 py-2 text-xs bg-[#C4622D] text-white rounded-lg font-semibold hover:bg-[#D4795A]">Save</button>
+                    <button disabled={updating} onClick={() => setShowTracking(false)} className="flex-1 py-2 text-xs border border-[#E8E0D8] rounded-lg text-[#6B5B4E] hover:bg-[#F5F0EA]">Cancel</button>
+                    <button disabled={updating || !trackingInput.trim() || /[\x00-\x1f\x7f]/.test(trackingInput)} onClick={async () => {
+                      if(updating)return;setUpdating(true);setActionError('');
+                      try {const updated=await api.updateOrderStatus(order.id,order.orderStatus,undefined,trackingInput.trim());setOrder(updated);setShowTracking(false);setTrackingInput('');}
+                      catch {setActionError('Tracking could not be saved. Your input is still here. Try again.');}
+                      finally {setUpdating(false);}
+                    }} className="flex-1 py-2 text-xs bg-[#C4622D] text-white rounded-lg font-semibold hover:bg-[#D4795A]">Save</button>
                   </div>
                 </div>
               )}
@@ -273,7 +283,7 @@ export default function OrderDetailPage({ orderId, onBack }: Props) {
               </div>
             ) : (
               <EmptyState icon="🚚" title="No shipment created" desc="Create a shipment once the order is ready to ship." action={
-                <button className="text-xs text-[#C4622D] font-semibold border border-[#C4622D]/30 px-3 py-1.5 rounded-lg hover:bg-[#C4622D] hover:text-white transition-colors">
+                <button disabled title="Shipment creation is not yet integrated. Use Add Tracking to record an existing tracking ID." className="text-xs text-[#C4622D] font-semibold border border-[#C4622D]/30 px-3 py-1.5 rounded-lg hover:bg-[#C4622D] hover:text-white transition-colors">
                   Create Shipment
                 </button>
               } />
@@ -327,13 +337,16 @@ export default function OrderDetailPage({ orderId, onBack }: Props) {
           <div className="bg-white rounded-xl border border-[#E8E0D8] p-5">
             <h3 className="font-bold text-[#1A1108] text-sm mb-3" style={{ fontFamily: 'var(--font-serif)' }}>Internal Notes</h3>
             <textarea
+              disabled
+              aria-label="Internal note"
               value={note}
               onChange={e => setNote(e.target.value)}
               placeholder="Add an internal note (not visible to customer)…"
               rows={3}
               className="w-full text-xs border border-[#E8E0D8] rounded-lg px-3 py-2 focus:outline-none focus:border-[#C4622D] resize-none bg-[#FDFAF7] text-[#1A1108] placeholder-[#C5B4A8]"
             />
-            <button className="mt-2 text-xs font-semibold text-[#C4622D] border border-[#C4622D]/30 px-3 py-1.5 rounded-lg hover:bg-[#C4622D] hover:text-white transition-colors">
+            <p className="mt-2 text-xs text-[#9C8B7E]">Internal note editing is not yet available.</p>
+            <button disabled title="Internal note saving is not yet integrated." className="mt-2 text-xs font-semibold text-[#C4622D] border border-[#C4622D]/30 px-3 py-1.5 rounded-lg hover:bg-[#C4622D] hover:text-white transition-colors">
               Save Note
             </button>
           </div>
@@ -347,6 +360,8 @@ export default function OrderDetailPage({ orderId, onBack }: Props) {
         message={`Are you sure you want to ${confirm?.label?.toLowerCase()} for order ${order.orderNumber}? This action will update the order status.`}
         confirmLabel={confirm?.label}
         danger={confirm?.danger}
+        busy={updating}
+        error={actionError}
         onConfirm={handleStatusUpdate}
         onCancel={() => { setConfirm(null); setNote(''); }}
       />
