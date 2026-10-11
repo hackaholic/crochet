@@ -18,7 +18,7 @@ export interface HomepageCampaign {
 }
 
 export interface StorefrontContent {
-  brand: { name: string; ownerName: string; instagramUrl?: string | null; whatsappUrl?: string | null };
+  brand: { logoUrl?: string | null; name: string; ownerName: string; instagramUrl?: string | null; whatsappUrl?: string | null };
   heroCampaigns: HomepageCampaign[];
 }
 

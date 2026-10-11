@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import OrderHistory from '../components/account/OrderHistory';
 import OrderItems from '../components/account/OrderItems';
 import ProfileEditor from '../components/account/ProfileEditor';
 import AddressManager from '../components/account/AddressManager';
@@ -68,7 +69,7 @@ export default function AccountPage({ onSignIn, onLogout, isAdmin = false }: { o
     <div className="mt-8"><AccountNavigation hideOrders={isAdmin} selected={section} onSelect={next => { setSection(next); setTrackingOrder(undefined); }} /></div>
     <div className="mt-6 grid gap-6">
       {section === 'profile' && overview && <ProfileEditor profile={overview.profile} onSaved={saved => setOverview(current => current ? {...current,profile:saved} : current)} />}
-      {section === 'orders' && <section id="account-orders" aria-label="Orders" className="min-w-0 rounded-2xl border border-[#EDE4D0] bg-white p-6"><h2 className="text-xl font-semibold text-[#2C1810]">Order history</h2>{orders.length ? orders.map(order => <div key={order.id} className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#EDE4D0] pt-4 text-sm"><div><button type="button" className="break-all font-semibold text-[#2C1810] underline" onClick={()=>setTrackingOrder(order.orderNumber)} aria-label={`View order ${order.orderNumber}`}>{order.orderNumber}</button><p className="capitalize text-[#8B6B4A]">{order.status.replaceAll('_', ' ').toLowerCase()}</p></div><div><p className="font-semibold text-[#2C1810]">₹{order.totalAmount}</p><button type="button" aria-label={`Track shipment for ${order.orderNumber}`} aria-expanded={trackingOrder === order.orderNumber} className="mt-2 underline text-[#C4622D]" onClick={() => setTrackingOrder(order.orderNumber)}>Track shipment</button></div></div>) : <p className="mt-4 text-sm text-[#8B6B4A]">Your orders will appear here.</p>}</section>}
+      {section === 'orders' && <OrderHistory orders={orders} selected={trackingOrder} onSelect={setTrackingOrder} />}
       {section === 'orders' && trackingOrder && <div className="min-w-0 space-y-3"><button type="button" className="underline text-sm" onClick={() => setTrackingOrder(undefined)}>Close shipment details</button><OrderItems key={`items-${trackingOrder}`} orderNumber={trackingOrder} /><OrderTrackingPanel key={trackingOrder} orderNumber={trackingOrder} /></div>}
       {section === 'addresses' && <AddressManager addresses={addresses} onChanged={fresh => {setAddresses(fresh);setOverview(current => current ? {...current,savedAddresses:fresh.length} : current);}} />}
     </div>

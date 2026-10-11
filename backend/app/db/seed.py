@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 import re
 import sys
+import sqlalchemy as sa
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 

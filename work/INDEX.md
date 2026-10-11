@@ -25,3 +25,5 @@
 - **Work 019 — Editable product information and defaults** · Completed · [work folder](work-019-product-information/)
 
 - **Work 020 — Incremental finance improvements** · In Progress · [work folder](work-020-finance-incremental/)
+
+- **Work 021 — Official brand logo** · Completed · [work folder](work-021-brand-logo/)

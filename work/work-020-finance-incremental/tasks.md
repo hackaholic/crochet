@@ -2,14 +2,6 @@
 
 ## In Progress
 
-
-
-
-
-
-
-
-
 - [ ] [20.16 — Finance product, category and operational drilldowns](tasks/task-016-finance-table-drilldowns.md) — Codex
 
 - [ ] [20.15 — Reusable admin table interaction template](tasks/task-015-interactive-table-template.md) — Codex

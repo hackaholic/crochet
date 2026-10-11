@@ -16,7 +16,7 @@ Add reusable colored table headers with accessible contrast.
 - Dependency context: Use restored Gemini API for profit; other visual tasks use existing APIs.
 - Blocked by: None
 - Blocker reason: None
-- Next action: Implement and verify locally
+- Next action: None (task completed)
 - Inspect/edit: src/admin/components/, src/admin/pages/FinancePage.tsx; backend finance files only for 20.7
 
 ## Test cases

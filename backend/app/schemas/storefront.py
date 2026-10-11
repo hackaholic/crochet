@@ -14,6 +14,13 @@ class BrandSettingsOut(BaseModel):
 
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
+    logo_url: str | None = Field(default=None, serialization_alias="logoUrl", alias="logoUrl")
+
+    @field_validator("logo_url", mode="before")
+    @classmethod
+    def resolve_logo(cls, value):
+        return build_image_url(value) if value else None
+
     name: str = "Sulocraft"
     owner_name: str = Field(default="Anupama Sharma", serialization_alias="ownerName", alias="ownerName")
     instagram_url: str | None = Field(default=None, serialization_alias="instagramUrl", alias="instagramUrl")
@@ -56,6 +63,18 @@ class BrandSettingsUpdate(BaseModel):
     """Payload to update storewide brand settings."""
 
     model_config = ConfigDict(populate_by_name=True, extra="forbid")
+
+    logo_url: str | None = Field(default=None, alias="logoUrl")
+
+    @field_validator("logo_url")
+    @classmethod
+    def validate_logo(cls, value):
+        if value is None: return None
+        value = value.strip()
+        if value.startswith(("http://", "https://")): return _validate_safe_url(value)
+        if not value or len(value) > 500 or value.startswith("/") or ".." in value or ":" in value or "\\" in value:
+            raise ValueError("Logo must be a safe asset key or HTTP(S) URL")
+        return value
 
     name: str | None = None
     owner_name: str | None = Field(default=None, alias="ownerName")

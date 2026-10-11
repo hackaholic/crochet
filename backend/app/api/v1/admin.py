@@ -3407,6 +3407,8 @@ def update_admin_brand_settings(
         db.add(brand)
 
     update_data = payload.model_dump(exclude_unset=True)
+    if "logo_url" in update_data:
+        brand.logo_url = update_data["logo_url"]
     if "name" in update_data:
         brand.name = update_data["name"]
     if "owner_name" in update_data:

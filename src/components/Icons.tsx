@@ -107,16 +107,7 @@ export const PackageIcon = ({ size = 20, className = '' }: { size?: number; clas
   </svg>
 );
 
-// Decorative yarn ball SVG logo
-export const YarnLogo = ({ size = 40 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
-    <circle cx="20" cy="20" r="14" fill="#F2C4CE" stroke="#C4622D" strokeWidth="1.5" />
-    <path d="M8 16 Q14 10 20 14 Q26 18 32 12" stroke="#C4622D" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-    <path d="M7 22 Q14 17 20 21 Q26 25 33 19" stroke="#C4622D" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-    <path d="M9 28 Q15 24 21 27 Q27 30 32 25" stroke="#C4622D" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-    <path d="M26 8 Q30 16 28 24 Q26 32 30 35" stroke="#8B6B4A" strokeWidth="1" strokeLinecap="round" fill="none" />
-  </svg>
-);
+export { default as YarnLogo } from './BrandLogo';
 
 // Decorative crochet flower
 export const FlowerDecor = ({ size = 60, color = '#F2C4CE' }: { size?: number; color?: string }) => (

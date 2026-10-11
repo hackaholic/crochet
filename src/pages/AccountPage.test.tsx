@@ -82,3 +82,13 @@ it('simplifies admin accounts without hiding profile, addresses or sign out',asy
  expect(screen.getByRole('button',{name:'Addresses'})).toBeVisible();
  expect(screen.getByRole('button',{name:'Sign out'})).toBeVisible();
 });
+it('lists multiple orders in a table and opens only the selected timeline',async()=>{
+ api.orders.mockResolvedValue([{id:1,orderNumber:'DEMO-1',status:'SHIPPED',totalAmount:500},{id:2,orderNumber:'DEMO-2',status:'DELIVERED',totalAmount:700}]);
+ render(<AccountPage onSignIn={vi.fn()} onLogout={vi.fn()}/>);
+ fireEvent.click(await screen.findByRole('button',{name:'Orders'}));
+ expect(screen.getByRole('table')).toBeVisible();
+ expect(screen.getAllByRole('row')).toHaveLength(3);
+ fireEvent.click(screen.getByRole('button',{name:'Track shipment for DEMO-2'}));
+ expect(screen.getByText('Tracking selected: DEMO-2')).toBeVisible();
+ expect(screen.queryByText('Tracking selected: DEMO-1')).toBeNull();
+});
