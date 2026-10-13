@@ -80,7 +80,8 @@ from app.models import (
     Wishlist,
     WishlistItem,
 )
-from app.models.catalogue import product_tags, product_collections, product_occasions
+from app.models.catalogue import ProductInformationDefaults, product_tags, product_collections, product_occasions
+from app.models.expense import AdminExpense
 from app.models.user import MagicLinkToken
 
 SEEDED_PRODUCT_IDS: set[int] = set()
@@ -137,6 +138,7 @@ def clean_transactional_data():
         db.query(MagicLinkToken).delete()
         db.query(NotificationLog).delete()
         db.query(SearchEvent).delete()
+        db.query(AdminExpense).delete()
         db.query(Payment).delete()
         db.query(OrderItem).delete()
         db.query(ReturnRequest).delete()
@@ -151,6 +153,16 @@ def clean_transactional_data():
         db.query(OtpVerification).delete()
         db.query(UserSession).delete()
         db.query(UserIdentity).delete()
+
+        # Reset storewide ProductInformationDefaults to seed defaults
+        defaults = db.query(ProductInformationDefaults).first()
+        if defaults:
+            defaults.handmade_details = "Handcrafted with traditional crochet techniques. Each piece is made by hand with attention to detail; subtle variations are natural and make each item unique."
+            defaults.materials_used = "Quality yarn and secure stitching tailored for crochet heirlooms."
+            defaults.size_dimensions = "Dimensions vary by design; please refer to the product specifications."
+            defaults.processing_time = "Processing time is confirmed for each order."
+            defaults.care_instructions = "Gently spot clean or dust with a dry soft cloth. Keep away from excessive moisture and direct prolonged sunlight."
+            defaults.shipping_delivery = "Shipping availability and delivery details are confirmed for each order."
 
         # Clean non-seeded users (preserving admin user seeded by seed_catalogue)
         if SEEDED_USER_IDS:

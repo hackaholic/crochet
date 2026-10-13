@@ -357,9 +357,6 @@ def test_seed_repair_idempotence():
         db.refresh(first_assoc)
         assert first_assoc.display_order == original_order
 
-        # Reseed catalogue clears and restores cleanly
-        reseed_catalogue(db)
-
 
 def test_fresh_database_seed_idempotency_isolated():
     """Verify a clean, fresh database seeds successfully and repeated runs preserve associations."""
@@ -368,7 +365,7 @@ def test_fresh_database_seed_idempotency_isolated():
     from sqlalchemy.orm import sessionmaker
     from app.db.base import Base
     import app.models  # noqa: F401
-    from app.db.seed import PRODUCT_OCCASIONS_MAP, PRODUCTS_DATA, seed_catalogue, seed_storefront_content
+    from app.db.seed import PRODUCT_OCCASIONS_MAP, PRODUCTS_DATA, reseed_catalogue, seed_catalogue, seed_storefront_content
 
     with tempfile.NamedTemporaryFile(suffix=".db") as tmp:
         db_url = f"sqlite:///{tmp.name}"
@@ -384,6 +381,10 @@ def test_fresh_database_seed_idempotency_isolated():
         with TestSession() as s:
             seed_catalogue(s)
             seed_storefront_content(s)
+
+        # 3. Reseed catalogue clears and restores cleanly in isolated environment
+        with TestSession() as s:
+            reseed_catalogue(s)
 
         # 3. Verify associations and ordering are preserved
         with TestSession() as s:

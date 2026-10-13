@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 from app.db.seed import align_postgres_sequences, seed_catalogue
 from app.db.session import SessionLocal
 from app.main import app
-from app.models.catalogue import Product, Tag
+from app.models.catalogue import Category, Product, Tag
 from app.models.user import User, UserIdentity
 
 client = TestClient(app)
@@ -67,6 +67,9 @@ def test_admin_product_create_succeeds_after_seed():
     """1.7.11-TC01: Admin can create product immediately after seed without ID collision."""
     with SessionLocal() as db:
         seed_catalogue(db)
+        cat = db.query(Category).first()
+        assert cat is not None
+        cat_id = cat.id
 
     cookies = _login_admin()
     create_payload = {
@@ -75,8 +78,8 @@ def test_admin_product_create_succeeds_after_seed():
         "description": "Handcrafted rose verifying sequence alignment.",
         "badge": "Handmade",
         "customizable": False,
-        "categoryIds": [1],
-        "primaryCategoryId": 1,
+        "categoryIds": [cat_id],
+        "primaryCategoryId": cat_id,
         "variants": [
             {
                 "sku": "SKU-SEQ-ROSE-01",

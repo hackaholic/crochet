@@ -1121,33 +1121,66 @@ def _seed_taxonomy_and_products(db: Session) -> None:
             if t_name in tag_map:
                 product.tags.append(tag_map[t_name])
 
-        # Populate Gallery Images
-        db.query(ProductImage).filter(ProductImage.product_id == product.id).delete()
-        for idx, img_url in enumerate(p_data.get("images", [p_data["image"]])):
-            db.add(
-                ProductImage(
-                    product_id=product.id,
-                    url=img_url,
-                    alt_text=f"{product.name} handcrafted photo {idx + 1}",
-                    sort_order=idx,
-                    is_primary=(idx == 0),
+        # Populate Gallery Images (upsert to preserve image IDs across re-seeds)
+        existing_images = (
+            db.query(ProductImage)
+            .filter(ProductImage.product_id == product.id)
+            .order_by(ProductImage.sort_order.asc(), ProductImage.id.asc())
+            .all()
+        )
+        new_image_urls = p_data.get("images", [p_data["image"]])
+        # Delete excess images if list shrank
+        if len(existing_images) > len(new_image_urls):
+            for extra in existing_images[len(new_image_urls):]:
+                db.delete(extra)
+        for idx, img_url in enumerate(new_image_urls):
+            alt = f"{product.name} handcrafted photo {idx + 1}"
+            if idx < len(existing_images):
+                img_obj = existing_images[idx]
+                img_obj.url = img_url
+                img_obj.alt_text = alt
+                img_obj.sort_order = idx
+                img_obj.is_primary = (idx == 0)
+            else:
+                db.add(
+                    ProductImage(
+                        product_id=product.id,
+                        url=img_url,
+                        alt_text=alt,
+                        sort_order=idx,
+                        is_primary=(idx == 0),
+                    )
                 )
-            )
 
-        # Populate Variants
-        db.query(ProductVariant).filter(ProductVariant.product_id == product.id).delete()
+        # Populate Variants (upsert by SKU to preserve variant IDs across re-seeds)
+        existing_variants = {
+            v.sku: v for v in db.query(ProductVariant).filter(ProductVariant.product_id == product.id).all()
+        }
+        target_skus = {v_data["sku"] for v_data in p_data.get("variants", [])}
+        for sku, v in existing_variants.items():
+            if sku not in target_skus:
+                db.delete(v)
         for v_data in p_data.get("variants", []):
-            db.add(
-                ProductVariant(
-                    product_id=product.id,
-                    sku=v_data["sku"],
-                    name=v_data["name"],
-                    price=v_data["price"],
-                    stock_quantity=v_data.get("stock", 10),
-                    status="ACTIVE",
-                    attributes_json=v_data.get("attributes", {}),
+            sku = v_data["sku"]
+            if sku in existing_variants:
+                v = existing_variants[sku]
+                v.name = v_data["name"]
+                v.price = v_data["price"]
+                v.stock_quantity = v_data.get("stock", 10)
+                v.status = "ACTIVE"
+                v.attributes_json = v_data.get("attributes", {})
+            else:
+                db.add(
+                    ProductVariant(
+                        product_id=product.id,
+                        sku=sku,
+                        name=v_data["name"],
+                        price=v_data["price"],
+                        stock_quantity=v_data.get("stock", 10),
+                        status="ACTIVE",
+                        attributes_json=v_data.get("attributes", {}),
+                    )
                 )
-            )
 
     db.flush()
 
@@ -1256,6 +1289,13 @@ def seed_storefront_content(db: Session) -> None:
             shipping_delivery="Shipping availability and delivery details are confirmed for each order.",
         )
         db.add(info_defaults)
+    else:
+        info_defaults.handmade_details = "Handcrafted with traditional crochet techniques. Each piece is made by hand with attention to detail; subtle variations are natural and make each item unique."
+        info_defaults.materials_used = "Quality yarn and secure stitching tailored for crochet heirlooms."
+        info_defaults.size_dimensions = "Dimensions vary by design; please refer to the product specifications."
+        info_defaults.processing_time = "Processing time is confirmed for each order."
+        info_defaults.care_instructions = "Gently spot clean or dust with a dry soft cloth. Keep away from excessive moisture and direct prolonged sunlight."
+        info_defaults.shipping_delivery = "Shipping availability and delivery details are confirmed for each order."
 
     if db.query(HomepageCampaign).count() == 0:
         campaigns_data = [

@@ -241,10 +241,15 @@ def test_admin_order_status_transitions():
     customer_cookies = _login_customer("9999911003")
     admin_cookies = _login_admin("9999900000")
 
+    with SessionLocal() as db:
+        test_variant = db.query(ProductVariant).filter(ProductVariant.stock_quantity > 0).first()
+        assert test_variant is not None
+        test_variant_id = test_variant.id
+
     # 1. Add item to cart
     add_cart = client.post(
         "/api/v1/cart/items",
-        json={"product_variant_id": 1, "quantity": 1},
+        json={"product_variant_id": test_variant_id, "quantity": 1},
         cookies=customer_cookies,
     )
     assert add_cart.status_code == 201
@@ -311,13 +316,15 @@ def test_admin_order_cancellation_restores_inventory():
     admin_cookies = _login_admin("9999900000")
 
     with SessionLocal() as db:
-        v = db.query(ProductVariant).filter(ProductVariant.id == 1).first()
+        v = db.query(ProductVariant).filter(ProductVariant.stock_quantity >= 5).first()
+        assert v is not None
+        test_variant_id = v.id
         initial_stock = v.stock_quantity
 
     # Add 2 items to cart
     add_cart = client.post(
         "/api/v1/cart/items",
-        json={"product_variant_id": 1, "quantity": 2},
+        json={"product_variant_id": test_variant_id, "quantity": 2},
         cookies=customer_cookies,
     )
     assert add_cart.status_code == 201
@@ -345,7 +352,7 @@ def test_admin_order_cancellation_restores_inventory():
     order_number = order_res.json()["orderNumber"]
 
     with SessionLocal() as db:
-        v = db.query(ProductVariant).filter(ProductVariant.id == 1).first()
+        v = db.query(ProductVariant).filter(ProductVariant.id == test_variant_id).first()
         assert v.stock_quantity == initial_stock - 2
 
     # Admin cancels order
@@ -358,7 +365,7 @@ def test_admin_order_cancellation_restores_inventory():
     assert cancel_res.json()["status"] == "CANCELLED"
 
     with SessionLocal() as db:
-        v = db.query(ProductVariant).filter(ProductVariant.id == 1).first()
+        v = db.query(ProductVariant).filter(ProductVariant.id == test_variant_id).first()
         assert v.stock_quantity == initial_stock
 
 
@@ -421,10 +428,16 @@ def test_admin_order_and_return_customer_identity_linkage():
     assert cust_auth.status_code == 200
     expected_user_id = cust_auth.json()["user"]["id"]
 
-    cust_client.post(
+    with SessionLocal() as db:
+        test_variant = db.query(ProductVariant).filter(ProductVariant.stock_quantity > 0).first()
+        assert test_variant is not None
+        test_variant_id = test_variant.id
+
+    cust_cart_res = cust_client.post(
         "/api/v1/cart/items",
-        json={"product_variant_id": 1, "quantity": 1},
+        json={"product_variant_id": test_variant_id, "quantity": 1},
     )
+    assert cust_cart_res.status_code == 201
     reg_order_res = cust_client.post(
         "/api/v1/orders",
         json={
@@ -450,7 +463,7 @@ def test_admin_order_and_return_customer_identity_linkage():
     guest_client = TestClient(app)
     guest_cart_res = guest_client.post(
         "/api/v1/cart/items",
-        json={"product_variant_id": 1, "quantity": 1},
+        json={"product_variant_id": test_variant_id, "quantity": 1},
     )
     assert guest_cart_res.status_code == 201
     guest_order_res = guest_client.post(
