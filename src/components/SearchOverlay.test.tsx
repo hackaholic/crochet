@@ -212,3 +212,72 @@ describe('SearchOverlay', () => {
   });
 });
 
+
+describe('Search pagination', () => {
+  const batch = Array.from({ length: 6 }, (_, index) => ({ ...rose, id: index + 100, name: `Rose ${index}` }));
+  beforeEach(() => { catalogueApi.searchProducts.mockReset(); vi.useFakeTimers(); });
+  async function start() {
+    render(<SearchOverlay open onClose={vi.fn()} onProductClick={vi.fn()} />);
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'rose' } });
+    await act(async () => { await vi.advanceTimersByTimeAsync(275); });
+  }
+  it('appends deduplicated pages, stops on a short page and records telemetry once', async () => {
+    catalogueApi.searchProducts.mockResolvedValueOnce(batch).mockResolvedValueOnce([batch[0], tulip]);
+    await start();
+    fireEvent.click(screen.getByRole('button', { name: 'Load more results' }));
+    await act(async () => { await Promise.resolve(); });
+    expect(catalogueApi.searchProducts).toHaveBeenLastCalledWith('rose', expect.objectContaining({ offset: 6 }));
+    expect(screen.getAllByRole('option')).toHaveLength(7);
+    expect(screen.getByText('End of results')).toBeInTheDocument();
+    fireEvent.scroll(screen.getByLabelText('Search result panel'));
+    expect(catalogueApi.searchProducts).toHaveBeenCalledTimes(2);
+    expect(catalogueApi.recordSearchQuery).toHaveBeenCalledTimes(1);
+  });
+  it('allows only one scroll request, preserves results on 429 and retries explicitly', async () => {
+    let rejectPage!: (reason: Error) => void;
+    catalogueApi.searchProducts.mockResolvedValueOnce(batch).mockImplementationOnce(() => new Promise((_, reject) => { rejectPage = reject; })).mockResolvedValueOnce([]);
+    await start();
+    const panel = screen.getByLabelText('Search result panel');
+    fireEvent.scroll(panel); fireEvent.scroll(panel);
+    expect(catalogueApi.searchProducts).toHaveBeenCalledTimes(2);
+    await act(async () => { rejectPage(new Error('429')); });
+    expect(screen.getAllByRole('option')).toHaveLength(6);
+    expect(screen.getByRole('alert')).toHaveTextContent('More results could not be loaded');
+    fireEvent.scroll(panel);
+    expect(catalogueApi.searchProducts).toHaveBeenCalledTimes(2);
+    fireEvent.click(screen.getByRole('button', { name: 'Retry more results' }));
+    await act(async () => { await Promise.resolve(); });
+    expect(catalogueApi.searchProducts).toHaveBeenLastCalledWith('rose', expect.objectContaining({ offset: 6 }));
+    expect(screen.getByText('End of results')).toBeInTheDocument();
+  });
+  it('cancels a pending page when closed and keeps keyboard-selected rows visible', async () => {
+    catalogueApi.searchProducts.mockResolvedValueOnce(batch).mockImplementationOnce(() => new Promise(() => {}));
+    const view = render(<SearchOverlay open onClose={vi.fn()} onProductClick={vi.fn()} />);
+    const input = screen.getByRole('searchbox');
+    fireEvent.change(input, { target: { value: 'rose' } });
+    await act(async () => { await vi.advanceTimersByTimeAsync(275); });
+    const option = screen.getAllByRole('option')[1];
+    const intoView = vi.fn();
+    option.scrollIntoView = intoView;
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+    expect(option).toHaveAttribute('aria-selected', 'true');
+    expect(intoView).toHaveBeenCalledWith({ block: 'nearest' });
+    fireEvent.click(screen.getByRole('button', { name: 'Load more results' }));
+    const signal = catalogueApi.searchProducts.mock.calls[1][1].signal;
+    view.rerender(<SearchOverlay open={false} onClose={vi.fn()} onProductClick={vi.fn()} />);
+    expect(signal.aborted).toBe(true);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+  it('aborts and ignores an old page when the query changes', async () => {
+    let resolvePage!: (value: Product[]) => void;
+    catalogueApi.searchProducts.mockResolvedValueOnce(batch).mockImplementationOnce(() => new Promise(resolve => { resolvePage = resolve; })).mockResolvedValueOnce([tulip]);
+    await start();
+    fireEvent.click(screen.getByRole('button', { name: 'Load more results' }));
+    const signal = catalogueApi.searchProducts.mock.calls[1][1].signal;
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'tulip' } });
+    expect(signal.aborted).toBe(true);
+    await act(async () => { resolvePage([rose]); await vi.advanceTimersByTimeAsync(275); });
+    expect(screen.getAllByRole('option')).toHaveLength(1);
+    expect(screen.getByRole('option')).toHaveTextContent('Crochet Tulip Bouquet');
+  });
+});

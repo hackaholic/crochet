@@ -94,6 +94,7 @@ export async function getProducts(signal?: AbortSignal): Promise<Product[]> {
 }
 
 export interface ProductSearchOptions {
+  offset?: number;
   limit?: number;
   signal?: AbortSignal;
 }
@@ -106,6 +107,7 @@ export async function searchProducts(query: string, options: ProductSearchOption
   const params = new URLSearchParams({
     q: normalizedQuery,
     limit: String(options.limit ?? 6),
+    offset: String(options.offset ?? 0),
   });
   const response = await fetch(apiUrl(`/products/search?${params.toString()}`), {
     signal: options.signal,

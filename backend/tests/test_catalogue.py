@@ -101,6 +101,123 @@ def test_search_products():
     assert "Panda" in data[0]["name"]
 
 
+# =============================================================================
+# Task 9.11 — Paginated search API Test Cases (9.11-TC1 to 9.11-TC4)
+# =============================================================================
+
+def test_9_11_tc1_paginated_search_batches_and_deterministic_order():
+    """9.11-TC1: Pages over fixtures return all active matches once; tied rankings use deterministic id order."""
+    # Query all seeded products matching common term like 'crochet' or empty/common letter 'e'
+    res_all = client.get("/api/v1/products/search?q=e&limit=50&offset=0")
+    assert res_all.status_code == 200
+    all_items = res_all.json()
+    assert len(all_items) >= 4, "Expected at least 4 items matching 'e' in seeded catalogue"
+
+    total_count = len(all_items)
+    batch_size = 2
+
+    # Fetch page by page with limit=2
+    page1 = client.get(f"/api/v1/products/search?q=e&limit={batch_size}&offset=0").json()
+    page2 = client.get(f"/api/v1/products/search?q=e&limit={batch_size}&offset=2").json()
+
+    assert len(page1) == batch_size
+    assert len(page2) == batch_size
+
+    # Verify no overlap between page 1 and page 2
+    ids_page1 = [p["id"] for p in page1]
+    ids_page2 = [p["id"] for p in page2]
+    assert set(ids_page1).isdisjoint(set(ids_page2))
+
+    # Verify pagination matches full list slicing
+    assert ids_page1 == [p["id"] for p in all_items[:2]]
+    assert ids_page2 == [p["id"] for p in all_items[2:4]]
+
+    # Verify deterministic ordering: reviews_count DESC, then id ASC
+    for i in range(len(all_items) - 1):
+        curr = all_items[i]
+        nxt = all_items[i + 1]
+        curr_reviews = curr.get("reviews", curr.get("reviewCount", 0))
+        nxt_reviews = nxt.get("reviews", nxt.get("reviewCount", 0))
+        if curr_reviews == nxt_reviews:
+            assert curr["id"] < nxt["id"], f"Tied reviews count should sort by id ASC: {curr['id']} vs {nxt['id']}"
+        else:
+            assert curr_reviews > nxt_reviews, f"Reviews count should sort DESC: {curr_reviews} vs {nxt_reviews}"
+
+
+def test_9_11_tc2_pagination_boundary_and_validation():
+    """9.11-TC2: Default request remains compatible; negative offset and invalid limit return 422; exhausted page returns []."""
+    # Default parameters (limit=20, offset=0)
+    res_default = client.get("/api/v1/products/search?q=rose")
+    assert res_default.status_code == 200
+    assert isinstance(res_default.json(), list)
+
+    # Negative offset -> 422 Unprocessable Entity
+    res_neg_offset = client.get("/api/v1/products/search?q=rose&offset=-1")
+    assert res_neg_offset.status_code == 422
+
+    # Limit = 0 -> 422 Unprocessable Entity
+    res_zero_limit = client.get("/api/v1/products/search?q=rose&limit=0")
+    assert res_zero_limit.status_code == 422
+
+    # Limit > 50 -> 422 Unprocessable Entity
+    res_over_limit = client.get("/api/v1/products/search?q=rose&limit=51")
+    assert res_over_limit.status_code == 422
+
+    # Exhausted page beyond available items -> []
+    res_exhausted = client.get("/api/v1/products/search?q=rose&offset=9999")
+    assert res_exhausted.status_code == 200
+    assert res_exhausted.json() == []
+
+
+def test_9_11_tc3_search_matching_and_inactive_exclusion_and_sql_safety():
+    """9.11-TC3: Search matches names, descriptions, tags, categories; inactive products excluded; SQL-like input safe."""
+    # Matches name
+    res_name = client.get("/api/v1/products/search?q=Bouquet")
+    assert res_name.status_code == 200
+    assert any("bouquet" in p["name"].lower() for p in res_name.json())
+
+    # Matches tag
+    res_tag = client.get("/api/v1/products/search?q=romantic")
+    assert res_tag.status_code == 200
+    assert len(res_tag.json()) > 0
+
+    # Matches category
+    res_cat = client.get("/api/v1/products/search?q=Flowers")
+    assert res_cat.status_code == 200
+    assert len(res_cat.json()) > 0
+
+    # Inactive products excluded
+    from app.db.session import SessionLocal
+    from app.models.catalogue import Product
+    with SessionLocal() as db:
+        inactive = db.query(Product).filter(Product.status != "ACTIVE").first()
+        if inactive:
+            res_inactive = client.get(f"/api/v1/products/search?q={inactive.name}")
+            assert all(p["id"] != inactive.id for p in res_inactive.json())
+
+    # SQL injection attempt / SQL-like input handled safely
+    res_sql = client.get("/api/v1/products/search?q=' OR '1'='1")
+    assert res_sql.status_code == 200
+    assert isinstance(res_sql.json(), list)
+
+
+def test_9_11_tc4_telemetry_isolation_on_pagination():
+    """9.11-TC4: GET /products/search does not ingest search telemetry (telemetry is POST /products/search/events only)."""
+    from app.db.session import SessionLocal
+    from app.models import SearchEvent
+    with SessionLocal() as db:
+        count_before = db.query(SearchEvent).count()
+
+    res = client.get("/api/v1/products/search?q=sunflower&offset=0&limit=5")
+    assert res.status_code == 200
+    res_page2 = client.get("/api/v1/products/search?q=sunflower&offset=5&limit=5")
+    assert res_page2.status_code == 200
+
+    with SessionLocal() as db:
+        count_after = db.query(SearchEvent).count()
+        assert count_after == count_before, "GET /products/search must never insert telemetry records"
+
+
 def test_get_product_detail_by_slug():
     """Verify full product detail by slug conforming to Section 2 of spec."""
     response = client.get("/api/v1/products/forever-crochet-rose-bouquet")

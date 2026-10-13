@@ -37,7 +37,7 @@ describe('catalogue API adapter', () => {
 
     const results = await searchProducts('  rose bouquet  ', { limit: 6, signal: controller.signal });
 
-    expect(fetchMock).toHaveBeenCalledWith('/api/v1/products/search?q=rose+bouquet&limit=6', { signal: controller.signal });
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/products/search?q=rose+bouquet&limit=6&offset=0', { signal: controller.signal });
     expect(results).toEqual([expect.objectContaining({ id: 2, slug: 'crochet-rose', name: 'Crochet Rose', image: 'rose.webp' })]);
   });
 

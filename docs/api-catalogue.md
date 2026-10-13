@@ -306,11 +306,12 @@ Retrieve complete product details. Supports both slug (`forever-crochet-rose-bou
 ---
 
 ### `GET /products/search`
-Full-text keyword search across product names, descriptions, tags, and category names.
+Full-text keyword search across product names, descriptions, tags, and category names. Results are ordered deterministically by `reviews_count DESC`, then `id ASC`.
 
 **Query Parameters:**
-* `q` (string, required): Search query string.
-* `limit` (integer, optional, default: `20`): Maximum results to return.
+* `q` (string, required): Search query string (minimum 1 character).
+* `limit` (integer, optional, default: `20`, minimum: `1`, maximum: `50`): Maximum results to return.
+* `offset` (integer, optional, default: `0`, minimum: `0`): Number of matched records to skip for pagination.
 
 ### `GET /products/search/suggestions`
 Returns backend-ranked suggestions for an empty search overlay. Rankings must come from persisted recent search activity and non-cancelled order-line activity. Do not use review counts or static frontend data as a trend proxy.

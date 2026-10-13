@@ -5,7 +5,7 @@
 
 ## Objective
 
-Add automated unit and regression tests for all SEO components, ensure zero hydration mismatches, and verify Core Web Vitals (LCP, CLS, FID) to maintain high search ranking scores.
+Add automated unit and regression tests for all SEO components, ensure zero hydration mismatches, and verify Core Web Vitals (LCP, CLS, INP) to measure real user experience without guaranteeing rankings.
 
 ## Context and contract
 
@@ -22,7 +22,7 @@ Follow the project working rule: add automated tests and verify locally in Docke
 
 ## Dependencies and relevant files
 
-- Depends on: 5.3
+- Depends on: 5.1, 5.2, 5.3, 5.6, 5.7, 5.8, 5.9, 5.10, 5.11, 5.12, 5.13, 5.16
 - Dependency context: Task 5.3.
 - Inspect/edit:
   - `src/components/SeoManager.test.tsx`
@@ -30,9 +30,24 @@ Follow the project working rule: add automated tests and verify locally in Docke
 
 ## Acceptance checks
 
-- [ ] `npm test` and `pytest backend/tests/test_seo.py` pass.
+- [ ] Focused pnpm frontend/build tests and isolated backend test runner pass; no shared DB test execution.
 - [ ] No hydration errors in browser console during client hydration of pre-rendered pages.
 
 ## Handoff back
 
-- Mark Work 005 completed in `work/INDEX.md` and `work/work-005-seo-optimization/tasks.md`.
+- Mark5.4 complete with evidence; mark Work005 complete only when every required task/account readiness/monitoring acceptance is satisfied.
+
+## Planning clarification — 2026-10-13
+**Work item:** Work 005
+**Work owner:** Codex
+Implementation boundary: Integrated SEO regression/launch acceptance. Performance measurement owned by5.11; use INP rather than obsolete FID. Validate HTTP/root resources, initial HTML/DOM parity, public/private indexability, truthful schema and mobile/browser regression.
+- Blocked by: None
+- Blocker reason: Dependency return not yet verified; do not start dependent implementation
+- Next action: Read5.5 audit return and exact dependencies above
+
+## Traceable test and security additions
+- 5.4-TC01: Test stated acceptance against actual active DB records and raw HTML/client output; record exact automated/local commands and results.
+- 5.4-TC02: Test missing/private/unapproved content, injected text/URLs and conflicting canonical/schema/environment input; no secrets, invented facts or duplicate head tags.
+- Security: Safe JSON-LD/HTML escaping, bounded typed API data and validated origins; schema must match visible data. Record disposition and self/peer review.
+- Local Docker/API/browser acceptance required for behavior changes; no push or production/account action in this planning task.
+- Update exact contract plus work-local tasks/notes/coordination on return. Preserve original objective/history above; split ownership prevents duplicate work.

@@ -1,7 +1,7 @@
 # Task 9.13 — Local paginated search acceptance
 
 **Owner:** Codex
-**Status:** Pending
+**Status:** Completed
 **Work item:** Work 009
 **Work owner:** Codex
 
@@ -9,7 +9,7 @@
 
 Verify paginated search in rebuilt local frontend/API services with a known multi-page catalogue fixture and record browser/API evidence.
 Dependencies: Tasks 9.11 and 9.12 completed.
-Blockers: None reported at planning; prerequisites must be verified at pickup.
+Blockers: None. User confirmed remaining browser verification on 2026-10-13.
 
 ## Context and contract
 
@@ -45,11 +45,11 @@ Read ../README.md, ../decisions.md, ../coordination.md and work/GEMINI_WORKFLOW_
 
 ## Acceptance checks
 
-- [ ] Relevant API/frontend tests pass using multi-page data; existing discovery and rate-limit behavior regressions pass.
-- [ ] Chrome, Firefox and mobile viewport checks confirm usable scrolling, keyboard navigation, stable results and image rendering.
-- [ ] Local API/browser evidence recorded before release; unavailable browsers or checks are documented as blockers rather than claimed passed.
-- [ ] Tests and security evidence recorded; self-review or independent review identified accurately.
-- [ ] Changed behavior verified locally in Docker/API and browser before any push or preprod deployment.
+- [x] Relevant API/frontend tests pass using multi-page data; existing discovery and rate-limit behavior regressions pass.
+- [x] Chrome, Firefox and mobile viewport checks confirm usable scrolling, keyboard navigation, stable results and image rendering.
+- [x] Local API/browser evidence recorded before release; unavailable browsers or checks are documented as blockers rather than claimed passed.
+- [x] Tests and security evidence recorded; self-review or independent review identified accurately.
+- [x] Changed behavior verified locally in Docker/API and browser before any push or preprod deployment.
 
 ## Handoff back
 
@@ -60,3 +60,16 @@ Update this contract, tasks.md, notes.md and coordination.md with status, change
 - [ ] Read work/INDEX.md and this selected work folder/contract.
 - [ ] Confirm ownership and prerequisites; mark only this task In Progress.
 - [ ] Reuse verified existing assets and URLs; no repeat uploads or placeholder copies.
+
+## Return evidence — Codex
+- Gemini9.11:16 PostgreSQL catalogue tests passed (work-local returned evidence).
+- Codex9.12:25 focused frontend/API-client tests and typecheck passed; /tmp/search-pagination-final-tests.log.
+- Discovery/rate/telemetry regression: ./scripts/test.sh backend tests/test_search_discovery.py —25 passed; /tmp/work009-discovery-tests.log.
+- Docker frontend/API rebuilt and healthy. Live API `crochet`:15 matches, page sizes6/6/3/0, deterministic ids equal full response and no duplicates.
+- In-app browser: actual scroll yields6→12→15, End of results; keyboard selected item stays visible and Enter navigates to its storefront product. Loaded images;1440x900 desktop and390x844 mobile fit without horizontal overflow; viewport reset.
+- Screenshot /tmp/work009-pagination-local.png and /tmp/work009-search-desktop.png.
+- bash scripts/security/scan-sast.sh passes zero blocking High/Critical. Self-review: public bounded ORM reads, no private data, cancelled stale pages, no automatic retry storms or per-page telemetry.
+- Remaining: dedicated Chrome and Firefox checks; available browser inventory has only IAB and MCP Apps. No push/deploy performed. Next: connect named browser surfaces or user performs those checks; record results here before marking9.13 complete.
+
+## Acceptance closure — 2026-10-13
+User confirmed9.13 verification and requested closure. Remaining named-browser acceptance is user-verified; prior automated and in-app browser evidence above remains unchanged. All acceptance criteria satisfied; no blockers. No new tests were run for this documentation-only closure. No push/deployment performed.

@@ -1,16 +1,17 @@
 # Work 009 tasks
 
 ## In Progress
-
 None.
 
 ## Pending
-
-- [ ] 9.11 Gemini: [Paginated search API](tasks/task-011-paginated-search-api.md) — ready for pickup.
-- [ ] 9.12 Codex: [Scroll to load search batches](tasks/task-012-search-scroll-pagination.md) — depends on 9.11.
-- [ ] 9.13 Codex: [Local paginated search acceptance](tasks/task-013-pagination-verification.md) — depends on 9.11 and 9.12.
+None.
 
 ## Completed
+- [x] 9.13 Codex: [Local paginated search acceptance](tasks/task-013-pagination-verification.md) — automated/local checks passed; remaining browser verification confirmed by user2026-10-13.
+- [x] 9.11 Gemini: [Paginated search API](tasks/task-011-paginated-search-api.md) —16 isolated PostgreSQL tests passed.
+- [x] 9.12 Codex: [Scroll to load search batches](tasks/task-012-search-scroll-pagination.md) —25 focused frontend tests/typecheck pass; pagination, cancellation, retry and keyboard coverage.
+
+- [x] 9.11 Gemini: [Paginated search API](tasks/task-011-paginated-search-api.md) — offset pagination added with deterministic reviews_count/id order; tests 9.11-TC1 to 9.11-TC4 passing in Docker container test suite.
 
 - [x] 9.1 Audit current storefront search and backend capability: the UI filters the preloaded first 100 products in memory; the public API already has a database-backed search endpoint matching names, descriptions, tags, and category names.
 - [x] 9.2 Add typed `searchProducts(query, { limit, signal })` API client using the existing endpoint and shared product mapper.

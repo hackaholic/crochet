@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { SearchIcon, XIcon } from './Icons';
+import { useSearchBatches } from '../hooks/useSearchBatches';
 import type { Product } from '../data/products';
-import { getSearchSuggestions, recordSearchQuery, searchProducts, type SearchSuggestions } from '../lib/api/catalogue';
+import { getSearchSuggestions, type SearchSuggestions } from '../lib/api/catalogue';
 
 interface SearchOverlayProps {
   open: boolean;
@@ -10,14 +11,9 @@ interface SearchOverlayProps {
 }
 
 const MIN_QUERY_LENGTH = 2;
-const SEARCH_DEBOUNCE_MS = 275;
-const SEARCH_RESULT_LIMIT = 6;
 
 export default function SearchOverlay({ open, onClose, onProductClick }: SearchOverlayProps) {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [retry, setRetry] = useState(0);
   const [suggestions, setSuggestions] = useState<SearchSuggestions>({ trending_keywords: [], trending_products: [] });
@@ -27,6 +23,8 @@ export default function SearchOverlay({ open, onClose, onProductClick }: SearchO
   const inputRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const normalizedQuery = query.trim();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const { results, loading, error, hasMore, loadingMore, pageError, loadMore } = useSearchBatches(normalizedQuery, open, retry);
 
   useEffect(() => {
     if (!open || normalizedQuery.length > 0) {
@@ -52,42 +50,17 @@ export default function SearchOverlay({ open, onClose, onProductClick }: SearchO
   }, [open, normalizedQuery, suggestionsRetry]);
 
   useEffect(() => {
-    if (!open || normalizedQuery.length < MIN_QUERY_LENGTH) {
-      setResults([]);
-      setLoading(false);
-      setError(false);
-      setActiveIndex(-1);
-      return;
-    }
-
-    const controller = new AbortController();
-    setLoading(true);
-    setError(false);
-    setResults([]);
     setActiveIndex(-1);
-
-    const timer = window.setTimeout(() => {
-      searchProducts(normalizedQuery, { limit: SEARCH_RESULT_LIMIT, signal: controller.signal })
-        .then(products => {
-          if (!controller.signal.aborted) {
-            setResults(products);
-            setActiveIndex(products.length > 0 ? 0 : -1);
-            void recordSearchQuery(normalizedQuery).catch(() => undefined);
-          }
-        })
-        .catch(() => {
-          if (!controller.signal.aborted) setError(true);
-        })
-        .finally(() => {
-          if (!controller.signal.aborted) setLoading(false);
-        });
-    }, SEARCH_DEBOUNCE_MS);
-
-    return () => {
-      window.clearTimeout(timer);
-      controller.abort();
-    };
+    if (panelRef.current) panelRef.current.scrollTop = 0;
   }, [normalizedQuery, open, retry]);
+
+  useEffect(() => {
+    if (results.length && activeIndex < 0) setActiveIndex(0);
+  }, [results, activeIndex]);
+
+  useEffect(() => {
+    if (activeIndex >= 0) panelRef.current?.querySelectorAll('[role="option"]')[activeIndex]?.scrollIntoView?.({ block: 'nearest' });
+  }, [activeIndex]);
 
   useEffect(() => {
     if (!open) return;
@@ -98,9 +71,6 @@ export default function SearchOverlay({ open, onClose, onProductClick }: SearchO
 
   const close = () => {
     setQuery('');
-    setResults([]);
-    setError(false);
-    setLoading(false);
     setActiveIndex(-1);
     onClose();
   };
@@ -178,7 +148,7 @@ export default function SearchOverlay({ open, onClose, onProductClick }: SearchO
           </button>
         </div>
 
-        <div className="max-h-[min(70vh,32rem)] overflow-y-auto px-4 py-5 sm:px-6" aria-live="polite" aria-busy={loading || suggestionsLoading}>
+        <div ref={panelRef} aria-label="Search result panel" onScroll={event => { const panel = event.currentTarget; if (panel.scrollHeight - panel.scrollTop - panel.clientHeight <= 80) loadMore(); }} className="max-h-[min(70vh,32rem)] overflow-y-auto px-4 py-5 sm:px-6" aria-live="polite" aria-busy={loading || loadingMore || suggestionsLoading}>
           {normalizedQuery.length === 0 ? (suggestionsLoading ? (
             <p role="status" className="py-8 text-center text-sm text-[#806F61]">Finding what customers are exploring…</p>
           ) : suggestionsError ? (
@@ -254,6 +224,10 @@ export default function SearchOverlay({ open, onClose, onProductClick }: SearchO
                   </div>
                 ))}
               </div>
+              {loadingMore ? <p role="status" className="py-3 text-center text-sm">Loading more products…</p>
+                : pageError ? <div className="py-3 text-center"><p role="alert">More results could not be loaded.</p><button type="button" onClick={() => loadMore(true)} className="rounded-full px-4 py-2 font-semibold text-[#C4622D]">Retry more results</button></div>
+                : hasMore ? <button type="button" onClick={() => loadMore()} className="mx-auto block rounded-full px-4 py-2 font-semibold text-[#C4622D]">Load more results</button>
+                : <p className="py-3 text-center text-xs text-[#806F61]">End of results</p>}
               <p className="sr-only" role="status">{results.length} search {results.length === 1 ? 'result' : 'results'} found.</p>
             </div>
           ) : (

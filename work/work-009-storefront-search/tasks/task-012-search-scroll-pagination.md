@@ -1,7 +1,7 @@
 # Task 9.12 — Scroll to load search batches
 
 **Owner:** Codex
-**Status:** Pending
+**Status:** Completed
 **Work item:** Work 009
 **Work owner:** Codex
 
@@ -47,13 +47,13 @@ Read ../README.md, ../decisions.md, ../coordination.md and work/GEMINI_WORKFLOW_
 
 ## Acceptance checks
 
-- [ ] Initial query loads six; scrolling appends the next batch without replacing earlier results or moving selection.
-- [ ] Rapid scrolling cannot issue duplicate concurrent requests; end of results stops further requests.
-- [ ] Query change/close cancels pending pages; stale responses cannot append; duplicate ids never render twice.
-- [ ] Later-page error or 429 keeps existing results and offers explicit retry without a retry storm; loading states are distinct.
-- [ ] Keyboard selection scrolls active items into view; accessible Load more fallback works on desktop/mobile; telemetry records the query once rather than every batch.
-- [ ] Tests and security evidence recorded; self-review or independent review identified accurately.
-- [ ] Changed behavior verified locally in Docker/API and browser before any push or preprod deployment.
+- [x] Initial query loads six; scrolling appends the next batch without replacing earlier results or moving selection.
+- [x] Rapid scrolling cannot issue duplicate concurrent requests; end of results stops further requests.
+- [x] Query change/close cancels pending pages; stale responses cannot append; duplicate ids never render twice.
+- [x] Later-page error or 429 keeps existing results and offers explicit retry without a retry storm; loading states are distinct.
+- [x] Keyboard selection scrolls active items into view; accessible Load more fallback works on desktop/mobile; telemetry records the query once rather than every batch.
+- [x] Tests and security evidence recorded; self-review or independent review identified accurately.
+- [x] Changed behavior verified locally in Docker/API and browser before any push or preprod deployment.
 
 ## Handoff back
 
@@ -64,3 +64,8 @@ Update this contract, tasks.md, notes.md and coordination.md with status, change
 - [ ] Read work/INDEX.md and this selected work folder/contract.
 - [ ] Confirm ownership and prerequisites; mark only this task In Progress.
 - [ ] Reuse verified existing assets and URLs; no repeat uploads or placeholder copies.
+
+## Implementation evidence
+Codex: src/hooks/useSearchBatches.ts owns cancellable batch state; SearchOverlay uses scroll trigger plus accessible Load more/explicit retry/end state. Client sends offset. Isolated frontend tests: 25 passed with typecheck (Docker), /tmp/search-pagination-tests.log. Gemini9.11 returned with16 PostgreSQL tests passing; integrated UI verification tracked in9.13; no push. Self-review: bounded six-item requests, no customer data, API-only products, text escaped by React, telemetry once per initial query and no retry storm.
+
+Local integration: actual DB search `crochet` loads6→12→15 via scroll, ends after short final batch; keyboard selected Baby Gift Hamper opens /products/baby-gift-hamper. Images loaded, desktop1440x900/mobile390x844 without overflow. Semgrep zero blocking High/Critical.25 frontend tests pass including close cancellation and keyboard scroll.

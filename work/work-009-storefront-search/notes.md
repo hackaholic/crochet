@@ -27,3 +27,11 @@
 
 ## 2026-10-07 — Scroll pagination request
 Existing search returns at most six UI results; backend has limit only and no offset. Added contracts 9.11–9.13. Work reopened for this extension; earlier completed work retained. No app changes or deployment in this planning pass.
+
+9.12 frontend: cancellable pagination hook, scroll and button loading, dedupe, explicit retry, stable results and end state implemented. 24 focused frontend tests/typecheck pass. 9.11 assigned Gemini by user; backend draft/test edits belong to his return. Local API/browser integration remains9.13; no release.
+
+- **Verification on 2026-10-13 (Task 9.11):** Completed Task 9.11 backend paginated search API. Verified `GET /api/v1/products/search` offset pagination parameter (`offset >= 0`, default 0, limit 1–50) with deterministic ordering (`Product.reviews_count.desc(), Product.id.asc()`). Documented endpoint in `docs/api-catalogue.md`. Added automated test suite covering criteria `9.11-TC1` to `9.11-TC4` in `backend/tests/test_catalogue.py`. Executed tests inside isolated PostgreSQL container test runner via `./scripts/test.sh backend tests/test_catalogue.py` (all 16 tests pass). Returning task to Codex for Task 9.12 frontend integration.
+
+2026-10-13 Codex:9.12 complete;25 frontend tests/typecheck,25 discovery regressions and SAST gate pass. Rebuilt API/frontend; actual DB15 crochet results load6/6/3 with no duplicate ids; UI scroll6→12→15, end and keyboard product navigation verified desktop/mobile.9.13 only remaining acceptance is dedicated Chrome/Firefox browsers not exposed by CUA inventory. No push. See exact9.13 contract for evidence.
+
+2026-10-13: User confirmed9.13 verification and requested closure. Marked9.13 and Work009 Completed. User verification is distinguished from Codex automated/in-app evidence. No further code changes/tests or push/deployment.

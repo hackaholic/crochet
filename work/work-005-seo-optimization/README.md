@@ -1,11 +1,14 @@
-# Work 005 — Global SEO optimization & multinational ranking
+# Work 005 — Complete ecommerce SEO
 
-**Objective:** Implement enterprise-grade, multinational search engine optimization (SEO) across Sulocraft to rank high globally for handcrafted crochet gifting, artisanal bouquets, and amigurumi.
+**Owner:** Codex · **Status:** Pending (planning ready)
+**CURRENT:** 5.5 — Read-only current SEO audit
 
-**Scope:** JSON-LD structured data (Product, Organization, BreadcrumbList, FAQ, MerchantReturnPolicy), international hreflang & canonicalization, dynamic sitemap generation, OpenGraph/Twitter social cards, Core Web Vitals optimization, and static route pre-rendering.
+**Objective:** Make real Sulocraft product/category/content pages crawlable, reliably indexable and accurately described. No visual redesign or ranking guarantees.
 
-**Current state:** Pending. Initial SEO schemas, resolver endpoint (`/api/v1/seo/resolve`), and route pre-rendering script exist in the codebase. Multinational internationalization and structured data audit remain to be completed.
+**Existing:** SEO resolver, sitemap/robots generators, SeoManager, prerender scripts and tests exist. These are foundations, not verified full SEO delivery. Preserve completed history and task IDs5.1–5.4.
 
-**Dependencies:** Product catalogue domain; `docs/api-seo.md`; prerender script at `scripts/prerender.mjs`.
+**Scope:** Initial HTML, stable URLs/canonicals, dynamic metadata/headings, truthful schema, sitemap/robots, media, mobile performance, crawlable links, content, Search Console/Merchant readiness and monitoring. Real database content; same code and configured environment policy locally/preprod/prod.
 
-**Done when:** All public routes have complete, validated JSON-LD structured data; sitemap and robots.txt are dynamically verified; hreflang tags support global and regional traffic; automated tests pass; prerender generates all 48+ public routes with accurate metadata.
+**Read next:** tasks.md → exact task → architecture.md / contracts/seo.md only as needed. Backend contracts5.17–5.20 and5.15 belong to Gemini; implementation waits for5.5 audit. No wholesale framework migration approved.
+
+**Definition of done:** Public initial HTML and HTTP behavior validated; canonical/private/preprod indexing policies enforced; backend/frontend schema and metadata match visible content; crawlable links/media/mobile performance verified; regression/security gates pass; external account/user actions documented truthfully. Local→preprod→accepted production gates remain required.

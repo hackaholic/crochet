@@ -650,6 +650,7 @@ def list_products(
 def search_products(
     q: str = Query(..., min_length=1, description="Search keyword"),
     limit: int = Query(default=20, ge=1, le=50),
+    offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
 ) -> list[ProductListItem]:
     """Search products across name, description, tags, and category names."""
@@ -674,7 +675,8 @@ def search_products(
                 Product.categories.any(Category.name.ilike(pattern)),
             ),
         )
-        .order_by(Product.reviews_count.desc())
+        .order_by(Product.reviews_count.desc(), Product.id.asc())
+        .offset(offset)
         .limit(limit)
         .all()
     )

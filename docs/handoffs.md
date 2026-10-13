@@ -4,7 +4,6 @@ This is a **global link registry only**. Contracts, owners, live status, blocker
 
 | Work | Active subtask | Owner/status | Work-local coordination |
 | --- | --- | --- | --- |
-| 009 — Storefront search | [9.11 pagination API](../work/work-009-storefront-search/tasks/task-011-paginated-search-api.md) | Gemini; ready for pickup | [coordination](../work/work-009-storefront-search/coordination.md) |
 | 003 — SOPS/age secret vault | 3.13 isolated backend test database returned; 3.14 environment-configurable deployment returned; 3.9 local Docker verified | All Gemini vault tasks completed; full test suite passing in isolated container (173/173 tests); preprod database protected | [coordination](../work/work-003-vault/coordination.md) |
 
 | 016 — Product taxonomy audit | [16.1 inventory/classification](../work/work-016-product-taxonomy-audit/tasks/task-001-taxonomy-inventory-audit.md) | Gemini; ready for pickup | [coordination](../work/work-016-product-taxonomy-audit/coordination.md) |
