@@ -31,3 +31,5 @@ Work001 handoffs: [coordination](../work/work-001-admin-dashboard/coordination.m
 - Work020 — Gemini pickup ready: [work coordination](../work/work-020-finance-incremental/coordination.md); start [20.9 chart bug](../work/work-020-finance-incremental/tasks/task-009-sales-chart-boundaries.md), then independent incremental UI tasks.
 
 - Work020 customer identity enhancement: [work-local coordination](../work/work-020-finance-incremental/coordination.md), [20.25 contract](../work/work-020-finance-incremental/tasks/task-025-customer-identity-links.md).
+
+Work022: [coordination](../work/work-022-warning-deprecation-cleanup/coordination.md); exact warning contracts and file ownership are maintained there.
