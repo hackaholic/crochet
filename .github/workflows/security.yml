@@ -31,6 +31,7 @@ jobs:
 
       - name: Run Configuration & Architecture Audit
         run: |
+          python3 -m unittest scripts/security/test_public_build_config.py
           chmod +x scripts/security/scan-config.sh
           ./scripts/security/scan-config.sh
 

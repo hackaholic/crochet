@@ -39,3 +39,5 @@ Complete isolated backend suite passed before backend commit810301b:476passed,5s
 Full frontend release run:289passed,2stale OccasionGrid button-role expectations failed after5.12crawlable link change. Corrected tests to assert accessible links, realhref destinations and isolation cleanup; no application behavior changed. Backend GitHub deployment38941598304 and security38941598270 succeeded on810301b.
 
 Backend phase1 accepted: workflow38941598304 confirms publicapi-dev/health success. Full frontend release checks now291pass across full run plus corrected2test rerun; only test assertions changed afterwards. Proceeding with frontend/config/docs dev commit; Cloudflare dev build and actual storefront still to verify.
+
+Public configuration gate follow-up: namedSEO_INDEXING_ENABLED andSEO_PUBLIC_ORIGIN validated explicitly. Git inventory failures now fail closed (exact workspace safe.directory used for Docker ownership).4tests plus Docker config/SAST/secret gates pass; CIruns tests.8adf100Cloudflaredevbuildsuccess; mastersecurityneedsfollow-upconfigcommit. Legacy non-targetworkers failures not treated as preprodsuccess.

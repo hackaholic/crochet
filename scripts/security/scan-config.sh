@@ -17,6 +17,7 @@ export REPO_ROOT
 python3 - <<'PY'
 import sys, os, subprocess, json, re
 from pathlib import Path
+from urllib.parse import urlsplit
 
 REPO_ROOT = os.environ.get("REPO_ROOT", os.getcwd())
 REPORT_FILE = os.path.join(REPO_ROOT, "work/work-013-security-audit/reports/config-audit.json")
@@ -27,7 +28,9 @@ warnings = []
 checks_passed = 0
 
 # 1. Plaintext production env and secrets check in git tracked files
-res = subprocess.run(["git", "ls-files"], cwd=REPO_ROOT, capture_output=True, text=True)
+res = subprocess.run(["git", "-c", f"safe.directory={REPO_ROOT}", "ls-files"], cwd=REPO_ROOT, capture_output=True, text=True)
+if res.returncode != 0:
+    failures.append("Cannot inspect Git tracked files; refusing an incomplete configuration audit.")
 tracked = res.stdout.splitlines()
 
 forbidden_files = [".env", ".env.local", "backend/.env", "backend/.env.preprod", "backend/.env.production"]
@@ -42,8 +45,32 @@ for public_env in (".env.production", ".env.preprod"):
         with open(p_path, "r", errors="ignore") as fh:
             for line in fh:
                 line_str = line.strip()
-                if line_str and not line_str.startswith("#") and not line_str.startswith("VITE_"):
-                    failures.append(f"Non-public variable found in tracked {public_env}: {line_str.split('=')[0]}")
+                if not line_str or line_str.startswith("#"):
+                    continue
+                key, separator, value = line_str.partition("=")
+                key = key.strip()
+                value = value.strip().strip("\"'")
+                if not separator:
+                    failures.append(f"Malformed public configuration in {public_env}")
+                elif key.startswith("VITE_"):
+                    continue
+                elif key == "SEO_INDEXING_ENABLED":
+                    if value not in {"true", "false"}:
+                        failures.append(f"Invalid public boolean in {public_env}: {key}")
+                elif key == "SEO_PUBLIC_ORIGIN":
+                    try:
+                        url = urlsplit(value)
+                        valid = (url.scheme in {"http", "https"} and bool(url.hostname)
+                                 and not url.username and not url.password and not url.query
+                                 and not url.fragment and url.path in {"", "/"})
+                        if public_env == ".env.production" and url.scheme != "https":
+                            valid = False
+                    except ValueError:
+                        valid = False
+                    if not valid:
+                        failures.append(f"Invalid public origin in {public_env}: {key}")
+                else:
+                    failures.append(f"Non-public variable found in tracked {public_env}: {key}")
 
 # 2. Check age private keys in repo
 for t in tracked:

@@ -80,3 +80,5 @@
 Owner steering2026-10-16: keep current reviews in preprod, remove demo cards before production and retain500+message. DEC-005-13 and launch checklist updated; no application/DB changes or push.
 
 Dev release phase1:810301b backend/assets pushed. Full local backend476passed/5skipped; GitHub backend38941598304 and security38941598270 success, deploy log confirms internal API and publicapi-devhealth. Full frontend289passed plus2corrected OccasionGrid link assertions now pass. Demo reviews/500+message retained. Phase2frontend/config/docs ready; no production promotion.
+
+Release phase2:8adf100 frontend pushed; Cloudflare sulocraft-dev build success. GitHub config gate rejected named publicSEO settings; fixed with narrow explicit validation, fail-closed tracked-file inventory and4fixture tests, added toCI. Docker unit/config/SAST/secret gates passed. No security gate disabled; private/unknown keys and credential-bearing origins still rejected. Follow-uppushpending. Legacy Cloudflare sulocraft/crochet builds fail separately; targetdevworker success.

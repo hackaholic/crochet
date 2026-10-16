@@ -60,3 +60,6 @@ Integration5.13/5.11.1 and checklist5.14/5.21 are being verified in one bounded 
 
 ## Authorized dev release —2026-10-16
 User authorized git commit/push and preprod safety verification. Codex will release additive backend/API+responsive manifest first, wait for backend workflow/API health, then frontend/config/docs. Production remains untouched; demo homepage reviews stay enabled in preprod and approved500+message retained. Local complete-backend/security release checks run before first push. Account/production/device acceptance remains separately recorded.
+
+### Release gate follow-up
+CIconfig rejected explicit publicSEO_INDEXING_ENABLED/SEO_PUBLIC_ORIGIN in tracked root build config. Codex will allow only those named settings with boolean/origin validation, keep unknown/private keys rejected, fail closed when Git inventory fails, and add fixture tests for valid config, invalid origin/credentials/unknown keys/noGit. Local Docker Git ownership can otherwise yield empty tracked inventory; exact workspace safe.directory is required, not a global wildcard.
