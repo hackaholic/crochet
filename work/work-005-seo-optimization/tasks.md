@@ -1,14 +1,15 @@
 # Work005 tasks
 
-**CURRENT = Local implementation/5.11.1/5.13/5.14/5.16/5.21 complete;5.4 launch acceptance awaiting owner/external gates**
+**CURRENT = Completed: implementation and authorized preprod acceptance passed; production operational checklist retained separately**
 
 ## In Progress
-- [ ] 5.4 — Authorized dev release verification — Codex; backend-first, thenfrontend; production gates remain separate.
+None
 
 ## Pending
 None; launch blockers below.
 
 ## Completed
+- [x] 5.4 — [Integrated SEO validation](tasks/task-004-seo-audit-vitals.md) — Codex; local tests and actual preprod acceptance passed, Cloudflaredev/backend/security green; external production operations explicitly documented.
 - [x] 5.13 — [Content templates](tasks/task-013-category-product-content.md) — Codex; returned full-body/rating API and raw HTML parity verified.
 - [x] 5.14 — [Search Console preparation](tasks/task-014-search-console-setup.md) — Codex; owner account/launch checklist delivered, account actions not claimed.
 - [x] 5.21 — [Monitoring plan](tasks/task-021-seo-monitoring-followup.md) — Codex; cadence/owners/triggers/privacy delivered; no live data or automation claimed.

@@ -19,8 +19,8 @@ Read Work005 README/tasks/decisions and5.11 report.5.10 already consumes API var
 - Depends on: 5.10, 5.11, 5.20, 5.11.2
 - Dependency context: Original verified asset keys under public/images/hero and docs/product-media.md. Frontend helper already accepts real width variants. R2 derivative publication and backend attachment follow after exact keys/files/dimensions are verified. Current environment lacks network/CPU throttling controls in connected browser.
 - Blocked by: None
-- Blocker reason: None;5.11.2 returned and currentSrc verified in real storefront.
-- Next action: Codex inspects current media tooling and establishes a bounded source-to-derivative manifest. Create a separate exact Gemini contract for manifest consumption only after asset inputs are verified; no backend pickup or new upload by Gemini yet.
+- Blocker reason: None; backend return integrated and locally/preprod verified.
+- Next action: None; completed integration. Production operations follow the launch checklist.
 - Inspect/edit: public/images/hero; existing R2 upload scripts; backend/app/services/media.py (future Gemini owner); src/lib/media/image.ts; docs/product-media.md
 
 ## Test cases

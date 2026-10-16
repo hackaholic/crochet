@@ -1,8 +1,8 @@
 # Work005 coordination
 **Work owner:** Codex
-**CURRENT:** Local implementation complete;5.4 launch acceptance Blocked on owner/external gates. See reports/task-004-final-local-audit.md.
+**CURRENT:** Completed: implementation/preprod accepted; production operational checklist retained, no production promotion.
 **Active cross-agent handoffs:** 5.16.1 returned; 5.13.1 returned; 5.11.2 returned; 5.15 returned; 5.10 returned; 5.20 returned; 5.18.2 returned; 5.17.1 returned; 5.19 returned; 5.18.1 returned; 5.22 returned; 5.18 returned
-**Handoff state:** Returned — all assigned Gemini inputs integrated. Owner launch acceptance remains in5.4; no active backend implementation handoff.
+**Handoff state:** Returned — assigned implementation complete; no active Gemini work. Owner production operations are documented in checklists/launch-search-console.md.
 
 ## Exact backend pickup sequence — Gemini
 First read work/GEMINI_WORKFLOW_PROMPT.md, then this work README/tasks/decisions and exact contract only.
@@ -82,3 +82,5 @@ Codex5.11.1/5.13 Completed,5.14/5.21 preparation delivered. Final tests/build/AP
 Owner decision recorded in DEC-005-13: retain demo review cards for preprod, hide before production using backend/admin content config, keep approved500+message. No review/data/UI removal performed; pending owner-content question resolved. Remaining5.4external release gates unchanged.
 
 Authorized dev release active: Codex backend-first, thenfrontend to avoid new snapshot endpoint race. Verify workflows and dev.sulocraft.com after push. No production promotion.
+
+Final preprod return:05ae025Cloudflaredev/securitygreen; backend810301bdeploymentgreen. Actualdesktop/mobilehome/category/product/images/content/canonical/noindex/hydration inspected.5.4Completed; Work005implementation/preprodCompleted. Production checklist actions not asserted complete; legacyworkerfailedchecks recorded in report.

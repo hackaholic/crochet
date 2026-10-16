@@ -1,7 +1,7 @@
 # Work 005 — Complete ecommerce SEO
 
-**Owner:** Codex · **Status:** In Progress
-**CURRENT:** Local implementation complete;5.4 launch acceptance Blocked on owner/external gates. See reports/task-004-final-local-audit.md.
+**Owner:** Codex · **Status:** Completed
+**CURRENT:** Implementation and preprod acceptance Completed. Production account/launch/field operations remain in checklists/launch-search-console.md; not claimed executed.
 
 **Objective:** Make real Sulocraft product/category/content pages crawlable, reliably indexable and accurately described. No visual redesign or ranking guarantees.
 

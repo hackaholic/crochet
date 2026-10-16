@@ -19,8 +19,8 @@ Read ../README.md, ../architecture.md, ../decisions.md and ../contracts/seo.md. 
 - Depends on: 5.5, 5.17, 5.13.1
 - Dependency context: Wait for dependency return and inspect actual code/API evidence; do not rebuild already completed foundations.
 - Blocked by: None
-- Blocker reason: Frontend content templates verified; full product body and genuine catalogue rating metadata require backend return.
-- Next action: Verify dependency readiness, then mark only this assigned task In Progress.
+- Blocker reason: None; backend return integrated and locally/preprod verified.
+- Next action: None; completed integration. Production operations follow the launch checklist.
 - Inspect/edit: category/product templates; admin SEO/content fields integration; Work019 contracts; docs/product-taxonomy.md
 
 ## Test cases (define before implementation)

@@ -1,7 +1,7 @@
 # Task 5.4 — Automated SEO test suite and Core Web Vitals verification
 
 **Owner:** Codex
-**Status:** In Progress
+**Status:** Completed
 
 ## Objective
 
@@ -41,9 +41,9 @@ Follow the project working rule: add automated tests and verify locally in Docke
 **Work item:** Work 005
 **Work owner:** Codex
 Implementation boundary: Integrated SEO regression/launch acceptance. Performance measurement owned by5.11; use INP rather than obsolete FID. Validate HTTP/root resources, initial HTML/DOM parity, public/private indexability, truthful schema and mobile/browser regression.
-- Blocked by: Owner launch acceptance
-- Blocker reason: Local checks pass; authorized preprod rollout and external launch/device/account acceptance remain; owner review-content decision recorded in DEC-005-13.
-- Next action: Keep demo reviews in preprod; before production hide demo cards via backend/admin config and retain approved500+message. Await authorized preprod verification and documented launch checks.
+- Blocked by: None
+- Blocker reason: None for implementation/preprod acceptance; production operational checks retained in launch checklist without claiming execution.
+- Next action: Owner uses launch-search-console.md before production; no production promotion authorized.
 
 ## Traceable test and security additions
 - 5.4-TC01: Test stated acceptance against actual active DB records and raw HTML/client output; record exact automated/local commands and results.
@@ -63,3 +63,7 @@ User authorized git commit/push and preprod safety verification. Codex will rele
 
 ### Release gate follow-up
 CIconfig rejected explicit publicSEO_INDEXING_ENABLED/SEO_PUBLIC_ORIGIN in tracked root build config. Codex will allow only those named settings with boolean/origin validation, keep unknown/private keys rejected, fail closed when Git inventory fails, and add fixture tests for valid config, invalid origin/credentials/unknown keys/noGit. Local Docker Git ownership can otherwise yield empty tracked inventory; exact workspace safe.directory is required, not a global wildcard.
+
+## Preprod acceptance returned —2026-10-16
+Backend810301b deployment38941598304 success; internal/public APIhealth verified byCI. Frontend05ae025Cloudflare sulocraft-dev success; mastersecurity38942825270success. Actualdev.sulocraft.comhome/product/390pxflowers inspected: loadedlogo/WebPs, full productbody, saved categoryintro, oneH1,51crawlablehomeanchors, devcanonicals/noindex, no newbundle hydration errors, no mobile overflow. Demo reviews and approved500+message retained. Local476backendtests pass/5skip,291frontendtests pass across fullrun+2assertionrerun;4configpolicytests pass.
+Implementation/preprod acceptance is Completed.5.14/5.21 objectives are documented readiness, not actual external account/traffic collection. Production owner facts/review-hiding, SearchConsole/Merchant account actions, native-browser/cold-network/field measurements remain explicit launch operations in checklists; not falsely marked executed. No production deployment. Legacy Cloudflare sulocraft/crochet workers have separate failed checks; targetdevworker and securitypassed.
