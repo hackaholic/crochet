@@ -12,7 +12,7 @@ afterEach(cleanup);
 describe('Header account navigation', () => {
   it('uses only the official logo in the home brand button', () => {
     render(<MemoryRouter><Header currentPage="home" onNavigate={vi.fn()} cartCount={0} wishlistCount={0} onSearchOpen={vi.fn()} onCartOpen={vi.fn()} onAccountOpen={vi.fn()} /></MemoryRouter>);
-    const brand = screen.getByRole('button', { name: 'Sulocraft home' });
+    const brand = screen.getByRole('link', { name: 'Sulocraft home' });
     expect(brand).toHaveTextContent('');
     expect(brand.querySelector('img')).toHaveAttribute('alt', 'Sulocraft logo');
   });

@@ -1,10 +1,12 @@
+import { usePublicBootstrap } from '../lib/seo/bootstrap';
 import { useEffect, useState } from 'react';
 import { getStorefrontContent } from '../lib/api/storefront';
 
 let brandRequest: ReturnType<typeof getStorefrontContent> | undefined;
 
 export default function BrandLogo({ size = 40, wordmark = false }: { size?: number; wordmark?: boolean }) {
-  const [url, setUrl] = useState<string>();
+  const initial = usePublicBootstrap()?.home.brand.logoUrl;
+  const [url, setUrl] = useState<string | undefined>(initial ?? undefined);
   const [failed, setFailed] = useState(false);
   useEffect(() => {
     let active = true;

@@ -4,7 +4,7 @@
 - **Work 002 — Product gallery media** · Pending · [work folder](work-002-product-gallery-media/)
 - **Work 003 — SOPS/age secret vault** · Completed · [work folder](work-003-vault/)
 - **Work 004 — Agent task workflow** · Completed · [work folder](work-004-task-workflow/)
-- **Work 005 — Complete ecommerce SEO** · Pending · [work folder](work-005-seo-optimization/)
+- **Work 005 — Complete ecommerce SEO** · In Progress · [work folder](work-005-seo-optimization/)
 - **Work 006 — Preprod DNS, email deliverability & continuous deployment** · In Progress · [work folder](work-006-dns-email-cd/)
 - **Work 007 — End-to-end purchase & mobile rendering QA** · Pending · [work folder](work-007-e2e-qa/)
 - **Work 008 — Customer promotions & reviews engine** · Pending · [work folder](work-008-promotions-reviews/)

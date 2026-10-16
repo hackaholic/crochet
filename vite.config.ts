@@ -1,10 +1,12 @@
-import { defineConfig } from 'vite'
+import { localSeoResources } from './scripts/vite-seo-resources.mjs'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'node:path'
 
-export default defineConfig({
-  plugins: [react(), tailwindcss()],
+export default defineConfig(({ mode }) => ({
+  plugins: [react(), tailwindcss(), localSeoResources({ ...loadEnv(mode, process.cwd(), ''), ...process.env })],
+  build: { manifest: true },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -25,4 +27,4 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5173,
   },
-})
+}))

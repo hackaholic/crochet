@@ -1,0 +1,237 @@
+{
+  "routes": [
+    {
+      "path": "/",
+      "canonical": "/",
+      "title": "Sulocraft | Handcrafted Crochet Gifts, Flower Bouquets & Amigurumi in India",
+      "robots": "index,follow",
+      "image": "http://localhost:8000/static/images/hero/heritage.png",
+      "breadcrumbs": [],
+      "shipping": {
+        "freeShippingThreshold": 999,
+        "standardFee": 100,
+        "currency": "INR",
+        "transitTime": "3-5 business days",
+        "country": "IN"
+      },
+      "returns": {
+        "returnWindowDays": 7,
+        "policyUrl": "/info/refund",
+        "returnFees": "Free for damaged or defective items"
+      }
+    },
+    {
+      "path": "/products/sunflower-bouquet",
+      "canonical": "/products/sunflower-bouquet",
+      "title": "Sunflower Bouquet - Handcrafted Crochet Sunflowers | Sulocraft",
+      "robots": "index,follow",
+      "image": "http://localhost:8000/static/images/products/sunflower-bouquet/primary.png",
+      "breadcrumbs": [
+        {
+          "name": "Home",
+          "path": "/"
+        },
+        {
+          "name": "Shop",
+          "path": "/shop"
+        },
+        {
+          "name": "Flowers",
+          "path": "/categories/flowers"
+        },
+        {
+          "name": "Sunflowers",
+          "path": "/categories/sunflowers"
+        },
+        {
+          "name": "Sunflower Bouquet",
+          "path": "/products/sunflower-bouquet"
+        }
+      ],
+      "shipping": {
+        "freeShippingThreshold": 999,
+        "standardFee": 100,
+        "currency": "INR",
+        "transitTime": "3-5 business days",
+        "country": "IN"
+      },
+      "returns": {
+        "returnWindowDays": 7,
+        "policyUrl": "/info/refund",
+        "returnFees": "Free for damaged or defective items"
+      }
+    },
+    {
+      "path": "/categories/flowers",
+      "canonical": "/categories/flowers",
+      "title": "Handcrafted Crochet Flowers | Buy Online India | Sulocraft",
+      "robots": "index,follow",
+      "image": "http://localhost:8000/static/images/categories/flowers/card.png",
+      "breadcrumbs": [
+        {
+          "name": "Home",
+          "path": "/"
+        },
+        {
+          "name": "Shop",
+          "path": "/shop"
+        },
+        {
+          "name": "Flowers",
+          "path": "/categories/flowers"
+        }
+      ],
+      "shipping": {
+        "freeShippingThreshold": 999,
+        "standardFee": 100,
+        "currency": "INR",
+        "transitTime": "3-5 business days",
+        "country": "IN"
+      },
+      "returns": {
+        "returnWindowDays": 7,
+        "policyUrl": "/info/refund",
+        "returnFees": "Free for damaged or defective items"
+      }
+    },
+    {
+      "path": "/collections/best-sellers",
+      "canonical": "/collections/best-sellers",
+      "title": "Page Not Found | Sulocraft",
+      "robots": "noindex,nofollow",
+      "image": null,
+      "breadcrumbs": [],
+      "shipping": null,
+      "returns": null
+    },
+    {
+      "path": "/about",
+      "canonical": "/about",
+      "title": "Our Story | Handcrafted Artisan Heritage | Sulocraft",
+      "robots": "index,follow",
+      "image": "http://localhost:8000/static/images/sections/artisan-story.jpg",
+      "breadcrumbs": [
+        {
+          "name": "Home",
+          "path": "/"
+        },
+        {
+          "name": "About Us",
+          "path": "/about"
+        }
+      ],
+      "shipping": {
+        "freeShippingThreshold": 999,
+        "standardFee": 100,
+        "currency": "INR",
+        "transitTime": "3-5 business days",
+        "country": "IN"
+      },
+      "returns": {
+        "returnWindowDays": 7,
+        "policyUrl": "/info/refund",
+        "returnFees": "Free for damaged or defective items"
+      }
+    },
+    {
+      "path": "/account",
+      "canonical": "/account",
+      "title": "My Account | Sulocraft",
+      "robots": "noindex,nofollow",
+      "image": null,
+      "breadcrumbs": [],
+      "shipping": null,
+      "returns": null
+    },
+    {
+      "path": "/this-route-does-not-exist",
+      "canonical": "/this-route-does-not-exist",
+      "title": "Page Not Found | Sulocraft",
+      "robots": "noindex,nofollow",
+      "image": null,
+      "breadcrumbs": [],
+      "shipping": null,
+      "returns": null
+    }
+  ],
+  "products": [
+    {
+      "id": 8,
+      "name": "Sunflower Bouquet",
+      "slug": "sunflower-bouquet",
+      "price": 2199,
+      "pricePaise": 219900,
+      "currency": "INR",
+      "compareAtPrice": null,
+      "originalPrice": null,
+      "rating": 4.8,
+      "reviews": 88,
+      "reviewCount": 88,
+      "image": "http://localhost:8000/static/images/products/sunflower-bouquet/primary.png",
+      "imageUrls": [
+        "http://localhost:8000/static/images/products/sunflower-bouquet/primary.png",
+        "http://localhost:8000/static/images/products/sunflower-bouquet/gallery-01-owner-lifestyle.png"
+      ],
+      "category": "Sunflowers",
+      "primaryCategory": {
+        "id": 228,
+        "name": "Sunflowers",
+        "slug": "sunflowers"
+      },
+      "categories": [
+        {
+          "id": 228,
+          "name": "Sunflowers",
+          "slug": "sunflowers"
+        },
+        {
+          "id": 225,
+          "name": "Bouquets",
+          "slug": "bouquets"
+        }
+      ],
+      "collections": [
+        {
+          "id": 31,
+          "name": "Gifts",
+          "slug": "gifts"
+        },
+        {
+          "id": 37,
+          "name": "Housewarming Gifts",
+          "slug": "housewarming-gifts"
+        },
+        {
+          "id": 32,
+          "name": "Birthday Gifts",
+          "slug": "birthday-gifts"
+        },
+        {
+          "id": 44,
+          "name": "Best Sellers",
+          "slug": "bestsellers"
+        }
+      ],
+      "badge": "Bestseller",
+      "tags": [
+        "sunflowers",
+        "housewarming",
+        "birthday",
+        "mother",
+        "father",
+        "Mother's Day",
+        "Father's Day",
+        "Birthday"
+      ],
+      "occasions": [
+        "mother",
+        "father",
+        "birthday"
+      ],
+      "description": "Radiant yellow sunflowers crafted with golden yarn centers and eucalyptus foliage. Radiates sunshine year-round.",
+      "customizable": true,
+      "inStock": true,
+      "inventoryStatus": "IN_STOCK"
+    }
+  ]
+}

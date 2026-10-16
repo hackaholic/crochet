@@ -1,3 +1,4 @@
+import type { MediaMetadata } from '../lib/media/image';
 export interface Product {
   id: number;
   name: string;
@@ -5,8 +6,10 @@ export interface Product {
   price: number;
   originalPrice?: number;
   rating: number;
+  aggregateRating?: { ratingValue: number; reviewCount: number; provenance: 'VERIFIED_REVIEWS' } | null;
   reviews: number;
   image: string;
+  primaryImageMetadata?: MediaMetadata | null;
   images?: string[];
   category: string;
   primaryCategory?: TaxonomyReference;

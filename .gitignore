@@ -51,3 +51,9 @@ __pycache__/
 
 # Generated local code intelligence cache
 /.claude/cache/codebase-index/
+
+# Temporary server renderer used by the public-page build
+/.seo-render/
+
+# Local package manager content cache (not source/assets).
+/.pnpm-store/

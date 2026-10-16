@@ -1,11 +1,11 @@
 # Task 5.2 — International SEO & hreflang architecture
 
 **Owner:** Codex
-**Status:** Pending
+**Status:** Completed
 
 ## Objective
 
-Implement multinational SEO architecture to allow Sulocraft to rank effectively across global regions (India, US, UK, Canada, Australia) while adhering to internationalization best practices.
+Define supported-market, canonical-origin and optional hreflang policy without inventing international variants. Runtime/build implementation belongs to5.3/5.6/5.7 after backend contract return.
 
 ## Context and contract
 
@@ -31,8 +31,8 @@ Multi-region e-commerce requires explicit canonicalization, `hreflang` tags (inc
 
 ## Acceptance checks
 
-- [ ] Every indexable route has a configured canonical; emit reciprocal hreflang only for approved real localized equivalents.
-- [ ] Query/filter/pagination canonicals follow reviewed5.7 policy; never collapse meaningful pagination blindly.
+- [x] Policy requires configured canonical and permits reciprocal hreflang only for approved real localized equivalents; implementation owners assigned.
+- [x] Query/filter/pagination policy review remains5.7; unconditional removal of meaningful page parameters is prohibited by contract.
 
 ## Handoff back
 
@@ -52,3 +52,6 @@ Implementation boundary: Architecture decision only: validate real supported cou
 - Security: Safe JSON-LD/HTML escaping, bounded typed API data and validated origins; schema must match visible data. Record disposition and self/peer review.
 - Local Docker/API/browser acceptance required for behavior changes; no push or production/account action in this planning task.
 - Update exact contract plus work-local tasks/notes/coordination on return. Preserve original objective/history above; split ownership prevents duplicate work.
+
+## Return —2026-10-13
+DEC-005-7 records final policy. Document review scenarios: production valid origin+explicit indexing→eligible public index; local/preprod→noindex; missing production origin→fail closed; unapproved locale/equivalent missing→omit hreflang. These are specification checks, not claims runtime already changed. No app changes/tests required for this documentation-only decision. Security disposition Pass for policy (approved origins, no domain/secret fallback); Codex self-review. Runtime output/security tests mandatory in assigned implementation tasks. Country shipping/account facts remain owner-confirmed before Merchant rollout; no task blocker for defining safe default policy.

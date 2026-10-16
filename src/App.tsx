@@ -1,35 +1,42 @@
-import { useState, useCallback, useEffect } from 'react';
+import { isPrivatePath } from './lib/seo/urlPolicy.mjs';
+import { usePublicBootstrap } from './lib/seo/bootstrap';
+import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import CartDrawer from './components/CartDrawer';
-import SearchOverlay from './components/SearchOverlay';
+const SearchOverlay = lazy(() => import('./components/SearchOverlay'));
 import HomePage from './pages/HomePage';
 import ShopPage from './pages/ShopPage';
 import ProductPage from './pages/ProductPage';
 import CartPage from './pages/CartPage';
 import WishlistPage from './pages/WishlistPage';
-import CheckoutPage from './pages/CheckoutPage';
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
 import AboutPage from './pages/AboutPage';
 import InfoPage from './pages/InfoPage';
 import GuestTrackingPage from './pages/GuestTrackingPage';
-import AccountPage from './pages/AccountPage';
-import AdminPage from './pages/AdminPage';
+const AccountPage = lazy(() => import('./pages/AccountPage'));
+const AdminPage = lazy(() => import('./pages/AdminPage'));
 import type { Product } from './data/products';
 import { normalizePathname, pageFromPath, pagePath, productPath, productSlug, type AppPage } from './lib/routes';
 import { useCatalogue } from './components/CatalogueProvider';
 import { ErrorState, LoadingState } from './components/StorefrontState';
 import { useCart } from './components/CartProvider';
-import AuthModal from './components/AuthModal';
+const AuthModal = lazy(() => import('./components/AuthModal'));
 import { authApi, type User } from './lib/api/auth';
 import { useWishlist } from './components/WishlistProvider';
 import SeoManager from './components/SeoManager';
+import type { SeoMetadata } from './lib/api/seo';
 
 export default function App() {
   const location = useLocation();
   const navigateTo = useNavigate();
-  const page = pageFromPath(location.pathname);
-  const { products, loading: catalogueLoading, error: catalogueError, retry: retryCatalogue } = useCatalogue();
+  const initial = usePublicBootstrap();
+  const [pageHeading, setPageHeading] = useState<{ path: string; h1?: string | null; metadata?: SeoMetadata } | undefined>(initial ? { path: initial.path, h1: initial.metadata.h1, metadata: initial.metadata } : undefined);
+  const onSeoMetadata = useCallback((metadata: SeoMetadata) => setPageHeading({ path: normalizePathname(location.pathname), h1: metadata.h1, metadata }), [location.pathname]);
+  const requestedPage = new URLSearchParams(location.search).get('page');
+  const page = requestedPage !== null && requestedPage !== '1' && !isPrivatePath(location.pathname.toLowerCase().replace(/\/+$/, '') || '/') ? 'notFound' : pageFromPath(location.pathname);
+  const { products, categories, loading: catalogueLoading, error: catalogueError, retry: retryCatalogue } = useCatalogue();
   const selectedProduct = page === 'product'
     ? products.find(product => productSlug(product) === normalizePathname(location.pathname).split('/').pop()) ?? null
     : null;
@@ -102,7 +109,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen" style={{ fontFamily: 'var(--font-sans)' }}>
-      <SeoManager page={showNotFound ? 'notFound' : page} pathname={location.pathname} product={selectedProduct} />
+      <SeoManager categories={categories} page={showNotFound ? 'notFound' : page} pathname={location.pathname} product={selectedProduct} onMetadata={onSeoMetadata} />
       <a href="#main-content" onClick={event => { if (page === 'tracking') { event.preventDefault(); const main = document.getElementById('main-content'); main?.focus(); main?.scrollIntoView(); } }} className="sr-only fixed left-4 top-4 z-100 rounded-full bg-[#2C1810] px-5 py-3 text-sm font-semibold text-white focus:not-sr-only">
         Skip to content
       </a>
@@ -116,6 +123,7 @@ export default function App() {
         onAccountOpen={() => user ? navigate('account') : openAuth()}
       />}
 
+      <Suspense fallback={<div className="min-h-screen bg-[#FAF7F2] pt-28"><LoadingState label="Loading page…" /></div>}>
       <main id="main-content" tabIndex={-1} className={page === 'admin' ? 'min-h-screen' : undefined}>
         {catalogueLoading && ['home', 'shop', 'product', 'wishlist'].includes(page) ? (
           <div className="min-h-screen bg-[#FAF7F2] pt-28"><LoadingState label="Loading the collection…" /></div>
@@ -136,6 +144,8 @@ export default function App() {
         )}
         {page === 'shop' && (
           <ShopPage
+            seoMetadata={pageHeading?.path === normalizePathname(location.pathname) ? pageHeading.metadata : undefined}
+            heading={pageHeading?.path === normalizePathname(location.pathname) ? pageHeading.h1 : undefined}
             onAddToCart={addToCart}
             onToggleWishlist={toggleWishlist}
             wishlist={wishlist}
@@ -145,6 +155,7 @@ export default function App() {
         {page === 'product' && (
           <ProductPage
             product={selectedProduct}
+            seoMetadata={pageHeading?.path === normalizePathname(location.pathname) ? pageHeading.metadata : undefined}
             onAddToCart={addToCart}
             onToggleWishlist={toggleWishlist}
             wishlist={wishlist}
@@ -194,6 +205,7 @@ export default function App() {
           </>
         )}
       </main>
+      </Suspense>
 
       {/* Show footer on all pages except checkout */}
       {page !== 'checkout' && page !== 'admin' && <Footer onNavigate={navigate} />}
@@ -210,12 +222,16 @@ export default function App() {
       />}
 
       {/* Search Overlay */}
-      {page !== 'admin' && <SearchOverlay
+      {page !== 'admin' && searchOpen && <Suspense fallback={<OverlayLoading />}><SearchOverlay
         open={searchOpen}
         onClose={() => setSearchOpen(false)}
         onProductClick={handleProductClick}
-      />}
-      <AuthModal open={authOpen} initialError={authError} onClose={() => { setAuthOpen(false); setAuthError(''); }} onSignedIn={signedInUser => { setUser(signedInUser); setAuthError(''); void refreshCart(); void refreshWishlist(); }} />
+      /></Suspense>}
+      {authOpen && <Suspense fallback={<OverlayLoading />}><AuthModal open={authOpen} initialError={authError} onClose={() => { setAuthOpen(false); setAuthError(''); }} onSignedIn={signedInUser => { setUser(signedInUser); setAuthError(''); void refreshCart(); void refreshWishlist(); }} /></Suspense>}
     </div>
   );
+}
+
+function OverlayLoading() {
+  return <div className="fixed inset-0 z-[100] grid place-items-center bg-black/40" role="status" aria-live="polite"><div className="rounded-2xl bg-[#FAF7F2] p-6"><LoadingState label="Loading…" /></div></div>;
 }

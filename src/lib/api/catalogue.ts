@@ -1,3 +1,4 @@
+import type { MediaMetadata } from '../media/image';
 import { informationValues, type ProductInformation } from '../products/information';
 import type { Product } from '../../data/products';
 import { apiUrl } from './client';
@@ -12,9 +13,11 @@ export interface CatalogueProduct {
   compareAtPrice?: number | null;
   originalPrice?: number | null;
   rating?: number;
+  aggregateRating?: Product['aggregateRating'];
   reviews?: number;
   reviewCount?: number;
   image: string;
+  primaryImageMetadata?: MediaMetadata | null;
   imageUrls?: string[];
   category: string;
   primaryCategory?: TaxonomyReference | null;
@@ -59,7 +62,7 @@ function taxonomyReference(value: string | TaxonomyReference): TaxonomyReference
     : value;
 }
 
-function toProduct(product: CatalogueProduct): Product {
+export function toProduct(product: CatalogueProduct): Product {
   const categories = (product.categories ?? []).map(taxonomyReference);
   const primaryCategory = product.primaryCategory ?? categories[0];
   return {
@@ -69,8 +72,10 @@ function toProduct(product: CatalogueProduct): Product {
     price: product.price,
     originalPrice: product.originalPrice ?? product.compareAtPrice ?? undefined,
     rating: product.rating ?? 5,
+    aggregateRating: product.aggregateRating,
     reviews: product.reviewCount ?? product.reviews ?? 0,
     image: product.image,
+    primaryImageMetadata: product.primaryImageMetadata,
     images: product.imageUrls?.length ? product.imageUrls : [product.image],
     category: primaryCategory?.name ?? product.category,
     primaryCategory,
@@ -86,11 +91,22 @@ function toProduct(product: CatalogueProduct): Product {
 }
 
 export async function getProducts(signal?: AbortSignal): Promise<Product[]> {
-  const response = await fetch(`${apiUrl('/products')}?limit=100`, { signal });
-  if (!response.ok) throw new Error(`Catalogue request failed (${response.status})`);
-  const payload: unknown = await response.json();
-  if (!Array.isArray(payload)) throw new Error('Catalogue response has an unexpected shape');
-  return payload.map(item => toProduct(item as CatalogueProduct));
+  const products: Product[] = [];
+  const seen = new Set<number>();
+  for (let page = 1; page <= 2000; page++) {
+    const response = await fetch(`${apiUrl('/products')}?limit=100&page=${page}`, { signal });
+    if (!response.ok) throw new Error(`Catalogue request failed (${response.status})`);
+    const payload: unknown = await response.json();
+    if (!Array.isArray(payload)) throw new Error('Catalogue response has an unexpected shape');
+    for (const item of payload) {
+      const product = toProduct(item as CatalogueProduct);
+      if (seen.has(product.id)) throw new Error('Catalogue pagination did not advance');
+      seen.add(product.id);
+      products.push(product);
+    }
+    if (payload.length < 100) return products;
+  }
+  throw new Error('Catalogue pagination exceeded its limit');
 }
 
 export interface ProductSearchOptions {

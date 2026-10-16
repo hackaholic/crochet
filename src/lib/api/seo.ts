@@ -1,3 +1,5 @@
+import type { ProductInformation } from '../products/information';
+import type { MediaMetadata } from '../media/image';
 import { apiUrl } from './client';
 
 export interface SeoBreadcrumb { name: string; path: string; }
@@ -14,13 +16,37 @@ export interface SeoReturnPolicy {
   policyUrl: string;
   returnFees: string;
 }
+export interface SeoProductEntity extends ProductInformation {
+  id: number; name: string; slug: string; sku: string; price: number; currency: string;
+  inStock: boolean; inventoryStatus: string; brand: string;
+  description?: string | null;
+  media?: MediaMetadata[];
+  primaryCategoryName?: string | null; imageUrls: string[];
+  variants: Array<{ id: number; sku: string; name: string; price: number; inStock: boolean }>;
+  aggregateRating?: { ratingValue: number; reviewCount: number; provenance?: string } | null;
+}
+export interface SeoBrand {
+  name: string; legalName?: string | null; logoUrl?: string | null; ownerName?: string | null;
+  sameAs?: string[]; whatsappUrl?: string | null;
+}
 export interface SeoMetadata {
+  httpStatus?: 200 | 301 | 404 | 410;
+  redirectTo?: string | null;
+  brand?: SeoBrand | null;
+  categoryEntity?: { id: number; name: string; slug: string; description?: string | null; parentName?: string | null; parentSlug?: string | null } | null;
+  collectionEntity?: { id: number; name: string; slug: string; description?: string | null } | null;
   title: string;
   description: string;
   canonicalPath: string;
+  canonicalUrl?: string | null;
+  h1?: string | null;
+  productEntity?: SeoProductEntity | null;
   robots: 'index,follow' | 'noindex,nofollow';
   imageUrl?: string | null;
   imageAlt?: string | null;
+  imageWidth?: number | null;
+  imageHeight?: number | null;
+  imageType?: string | null;
   pageType: 'website' | 'product' | 'collection' | 'article';
   breadcrumbs: SeoBreadcrumb[];
   faqs?: SeoFaqItem[];

@@ -101,3 +101,17 @@ docker-compose -f docker/compose.yaml run --rm --no-deps frontend pnpm test
 docker-compose -f docker/compose.yaml run --rm --no-deps -e VITE_LAUNCH_MODE=coming-soon frontend pnpm build
 pnpm build:dev
 ```
+
+## Root sitemap and indexing policy
+
+The same build exports `/sitemap.xml`, optional `/sitemap-N.xml` chunks, `/robots.txt` and Workers `_headers`. URLs come from the backend public route inventory and must have a matching rendered page. XML is split at configured URL/byte limits; static-page generated dates are omitted rather than presented as modification dates. Catalogue edits require a new successful build to refresh these artifacts.
+
+Tracked `.env.preprod` and the current coming-soon `.env.production` explicitly set `SEO_INDEXING_ENABLED=false`. These builds publish an empty sitemap, allow crawling so noindex can be read, and attach `X-Robots-Tag: noindex, nofollow` to assets. Access control remains separate.
+
+For an accepted production launch, set `SEO_INDEXING_ENABLED=true` and `SEO_PUBLIC_ORIGIN` to the approved HTTPS storefront origin. Backend canonical configuration must match. Missing production indexing configuration, an invalid origin, an inventory mismatch or an unrendered route fails the build. No dashboard edits or code fork are required. Optional public build settings: `SEO_SITEMAP_MAX_URLS` (default50000), `SEO_SITEMAP_MAX_BYTES` (default52428800), `SEO_RESOURCE_CACHE_SECONDS` (default300). Nonproduction cannot enable indexing. Local Vite exposes the same non-indexing root resources and HTTP header.
+
+## Canonical routing and lifecycle
+
+The build writes public `routing-policy.json` and embeds the same policy for initial/runtime metadata. Full builds require `SEO_PUBLIC_ORIGIN` and a public API (`SEO_EDGE_API_BASE_URL`, falling back to `VITE_API_BASE_URL`); `SEO_API_BASE_URL` can independently address the internal build API. Do not place credentials in any public routing setting. Production routing requires HTTPS.
+
+Worker HTML requests consult `/seo/resolve` for current301/404/410 decisions before serving assets; resolver/target failure returns noindex503. Upstream redirects are handled manually and rejected. Case/slash/legacy redirects remain same-site and validated; query views use noindex CSR to avoid stale hydration. Current unsupported page>1 is404, not page1 canonicalization. HTML lifecycle checks need an available API; static media/resource files are served directly.

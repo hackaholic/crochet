@@ -1,3 +1,6 @@
+import DestinationLink from './DestinationLink';
+import { productPath } from '../lib/routes';
+import { imageAttributes } from '../lib/media/image';
 import { useState } from 'react';
 import { HeartIcon, StarIcon } from './Icons';
 import type { Product } from '../data/products';
@@ -19,6 +22,7 @@ const badgeColor: Record<string, string> = {
 };
 
 export default function ProductCard({ product, onAddToCart, onToggleWishlist, isWishlisted, onProductClick }: ProductCardProps) {
+  const verified = product.aggregateRating?.provenance === 'VERIFIED_REVIEWS' && product.aggregateRating.reviewCount > 0 ? product.aggregateRating : undefined;
   const [adding, setAdding] = useState(false);
 
   const handleAdd = (e: React.MouseEvent) => {
@@ -36,9 +40,8 @@ export default function ProductCard({ product, onAddToCart, onToggleWishlist, is
   return (
     <div
       data-testid="product-card"
-      className="product-card group flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl bg-white"
+      className="product-card group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl bg-white"
       style={{ boxShadow: '0 2px 16px rgba(44,24,16,0.07)', transition: 'all 0.3s ease' }}
-      onClick={() => onProductClick(product)}
       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 32px rgba(44,24,16,0.13)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px)'; }}
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 16px rgba(44,24,16,0.07)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}
     >
@@ -46,7 +49,7 @@ export default function ProductCard({ product, onAddToCart, onToggleWishlist, is
       <div data-testid="product-image-frame" className="relative aspect-[3/4] w-full shrink-0 overflow-hidden bg-[#F5EDE0]">
         <img
           src={product.image}
-          alt={product.name}
+          {...imageAttributes(product.image, product.primaryImageMetadata, product.name)}
           loading="lazy"
           decoding="async"
           sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
@@ -60,14 +63,14 @@ export default function ProductCard({ product, onAddToCart, onToggleWishlist, is
         )}
         {/* Wishlist */}
         <button
-          className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white flex items-center justify-center shadow-sm transition-all duration-200 hover:scale-110"
+          className="absolute z-20 top-3 right-3 w-9 h-9 rounded-full bg-white flex items-center justify-center shadow-sm transition-all duration-200 hover:scale-110"
           onClick={handleWishlist}
           aria-label="Toggle wishlist"
         >
           <HeartIcon size={16} filled={isWishlisted} className={isWishlisted ? 'text-[#C4622D]' : 'text-[#8B6B4A]'} />
         </button>
         {/* Quick add — slides up on hover */}
-        <div className="quick-add-btn absolute bottom-0 left-0 right-0 opacity-0 translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
+        <div className="quick-add-btn z-20 absolute bottom-0 left-0 right-0 opacity-0 translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
           <button
             className={`w-full py-2.5 text-sm font-semibold transition-colors ${adding ? 'bg-[#8FAF8C] text-white' : 'bg-[#2C1810] text-white hover:bg-[#C4622D]'}`}
             onClick={handleAdd}
@@ -80,16 +83,16 @@ export default function ProductCard({ product, onAddToCart, onToggleWishlist, is
       <div className="flex flex-1 flex-col p-4">
         <p className="text-xs text-[#8B6B4A] font-medium mb-1">{product.category}</p>
         <h3 className="mb-2 min-h-10 line-clamp-2 text-sm font-semibold leading-snug text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>
-          {product.name}
+          <DestinationLink href={productPath(product)} onNavigate={() => onProductClick(product)} className="after:absolute after:inset-0 after:z-10 after:rounded-2xl focus-visible:outline-2 focus-visible:outline-[#C4622D]">{product.name}</DestinationLink>
         </h3>
-        <div className="flex items-center gap-1.5 mb-3">
+        {verified && <div className="flex items-center gap-1.5 mb-3">
           <div className="flex">
             {[1,2,3,4,5].map(i => (
-              <StarIcon key={i} size={12} filled={i <= Math.floor(product.rating)} className="text-[#C4622D]" />
+              <StarIcon key={i} size={12} filled={i <= Math.floor(verified.ratingValue)} className="text-[#C4622D]" />
             ))}
           </div>
-          <span className="text-xs text-[#8B6B4A]">({product.reviews})</span>
-        </div>
+          <span className="text-xs text-[#8B6B4A]">({verified.reviewCount})</span>
+        </div>}
         <div className="mt-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="font-bold text-[#2C1810]">₹{product.price}</span>

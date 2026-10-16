@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { usePublicBootstrap } from '../lib/seo/bootstrap';
 import type { Product } from '../data/products';
 import { getCategories, getCollections, getProducts, type Category, type Collection } from '../lib/api/catalogue';
 
@@ -14,16 +15,17 @@ interface CatalogueState {
 const CatalogueContext = createContext<CatalogueState | null>(null);
 
 export function CatalogueProvider({ children }: { children: ReactNode }) {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [collections, setCollections] = useState<Collection[]>([]);
-  const [loading, setLoading] = useState(true);
+  const initial = usePublicBootstrap();
+  const [products, setProducts] = useState<Product[]>(initial?.products ?? []);
+  const [categories, setCategories] = useState<Category[]>(initial?.categories ?? []);
+  const [collections, setCollections] = useState<Collection[]>(initial?.collections ?? []);
+  const [loading, setLoading] = useState(!initial);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
-    setLoading(true);
+    if (!initial) setLoading(true);
     setError(false);
     getProducts(controller.signal)
       .then(setProducts)

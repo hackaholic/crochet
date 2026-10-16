@@ -1,0 +1,253 @@
+{
+  "conditions": {
+    "viewport": "390x844",
+    "browser": "IAB Chromium",
+    "network": "unthrottled loopback",
+    "cpu": "unthrottled",
+    "htmlJsCssCache": "no-store",
+    "mediaFonts": "shared browser cache; warm assets, not cold mobile network",
+    "fieldData": false
+  },
+  "before": {
+    "bytes": {
+      "files": [
+        {
+          "file": "assets/index-Dj-gMqLE.js",
+          "bytes": 556498,
+          "gzip": 152245
+        },
+        {
+          "file": "assets/index-DXWwNrRK.css",
+          "bytes": 82541,
+          "gzip": 14529
+        }
+      ],
+      "jsGzip": 152245,
+      "cssGzip": 14529,
+      "limits": {
+        "jsGzip": 120000,
+        "cssGzip": 20000
+      },
+      "passed": false
+    },
+    "samples": [
+      {
+        "page": "home",
+        "lcpMs": 748,
+        "cls": 0.010534502346024762,
+        "maxInteractionMs": 216,
+        "longTaskMs": 437,
+        "supported": [
+          "element",
+          "event",
+          "first-input",
+          "interaction-contentful-paint",
+          "largest-contentful-paint",
+          "layout-shift",
+          "long-animation-frame",
+          "longtask",
+          "mark",
+          "measure",
+          "navigation",
+          "paint",
+          "resource",
+          "soft-navigation",
+          "visibility-state"
+        ]
+      },
+      {
+        "page": "home-2",
+        "lcpMs": 260,
+        "cls": 0.0000031401503016317553,
+        "maxInteractionMs": null,
+        "longTaskMs": 0,
+        "supported": [
+          "element",
+          "event",
+          "first-input",
+          "interaction-contentful-paint",
+          "largest-contentful-paint",
+          "layout-shift",
+          "long-animation-frame",
+          "longtask",
+          "mark",
+          "measure",
+          "navigation",
+          "paint",
+          "resource",
+          "soft-navigation",
+          "visibility-state"
+        ]
+      },
+      {
+        "page": "home-3",
+        "lcpMs": 252,
+        "cls": 0,
+        "maxInteractionMs": null,
+        "longTaskMs": 0,
+        "supported": [
+          "element",
+          "event",
+          "first-input",
+          "interaction-contentful-paint",
+          "largest-contentful-paint",
+          "layout-shift",
+          "long-animation-frame",
+          "longtask",
+          "mark",
+          "measure",
+          "navigation",
+          "paint",
+          "resource",
+          "soft-navigation",
+          "visibility-state"
+        ]
+      },
+      {
+        "page": "product",
+        "lcpMs": 412,
+        "cls": 0,
+        "maxInteractionMs": null,
+        "longTaskMs": 0,
+        "supported": [
+          "element",
+          "event",
+          "first-input",
+          "interaction-contentful-paint",
+          "largest-contentful-paint",
+          "layout-shift",
+          "long-animation-frame",
+          "longtask",
+          "mark",
+          "measure",
+          "navigation",
+          "paint",
+          "resource",
+          "soft-navigation",
+          "visibility-state"
+        ]
+      }
+    ]
+  },
+  "after": {
+    "bytes": {
+      "files": [
+        {
+          "file": "assets/index-B0NNRRh0.js",
+          "bytes": 376439,
+          "gzip": 110687
+        },
+        {
+          "file": "assets/index-OU-pph6z.css",
+          "bytes": 80605,
+          "gzip": 14056
+        }
+      ],
+      "jsGzip": 110687,
+      "cssGzip": 14056,
+      "limits": {
+        "jsGzip": 120000,
+        "cssGzip": 20000
+      },
+      "passed": true
+    },
+    "samples": [
+      {
+        "page": "home",
+        "lcpMs": 368,
+        "cls": 0,
+        "maxInteractionMs": 80,
+        "longTaskMs": 54,
+        "supported": [
+          "element",
+          "event",
+          "first-input",
+          "interaction-contentful-paint",
+          "largest-contentful-paint",
+          "layout-shift",
+          "long-animation-frame",
+          "longtask",
+          "mark",
+          "measure",
+          "navigation",
+          "paint",
+          "resource",
+          "soft-navigation",
+          "visibility-state"
+        ]
+      },
+      {
+        "page": "home-2",
+        "lcpMs": 220,
+        "cls": 0,
+        "maxInteractionMs": null,
+        "longTaskMs": 0,
+        "supported": [
+          "element",
+          "event",
+          "first-input",
+          "interaction-contentful-paint",
+          "largest-contentful-paint",
+          "layout-shift",
+          "long-animation-frame",
+          "longtask",
+          "mark",
+          "measure",
+          "navigation",
+          "paint",
+          "resource",
+          "soft-navigation",
+          "visibility-state"
+        ]
+      },
+      {
+        "page": "home-3",
+        "lcpMs": 296,
+        "cls": 0.000005018699040902047,
+        "maxInteractionMs": null,
+        "longTaskMs": 0,
+        "supported": [
+          "element",
+          "event",
+          "first-input",
+          "interaction-contentful-paint",
+          "largest-contentful-paint",
+          "layout-shift",
+          "long-animation-frame",
+          "longtask",
+          "mark",
+          "measure",
+          "navigation",
+          "paint",
+          "resource",
+          "soft-navigation",
+          "visibility-state"
+        ]
+      },
+      {
+        "page": "product",
+        "lcpMs": 220,
+        "cls": 0,
+        "maxInteractionMs": null,
+        "longTaskMs": 0,
+        "supported": [
+          "element",
+          "event",
+          "first-input",
+          "interaction-contentful-paint",
+          "largest-contentful-paint",
+          "layout-shift",
+          "long-animation-frame",
+          "longtask",
+          "mark",
+          "measure",
+          "navigation",
+          "paint",
+          "resource",
+          "soft-navigation",
+          "visibility-state"
+        ]
+      }
+    ]
+  }
+}

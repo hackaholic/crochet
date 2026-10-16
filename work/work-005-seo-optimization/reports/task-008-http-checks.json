@@ -1,0 +1,44 @@
+[
+  {
+    "origin": "http://localhost:8080",
+    "route": "/robots.txt",
+    "status": 200,
+    "type": "text/plain; charset=utf-8",
+    "robots": "noindex, nofollow"
+  },
+  {
+    "origin": "http://localhost:8080",
+    "route": "/sitemap.xml",
+    "status": 200,
+    "type": "application/xml; charset=utf-8",
+    "robots": "noindex, nofollow"
+  },
+  {
+    "origin": "http://localhost:8080",
+    "route": "/products/sunflower-bouquet",
+    "status": 200,
+    "type": "text/html",
+    "robots": "noindex, nofollow"
+  },
+  {
+    "origin": "http://127.0.0.1:4181",
+    "route": "/robots.txt",
+    "status": 200,
+    "type": "text/plain; charset=utf-8",
+    "robots": "noindex, nofollow"
+  },
+  {
+    "origin": "http://127.0.0.1:4181",
+    "route": "/sitemap.xml",
+    "status": 200,
+    "type": "application/xml; charset=utf-8",
+    "robots": "noindex, nofollow"
+  },
+  {
+    "origin": "http://127.0.0.1:4181",
+    "route": "/products/sunflower-bouquet",
+    "status": 200,
+    "type": "text/html; charset=utf-8",
+    "robots": "noindex, nofollow"
+  }
+]

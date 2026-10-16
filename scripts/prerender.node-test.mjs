@@ -1,130 +1,79 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { apiBase, validatePublicPath, getPublicRoutes } from './prerender-routes.mjs';
+import { pageDocument, serializePublicData } from './prerender.mjs';
 
-import { getPublicRoutes } from './prerender-routes.mjs';
+test('public paths reject traversal, private routes and external URLs', () => {
+  for (const value of ['/../secret', '/admin', '//evil.test', '/products/%2e%2e', '/account/settings', '/product?secret=x']) assert.throws(() => validatePublicPath(value));
+  assert.equal(validatePublicPath('/products/bunny'), '/products/bunny');
+});
+test('build API configuration rejects credentials and non HTTP URLs', () => {
+  for (const value of ['file:///etc/passwd', 'https://user:secret@api.test', 'https://api.test?q=x']) assert.throws(() => apiBase(value));
+});
+test('snapshot rejects duplicates and nonpublic metadata', async () => {
+  const item = { path: '/', metadata: { title: 'Home', description: 'Public', robots: 'index,follow' } };
+  await assert.rejects(getPublicRoutes('https://api.test', async () => ({ ok: true, json: async () => ({ versionHash: 'a'.repeat(16), items: [item, item], totalCount: 2, totalPages: 1 }) })));
+  await assert.rejects(getPublicRoutes('https://api.test', async () => ({ ok: false, status: 503 })));
+});
+test('HTML retains React markup and escapes script-breaking API content', () => {
+  const bootstrap = { path: '/', metadata: { title: 'A < B', description: 'Hello', canonicalUrl: 'https://store.test/', robots: 'index,follow' }, content: '</script><script>alert(1)</script>' };
+  const html = pageDocument('<head><title>Old</title><meta name="robots" content="index,follow"></head><div id="root"></div>', '<h1>Visible</h1>', bootstrap);
+  assert.ok(html.includes('<div id="root"><h1>Visible</h1></div>'));
+  assert.equal((html.match(/name="robots"/g) || []).length, 1);
+  assert.ok(html.includes('A &lt; B'));
+  assert.ok(!serializePublicData(bootstrap).includes('</script>'));
+  assert.deepEqual(JSON.parse(serializePublicData(bootstrap)), bootstrap);
+});
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const repositoryRoot = path.resolve(__dirname, '..');
-const distDir = path.join(repositoryRoot, 'dist');
+test('paginated snapshot fails closed when its version changes', async () => {
+  const fetcher = async url => ({ ok: true, json: async () => ({
+    page: Number(new URL(url).searchParams.get('page')), totalPages: 2, totalCount: 2,
+    versionHash: (url.includes('page=1') ? 'a' : 'b').repeat(16),
+    items: [{ path: url.includes('page=1') ? '/' : '/shop', metadata: { title: 'Public', description: 'Public', robots: 'index,follow' } }],
+  }) });
+  await assert.rejects(getPublicRoutes('https://api.test', fetcher), /version changed/);
+});
 
-test('getPublicRoutes inventory structure', () => {
-  const routes = getPublicRoutes();
-  assert.ok(routes.length >= 35, `Expected at least 35 public routes, got ${routes.length}`);
-
-  // Core static pages
-  const paths = new Set(routes.map(r => r.path));
-  assert.ok(paths.has('/'), 'Must include home /');
-  assert.ok(paths.has('/shop'), 'Must include /shop');
-  assert.ok(paths.has('/about'), 'Must include /about');
-  assert.ok(paths.has('/contact'), 'Must include /contact');
-  assert.ok(paths.has('/shipping-policy'), 'Must include /shipping-policy');
-  assert.ok(paths.has('/return-policy'), 'Must include /return-policy');
-  assert.ok(paths.has('/privacy-policy'), 'Must include /privacy-policy');
-  assert.ok(paths.has('/terms'), 'Must include /terms');
-
-  // Must NOT include private or customer routes
-  assert.strictEqual(paths.has('/cart'), false, 'Private /cart must not be pre-rendered');
-  assert.strictEqual(paths.has('/checkout'), false, 'Private /checkout must not be pre-rendered');
-  assert.strictEqual(paths.has('/account'), false, 'Private /account must not be pre-rendered');
-  assert.strictEqual(paths.has('/admin'), false, 'Private /admin must not be pre-rendered');
-  assert.strictEqual(paths.has('/wishlist'), false, 'Private /wishlist must not be pre-rendered');
-
-  // Must include all 16 controlled products
-  const expectedProducts = [
-    'forever-crochet-rose-bouquet',
-    'crochet-tulip-bouquet',
-    'heart-bear',
-    'couple-bunny-set',
-    'mini-panda-amigurumi',
-    'crochet-bunny',
-    'crochet-marigold-garland',
-    'sunflower-bouquet',
-    'crochet-hanging-planter',
-    'boho-wall-hanging',
-    'love-letter-crochet-set',
-    'mini-rose-box',
-    'lotus-mala',
-    'crochet-toran',
-    'daisy-coaster-set',
-    'mini-teddy-bear',
-    'baby-gift-hamper',
-    'crochet-heart-planter',
-    'baby-blanket',
-    'bunny-amigurami-set',
-    'amigurumi-flower-bouquet',
-    'octopus-amigurami-set',
-    'pooja-dress',
-    'potli-handbag',
-  ];
-
-  for (const slug of expectedProducts) {
-    const pPath = `/products/${slug}`;
-    assert.ok(paths.has(pPath), `Must include controlled product route ${pPath}`);
-    const r = routes.find(x => x.path === pPath);
-    assert.ok(r.title.includes('Sulocraft'), `Product title must include brand: ${r.title}`);
-    assert.ok(r.price > 0, `Product must have valid positive price: ${r.price}`);
-    assert.strictEqual(r.currency, 'INR');
-    assert.ok(r.sku && r.sku.startsWith('SULO-'), `Product must have valid SKU: ${r.sku}`);
-  }
-
-  // Must include canonical categories
-  assert.ok(paths.has('/categories/flowers'), 'Must include flowers category');
-  assert.ok(paths.has('/categories/amigurumi'), 'Must include amigurumi category');
-  assert.ok(paths.has('/categories/baby'), 'Must include baby category');
-  assert.ok(paths.has('/categories/home-decor'), 'Must include home-decor category');
-  assert.ok(paths.has('/categories/pooja-devotional'), 'Must include pooja-devotional category');
-
-  // Validate SEO fields on all routes
-  for (const r of routes) {
-    assert.ok(r.title && r.title.length > 5, `Route ${r.path} must have meaningful title`);
-    assert.ok(r.description && r.description.length > 10, `Route ${r.path} must have meaningful description`);
-    assert.ok(r.canonicalPath.startsWith('/'), `Route ${r.path} must have absolute canonicalPath`);
-    assert.ok(Array.isArray(r.breadcrumbs) && r.breadcrumbs.length > 0, `Route ${r.path} must have breadcrumbs`);
+test('missing public pages return real 404; private pages receive noindex CSR shell', async () => {
+  const worker = (await import('../worker/storefront.mjs')).default;
+  const env = { ASSETS: { fetch: async request => {
+    if(new URL(request.url).pathname === '/routing-policy.json') return Response.json({comingSoon:true});
+    assert.equal(new URL(request.url).pathname, '/app-shell.html');
+    return new Response('<div id="root"></div>', { headers: { 'Content-Type': 'text/html' } });
+  } } };
+  for (const [path, status] of [['/products/deleted', 404], ['/account', 200], ['/admin/products', 200], ['/unknown', 404]]) {
+    const response = await worker.fetch(new Request(`https://store.test${path}`), env);
+    assert.equal(response.status, status);
+    assert.equal(response.headers.get('X-Robots-Tag'), 'noindex, nofollow');
+    assert.ok(!(await response.text()).includes('storefront-bootstrap'));
   }
 });
 
-test('prerender execution writes static HTML with metadata and schema', async () => {
-  // Ensure dist directory exists with a template
-  fs.mkdirSync(distDir, { recursive: true });
-  const templatePath = path.join(distDir, 'index.html');
-  const dummyTemplate = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Sulocraft Template</title></head><body><div id="root"></div></body></html>';
-  fs.writeFileSync(templatePath, dummyTemplate, 'utf8');
+test('rendering never uses previously generated page content as a template', () => {
+  assert.throws(() => pageDocument('<div id="root"><h1>Old content</h1></div>', '', {}), /pristine app shell/);
+});
 
-  // Import and run prerender
-  const { prerender } = await import('./prerender.mjs');
-  prerender();
-
-  // Verify Shop static page
-  const shopPath = path.join(distDir, 'shop', 'index.html');
-  assert.ok(fs.existsSync(shopPath), 'dist/shop/index.html must exist');
-  const shopHtml = fs.readFileSync(shopPath, 'utf8');
-  assert.ok(shopHtml.includes('<title>Shop Handcrafted Crochet Creations | Sulocraft</title>'), 'Shop title injected');
-  assert.ok(shopHtml.includes('<link rel="canonical" href="https://sulocraft.com/shop">'), 'Shop canonical injected');
-  assert.ok(shopHtml.includes('id="sulocraft-breadcrumb-schema"'), 'Shop breadcrumb schema injected');
-  assert.ok(shopHtml.includes('All Products'), 'Shop initial markup injected');
-
-  // Verify Product static page
-  const prodPath = path.join(distDir, 'products', 'heart-bear', 'index.html');
-  assert.ok(fs.existsSync(prodPath), 'dist/products/heart-bear/index.html must exist');
-  const prodHtml = fs.readFileSync(prodPath, 'utf8');
-  assert.ok(prodHtml.includes('<title>Heart Bear | Sulocraft</title>'), 'Product title injected');
-  assert.ok(prodHtml.includes('<link rel="canonical" href="https://sulocraft.com/products/heart-bear">'), 'Product canonical injected');
-  assert.ok(prodHtml.includes('id="sulocraft-product-schema"'), 'Product Schema.org JSON-LD injected');
-  assert.ok(prodHtml.includes('"price":1799'), 'Product price in Schema.org JSON-LD');
-  assert.ok(prodHtml.includes('₹1799'), 'Product price in initial body markup');
-
-  // Verify Category static page
-  const catPath = path.join(distDir, 'categories', 'flowers', 'index.html');
-  assert.ok(fs.existsSync(catPath), 'dist/categories/flowers/index.html must exist');
-  const catHtml = fs.readFileSync(catPath, 'utf8');
-  assert.ok(catHtml.includes('Flowers | Handcrafted Crochet | Sulocraft'), 'Category title injected');
-  assert.ok(catHtml.includes('https://sulocraft.com/categories/flowers'), 'Category canonical injected');
-
-  // Verify private routes are NOT generated
-  assert.strictEqual(fs.existsSync(path.join(distDir, 'cart', 'index.html')), false, 'Cart must not be pre-rendered');
-  assert.strictEqual(fs.existsSync(path.join(distDir, 'admin', 'index.html')), false, 'Admin must not be pre-rendered');
-  assert.strictEqual(fs.existsSync(path.join(distDir, 'checkout', 'index.html')), false, 'Checkout must not be pre-rendered');
+test('initial social tags share runtime values, escape content and reject unsafe images', async () => {
+  const {socialMetadata}=await import('../src/lib/seo/socialMetadata.mjs');
+  const metadata={title:'Rose "bouquet"',description:'Saved <summary>',canonicalPath:'/products/rose',canonicalUrl:'https://store.test/products/rose',pageType:'product',robots:'index,follow',imageUrl:'https://media.test/rose.png',imageAlt:'Red <roses>',imageWidth:800,imageHeight:1000,imageType:'image/png'};
+  const template='<head><meta property="og:image" content="old"><meta name="twitter:card" content="old"></head><div id="root"></div>';
+  const html=pageDocument(template,'<h1>Rose</h1>',{metadata});
+  for(const key of Object.keys(socialMetadata(metadata,metadata.canonicalUrl))) {
+    assert.equal((html.match(new RegExp(`(?:property|name)="${key}"`,'g'))||[]).length,1,key);
+  }
+  assert.ok(html.includes('content="Red &lt;roses&gt;"'));
+  assert.ok(html.includes('name="twitter:image:alt"'));
+  assert.ok(html.includes('property="og:image:width" content="800"'));
+  for(const imageUrl of [null,'javascript:alert(1)','data:image/png;base64,abc','https://user:secret@media.test/p.png','//media.test/p.png','/relative.png']) {
+    const tags=socialMetadata({...metadata,imageUrl},metadata.canonicalUrl);
+    assert.equal(tags['og:image'],undefined);
+    assert.equal(tags['twitter:card'],'summary');
+  }
+  for(const canonicalPath of ['/account','/admin/orders','/track']) {
+    assert.equal(socialMetadata({...metadata,canonicalPath},metadata.canonicalUrl)['og:image'],undefined);
+  }
+  for(const httpStatus of [404,410]) assert.equal(socialMetadata({...metadata,httpStatus},metadata.canonicalUrl)['og:image'],undefined);
+  const unknown=socialMetadata({...metadata,imageWidth:-1,imageType:'text/html'},metadata.canonicalUrl);
+  assert.equal(unknown['og:image:width'],undefined);
+  assert.equal(unknown['og:image:type'],undefined);
 });

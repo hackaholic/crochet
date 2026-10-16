@@ -1,7 +1,7 @@
 # Task 5.5 — current seo audit
 
 **Owner:** Codex
-**Status:** Pending
+**Status:** Completed
 **Work item:** Work 005
 **Work owner:** Codex
 
@@ -36,16 +36,19 @@ Read ../README.md, ../architecture.md, ../decisions.md and ../contracts/seo.md. 
 - Disposition: Pending; record commands/results, findings, owner and blockers before return.
 
 ## Acceptance checks
-- [ ] Compare raw HTML and hydrated DOM for home/product/category/collection/info/private/missing routes; record actual status, canonical and critical visible fields.
-- [ ] Identify static/DB divergence, duplicate/query URLs and fabricated facts; preserve design and report unknowns instead of treating them as verified.
-- [ ] Relevant tests pass; Docker/API and actual local browser checks where behavior changes, before push.
-- [ ] Security disposition and accurately labeled self/peer review recorded.
-- [ ] Work-local docs updated; no unapproved business facts or design changes.
+- [x] Compare raw HTML and hydrated DOM for home/product/category/collection/info/private/missing routes; record actual status, canonical and critical visible fields.
+- [x] Identify static/DB divergence, duplicate/query URLs and fabricated facts; preserve design and report unknowns instead of treating them as verified.
+- [x] Relevant tests pass; Docker/API and actual local browser checks where behavior changes, before push.
+- [x] Security disposition and accurately labeled self/peer review recorded.
+- [x] Work-local docs updated; no unapproved business facts or design changes.
 
 ## Handoff back
 Return to Codex: read-only audit report in this task; architecture.md and contracts/seo.md for durable decisions. Update this exact contract, tasks.md, notes.md and coordination.md with status/files/tests, dependency readiness and blockers. Preserve completed contracts and source provenance. Global docs link here only; no push/deploy without gated approval.
 
 ## Pickup checklist
-- [ ] Read work/INDEX.md and selected Work005 files plus this contract only.
-- [ ] Confirm owner/dependencies; mark only assigned task In Progress.
-- [ ] Reuse existing verified assets/endpoints and record questions rather than inventing facts.
+- [x] Read work/INDEX.md and selected Work005 files plus this contract only.
+- [x] Confirm owner/dependencies; mark only assigned task In Progress.
+- [x] Reuse existing verified assets/endpoints and record questions rather than inventing facts.
+
+## Return —2026-10-13
+Audit report: [task005 findings](../reports/task-005-audit.md). Public HTTP/API/DOM evidence in adjacent reports. Frontend baseline3 tests and prerender2 tests pass via scripts/test.sh frontend; backend SEO9 tests pass via scripts/test.sh backend tests/test_seo.py. Build:56 static routes. No application changes or deployment; security disposition Pass for read-only audit (findings remain assigned implementation tasks), Codex self-review. Unknown external account/CWV/edge403 access recorded honestly. Gemini5.17/5.19/5.20 dependencies now ready;5.18 waits5.17. Next Codex5.2 policy decision.

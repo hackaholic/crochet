@@ -33,3 +33,21 @@ Work001 handoffs: [coordination](../work/work-001-admin-dashboard/coordination.m
 - Work020 customer identity enhancement: [work-local coordination](../work/work-020-finance-incremental/coordination.md), [20.25 contract](../work/work-020-finance-incremental/tasks/task-025-customer-identity-links.md).
 
 Work022: [coordination](../work/work-022-warning-deprecation-cleanup/coordination.md); exact warning contracts and file ownership are maintained there.
+
+Work005: [coordination](../work/work-005-seo-optimization/coordination.md); Gemini completed and returned [5.17 metadata contract](../work/work-005-seo-optimization/tasks/task-017-backend-seo-content-contract.md), [5.18 route inventory & snapshot generators](../work/work-005-seo-optimization/tasks/task-018-backend-public-route-inventory.md), [5.22 review rating provenance](../work/work-005-seo-optimization/tasks/task-022-review-rating-provenance.md), [5.18.1 global snapshot consistency](../work/work-005-seo-optimization/tasks/task-023-snapshot-version-consistency.md), and [5.19 slug lifecycle & redirects](../work/work-005-seo-optimization/tasks/task-019-backend-slug-lifecycle.md); Codex unblocked for [5.6 rendering](../work/work-005-seo-optimization/tasks/task-006-indexability-rendering.md), [5.8 sitemap delivery](../work/work-005-seo-optimization/tasks/task-008-sitemap-robots-delivery.md), [5.1 runtime schema](../work/work-005-seo-optimization/tasks/task-001-structured-data.md), and [5.7 URL canonical strategy](../work/work-005-seo-optimization/tasks/task-007-url-canonical-strategy.md).
+
+Work005 backend follow-up: [5.18.2 origin/indexing/lastmod contract](../work/work-005-seo-optimization/tasks/task-024-backend-origin-lastmod-policy.md) — Gemini Completed / Returned; [work-local coordination](../work/work-005-seo-optimization/coordination.md).
+
+Work005: [5.17.1 brand-truth follow-up](../work/work-005-seo-optimization/tasks/task-025-backend-brand-truth.md) — Gemini Completed / Returned; coordinated in [work-local state](../work/work-005-seo-optimization/coordination.md).
+
+Work005 media metadata: [5.20 backend image metadata contract](../work/work-005-seo-optimization/tasks/task-020-backend-image-metadata.md) — Gemini Completed / Returned; Codex unblocked for [5.10 image SEO](../work/work-005-seo-optimization/tasks/task-010-image-seo.md); coordinated in [work-local state](../work/work-005-seo-optimization/coordination.md).
+
+Work005 Merchant Center feed: [5.15 merchant center feed contract](../work/work-005-seo-optimization/tasks/task-015-merchant-center-feed.md) — Gemini Completed / Returned; coordinated in [work-local state](../work/work-005-seo-optimization/coordination.md).
+
+
+
+Work005 responsive media: [5.11.2 backend contract](../work/work-005-seo-optimization/tasks/task-027-backend-responsive-media.md) — Gemini Completed / Returned; Codex unblocked for [5.11.1 storefront srcset acceptance](../work/work-005-seo-optimization/tasks/task-026-optimized-media-variants.md); coordinated in [work-local state](../work/work-005-seo-optimization/coordination.md).
+
+
+
+Work005: [work-local coordination and launch acceptance](../work/work-005-seo-optimization/coordination.md). Completed backend contracts and current owner gates are recorded there.

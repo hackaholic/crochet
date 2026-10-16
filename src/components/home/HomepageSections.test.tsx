@@ -35,11 +35,11 @@ describe('HomepageSections', () => {
     render(<HomepageSections sections={sections} wishlist={[]} onNavigate={vi.fn()} onAddToCart={vi.fn()} onToggleWishlist={vi.fn()} onProductClick={vi.fn()} />);
     const headings = screen.getAllByRole('heading').map(heading => heading.textContent);
     expect(headings).toEqual(['Shop by Category', 'Most Loved Creations', 'Gift by Occasion', 'Festival offer']);
-    expect(screen.getByRole('button', { name: /show all categories/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /show all categories/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Shop by Category' }).closest('section')).toHaveClass('storefront-shell');
     expect(screen.getByRole('heading', { name: 'Most Loved Creations' }).parentElement).toHaveClass('text-center');
     expect(screen.getByText('Loved crochet made for everyday gifting.')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Shop gifts for Birthday' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Shop gifts for Birthday' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Shop gifts for Wedding' })).not.toBeInTheDocument();
     expect(screen.getByTestId('product-grid')).toHaveClass('grid-cols-2', 'md:grid-cols-4');
     expect(screen.getByRole('heading', { name: 'Festival offer' }).closest('section')).toHaveClass('w-full');

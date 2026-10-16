@@ -1,3 +1,5 @@
+import DestinationLink from '../DestinationLink';
+import { imageAttributes } from '../../lib/media/image';
 import type { OccasionGridSection } from '../../lib/api/storefront';
 import { useState } from 'react';
 
@@ -24,16 +26,16 @@ function OccasionCard({ occasion, onNavigate }: { occasion: OccasionGridSection[
   const showImage = Boolean(occasion.imageUrl) && !imageFailed;
 
   return (
-    <button
-      type="button"
-      onClick={() => onNavigate(`/shop?occasion=${encodeURIComponent(occasion.id)}`)}
+    <DestinationLink href={`/shop?occasion=${encodeURIComponent(occasion.id)}`}
+      onNavigate={() => onNavigate(`/shop?occasion=${encodeURIComponent(occasion.id)}`)}
       aria-label={`Shop gifts for ${occasion.name}`}
       className="group relative aspect-[4/3] overflow-hidden rounded-2xl bg-[#EDE4D0] text-left"
     >
       {showImage ? (
         <img
           src={occasion.imageUrl!}
-          alt=""
+          {...imageAttributes(occasion.imageUrl!, occasion.imageMetadata, '')}
+          sizes="(min-width: 768px) 20vw, (min-width: 640px) 33vw, 50vw"
           onError={() => setImageFailed(true)}
           className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           loading="lazy"
@@ -46,6 +48,6 @@ function OccasionCard({ occasion, onNavigate }: { occasion: OccasionGridSection[
       )}
       <span className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
       <span className="absolute inset-x-0 bottom-0 p-3 text-sm font-semibold text-white">{occasion.name}</span>
-    </button>
+    </DestinationLink>
   );
 }

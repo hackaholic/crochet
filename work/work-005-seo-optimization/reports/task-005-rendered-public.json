@@ -1,0 +1,29 @@
+[
+  {
+    "anchors": 1,
+    "h1": [
+      "Rooted in Warmth, Woven by HandEvery loop tells a story"
+    ],
+    "path": "/",
+    "robots": "index,follow",
+    "title": "Sulocraft | Handcrafted Crochet Gifts, Flower Bouquets & Amigurumi in India"
+  },
+  {
+    "anchors": 1,
+    "h1": [
+      "All Products"
+    ],
+    "path": "/categories/flowers",
+    "robots": "index,follow",
+    "title": "Handcrafted Crochet Flowers | Buy Online India | Sulocraft"
+  },
+  {
+    "anchors": 1,
+    "h1": [
+      "All Products"
+    ],
+    "path": "/collections/gifts",
+    "robots": "index,follow",
+    "title": "Gifts | Sulocraft Collections"
+  }
+]

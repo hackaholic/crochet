@@ -1,4 +1,10 @@
-import { useState } from 'react';
+import DestinationLink from './DestinationLink';
+import { useNavigate } from 'react-router';
+import { useCatalogue } from './CatalogueProvider';
+import { pagePath } from '../lib/routes';
+import { usePublicBootstrap } from '../lib/seo/bootstrap';
+import { getStorefrontContent } from '../lib/api/storefront';
+import { useState, useEffect } from 'react';
 import { YarnLogo } from './Icons';
 
 type Page = 'home' | 'shop' | 'product' | 'cart' | 'wishlist' | 'checkout' | 'about' | 'tracking' | 'contact' | 'shipping' | 'returns' | 'privacy' | 'terms' | 'notFound';
@@ -29,6 +35,12 @@ const FacebookIcon = () => (
 );
 
 export default function Footer({ onNavigate }: FooterProps) {
+  const navigate = useNavigate();
+  const { categories, collections } = useCatalogue();
+  const initial = usePublicBootstrap();
+  const [brand, setBrand] = useState(initial?.home.brand);
+  useEffect(() => { if (initial) return; const controller = new AbortController(); getStorefrontContent(controller.signal).then(data => setBrand(data.brand)).catch(() => {}); return () => controller.abort(); }, [initial]);
+  const shopLinks = [{ label: 'All Products', href: '/shop' }, ...collections.slice(0, 2).map(c => ({ label: c.name, href: `/collections/${encodeURIComponent(c.slug)}` })), { label: 'Custom Orders', href: '/contact?subject=custom-order' }];
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
 
@@ -83,11 +95,11 @@ export default function Footer({ onNavigate }: FooterProps) {
           <div>
             <h4 className="text-[#F2C4CE] text-xs tracking-widest uppercase mb-4 font-semibold">Shop</h4>
             <ul className="space-y-2.5">
-              {['All Products', 'New Arrivals', 'Best Sellers', 'Custom Orders'].map(item => (
-                <li key={item}>
-                  <button onClick={() => onNavigate('shop')} className="text-white/60 hover:text-white text-sm transition-colors">
-                    {item}
-                  </button>
+              {shopLinks.map(({label, href}) => (
+                <li key={href}>
+                  <DestinationLink href={href} onNavigate={() => navigate(href)} className="text-white/60 hover:text-white text-sm transition-colors">
+                    {label}
+                  </DestinationLink>
                 </li>
               ))}
             </ul>
@@ -95,11 +107,11 @@ export default function Footer({ onNavigate }: FooterProps) {
           <div>
             <h4 className="text-[#F2C4CE] text-xs tracking-widest uppercase mb-4 font-semibold">Collections</h4>
             <ul className="space-y-2.5">
-              {['Flowers', 'Romantic Gifts', 'Pooja', 'Home Décor', 'Amigurumi'].map(item => (
-                <li key={item}>
-                  <button onClick={() => onNavigate('shop')} className="text-white/60 hover:text-white text-sm transition-colors">
-                    {item}
-                  </button>
+              {categories.filter(c => c.isActive !== false).slice(0, 5).map(category => (
+                <li key={category.id}>
+                  <DestinationLink href={`/categories/${encodeURIComponent(category.slug)}`} onNavigate={() => navigate(`/categories/${encodeURIComponent(category.slug)}`)} className="text-white/60 hover:text-white text-sm transition-colors">
+                    {category.name}
+                  </DestinationLink>
                 </li>
               ))}
             </ul>
@@ -116,7 +128,7 @@ export default function Footer({ onNavigate }: FooterProps) {
                 { label: 'Terms', page: 'terms' as Page },
               ].map(({ label, page }) => (
                 <li key={label}>
-                  <button onClick={() => onNavigate(page)} className="text-white/60 hover:text-white text-sm transition-colors">{label}</button>
+                  <DestinationLink href={pagePath(page as Exclude<Page, 'product' | 'notFound'>)} onNavigate={() => onNavigate(page)} className="text-white/60 hover:text-white text-sm transition-colors">{label}</DestinationLink>
                 </li>
               ))}
             </ul>
@@ -126,9 +138,7 @@ export default function Footer({ onNavigate }: FooterProps) {
             <ul className="space-y-2.5">
               {['Our Story', 'Handmade Process', 'Instagram', 'Sustainability', 'Packaging'].map(item => (
                 <li key={item}>
-                  <button onClick={() => item === 'Our Story' || item === 'Handmade Process' ? onNavigate('about') : undefined} className="text-white/60 hover:text-white text-sm transition-colors">
-                    {item}
-                  </button>
+                  {item === 'Our Story' || item === 'Handmade Process' ? <DestinationLink href="/about" onNavigate={() => onNavigate('about')} className="text-white/60 hover:text-white text-sm transition-colors">{item}</DestinationLink> : item === 'Instagram' && brand?.instagramUrl ? <DestinationLink href={brand.instagramUrl} className="text-white/60 hover:text-white text-sm transition-colors">{item}</DestinationLink> : <span className="text-white/60 text-sm">{item}</span>}
                 </li>
               ))}
             </ul>
@@ -147,19 +157,11 @@ export default function Footer({ onNavigate }: FooterProps) {
           {/* Social icons */}
           <div className="flex items-center gap-3">
             {[
-              { icon: <InstagramIcon />, label: 'Instagram' },
-              { icon: <PinterestIcon />, label: 'Pinterest' },
-              { icon: <WhatsAppIcon />, label: 'WhatsApp' },
-              { icon: <FacebookIcon />, label: 'Facebook' },
-            ].map(({ icon, label }) => (
-              <button
-                key={label}
-                aria-label={label}
-                className="w-9 h-9 rounded-full bg-white/10 hover:bg-[#C4622D] flex items-center justify-center transition-colors"
-              >
-                {icon}
-              </button>
-            ))}
+              { icon: <InstagramIcon />, label: 'Instagram', href: brand?.instagramUrl },
+              { icon: <PinterestIcon />, label: 'Pinterest', href: undefined },
+              { icon: <WhatsAppIcon />, label: 'WhatsApp', href: brand?.whatsappUrl },
+              { icon: <FacebookIcon />, label: 'Facebook', href: undefined },
+            ].map(({ icon, label, href }) => href ? <DestinationLink key={label} href={href} aria-label={label} className="w-9 h-9 rounded-full bg-white/10 hover:bg-[#C4622D] flex items-center justify-center transition-colors">{icon}</DestinationLink> : <span key={label} aria-label={label} className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">{icon}</span>)}
           </div>
         </div>
       </div>

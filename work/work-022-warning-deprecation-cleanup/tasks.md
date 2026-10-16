@@ -7,6 +7,8 @@ None.
 - [ ] 22.2 Gemini — [Per-request test cookies](tasks/task-002-testclient-cookie-api.md)
 - [ ] 22.3 Codex — [Targeted regression and warning check](tasks/task-003-targeted-verification.md)
 
+- [ ] 22.4 Codex — [Vite native config warning](tasks/task-004-vite-native-config.md)
+
 ## Completed
 None.
 

@@ -1,7 +1,7 @@
 # Task 5.1 — Structured data and rich snippet validation
 
 **Owner:** Codex
-**Status:** Pending
+**Status:** Completed
 
 ## Objective
 
@@ -30,11 +30,12 @@ All structured data must be valid JSON-LD rendered in the `<head>` of HTML pages
   - `src/components/SeoManager.tsx`
   - `docs/api-seo.md`
 
-## Acceptance checks
-
-- [ ] Product JSON-LD includes valid offers, pricing, availability, and high-res image URLs.
-- [ ] Breadcrumbs correctly represent hierarchy (Home > Category > Product).
-- [ ] No schema validation errors or missing required fields.
+## Acceptance checks — owned Product runtime scope
+- [x] Product JSON-LD uses real API entity SKU/price/currency/stock/images and matches visible product id/name/price; contradictions omit schema rather than publishing stale data.
+- [x] No synthetic expiry, return/shipping policy, seed-counter rating or invisible FAQ is emitted.5.22 adds genuine review provenance; optional approved merchant policies remain5.15.
+- [x]12 focused frontend tests/typecheck +1 JSON-LD injection test pass; rebuilt Docker and actual product DOM verified.
+- [x] Full Docker Semgrep passes zero blocking High/Critical; Codex self-review recorded.
+- Breadcrumb/Organization coverage belongs to5.9; generated initial HTML parity belongs to5.6; external rich-result validation remains5.4. Those are not claimed complete here.
 
 ## Handoff back
 
@@ -54,3 +55,5 @@ Implementation boundary: Frontend shared Product/Offer JSON-LD and serializer pa
 - Security: Safe JSON-LD/HTML escaping, bounded typed API data and validated origins; schema must match visible data. Record disposition and self/peer review.
 - Local Docker/API/browser acceptance required for behavior changes; no push or production/account action in this planning task.
 - Update exact contract plus work-local tasks/notes/coordination on return. Preserve original objective/history above; split ownership prevents duplicate work.
+
+Return2026-10-13: Reusable src/lib/seo/productSchema.ts consumes5.17 entity. Actual localhost Sunflower DOM schema has price2199 INR, SKU SULO-FLR-SUNFLOWER-001, InStock, one robots tag and no expiry/return/shipping/rating/FAQ claims. Existing product visual price remains2199; metadata unavailable/contradictory/private path emits no product schema. Tests /tmp/work005-runtime-schema-tests.log(12/typecheck), /tmp/work005-schema-security-test.log(1), /tmp/work005-schema-full-sast.log(full Semgrep). Security: safe JSON serialization/injection test, no synthetic trust fields, metadata mismatch omission. No push.

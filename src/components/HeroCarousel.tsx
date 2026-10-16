@@ -1,3 +1,5 @@
+import DestinationLink from './DestinationLink';
+import { imageAttributes, sourceAttributes } from '../lib/media/image';
 import { useEffect, useState, type CSSProperties } from 'react';
 import { ArrowRightIcon, ChevronLeftIcon, ChevronRightIcon } from './Icons';
 import type { HomepageCampaign } from '../lib/api/storefront';
@@ -30,7 +32,7 @@ export default function HeroCarousel({ campaigns, loading = false, onShop, onCus
   useEffect(() => {
     if (paused || campaigns.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const timer = window.setInterval(
-      () => setActiveIndex(current => (current + 1) % campaigns.length),
+      () => { if (!document.hidden) setActiveIndex(current => (current + 1) % campaigns.length); },
       ROTATION_INTERVAL_MS,
     );
     return () => window.clearInterval(timer);
@@ -124,17 +126,17 @@ export default function HeroCarousel({ campaigns, loading = false, onShop, onCus
         className="absolute inset-x-0 bottom-0 top-24 sm:top-28 h-[calc(100%-6rem)] sm:h-[calc(100%-7rem)] w-full"
         style={{ '--hero-mobile-object-position': mobileObjectPosition(activeCampaign.mobileImagePosition) } as CSSProperties}
       >
-        {activeCampaign.mobileImageUrl && <source media="(max-width: 639px)" srcSet={activeCampaign.mobileImageUrl} sizes="100vw" />}
+        {activeCampaign.mobileImageUrl && <source media="(max-width: 639px)" {...sourceAttributes(activeCampaign.mobileImageUrl, activeCampaign.mobileImageMetadata ?? { url: activeCampaign.mobileImageUrl, width: activeCampaign.mobileImageWidth, height: activeCampaign.mobileImageHeight })} srcSet={sourceAttributes(activeCampaign.mobileImageUrl, activeCampaign.mobileImageMetadata).srcSet ?? activeCampaign.mobileImageUrl} sizes="100vw" />}
         <img
           data-testid="hero-image"
           key={activeCampaign.id}
           src={activeCampaign.imageUrl}
-          alt={activeCampaign.imageAlt}
+          {...imageAttributes(activeCampaign.imageUrl, activeCampaign.imageMetadata ?? { url: activeCampaign.imageUrl, width: activeCampaign.imageWidth, height: activeCampaign.imageHeight }, activeCampaign.imageAlt)}
           className="hero-campaign-image h-full w-full object-cover object-[var(--hero-mobile-object-position,70%_center)] sm:object-center motion-safe:animate-[fade-in_350ms_ease-out]"
           loading={activeIndex === 0 ? 'eager' : 'lazy'}
           decoding="async"
           fetchPriority={activeIndex === 0 ? 'high' : 'low'}
-          sizes="(max-width: 639px) 100vw, (max-width: 1023px) 100vw, 1280px"
+          sizes="100vw"
         />
       </picture>
       <div className="absolute inset-x-0 bottom-0 top-24 sm:top-28 bg-gradient-to-r from-[#1F100B]/95 via-[#2C1810]/68 to-[#2C1810]/5" />
@@ -156,12 +158,12 @@ export default function HeroCarousel({ campaigns, loading = false, onShop, onCus
           </div>
 
           <div className="mt-3 sm:mt-6 flex flex-wrap gap-2.5 sm:gap-3">
-            <button onClick={onShop} className="flex items-center gap-2 rounded-full bg-[#C4622D] px-5 py-2.5 sm:px-7 sm:py-3.5 text-xs sm:text-base font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-[#D4795A]">
+            <DestinationLink href="/shop" onNavigate={onShop} className="flex items-center gap-2 rounded-full bg-[#C4622D] px-5 py-2.5 sm:px-7 sm:py-3.5 text-xs sm:text-base font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-[#D4795A]">
               Shop Collection <ArrowRightIcon size={16} />
-            </button>
-            <button onClick={onCustom} className="hidden sm:inline-flex rounded-full border-2 border-white/80 bg-black/10 px-7 py-3.5 font-semibold text-white backdrop-blur-sm transition hover:bg-white hover:text-[#2C1810]">
+            </DestinationLink>
+            <DestinationLink href="/contact?subject=custom-order" onNavigate={onCustom} className="hidden sm:inline-flex rounded-full border-2 border-white/80 bg-black/10 px-7 py-3.5 font-semibold text-white backdrop-blur-sm transition hover:bg-white hover:text-[#2C1810]">
               Create Something Custom
-            </button>
+            </DestinationLink>
           </div>
 
           <p className="sr-only" aria-live="polite">Slide {activeIndex + 1} of {campaigns.length}: {activeCampaign.title}</p>

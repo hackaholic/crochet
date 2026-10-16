@@ -1,3 +1,4 @@
+import { usePublicBootstrap } from '../lib/seo/bootstrap';
 import { useEffect, useRef, useState } from 'react';
 import { reviews } from '../data/products';
 import ProductCard from '../components/ProductCard';
@@ -55,9 +56,10 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
     }
   };
 
-  const [heroCampaigns, setHeroCampaigns] = useState<HomepageCampaign[]>([]);
-  const [homepageSections, setHomepageSections] = useState<HomepageSection[]>([]);
-  const [heroLoading, setHeroLoading] = useState(true);
+  const initial = usePublicBootstrap()?.home;
+  const [heroCampaigns, setHeroCampaigns] = useState<HomepageCampaign[]>(initial?.hero.slice(0, 5) ?? []);
+  const [homepageSections, setHomepageSections] = useState<HomepageSection[]>(initial?.sections ?? []);
+  const [heroLoading, setHeroLoading] = useState(!initial);
 
   useEffect(() => {
     const controller = new AbortController();

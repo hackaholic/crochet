@@ -1,0 +1,15 @@
+# Encoder settings apply unchanged in local, preprod and production.
+sourceRoot: public/images
+outputDirectory: optimized
+manifestName: manifest.json
+directories:
+  - hero
+  - categories
+  - products
+  - occasions
+  - sections
+widths: [480, 800, 1200, 1600]
+includeNativeWidth: true
+quality: 84
+effort: 6
+maxInputPixels: 40000000

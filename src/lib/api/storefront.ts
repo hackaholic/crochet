@@ -1,7 +1,9 @@
+import type { MediaMetadata } from '../media/image';
+export interface ImageDimensions { imageMetadata?: MediaMetadata | null; imageWidth?: number | null; imageHeight?: number | null; imageType?: string | null; }
 import { apiUrl } from './client';
 import type { Product } from '../../data/products';
 
-export interface HomepageCampaign {
+export interface HomepageCampaign extends ImageDimensions {
   id: number;
   title: string;
   emphasis?: string | null;
@@ -9,6 +11,9 @@ export interface HomepageCampaign {
   eyebrow?: string | null;
   imageUrl: string;
   imageAlt: string;
+  mobileImageMetadata?: MediaMetadata | null;
+  mobileImageWidth?: number | null;
+  mobileImageHeight?: number | null;
   mobileImageUrl?: string | null;
   mobileImagePosition?: { x: number; y: number } | null;
   destination?: string | null;
@@ -22,10 +27,10 @@ export interface StorefrontContent {
   heroCampaigns: HomepageCampaign[];
 }
 
-export interface CategorySummary { id: number; name: string; slug: string; description?: string | null; imageUrl: string; }
-export interface OccasionSummary { id: string; name: string; icon?: string | null; imageUrl?: string | null; }
+export interface CategorySummary extends ImageDimensions { imageAlt?: string | null; id: number; name: string; slug: string; description?: string | null; imageUrl: string; }
+export interface OccasionSummary extends ImageDimensions { id: string; name: string; icon?: string | null; imageUrl?: string | null; }
 export interface ReviewSummary { id: number; authorName: string; location?: string | null; rating: number; text: string; avatarUrl?: string | null; }
-interface BaseSection { id: number; order: number; enabled: boolean; }
+interface BaseSection extends ImageDimensions { id: number; order: number; enabled: boolean; }
 export interface CategoryGridSection extends BaseSection { type: 'category_grid'; title: string; eyebrow?: string | null; categories: CategorySummary[]; }
 export interface ProductCollectionSection extends BaseSection { type: 'product_collection'; title: string; eyebrow?: string | null; description?: string | null; collectionSlug: string; products: Product[]; }
 export interface OccasionGridSection extends BaseSection { type: 'occasion_grid'; title: string; eyebrow?: string | null; description?: string | null; occasions: OccasionSummary[]; }

@@ -1,3 +1,5 @@
+import DestinationLink from './DestinationLink';
+import { pagePath } from '../lib/routes';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { SearchIcon, HeartIcon, ShoppingBagIcon, UserIcon, MenuIcon, XIcon, YarnLogo } from './Icons';
@@ -40,7 +42,7 @@ export default function Header({ currentPage, onNavigate, cartCount, wishlistCou
   const { categories } = useCatalogue();
   const navLinks: NavLink[] = [
     ...baseNavLinks,
-    ...categories.slice(0, 3).map(category => ({ label: category.name, href: `/shop?category=${encodeURIComponent(category.slug)}` })),
+    ...categories.filter(category => category.isActive !== false).slice(0, 3).map(category => ({ label: category.name, href: `/categories/${encodeURIComponent(category.slug)}` })),
     { label: 'Custom Orders', href: '/contact?subject=custom-order' },
     { label: 'About Us', page: 'about' as Page },
   ];
@@ -82,25 +84,25 @@ export default function Header({ currentPage, onNavigate, cartCount, wishlistCou
       >
         <div className="storefront-shell flex items-center justify-between gap-4">
           {/* Logo */}
-          <button
-            onClick={() => onNavigate('home')}
+          <DestinationLink href="/"
+            onNavigate={() => onNavigate('home')}
             aria-label="Sulocraft home"
             className="flex items-center gap-2.5 shrink-0"
           >
             <YarnLogo size={38} wordmark />
-          </button>
+          </DestinationLink>
 
           {/* Desktop nav */}
           <nav className="hidden lg:flex items-center gap-6">
             {navLinks.map(({ label, page, href }) => (
-              <button
+              <DestinationLink href={href ?? pagePath(page as Exclude<Page, 'product' | 'notFound'>)}
                 key={label}
-                onClick={() => handleNavClick(page, href)}
+                onNavigate={() => handleNavClick(page, href)}
                 aria-current={currentPage === page ? 'page' : undefined}
                 className={`text-sm font-medium transition-colors hover:text-[#C4622D] ${currentPage === page && label === 'Home' ? 'text-[#C4622D]' : 'text-[#5C3D2E]'}`}
               >
                 {label}
-              </button>
+              </DestinationLink>
             ))}
           </nav>
 
@@ -151,13 +153,13 @@ export default function Header({ currentPage, onNavigate, cartCount, wishlistCou
         {mobileOpen && (
           <div className="lg:hidden border-t border-[#EDE4D0] bg-white px-4 pb-4 pt-2">
             {navLinks.map(({ label, page, href }) => (
-              <button
+              <DestinationLink href={href ?? pagePath(page as Exclude<Page, 'product' | 'notFound'>)}
                 key={label}
-                onClick={() => { handleNavClick(page, href); setMobileOpen(false); }}
+                onNavigate={() => { handleNavClick(page, href); setMobileOpen(false); }}
                 className="block w-full text-left py-3 text-sm font-medium text-[#5C3D2E] border-b border-[#F5EDE0] hover:text-[#C4622D] transition-colors"
               >
                 {label}
-              </button>
+              </DestinationLink>
             ))}
             <button
               onClick={() => { onNavigate('cart'); setMobileOpen(false); }}

@@ -1,0 +1,100 @@
+[
+  {
+    "origin": "http://localhost:8080",
+    "path": "/info/privacy",
+    "status": 301,
+    "location": "/privacy-policy",
+    "robots": "noindex, nofollow"
+  },
+  {
+    "origin": "http://localhost:8080",
+    "path": "/PRODUCTS/SUNFLOWER-BOUQUET/",
+    "status": 301,
+    "location": "/products/sunflower-bouquet",
+    "robots": "noindex, nofollow"
+  },
+  {
+    "origin": "http://localhost:8080",
+    "path": "/products/qa-work001-catalogue-acceptance",
+    "status": 410,
+    "location": null,
+    "robots": "noindex, nofollow"
+  },
+  {
+    "origin": "http://localhost:8080",
+    "path": "/products/not-a-real-product",
+    "status": 404,
+    "location": null,
+    "robots": "noindex, nofollow"
+  },
+  {
+    "origin": "http://localhost:8080",
+    "path": "/shop?page=2",
+    "status": 404,
+    "location": null,
+    "robots": "noindex, nofollow"
+  },
+  {
+    "origin": "http://localhost:8080",
+    "path": "/shop?q=bunny",
+    "status": 200,
+    "location": null,
+    "robots": "noindex, nofollow"
+  },
+  {
+    "origin": "http://localhost:8080",
+    "path": "/products/sunflower-bouquet",
+    "status": 200,
+    "location": null,
+    "robots": "noindex, nofollow"
+  },
+  {
+    "origin": "http://127.0.0.1:4181",
+    "path": "/info/privacy",
+    "status": 301,
+    "location": "/privacy-policy",
+    "robots": null
+  },
+  {
+    "origin": "http://127.0.0.1:4181",
+    "path": "/PRODUCTS/SUNFLOWER-BOUQUET/",
+    "status": 301,
+    "location": "/products/sunflower-bouquet",
+    "robots": null
+  },
+  {
+    "origin": "http://127.0.0.1:4181",
+    "path": "/products/qa-work001-catalogue-acceptance",
+    "status": 410,
+    "location": null,
+    "robots": "noindex, nofollow"
+  },
+  {
+    "origin": "http://127.0.0.1:4181",
+    "path": "/products/not-a-real-product",
+    "status": 404,
+    "location": null,
+    "robots": "noindex, nofollow"
+  },
+  {
+    "origin": "http://127.0.0.1:4181",
+    "path": "/shop?page=2",
+    "status": 404,
+    "location": null,
+    "robots": "noindex, nofollow"
+  },
+  {
+    "origin": "http://127.0.0.1:4181",
+    "path": "/shop?q=bunny",
+    "status": 200,
+    "location": null,
+    "robots": "noindex, nofollow"
+  },
+  {
+    "origin": "http://127.0.0.1:4181",
+    "path": "/products/sunflower-bouquet",
+    "status": 200,
+    "location": null,
+    "robots": "noindex, nofollow"
+  }
+]

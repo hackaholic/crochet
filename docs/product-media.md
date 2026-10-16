@@ -10,6 +10,24 @@ products/<product-slug>/gallery-02.png
 
 The database stores the object key. The API prepends `IMAGE_BASE_URL`; React renders the returned URL unchanged.
 
+## Media metadata & dimensions contract (Task 5.20)
+
+To support layout stability (zero CLS) and responsive image rendering (Task 5.10), the backend exposes intrinsic media dimensions and MIME types across API contracts:
+
+- `ProductImageOut`: exposes `width`, `height`, `contentType`, `variants` (alongside `url`, `alt_text`).
+- `ProductDetail` & `ProductListItem`: expose `primaryImageMetadata` with `url`, `key`, `altText`, `width`, `height`, `contentType`, `variants`.
+- `SeoMetadataOut`: exposes `imageWidth`, `imageHeight`, `imageType`, `imageMetadata` (for OpenGraph / Twitter tags).
+- `SeoProductEntity`: exposes `media: list[MediaMetadataOut]` for all product gallery items.
+- `SeoCategoryEntity` & `SeoCollectionEntity`: expose `imageAlt`, `imageWidth`, `imageHeight`, `imageType`, `imageMetadata`.
+- `HomepageCampaignOut`: exposes `imageWidth`, `imageHeight`, `imageType`, `mobileImageWidth`, `mobileImageHeight`, `mobileImageType`.
+- `CategorySummary`: exposes `imageAlt`, `imageWidth`, `imageHeight`, `imageType`.
+
+### Security Guarantees
+- **No SSRF:** Outbound network requests are strictly forbidden for image inspection; remote external URLs safely return `width=None`, `height=None`.
+- **Path Traversal Protection:** Directory traversal sequences (`..`, null bytes, absolute paths) are rejected.
+- **No Fabricated Variants:** Responsive variants are only emitted when backed by verified assets (e.g. mobile campaign images). Missing metadata safely defaults to `None`.
+
+
 ## Seed catalogue: approved SKU and unique primary image
 
 The SKU belongs to the default sellable variant. Future size, color, or customization variants receive their own SKU and may share a product gallery only when they are genuinely the same product.
@@ -82,3 +100,9 @@ A product is not seed-ready or publish-ready unless all of the following are tru
 - image records have deterministic display order and only existing gallery objects are included.
 
 Seed validation must fail loudly when any gate fails. Do not create database rows pointing at planned or missing media. This manifest is the controlled starting catalogue; new products must be added to the manifest or an equivalent admin import before publication.
+
+## Responsive derivatives (Work0055.11.1)
+
+`pnpm media:variants` reads `config/media-variants.yaml` and preserves source images. It generates WebP widths without cropping/upscaling, publishes content-addressed keys under `public/images/optimized/`, and writes the provenance manifest there. Configuration selects directories, widths, native-width inclusion, quality, effort and pixel limits. Unknown/unsafe input fails validation; animated/oriented sources require explicit review instead of silent transformation.
+
+The manifest records original/derivative hashes, dimensions, MIME and bytes. Upload **only the WebP derivatives**, preserving their `optimized/` prefix; the local manifest is packaged with the backend and need not be uploaded publicly. Existing originals must not be overwritten or reuploaded. Backend5.11.2 attaches verified variants through configured IMAGE_BASE_URL; the frontend never reconstructs derivative URLs from filenames. Never substitute another product's image or use unverified CDN transformation paths.

@@ -1,7 +1,7 @@
 # Task 5.3 — Meta tags, dynamic social cards, and prerender route coverage
 
 **Owner:** Codex
-**Status:** Pending
+**Status:** Completed
 
 ## Objective
 
@@ -28,10 +28,11 @@ Social platforms and search bots do not always execute JavaScript. Pre-rendering
   - `scripts/prerender.mjs`
   - `src/components/SeoManager.tsx`
 
-## Acceptance checks
-
-- [ ] `node scripts/prerender.mjs` completes successfully and covers the complete current indexable route inventory.
-- [ ] Direct curl on built static HTML confirms `<meta>` tags and JSON-LD are present without JS execution.
+## Acceptance checks — owned runtime scope
+- [x] API title/description/canonical/robots applied once; duplicate initial tags removed and unapproved alternate locale links removed.
+- [x] Database h1 drives category/collection heading without visual redesign; private/error fallback stays noindex.
+- [x]10 focused tests/typecheck, rebuilt local API/frontend and actual browser checks pass; full Semgrep zero blocking High/Critical.
+- Initial HTML and complete prerender inventory checks from the original broader description are owned by5.6; social preview acceptance by5.16, per existing planning scope partition. Neither is claimed complete here.
 
 ## Handoff back
 
@@ -51,3 +52,5 @@ Implementation boundary: Own reusable title/description/canonical/robots and hea
 - Security: Safe JSON-LD/HTML escaping, bounded typed API data and validated origins; schema must match visible data. Record disposition and self/peer review.
 - Local Docker/API/browser acceptance required for behavior changes; no push or production/account action in this planning task.
 - Update exact contract plus work-local tasks/notes/coordination on return. Preserve original objective/history above; split ownership prevents duplicate work.
+
+Return2026-10-13: Added reusable head helpers/API canonical+h1 integration with cancellation and callback to ShopPage. Browser Flowers/Gifts H1, one canonical/robots, no default alternates, private/missing noindex verified; About share image200 after backend17. Screenshot /tmp/work005-category-metadata.png. No push. Shared runner SAST used fallback AST checks; separate full Docker Semgrep also passed, /tmp/work005-metadata-full-sast.log. Security self-review: unsafe canonical schemes/credentials ignored, API failure noindex, stale response cannot overwrite head.

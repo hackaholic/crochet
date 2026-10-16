@@ -1,0 +1,55 @@
+{
+  "manifest": "public/images/optimized/manifest.json",
+  "manifestSha256": "fbd063aed796d834dc784244002717feb5279fa097cd5b04c9fdb190c08446d5",
+  "sourceCount": 62,
+  "variantCount": 212,
+  "publicBaseUrl": "https://images.sulocraft.com",
+  "publication": {
+    "method": "existing R2 uploader with explicit configured storage fields",
+    "originalsUploaded": false,
+    "verifyPublic": true,
+    "exitCode": 0,
+    "verifiedHttpStatus": 200
+  },
+  "samples": [
+    {
+      "key": "categories/amigurumi/card-v2.png",
+      "sourceBytes": 2477091,
+      "variant": {
+        "key": "optimized/categories/amigurumi/card-v2-6d17f6400587a542-800w.webp",
+        "width": 800,
+        "height": 450,
+        "contentType": "image/webp",
+        "descriptor": "800w",
+        "bytes": 77500,
+        "sha256": "51b3223136abb67945ecdd5513cd4f390383acdb0374275f774bdfea74be82da"
+      }
+    },
+    {
+      "key": "hero/heritage.png",
+      "sourceBytes": 2172121,
+      "variant": {
+        "key": "optimized/hero/heritage-5a9bd0025b015ad5-800w.webp",
+        "width": 800,
+        "height": 450,
+        "contentType": "image/webp",
+        "descriptor": "800w",
+        "bytes": 58494,
+        "sha256": "e3a37ef746c384c019f7c44aa1f4d9ac9501ca13ffb1119cd94942141f726e81"
+      }
+    },
+    {
+      "key": "products/forever-crochet-rose-bouquet/primary.png",
+      "sourceBytes": 2449035,
+      "variant": {
+        "key": "optimized/products/forever-crochet-rose-bouquet/primary-234ba05b8d8adbb3-800w.webp",
+        "width": 800,
+        "height": 1000,
+        "contentType": "image/webp",
+        "descriptor": "800w",
+        "bytes": 120200,
+        "sha256": "479c8b26522cad9f7606e318d97296db2811784b259aa9f98e0ce57852fc799a"
+      }
+    }
+  ]
+}

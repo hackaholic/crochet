@@ -1,4 +1,6 @@
 import { cleanup, render, screen } from '@testing-library/react';
+import { renderToString } from 'react-dom/server';
+import type { SeoMetadata } from '../lib/api/seo';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import ProductPage from './ProductPage';
 import type { Product } from '../data/products';
@@ -38,4 +40,10 @@ describe('ProductPage options', () => {
     expect(screen.getByRole('heading', { name: product.name })).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Add to Basket' })).toHaveLength(2);
   });
+});
+
+it('renders saved full description and product information in initial HTML without invented claims',()=>{
+ const metadata={productEntity:{id:42,description:'Owner-written full product story',materialsUsed:'Owner supplied yarn',aggregateRating:null}} as SeoMetadata;
+ const html=renderToString(<ProductPage product={product} seoMetadata={metadata} onAddToCart={vi.fn()} onToggleWishlist={vi.fn()} wishlist={[]} onProductClick={vi.fn()} onNavigate={vi.fn()}/>);
+ expect(html).toContain('Owner-written full product story');expect(html).toContain('Owner supplied yarn');expect(html).not.toContain('premium cotton');expect(html).not.toContain('Free Shipping ₹999+');expect(html).not.toContain('Gift Wrapping');expect(html).not.toContain('Purchased:');expect(html.match(/<h1/g)).toHaveLength(1);
 });

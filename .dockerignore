@@ -11,3 +11,8 @@ docs
 **/.secrets/**
 .deploy
 E-commerce Website Design.zip
+
+# Local package/index/render caches are never application inputs.
+.pnpm-store
+.claude/cache
+.seo-render

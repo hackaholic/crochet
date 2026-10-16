@@ -49,6 +49,11 @@ afterEach(() => {
 });
 
 describe('ShopPage filters', () => {
+  it('renders the backend-provided category heading without changing the layout', () => {
+    render(<ShopPage heading="Flowers" wishlist={[]} onAddToCart={vi.fn()} onToggleWishlist={vi.fn()} onProductClick={vi.fn()} />);
+    expect(screen.getByRole('heading', { name: 'Flowers', level: 1 })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'All Products' })).not.toBeInTheDocument();
+  });
   it('keeps the listing title, result count, and sort control together in the compact toolbar', () => {
     render(<ShopPage wishlist={[]} onAddToCart={vi.fn()} onToggleWishlist={vi.fn()} onProductClick={vi.fn()} />);
 

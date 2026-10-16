@@ -1,6 +1,8 @@
-import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import OccasionGrid from './OccasionGrid';
+
+afterEach(cleanup);
 
 describe('OccasionGrid', () => {
   it('renders backend occasion order unchanged so active seasonal cards can lead', () => {
@@ -16,8 +18,10 @@ describe('OccasionGrid', () => {
       onNavigate={onNavigate}
     />);
 
-    const cards = screen.getAllByRole('button');
+    const cards = screen.getAllByRole('link');
     expect(cards.map(card => card.textContent)).toEqual(['Diwali', 'Birthday']);
+    expect(cards[0]).toHaveAttribute('href', '/shop?occasion=diwali');
+    expect(cards[1]).toHaveAttribute('href', '/shop?occasion=birthday');
     fireEvent.click(cards[0]);
     expect(onNavigate).toHaveBeenCalledWith('/shop?occasion=diwali');
   });
@@ -35,6 +39,6 @@ describe('OccasionGrid', () => {
 
     expect(screen.queryByRole('img', { hidden: true })).not.toBeInTheDocument();
     expect(screen.getByText('🍼')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Shop gifts for Baby Shower' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Shop gifts for Baby Shower' })).toBeInTheDocument();
   });
 });

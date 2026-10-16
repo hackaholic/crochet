@@ -4,7 +4,7 @@ import HeroCarousel from './HeroCarousel';
 import type { HomepageCampaign } from '../lib/api/storefront';
 
 const campaigns: HomepageCampaign[] = [
-  { id: 1, title: 'First campaign', emphasis: 'Handmade', description: 'First description', eyebrow: 'New', imageUrl: 'https://images.example/one.webp', imageAlt: 'First campaign image', priority: 1 },
+  { id: 1, title: 'First campaign', emphasis: 'Handmade', description: 'First description', eyebrow: 'New', imageUrl: 'https://images.example/one.webp', imageAlt: 'First campaign image', imageWidth: 1920, imageHeight: 1080, priority: 1 },
   { id: 2, title: 'Second campaign', description: 'Second description', eyebrow: 'Festive', imageUrl: 'https://images.example/two.webp', imageAlt: 'Second campaign image', priority: 2 },
 ];
 
@@ -29,8 +29,8 @@ describe('HeroCarousel', () => {
 
     expect(screen.getByText('First campaign')).toBeInTheDocument();
     expect(screen.getByText('Handmade')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /shop collection/i }));
-    fireEvent.click(screen.getByRole('button', { name: /create something custom/i }));
+    fireEvent.click(screen.getByRole('link', { name: /shop collection/i }));
+    fireEvent.click(screen.getByRole('link', { name: /create something custom/i }));
     expect(onShop).toHaveBeenCalledOnce();
     expect(onCustom).toHaveBeenCalledOnce();
   });
@@ -40,7 +40,7 @@ describe('HeroCarousel', () => {
     const section = screen.getByTestId('hero-section');
     expect(section).toHaveClass('h-[408px]', 'sm:h-[540px]', 'lg:h-[620px]');
     expect(section.className).not.toMatch(/h-\[(?:100vh|100svh)/);
-    expect(screen.getByRole('button', { name: /create something custom/i })).toHaveClass('hidden', 'sm:inline-flex');
+    expect(screen.getByRole('link', { name: /create something custom/i })).toHaveClass('hidden', 'sm:inline-flex');
     expect(screen.getByTestId('hero-slide-frame')).toHaveClass('h-[calc(100%-6rem)]', 'sm:h-[calc(100%-7rem)]');
   });
 
@@ -135,12 +135,44 @@ describe('HeroCarousel', () => {
     expect(dotBtn).toHaveClass('min-h-[44px]', 'min-w-[28px]');
   });
 
+  it('uses only verified API desktop and mobile responsive variants', () => {
+    const campaign = { ...campaigns[0], mobileImageUrl: '/mobile.png',
+      imageMetadata: { url: campaigns[0].imageUrl, width: 1920, height: 1080, variants: [{ url: '/desktop-800.webp', width: 800 }] },
+      mobileImageMetadata: { url: '/mobile.png', width: 800, height: 1000, variants: [{ url: '/mobile-480.webp', width: 480 }] } };
+    const { container } = render(<HeroCarousel campaigns={[campaign]} onShop={vi.fn()} onCustom={vi.fn()} />);
+    expect(screen.getByTestId('hero-image')).toHaveAttribute('srcset', '/desktop-800.webp 800w');
+    expect(container.querySelector('source')).toHaveAttribute('srcset', '/mobile-480.webp 480w');
+    expect(container.querySelector('source')).toHaveAttribute('width', '800');
+    expect(container.querySelector('source')).not.toHaveAttribute('alt');
+  });
+
+  it('does not rotate campaigns while the document is hidden', () => {
+    vi.useFakeTimers();
+    const original = Object.getOwnPropertyDescriptor(document, 'hidden');
+    Object.defineProperty(document, 'hidden', { configurable: true, value: true });
+    try {
+      render(<HeroCarousel campaigns={campaigns} onShop={vi.fn()} onCustom={vi.fn()} />);
+      vi.advanceTimersByTime(18000);
+      expect(screen.getByTestId('hero-image')).toHaveAttribute('src', campaigns[0].imageUrl);
+    } finally {
+      if (original) Object.defineProperty(document, 'hidden', original);
+      else delete (document as { hidden?: boolean }).hidden;
+      vi.useRealTimers();
+    }
+  });
+
   it('optimizes first-slide LCP with eager loading and high fetch priority', () => {
     render(<HeroCarousel campaigns={campaigns} onShop={vi.fn()} onCustom={vi.fn()} />);
     const image = screen.getByTestId('hero-image');
     expect(image).toHaveAttribute('loading', 'eager');
     expect(image).toHaveAttribute('fetchpriority', 'high');
     expect(image).toHaveAttribute('decoding', 'async');
-    expect(image).toHaveAttribute('sizes', '(max-width: 639px) 100vw, (max-width: 1023px) 100vw, 1280px');
+    expect(image).toHaveAttribute('sizes', '100vw');
+    expect(image).toHaveAttribute('width', '1920');
+    expect(image).toHaveAttribute('height', '1080');
+    fireEvent.click(screen.getByRole('button', { name: /next promotion/i }));
+    expect(screen.getByTestId('hero-image')).toHaveAttribute('loading', 'lazy');
+    expect(screen.getByTestId('hero-image')).toHaveAttribute('fetchpriority', 'low');
+    expect(screen.getByTestId('hero-image')).not.toHaveAttribute('width');
   });
 });

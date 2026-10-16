@@ -9,6 +9,20 @@ describe('catalogue API adapter', () => {
     await expect(getProducts()).resolves.toEqual([expect.objectContaining({ id: 1, slug: 'rose', reviews: 12, images: ['rose.jpg', 'rose-2.jpg'], category: 'Bouquets', primaryCategory: { name: 'Bouquets', slug: 'bouquets' }, collections: [{ name: 'Birthday Gifts', slug: 'birthday-gifts' },], customizable: true })]);
   });
 
+  it('loads products beyond the first page without dropping them after hydration', async () => {
+    const item = (id: number) => ({ id, name: `Product ${id}`, slug: `product-${id}`, price: 500, image: '/image.png', category: 'Flowers' });
+    const fetchMock = vi.fn().mockResolvedValueOnce({ ok: true, json: async () => Array.from({length: 100}, (_, index) => item(index + 1)) })
+      .mockResolvedValueOnce({ ok: true, json: async () => [item(101)] });
+    vi.stubGlobal('fetch', fetchMock);
+    expect(await getProducts()).toHaveLength(101);
+    expect(fetchMock.mock.calls[1][0]).toContain('page=2');
+  });
+
+  it('rejects a server that repeats its full first page', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => Array.from({length: 100}, (_, id) => ({id, name: 'Product', price: 1, image: '', category: 'Flowers'})) }));
+    await expect(getProducts()).rejects.toThrow('did not advance');
+  });
+
   it('loads and flattens backend-managed category trees', async () => {
     const tree = [{ id: 1, name: 'Flowers', slug: 'flowers', displayOrder: 1, isActive: true, productCount: 1, children: [{ id: 2, name: 'Bouquets', slug: 'bouquets', displayOrder: 1, isActive: true, productCount: 1, children: [] }] }];
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => tree }));

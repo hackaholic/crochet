@@ -1,7 +1,7 @@
 # Task 5.6 — indexability rendering
 
 **Owner:** Codex
-**Status:** Pending
+**Status:** Completed
 **Work item:** Work 005
 **Work owner:** Codex
 
@@ -36,11 +36,11 @@ Read ../README.md, ../architecture.md, ../decisions.md and ../contracts/seo.md. 
 - Disposition: Pending; record commands/results, findings, owner and blockers before return.
 
 ## Acceptance checks
-- [ ] Initial HTML contains visible H1/name/description/price/availability/category copy and matching metadata/schema from a known API snapshot; hydration preserves it.
-- [ ] API failure or deleted/draft record cannot publish stale fake products; same build code/config-selected environment; incremental/new product refresh and real missing-page status verified.
-- [ ] Relevant tests pass; Docker/API and actual local browser checks where behavior changes, before push.
-- [ ] Security disposition and accurately labeled self/peer review recorded.
-- [ ] Work-local docs updated; no unapproved business facts or design changes.
+- [x] Initial HTML contains visible H1/name/description/price/availability/category copy and matching metadata/schema from a known API snapshot; hydration preserves it.
+- [x] API failure or deleted/draft record cannot publish stale fake products; same build code/config-selected environment; incremental/new product refresh and real missing-page status verified.
+- [x] Relevant tests pass; Docker/API and actual local browser checks where behavior changes, before push.
+- [x] Security disposition and accurately labeled self/peer review recorded.
+- [x] Work-local docs updated; no unapproved business facts or design changes.
 
 ## Handoff back
 Return to Codex: rendering ADR, snapshot contract and initial-HTML regression evidence. Update this exact contract, tasks.md, notes.md and coordination.md with status/files/tests, dependency readiness and blockers. Preserve completed contracts and source provenance. Global docs link here only; no push/deploy without gated approval.
@@ -49,3 +49,9 @@ Return to Codex: rendering ADR, snapshot contract and initial-HTML regression ev
 - [ ] Read work/INDEX.md and selected Work005 files plus this contract only.
 - [ ] Confirm owner/dependencies; mark only assigned task In Progress.
 - [ ] Reuse existing verified assets/endpoints and record questions rather than inventing facts.
+
+## Implementation return — 2026-10-13
+See [rendering evidence](../reports/task-006-rendering.md). Core shared React/API bootstrap and validated build implemented; local Docker/browser and focused tests passed. Status remains In Progress: await final5.18.1 snapshot-version return and verify actual Wrangler routing locally before closure. Next action: inspect returned task023, rebuild affected API/artifact and run clean-URL/private/404 checks. No push.
+
+## Final verification
+Completed after Gemini5.18.1 return (420 backend tests reported). Rebuilt local API, verified equal global versions across actual page1/page2, and final frontend build generated96 API-backed pages. Local Wrangler confirmed clean public paths200 with expected visible H1, unknown/deleted product404, admin/account200 with empty noindex shell. Seven build/routing/security unit tests plus15 catalogue/hydration tests and typecheck pass. Actual final built product/category/home browser checks passed; no React418, product2199 and images visible. Full Docker Semgrep has zero blocking findings. Self-review: public-only serialization, safe paths/canonical URLs, script escaping, pristine-template rerender guard and fail-closed consistency checks reviewed. No separate peer review claimed. No push/deploy. Existing richer social/site-schema/content/performance work remains separately tracked.

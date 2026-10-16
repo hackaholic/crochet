@@ -1,0 +1,33 @@
+{
+  "homeAnchors": 51,
+  "reachablePages": 58,
+  "reachableProducts": 24,
+  "categorySubcategoryPages": 24,
+  "missingPublicTargets": [],
+  "sampleEdges": [
+    {
+      "from": "/",
+      "to": "/products/crochet-marigold-garland"
+    },
+    {
+      "from": "/",
+      "to": "/products/crochet-toran"
+    },
+    {
+      "from": "/",
+      "to": "/products/daisy-coaster-set"
+    },
+    {
+      "from": "/",
+      "to": "/products/forever-crochet-rose-bouquet"
+    },
+    {
+      "from": "/",
+      "to": "/products/octopus-amigurami-set"
+    },
+    {
+      "from": "/",
+      "to": "/products/heart-bear"
+    }
+  ]
+}

@@ -1,282 +1,71 @@
-#!/usr/bin/env node
-import fs from 'node:fs';
+import { socialMetadata } from '../src/lib/seo/socialMetadata.mjs';
+import fs from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { pathToFileURL } from 'node:url';
+import { canonicalMetadata } from '../src/lib/seo/urlPolicy.mjs';
+import { apiBase, getJson, getPublicRoutes } from './prerender-routes.mjs';
 
-import { getPublicRoutes } from './prerender-routes.mjs';
+const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
+export const serializePublicData = value => JSON.stringify(value).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const repositoryRoot = path.resolve(__dirname, '..');
-const distDir = path.join(repositoryRoot, 'dist');
-const templatePath = path.join(distDir, 'index.html');
-
-const BASE_URL = 'https://sulocraft.com';
-
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+export function pageDocument(template, html, bootstrap, schema) {
+  if (!template.includes('<div id="root"></div>')) throw new Error('Public render requires a pristine app shell');
+  const metadata = bootstrap.metadata;
+  const canonical = new URL(metadata.canonicalUrl);
+  if (!['http:', 'https:'].includes(canonical.protocol) || canonical.username || canonical.password) throw new Error('Invalid canonical URL');
+  const head = `<title>${escape(metadata.title)}</title>
+<meta name="description" content="${escape(metadata.description)}">
+<meta name="robots" content="${escape(metadata.robots)}">
+<link rel="canonical" href="${escape(canonical.href)}">
+${Object.entries(socialMetadata(metadata, canonical.href)).map(([key, content]) =>
+  `<meta ${key.startsWith('og:') ? 'property' : 'name'}="${key}" content="${escape(content)}">`).join('\n')}
+${schema ? Object.entries(schema).map(([id, value]) => `<script id="${escape(id)}" type="application/ld+json"${id === 'sulocraft-product-schema' ? ' data-seo="product"' : ''}>${serializePublicData(value)}</script>`).join('\n') : ''}`;
+  return template.replace(/<title>[\s\S]*?<\/title>/gi, '')
+    .replace(/<meta\s+(?:name|property)="(?:description|robots|og:[^"]*|twitter:[^"]*)"[^>]*>/gi, '')
+    .replace('</head>', `${head}</head>`)
+    .replace('<div id="root"></div>', `<div id="root">${html}</div><script id="storefront-bootstrap" type="application/json">${serializePublicData(bootstrap)}</script>`);
 }
 
-export function prerender() {
-  if (!fs.existsSync(templatePath)) {
-    console.error(`[prerender] Template not found at ${templatePath}. Run 'vite build' first.`);
-    process.exit(1);
+export async function prerender({ repositoryRoot = process.cwd(), baseUrl = process.env.SEO_API_BASE_URL || process.env.VITE_API_BASE_URL, fetcher = fetch, policy } = {}) {
+  if (!baseUrl) throw new Error('SEO_API_BASE_URL is required for public-page rendering');
+  const base = apiBase(baseUrl);
+  const routes = await getPublicRoutes(base, fetcher);
+  const products = [];
+  for (let page = 1; page <= 2000; page++) {
+    const batch = await getJson(base, `/products?page=${page}&limit=100`, fetcher);
+    if (!Array.isArray(batch)) throw new Error('Invalid public catalogue');
+    products.push(...batch);
+    if (new Set(products.map(product => product.id)).size !== products.length) throw new Error('Catalogue pagination did not advance');
+    if (batch.length < 100) break;
+    if (page === 2000) throw new Error('Catalogue build limit exceeded');
   }
-
-  const templateHtml = fs.readFileSync(templatePath, 'utf8');
-  const routes = getPublicRoutes();
-
-  console.log(`[prerender] Starting pre-render for ${routes.length} public routes...`);
-
-  let generatedCount = 0;
-
+  const [categories, collections, home] = await Promise.all([
+    getJson(base, '/categories?flat=false&includeEmpty=false', fetcher),
+    getJson(base, '/collections', fetcher), getJson(base, '/storefront/home', fetcher),
+  ]);
+  if (!Array.isArray(categories) || !Array.isArray(collections) || !Array.isArray(home.hero) || !Array.isArray(home.sections)) throw new Error('Invalid public storefront data');
+  // Reject changes both within pagination and while fetching supplemental public data.
+  const after = await getPublicRoutes(base, fetcher);
+  if (routes.versionHash !== after.versionHash || JSON.stringify(routes) !== JSON.stringify(after)) throw new Error('Public snapshot changed during build; retry');
+  const renderer = await import(pathToFileURL(path.join(repositoryRoot, '.seo-render/entry-server.js')).href);
+  const dist = path.join(repositoryRoot, 'dist');
+  const template = await fs.readFile(path.join(dist, 'app-shell.html'), 'utf8');
+  const catalogue = products.map(renderer.toProduct);
+  const documents = [];
   for (const route of routes) {
-    const canonicalUrl = `${BASE_URL}${route.canonicalPath}`;
-    
-    // 1. Build Meta Tags
-    let metaTags = `\n    <title>${escapeHtml(route.title)}</title>`;
-    metaTags += `\n    <meta name="description" content="${escapeHtml(route.description)}">`;
-    metaTags += `\n    <meta name="robots" content="index,follow">`;
-    metaTags += `\n    <link rel="canonical" href="${escapeHtml(canonicalUrl)}">`;
-    metaTags += `\n    <link rel="alternate" hreflang="en-IN" href="${escapeHtml(canonicalUrl)}">`;
-    metaTags += `\n    <link rel="alternate" hreflang="x-default" href="${escapeHtml(canonicalUrl)}">`;
-    metaTags += `\n    <meta property="og:title" content="${escapeHtml(route.title)}">`;
-    metaTags += `\n    <meta property="og:description" content="${escapeHtml(route.description)}">`;
-    metaTags += `\n    <meta property="og:type" content="${escapeHtml(route.pageType)}">`;
-    metaTags += `\n    <meta property="og:url" content="${escapeHtml(canonicalUrl)}">`;
-    metaTags += `\n    <meta property="og:site_name" content="Sulocraft">`;
-    metaTags += `\n    <meta name="twitter:card" content="${route.imageUrl ? 'summary_large_image' : 'summary'}">`;
-    metaTags += `\n    <meta name="twitter:title" content="${escapeHtml(route.title)}">`;
-    metaTags += `\n    <meta name="twitter:description" content="${escapeHtml(route.description)}">`;
-
-    if (route.imageUrl) {
-      metaTags += `\n    <meta property="og:image" content="${escapeHtml(route.imageUrl)}">`;
-      metaTags += `\n    <meta property="og:image:alt" content="${escapeHtml(route.heading)}">`;
-      metaTags += `\n    <meta name="twitter:image" content="${escapeHtml(route.imageUrl)}">`;
-    }
-
-    // 2. Build Schema.org Scripts
-    let schemas = '';
-
-    // BreadcrumbList Schema
-    if (route.breadcrumbs && route.breadcrumbs.length > 0) {
-      const breadcrumbData = {
-        '@context': 'https://schema.org',
-        '@type': 'BreadcrumbList',
-        itemListElement: route.breadcrumbs.map((b, idx) => ({
-          '@type': 'ListItem',
-          position: idx + 1,
-          name: b.name,
-          item: `${BASE_URL}${b.path}`,
-        })),
-      };
-      schemas += `\n    <script type="application/ld+json" id="sulocraft-breadcrumb-schema">${JSON.stringify(breadcrumbData).replace(/</g, '\\u003c')}</script>`;
-    }
-
-    // Product Schema (for products)
-    if (route.pageType === 'product' && route.price) {
-      const productData = {
-        '@context': 'https://schema.org',
-        '@type': 'Product',
-        name: route.heading,
-        description: route.summary,
-        image: route.imageUrl ? [route.imageUrl] : [],
-        sku: route.sku || `SULO-${route.heading.toUpperCase().replace(/[^A-Z0-9]+/g, '-')}`,
-        brand: { '@type': 'Brand', name: 'Sulocraft' },
-        category: route.category || 'Crochet',
-        itemCondition: 'https://schema.org/NewCondition',
-        offers: {
-          '@type': 'Offer',
-          priceCurrency: route.currency || 'INR',
-          price: route.price,
-          priceValidUntil: '2027-12-31',
-          itemCondition: 'https://schema.org/NewCondition',
-          availability: route.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-          url: canonicalUrl,
-          hasMerchantReturnPolicy: {
-            '@type': 'MerchantReturnPolicy',
-            applicableCountry: 'IN',
-            returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
-            merchantReturnDays: 7,
-            returnMethod: 'https://schema.org/ReturnByMail',
-            returnFees: 'https://schema.org/FreeReturn',
-          },
-          shippingDetails: {
-            '@type': 'OfferShippingDetails',
-            shippingRate: {
-              '@type': 'MonetaryAmount',
-              value: route.price >= 999 ? 0 : 100,
-              currency: 'INR',
-            },
-            shippingDestination: {
-              '@type': 'DefinedRegion',
-              addressCountry: 'IN',
-            },
-            deliveryTime: {
-              '@type': 'ShippingDeliveryTime',
-              handlingTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 2, unitCode: 'd' },
-              transitTime: { '@type': 'QuantitativeValue', minValue: 3, maxValue: 5, unitCode: 'd' },
-            },
-          },
-        },
-      };
-      if (route.rating && route.reviews > 0) {
-        productData.aggregateRating = {
-          '@type': 'AggregateRating',
-          ratingValue: route.rating,
-          reviewCount: route.reviews,
-        };
-      }
-      schemas += `\n    <script type="application/ld+json" id="sulocraft-product-schema">${JSON.stringify(productData).replace(/</g, '\\u003c')}</script>`;
-
-      // Product FAQPage Schema
-      const faqData = {
-        '@context': 'https://schema.org',
-        '@type': 'FAQPage',
-        mainEntity: [
-          {
-            '@type': 'Question',
-            name: `How do I care for and clean ${route.heading}?`,
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: `Gently spot clean ${route.heading} with a damp cloth and mild soap. Reshape gently while slightly damp and lay flat to dry in shade.`,
-            },
-          },
-          {
-            '@type': 'Question',
-            name: `What materials are used in ${route.heading}?`,
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: `Crafted from 100% hypoallergenic milk cotton yarn and durable, color-fast stitching designed to last forever.`,
-            },
-          },
-          {
-            '@type': 'Question',
-            name: 'What is the return policy for this item?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'Sulocraft offers a 7-day hassle-free return window for any damaged or defective items with full replacement or refund.',
-            },
-          },
-        ],
-      };
-      schemas += `\n    <script type="application/ld+json" id="sulocraft-faq-schema">${JSON.stringify(faqData).replace(/</g, '\\u003c')}</script>`;
-    }
-
-    // Organization & WebSite Schema
-    if (route.path === '/') {
-      const siteData = {
-        '@context': 'https://schema.org',
-        '@graph': [
-          {
-            '@type': 'Organization',
-            '@id': `${BASE_URL}/#organization`,
-            name: 'Sulocraft',
-            url: BASE_URL,
-            logo: `https://images.sulocraft.com/brand/logo.png`,
-            founder: {
-              '@type': 'Person',
-              name: 'Anupama Sharma',
-            },
-            foundingDate: '2026',
-            sameAs: [
-              'https://instagram.com/sulocraft',
-              'https://facebook.com/sulocraft',
-              'https://pinterest.com/sulocraft',
-            ],
-          },
-          {
-            '@type': 'WebSite',
-            '@id': `${BASE_URL}/#website`,
-            name: 'Sulocraft',
-            url: BASE_URL,
-            publisher: { '@id': `${BASE_URL}/#organization` },
-            potentialAction: {
-              '@type': 'SearchAction',
-              target: `${BASE_URL}/shop?q={search_term_string}`,
-              'query-input': 'required name=search_term_string',
-            },
-          },
-        ],
-      };
-      schemas += `\n    <script type="application/ld+json" id="sulocraft-site-schema">${JSON.stringify(siteData).replace(/</g, '\\u003c')}</script>`;
-    }
-
-    // 3. Meaningful Initial Server-Rendered Content for <div id="root">
-    const breadcrumbHtml = route.breadcrumbs && route.breadcrumbs.length > 0
-      ? `<nav aria-label="Breadcrumb" class="mb-4 text-xs text-[#8B6B4A]"><ol class="flex flex-wrap items-center gap-1">${route.breadcrumbs.map((b, idx) => `<li>${idx > 0 ? '<span class="mx-1">/</span>' : ''}<a href="${escapeHtml(b.path)}" class="hover:underline">${escapeHtml(b.name)}</a></li>`).join('')}</ol></nav>`
-      : '';
-
-    const productExtraHtml = route.pageType === 'product' && route.price
-      ? `<div class="mt-4"><p class="text-3xl font-semibold text-[#2C1810]">₹${route.price}</p><p class="text-xs text-[#8B6B4A] mt-1">Inclusive of all taxes · Free shipping above ₹999</p>${route.imageUrl ? `<img src="${escapeHtml(route.imageUrl)}" alt="${escapeHtml(route.heading)}" class="mt-6 rounded-2xl w-full max-w-md object-cover shadow-sm" width="600" height="600" loading="eager" />` : ''}</div>`
-      : '';
-
-    const initialContent = `
-      <div class="min-h-screen bg-[#FAF7F2] text-[#2C1810]">
-        <div class="bg-[#2C1810] text-white text-center py-2 text-xs font-medium tracking-wide">
-          <span>Free shipping on orders above ₹999</span>
-          <span class="mx-3 opacity-40">|</span>
-          <span>Handmade with love in India 🇮🇳</span>
-        </div>
-        <header class="border-b border-[#EDE4D0] bg-[#FAF7F2] py-4 px-4">
-          <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <a href="/" class="font-bold text-[#2C1810] text-lg tracking-tight">Sulocraft</a>
-            <nav class="flex gap-6 text-sm font-medium text-[#5C3D2E]">
-              <a href="/" class="hover:text-[#C4622D]">Home</a>
-              <a href="/shop" class="hover:text-[#C4622D]">Shop</a>
-              <a href="/about" class="hover:text-[#C4622D]">About</a>
-              <a href="/contact" class="hover:text-[#C4622D]">Contact</a>
-            </nav>
-          </div>
-        </header>
-        <main class="max-w-7xl mx-auto px-4 py-12">
-          ${breadcrumbHtml}
-          <h1 class="text-4xl font-medium text-[#2C1810] tracking-tight mb-4" style="font-family: var(--font-serif, serif)">${escapeHtml(route.heading)}</h1>
-          <p class="text-[#8B6B4A] max-w-2xl leading-relaxed text-base">${escapeHtml(route.summary)}</p>
-          ${productExtraHtml}
-        </main>
-      </div>
-    `.trim();
-
-    // 4. Inject into Template HTML
-    let outputHtml = templateHtml;
-
-    // Replace <title>
-    outputHtml = outputHtml.replace(/<title>.*?<\/title>/i, '');
-    
-    // Inject Head metadata right before </head>
-    outputHtml = outputHtml.replace('</head>', `${metaTags}${schemas}\n  </head>`);
-
-    // Inject Root content inside <div id="root"></div>
-    outputHtml = outputHtml.replace(
-      /(<div id="root">)(<\/div>)/i,
-      `$1${initialContent}$2`
-    );
-
-    // 5. Determine Destination File Path
-    let targetFile;
-    if (route.path === '/') {
-      targetFile = path.join(distDir, 'index.html');
-    } else {
-      const cleanPath = route.path.replace(/^\/+|\/+$/g, '');
-      const targetSubDir = path.join(distDir, cleanPath);
-      fs.mkdirSync(targetSubDir, { recursive: true });
-      targetFile = path.join(targetSubDir, 'index.html');
-    }
-
-    fs.writeFileSync(targetFile, outputHtml, 'utf8');
-    generatedCount++;
+    const entity = route.metadata.productEntity;
+    const product = entity && catalogue.find(item => item.id === entity.id);
+    if (entity && (!product || product.price !== entity.price || product.name !== entity.name)) throw new Error('Catalogue and SEO product snapshot disagree');
+    const metadata = canonicalMetadata(route.metadata, policy);
+    const bootstrap = { policy, path: route.path, metadata, products: catalogue, categories, collections, home };
+    documents.push({ path: route.path, html: pageDocument(template, renderer.render(bootstrap), bootstrap, renderer.pageSchemas(metadata, metadata.canonicalUrl, product, categories)) });
   }
-
-  console.log(`[prerender] Successfully pre-rendered ${generatedCount} static HTML routes into dist/`);
-}
-
-// Allow standalone execution
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  prerender();
+  // Do not publish partial output when rendering any route fails.
+  await fs.writeFile(path.join(dist, 'app-shell.html'), template.replace('index,follow', 'noindex,nofollow'));
+  for (const document of documents) {
+    const target = path.join(dist, document.path === '/' ? 'index.html' : `${document.path.slice(1)}/index.html`);
+    await fs.mkdir(path.dirname(target), { recursive: true });
+    await fs.writeFile(target, document.html);
+  }
+  console.log(`[sulocraft] Rendered ${documents.length} API-backed public pages`);
 }

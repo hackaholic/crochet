@@ -1,0 +1,335 @@
+[
+  {
+    "origin": "http://localhost:8080",
+    "path": "/",
+    "status": 200,
+    "content_type": "text/html",
+    "title": [
+      "Sulocraft \u2014 Handmade crochet gifts"
+    ],
+    "meta": [
+      {
+        "name": "description",
+        "content": "Thoughtful handmade crochet gifts, flowers, d\u00e9cor, and keepsakes made with care."
+      },
+      {
+        "name": "robots",
+        "content": "index,follow"
+      }
+    ],
+    "canonical": [],
+    "h1_count": 0,
+    "anchor_count": 0,
+    "headers": {},
+    "jsonld_count": 0
+  },
+  {
+    "origin": "http://localhost:8080",
+    "path": "/products/sunflower-bouquet",
+    "status": 200,
+    "content_type": "text/html",
+    "title": [
+      "Sulocraft \u2014 Handmade crochet gifts"
+    ],
+    "meta": [
+      {
+        "name": "description",
+        "content": "Thoughtful handmade crochet gifts, flowers, d\u00e9cor, and keepsakes made with care."
+      },
+      {
+        "name": "robots",
+        "content": "index,follow"
+      }
+    ],
+    "canonical": [],
+    "h1_count": 0,
+    "anchor_count": 0,
+    "headers": {},
+    "jsonld_count": 0
+  },
+  {
+    "origin": "http://localhost:8080",
+    "path": "/categories/flowers",
+    "status": 200,
+    "content_type": "text/html",
+    "title": [
+      "Sulocraft \u2014 Handmade crochet gifts"
+    ],
+    "meta": [
+      {
+        "name": "description",
+        "content": "Thoughtful handmade crochet gifts, flowers, d\u00e9cor, and keepsakes made with care."
+      },
+      {
+        "name": "robots",
+        "content": "index,follow"
+      }
+    ],
+    "canonical": [],
+    "h1_count": 0,
+    "anchor_count": 0,
+    "headers": {},
+    "jsonld_count": 0
+  },
+  {
+    "origin": "http://localhost:8080",
+    "path": "/collections/best-sellers",
+    "status": 200,
+    "content_type": "text/html",
+    "title": [
+      "Sulocraft \u2014 Handmade crochet gifts"
+    ],
+    "meta": [
+      {
+        "name": "description",
+        "content": "Thoughtful handmade crochet gifts, flowers, d\u00e9cor, and keepsakes made with care."
+      },
+      {
+        "name": "robots",
+        "content": "index,follow"
+      }
+    ],
+    "canonical": [],
+    "h1_count": 0,
+    "anchor_count": 0,
+    "headers": {},
+    "jsonld_count": 0
+  },
+  {
+    "origin": "http://localhost:8080",
+    "path": "/about",
+    "status": 200,
+    "content_type": "text/html",
+    "title": [
+      "Sulocraft \u2014 Handmade crochet gifts"
+    ],
+    "meta": [
+      {
+        "name": "description",
+        "content": "Thoughtful handmade crochet gifts, flowers, d\u00e9cor, and keepsakes made with care."
+      },
+      {
+        "name": "robots",
+        "content": "index,follow"
+      }
+    ],
+    "canonical": [],
+    "h1_count": 0,
+    "anchor_count": 0,
+    "headers": {},
+    "jsonld_count": 0
+  },
+  {
+    "origin": "http://localhost:8080",
+    "path": "/account",
+    "status": 200,
+    "content_type": "text/html",
+    "title": [
+      "Sulocraft \u2014 Handmade crochet gifts"
+    ],
+    "meta": [
+      {
+        "name": "description",
+        "content": "Thoughtful handmade crochet gifts, flowers, d\u00e9cor, and keepsakes made with care."
+      },
+      {
+        "name": "robots",
+        "content": "index,follow"
+      }
+    ],
+    "canonical": [],
+    "h1_count": 0,
+    "anchor_count": 0,
+    "headers": {},
+    "jsonld_count": 0
+  },
+  {
+    "origin": "http://localhost:8080",
+    "path": "/this-route-does-not-exist",
+    "status": 200,
+    "content_type": "text/html",
+    "title": [
+      "Sulocraft \u2014 Handmade crochet gifts"
+    ],
+    "meta": [
+      {
+        "name": "description",
+        "content": "Thoughtful handmade crochet gifts, flowers, d\u00e9cor, and keepsakes made with care."
+      },
+      {
+        "name": "robots",
+        "content": "index,follow"
+      }
+    ],
+    "canonical": [],
+    "h1_count": 0,
+    "anchor_count": 0,
+    "headers": {},
+    "jsonld_count": 0
+  },
+  {
+    "origin": "http://localhost:8080",
+    "path": "/robots.txt",
+    "status": 200,
+    "content_type": "text/html",
+    "title": [
+      "Sulocraft \u2014 Handmade crochet gifts"
+    ],
+    "meta": [
+      {
+        "name": "description",
+        "content": "Thoughtful handmade crochet gifts, flowers, d\u00e9cor, and keepsakes made with care."
+      },
+      {
+        "name": "robots",
+        "content": "index,follow"
+      }
+    ],
+    "canonical": [],
+    "h1_count": 0,
+    "anchor_count": 0,
+    "headers": {},
+    "jsonld_count": 0
+  },
+  {
+    "origin": "http://localhost:8080",
+    "path": "/sitemap.xml",
+    "status": 200,
+    "content_type": "text/html",
+    "title": [
+      "Sulocraft \u2014 Handmade crochet gifts"
+    ],
+    "meta": [
+      {
+        "name": "description",
+        "content": "Thoughtful handmade crochet gifts, flowers, d\u00e9cor, and keepsakes made with care."
+      },
+      {
+        "name": "robots",
+        "content": "index,follow"
+      }
+    ],
+    "canonical": [],
+    "h1_count": 0,
+    "anchor_count": 0,
+    "headers": {},
+    "jsonld_count": 0
+  },
+  {
+    "origin": "https://dev.sulocraft.com",
+    "path": "/",
+    "status": 403,
+    "content_type": "text/plain; charset=UTF-8",
+    "title": [],
+    "meta": [],
+    "canonical": [],
+    "h1_count": 0,
+    "anchor_count": 0,
+    "headers": {},
+    "jsonld_count": 0
+  },
+  {
+    "origin": "https://dev.sulocraft.com",
+    "path": "/products/sunflower-bouquet",
+    "status": 403,
+    "content_type": "text/plain; charset=UTF-8",
+    "title": [],
+    "meta": [],
+    "canonical": [],
+    "h1_count": 0,
+    "anchor_count": 0,
+    "headers": {},
+    "jsonld_count": 0
+  },
+  {
+    "origin": "https://dev.sulocraft.com",
+    "path": "/categories/flowers",
+    "status": 403,
+    "content_type": "text/plain; charset=UTF-8",
+    "title": [],
+    "meta": [],
+    "canonical": [],
+    "h1_count": 0,
+    "anchor_count": 0,
+    "headers": {},
+    "jsonld_count": 0
+  },
+  {
+    "origin": "https://dev.sulocraft.com",
+    "path": "/collections/best-sellers",
+    "status": 403,
+    "content_type": "text/plain; charset=UTF-8",
+    "title": [],
+    "meta": [],
+    "canonical": [],
+    "h1_count": 0,
+    "anchor_count": 0,
+    "headers": {},
+    "jsonld_count": 0
+  },
+  {
+    "origin": "https://dev.sulocraft.com",
+    "path": "/about",
+    "status": 403,
+    "content_type": "text/plain; charset=UTF-8",
+    "title": [],
+    "meta": [],
+    "canonical": [],
+    "h1_count": 0,
+    "anchor_count": 0,
+    "headers": {},
+    "jsonld_count": 0
+  },
+  {
+    "origin": "https://dev.sulocraft.com",
+    "path": "/account",
+    "status": 403,
+    "content_type": "text/plain; charset=UTF-8",
+    "title": [],
+    "meta": [],
+    "canonical": [],
+    "h1_count": 0,
+    "anchor_count": 0,
+    "headers": {},
+    "jsonld_count": 0
+  },
+  {
+    "origin": "https://dev.sulocraft.com",
+    "path": "/this-route-does-not-exist",
+    "status": 403,
+    "content_type": "text/plain; charset=UTF-8",
+    "title": [],
+    "meta": [],
+    "canonical": [],
+    "h1_count": 0,
+    "anchor_count": 0,
+    "headers": {},
+    "jsonld_count": 0
+  },
+  {
+    "origin": "https://dev.sulocraft.com",
+    "path": "/robots.txt",
+    "status": 403,
+    "content_type": "text/plain; charset=UTF-8",
+    "title": [],
+    "meta": [],
+    "canonical": [],
+    "h1_count": 0,
+    "anchor_count": 0,
+    "headers": {},
+    "jsonld_count": 0
+  },
+  {
+    "origin": "https://dev.sulocraft.com",
+    "path": "/sitemap.xml",
+    "status": 403,
+    "content_type": "text/plain; charset=UTF-8",
+    "title": [],
+    "meta": [],
+    "canonical": [],
+    "h1_count": 0,
+    "anchor_count": 0,
+    "headers": {},
+    "jsonld_count": 0
+  }
+]

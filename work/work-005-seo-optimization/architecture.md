@@ -14,7 +14,7 @@ Verified media metadata (Gemini5.20) → reusable image templates (Codex5.10).
 Sitemap/robots generators (Gemini5.18) → storefront root delivery (Codex5.8).
 Merchant feed (Gemini5.15) uses the same prices/stock/canonicals and approved policy facts.
 
-## Source-inspection findings — preliminary, not full audit acceptance
+## Source-inspection findings — superseded by verified5.5 report
 | Severity | Evidence | Required follow-up |
 | --- | --- | --- |
 | High | scripts/prerender-routes.mjs contains static routes/descriptions and hardcoded origins; backend resolver separately reads catalogue |5.5 inspect generated/live HTML, then5.6/5.18 replace duplicate business content with versioned DB snapshot |
@@ -38,3 +38,6 @@ Merchant feed (Gemini5.15) uses the same prices/stock/canonicals and approved po
 - [Faceted crawling](https://developers.google.com/crawling/docs/faceted-navigation)
 - [Merchant product specification](https://support.google.com/merchants/answer/7052112?hl=en)
 Recheck official current requirements during relevant implementation; no third-party invented compliance values.
+
+## Verified audit return
+[5.5 evidence/report](reports/task-005-audit.md) confirms price/schema mismatch, hydration418, duplicate robots, mostly button navigation, inaccurate category H1 and missing about share image. Reuse exact evidence; do not repeat baseline setup. DEC-005-7 specifies targeting/origin policy; Gemini5.17 ready and Codex5.3 awaits typed return.

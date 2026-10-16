@@ -1,3 +1,6 @@
+import CatalogueIntro from '../components/CatalogueIntro';
+import SeoBreadcrumbs from '../components/SeoBreadcrumbs';
+import type { SeoMetadata } from '../lib/api/seo';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router';
 import ProductCard from '../components/ProductCard';
@@ -7,6 +10,8 @@ import { useCatalogue } from '../components/CatalogueProvider';
 import { buildCategoryFilterOptions, buildCollectionFilterOptions, buildPriceFilterOptions, productMatchesCategory, productMatchesOccasion, sortShopProducts } from '../lib/shopFilters';
 
 interface ShopPageProps {
+  seoMetadata?: SeoMetadata;
+  heading?: string | null;
   onAddToCart: (product: Product) => void;
   onToggleWishlist: (product: Product) => void;
   wishlist: number[];
@@ -48,17 +53,17 @@ function FilterSection({ title, children, defaultOpen = true }: { title: string;
   );
 }
 
-export default function ShopPage({ onAddToCart, onToggleWishlist, wishlist, onProductClick }: ShopPageProps) {
+export default function ShopPage({ seoMetadata, heading, onAddToCart, onToggleWishlist, wishlist, onProductClick }: ShopPageProps) {
   const location = useSafeLocation();
   const { products, categories, collections } = useCatalogue();
   const categoryFilters = useMemo(() => buildCategoryFilterOptions(categories, products), [categories, products]);
   const collectionFilters = useMemo(() => buildCollectionFilterOptions(collections, products), [collections, products]);
   const priceFilters = useMemo(() => buildPriceFilterOptions(priceRanges, products), [products]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(() => {
-    const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+    const params = new URLSearchParams(location.search);
     const category = params.get('category');
     if (category) return [category];
-    const path = typeof window !== 'undefined' ? window.location.pathname.replace(/\/+$/, '') : '';
+    const path = location.pathname.replace(/\/+$/, '');
     if (path.startsWith('/categories/')) {
       const slug = path.replace(/^\/categories\//, '');
       if (slug) return [slug];
@@ -67,10 +72,10 @@ export default function ShopPage({ onAddToCart, onToggleWishlist, wishlist, onPr
   });
   const [selectedPriceRange, setSelectedPriceRange] = useState<number | null>(null);
   const [selectedOccasions, setSelectedOccasions] = useState<string[]>(() => {
-    const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+    const params = new URLSearchParams(location.search);
     const collection = params.get('occasion') ?? params.get('collection');
     if (collection) return [collection];
-    const path = typeof window !== 'undefined' ? window.location.pathname.replace(/\/+$/, '') : '';
+    const path = location.pathname.replace(/\/+$/, '');
     if (path.startsWith('/collections/')) {
       const slug = path.replace(/^\/collections\//, '');
       if (slug) return [slug];
@@ -217,12 +222,13 @@ export default function ShopPage({ onAddToCart, onToggleWishlist, wishlist, onPr
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] pt-28">
+      <SeoBreadcrumbs metadata={seoMetadata} categories={categories} />
       <div className="storefront-shell pb-10 pt-6 sm:pb-12 sm:pt-8">
         {/* Top bar */}
         <div className="mb-5 flex flex-wrap items-center justify-between gap-4 sm:mb-6">
           <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
             <h1 className="text-3xl font-medium text-[#2C1810] sm:text-4xl" style={{ fontFamily: 'var(--font-serif)' }}>
-              All Products
+              {heading || 'All Products'}
             </h1>
             <p className="text-sm text-[#8B6B4A]">{filtered.length} handmade creations</p>
           </div>
@@ -251,6 +257,8 @@ export default function ShopPage({ onAddToCart, onToggleWishlist, wishlist, onPr
             </div>
           </div>
         </div>
+
+        <CatalogueIntro metadata={seoMetadata} pathname={location.pathname} />
 
         {/* Active filter chips */}
         {activeFilters > 0 && (
