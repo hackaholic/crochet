@@ -1,0 +1,2477 @@
+{
+  "version": 1,
+  "encoder": {
+    "format": "webp",
+    "quality": 84,
+    "effort": 6,
+    "sharp": "0.35.5"
+  },
+  "assets": [
+    {
+      "key": "categories/amigurumi/card-v2.png",
+      "sha256": "07c7c90f5fce0975824b9a5b37c2535af619313ad3e63c3530a3608be8453276",
+      "bytes": 2477091,
+      "width": 1672,
+      "height": 941,
+      "variants": [
+        {
+          "key": "optimized/categories/amigurumi/card-v2-6d17f6400587a542-480w.webp",
+          "width": 480,
+          "height": 270,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 33166,
+          "sha256": "44066cbe933117407d0bc2f62fcd426de67e1c2d37909056639285d448c25a83"
+        },
+        {
+          "key": "optimized/categories/amigurumi/card-v2-6d17f6400587a542-800w.webp",
+          "width": 800,
+          "height": 450,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 77500,
+          "sha256": "51b3223136abb67945ecdd5513cd4f390383acdb0374275f774bdfea74be82da"
+        },
+        {
+          "key": "optimized/categories/amigurumi/card-v2-6d17f6400587a542-1200w.webp",
+          "width": 1200,
+          "height": 675,
+          "contentType": "image/webp",
+          "descriptor": "1200w",
+          "bytes": 141196,
+          "sha256": "cad86222cfad5ab6e6c64c4ec531c19fe781edbacb876be42c2d14cdab6b6343"
+        },
+        {
+          "key": "optimized/categories/amigurumi/card-v2-6d17f6400587a542-1600w.webp",
+          "width": 1600,
+          "height": 900,
+          "contentType": "image/webp",
+          "descriptor": "1600w",
+          "bytes": 209280,
+          "sha256": "f77bfec40da88c142941ccb354dd65a6e7f0b7db66604140802a88b51f6b599e"
+        },
+        {
+          "key": "optimized/categories/amigurumi/card-v2-6d17f6400587a542-1672w.webp",
+          "width": 1672,
+          "height": 941,
+          "contentType": "image/webp",
+          "descriptor": "1672w",
+          "bytes": 223402,
+          "sha256": "d0280ac9dae31c63feab6bfc086ce91a161b1e5047bfdd43a1a7a604ed902403"
+        }
+      ]
+    },
+    {
+      "key": "categories/amigurumi/card.png",
+      "sha256": "6b812fff7acb23e7c4eaceef32f81385f5a16792743b824df4667d1fb80d7f68",
+      "bytes": 2179956,
+      "width": 1672,
+      "height": 941,
+      "variants": [
+        {
+          "key": "optimized/categories/amigurumi/card-a4e7cdd6f1244a03-480w.webp",
+          "width": 480,
+          "height": 270,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 27294,
+          "sha256": "072befb7b9360c0165a620a4ef5539562aa4cfe668e884b796dee4e914673146"
+        },
+        {
+          "key": "optimized/categories/amigurumi/card-a4e7cdd6f1244a03-800w.webp",
+          "width": 800,
+          "height": 450,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 59912,
+          "sha256": "af268778a315da95173195824c41471fc57f537b083f625c16ca9d08c9241597"
+        },
+        {
+          "key": "optimized/categories/amigurumi/card-a4e7cdd6f1244a03-1200w.webp",
+          "width": 1200,
+          "height": 675,
+          "contentType": "image/webp",
+          "descriptor": "1200w",
+          "bytes": 109196,
+          "sha256": "fd57452db58229de9d5e541ca7b92d32983e256ada1b2ce3e7ef73d44cc6e525"
+        },
+        {
+          "key": "optimized/categories/amigurumi/card-a4e7cdd6f1244a03-1600w.webp",
+          "width": 1600,
+          "height": 900,
+          "contentType": "image/webp",
+          "descriptor": "1600w",
+          "bytes": 155578,
+          "sha256": "a5875874c28153bbe27e73c7786505e6d69ea21accddd88c582fc982e5aef7bf"
+        },
+        {
+          "key": "optimized/categories/amigurumi/card-a4e7cdd6f1244a03-1672w.webp",
+          "width": 1672,
+          "height": 941,
+          "contentType": "image/webp",
+          "descriptor": "1672w",
+          "bytes": 164846,
+          "sha256": "303711a7745b76d9471ab85e0aa54ee3f108ae606cba69c6703e3e6698242a0c"
+        }
+      ]
+    },
+    {
+      "key": "categories/baby/card.png",
+      "sha256": "cb4443fea88ab3e12e7d9797fb0ca030f568567315de998c8d54f0a237edb2f5",
+      "bytes": 2428441,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/categories/baby/card-be9bf8ba4d56d8c6-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 57586,
+          "sha256": "bb7d54deef4b67f0fbae101b9a412fceab24a7298df52cca109eaa51d4dbd83f"
+        },
+        {
+          "key": "optimized/categories/baby/card-be9bf8ba4d56d8c6-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 128584,
+          "sha256": "b3a835afe42efcc3d6e4b0e54772587031836a5e4b70853db5653e34e27ecbb6"
+        },
+        {
+          "key": "optimized/categories/baby/card-be9bf8ba4d56d8c6-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 204604,
+          "sha256": "d10a87f4a8a84162d6db7383734a4b496952f7c5aef330113eb091e4854d7c6c"
+        }
+      ]
+    },
+    {
+      "key": "categories/flowers/card.png",
+      "sha256": "cfdd4f0704b429fbd554b97c00d5e2a3f09c8873053d93460d88d354ef8a79bd",
+      "bytes": 2630991,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/categories/flowers/card-264fa6971c62b028-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 76530,
+          "sha256": "3f9ae68eaca7f781bb1df2f25dd5372a90fe4e6ce8bd735b55edc457f66d1a1b"
+        },
+        {
+          "key": "optimized/categories/flowers/card-264fa6971c62b028-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 170980,
+          "sha256": "ea0cc9210b4dfc2360b232d4bc84f8cfbfc5e4264522139d1503809c170ae646"
+        },
+        {
+          "key": "optimized/categories/flowers/card-264fa6971c62b028-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 272170,
+          "sha256": "dabffa73b312515f35f247a364772f875f4400620750913ca4d36e0d4ade6a42"
+        }
+      ]
+    },
+    {
+      "key": "categories/home-decor/card-v2.png",
+      "sha256": "b92a89d6af21ca5304caa772b0873423009c3099cdcbb159997daf3f58ba980c",
+      "bytes": 2976850,
+      "width": 1672,
+      "height": 941,
+      "variants": [
+        {
+          "key": "optimized/categories/home-decor/card-v2-4f6ec7f04b74fbc0-480w.webp",
+          "width": 480,
+          "height": 270,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 51918,
+          "sha256": "ba03e97bf47c5a02bd9b4d2e08f42a4186272875634b8a9ed64a4c6b2e10d612"
+        },
+        {
+          "key": "optimized/categories/home-decor/card-v2-4f6ec7f04b74fbc0-800w.webp",
+          "width": 800,
+          "height": 450,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 125938,
+          "sha256": "ce4875fed71e246b5890fac458aed339852fec03a07b2123e459a9a5d3d4797a"
+        },
+        {
+          "key": "optimized/categories/home-decor/card-v2-4f6ec7f04b74fbc0-1200w.webp",
+          "width": 1200,
+          "height": 675,
+          "contentType": "image/webp",
+          "descriptor": "1200w",
+          "bytes": 239084,
+          "sha256": "bb10075e59149c0f0572b5b0b81559d83816f31ca1cc7ed7619d02d3793380e8"
+        },
+        {
+          "key": "optimized/categories/home-decor/card-v2-4f6ec7f04b74fbc0-1600w.webp",
+          "width": 1600,
+          "height": 900,
+          "contentType": "image/webp",
+          "descriptor": "1600w",
+          "bytes": 355520,
+          "sha256": "c4187bfc42a4095442b5ce439a7b3c437db442999329a6af8b1b24b870d7bca7"
+        },
+        {
+          "key": "optimized/categories/home-decor/card-v2-4f6ec7f04b74fbc0-1672w.webp",
+          "width": 1672,
+          "height": 941,
+          "contentType": "image/webp",
+          "descriptor": "1672w",
+          "bytes": 376354,
+          "sha256": "c852b4faa2a5328cfb4b5b25dfa93a9769575a939ddb42041ce9f7f936aca092"
+        }
+      ]
+    },
+    {
+      "key": "categories/home-decor/card.png",
+      "sha256": "ee7d956850c0f74a43783e69f72befac0bf1a2b216136ee65e69a8c08075af97",
+      "bytes": 2285918,
+      "width": 1672,
+      "height": 941,
+      "variants": [
+        {
+          "key": "optimized/categories/home-decor/card-d12b7c67a20f9048-480w.webp",
+          "width": 480,
+          "height": 270,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 31942,
+          "sha256": "77ca9f05b9b97e53035af2641f3a72a18db34bba554fab370e9f8fc3b2afa056"
+        },
+        {
+          "key": "optimized/categories/home-decor/card-d12b7c67a20f9048-800w.webp",
+          "width": 800,
+          "height": 450,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 72880,
+          "sha256": "50542c4ae0d18d3a9c09fcc4131a8ce7a12c2c0d1f51fb2caa76b67754465dc2"
+        },
+        {
+          "key": "optimized/categories/home-decor/card-d12b7c67a20f9048-1200w.webp",
+          "width": 1200,
+          "height": 675,
+          "contentType": "image/webp",
+          "descriptor": "1200w",
+          "bytes": 131028,
+          "sha256": "e8be9a93545e5e71690ca26e74ff442731da89e9b20d56b09b1cedba1473a6fc"
+        },
+        {
+          "key": "optimized/categories/home-decor/card-d12b7c67a20f9048-1600w.webp",
+          "width": 1600,
+          "height": 900,
+          "contentType": "image/webp",
+          "descriptor": "1600w",
+          "bytes": 188848,
+          "sha256": "d168d15258845aebf434436eb3f1cec690f583978bc755b0b6f8c37b90231057"
+        },
+        {
+          "key": "optimized/categories/home-decor/card-d12b7c67a20f9048-1672w.webp",
+          "width": 1672,
+          "height": 941,
+          "contentType": "image/webp",
+          "descriptor": "1672w",
+          "bytes": 200166,
+          "sha256": "348d25d9ebfc68a623119963f33e12b579a7369b565a09128e75f18c12224852"
+        }
+      ]
+    },
+    {
+      "key": "categories/pooja-devotional/card.png",
+      "sha256": "217cb699245f2c2c9cf2e091160bbe5187793a866c22dd371e6a31b23013395b",
+      "bytes": 2421301,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/categories/pooja-devotional/card-cc9107793109b503-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 71088,
+          "sha256": "2641a16b8a8692a401d8ef683c371d834bc3774099b05c61589d220cab5b0a0f"
+        },
+        {
+          "key": "optimized/categories/pooja-devotional/card-cc9107793109b503-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 157954,
+          "sha256": "388ec1bbf3c4d6eb235e7abb330277d43c1e8ba31400d45a8aa0e5f39fe048c3"
+        },
+        {
+          "key": "optimized/categories/pooja-devotional/card-cc9107793109b503-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 253032,
+          "sha256": "de331d20233d0da777ec4a98d21e380b15f5c85c15563bfc6db92e51ba96d2bf"
+        }
+      ]
+    },
+    {
+      "key": "hero/amigurumi.png",
+      "sha256": "6b812fff7acb23e7c4eaceef32f81385f5a16792743b824df4667d1fb80d7f68",
+      "bytes": 2179956,
+      "width": 1672,
+      "height": 941,
+      "variants": [
+        {
+          "key": "optimized/hero/amigurumi-a4e7cdd6f1244a03-480w.webp",
+          "width": 480,
+          "height": 270,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 27294,
+          "sha256": "072befb7b9360c0165a620a4ef5539562aa4cfe668e884b796dee4e914673146"
+        },
+        {
+          "key": "optimized/hero/amigurumi-a4e7cdd6f1244a03-800w.webp",
+          "width": 800,
+          "height": 450,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 59912,
+          "sha256": "af268778a315da95173195824c41471fc57f537b083f625c16ca9d08c9241597"
+        },
+        {
+          "key": "optimized/hero/amigurumi-a4e7cdd6f1244a03-1200w.webp",
+          "width": 1200,
+          "height": 675,
+          "contentType": "image/webp",
+          "descriptor": "1200w",
+          "bytes": 109196,
+          "sha256": "fd57452db58229de9d5e541ca7b92d32983e256ada1b2ce3e7ef73d44cc6e525"
+        },
+        {
+          "key": "optimized/hero/amigurumi-a4e7cdd6f1244a03-1600w.webp",
+          "width": 1600,
+          "height": 900,
+          "contentType": "image/webp",
+          "descriptor": "1600w",
+          "bytes": 155578,
+          "sha256": "a5875874c28153bbe27e73c7786505e6d69ea21accddd88c582fc982e5aef7bf"
+        },
+        {
+          "key": "optimized/hero/amigurumi-a4e7cdd6f1244a03-1672w.webp",
+          "width": 1672,
+          "height": 941,
+          "contentType": "image/webp",
+          "descriptor": "1672w",
+          "bytes": 164846,
+          "sha256": "303711a7745b76d9471ab85e0aa54ee3f108ae606cba69c6703e3e6698242a0c"
+        }
+      ]
+    },
+    {
+      "key": "hero/custom-bouquet.png",
+      "sha256": "5b359e0c6c780da719f3db99fcb2e91b4a484c66914b11f0322d7ce6d8a54549",
+      "bytes": 2542971,
+      "width": 1672,
+      "height": 941,
+      "variants": [
+        {
+          "key": "optimized/hero/custom-bouquet-07dbbcb29426b53b-480w.webp",
+          "width": 480,
+          "height": 270,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 32066,
+          "sha256": "d2a72d3e0027352c04925dd28715dbb25b1838c017efe401c55c92ab2d2ab683"
+        },
+        {
+          "key": "optimized/hero/custom-bouquet-07dbbcb29426b53b-800w.webp",
+          "width": 800,
+          "height": 450,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 79860,
+          "sha256": "1e78df0b779b80ad68f788aaac4c6531d906255a84b762fd2784ce784038f012"
+        },
+        {
+          "key": "optimized/hero/custom-bouquet-07dbbcb29426b53b-1200w.webp",
+          "width": 1200,
+          "height": 675,
+          "contentType": "image/webp",
+          "descriptor": "1200w",
+          "bytes": 154426,
+          "sha256": "943acc1689d76dd9ee7471a46b66d458743aba5c7b843c08ea5f48b0c0ee5fae"
+        },
+        {
+          "key": "optimized/hero/custom-bouquet-07dbbcb29426b53b-1600w.webp",
+          "width": 1600,
+          "height": 900,
+          "contentType": "image/webp",
+          "descriptor": "1600w",
+          "bytes": 231370,
+          "sha256": "33fc06d911e276ad35976f339a7cf310f025a3976c1b18cb1745a7dc3831f73a"
+        },
+        {
+          "key": "optimized/hero/custom-bouquet-07dbbcb29426b53b-1672w.webp",
+          "width": 1672,
+          "height": 941,
+          "contentType": "image/webp",
+          "descriptor": "1672w",
+          "bytes": 248338,
+          "sha256": "5afd04e48c4bc7e78263f7e96c4eb47bbb99503a802daa376acdfce71818987c"
+        }
+      ]
+    },
+    {
+      "key": "hero/festive-gifting.png",
+      "sha256": "ca35ff583e472713a97301215b5e94283ee2b5a37a2317aff067009b8b5eb961",
+      "bytes": 2333057,
+      "width": 1672,
+      "height": 941,
+      "variants": [
+        {
+          "key": "optimized/hero/festive-gifting-bd03ca1736a5224f-480w.webp",
+          "width": 480,
+          "height": 270,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 32346,
+          "sha256": "8842e42786898b22f4ea6ddd641e875813633a79b0eed2b800a7dc9d70e2a161"
+        },
+        {
+          "key": "optimized/hero/festive-gifting-bd03ca1736a5224f-800w.webp",
+          "width": 800,
+          "height": 450,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 75678,
+          "sha256": "524630c31931ef290df585534628b44e10f8b4efdd23f31b08769ac0b92eba2a"
+        },
+        {
+          "key": "optimized/hero/festive-gifting-bd03ca1736a5224f-1200w.webp",
+          "width": 1200,
+          "height": 675,
+          "contentType": "image/webp",
+          "descriptor": "1200w",
+          "bytes": 144268,
+          "sha256": "08b4fd9141f9c8cb5cf1b30da828884ecdf5549974effbbb2e894e833f4dbf51"
+        },
+        {
+          "key": "optimized/hero/festive-gifting-bd03ca1736a5224f-1600w.webp",
+          "width": 1600,
+          "height": 900,
+          "contentType": "image/webp",
+          "descriptor": "1600w",
+          "bytes": 217274,
+          "sha256": "3f4113c79aa063d651a66d90f7d1bf242044693a55947146a19cfc52cdf2d568"
+        },
+        {
+          "key": "optimized/hero/festive-gifting-bd03ca1736a5224f-1672w.webp",
+          "width": 1672,
+          "height": 941,
+          "contentType": "image/webp",
+          "descriptor": "1672w",
+          "bytes": 231488,
+          "sha256": "c7c7e451d1d32a0e256915e4ec58154392cc037b4937bd9b3f74f0059c901518"
+        }
+      ]
+    },
+    {
+      "key": "hero/flower-bouquet.png",
+      "sha256": "b11f9492c7def826275f68d842c30164334dfcde0fa7072ad677ab070a71319e",
+      "bytes": 2338736,
+      "width": 1672,
+      "height": 941,
+      "variants": [
+        {
+          "key": "optimized/hero/flower-bouquet-517d49922615c0c9-480w.webp",
+          "width": 480,
+          "height": 270,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 29564,
+          "sha256": "fb20a271def29df4d929df998acbaf6ce54184c2e0ac42fa892dfda8a03ae8cb"
+        },
+        {
+          "key": "optimized/hero/flower-bouquet-517d49922615c0c9-800w.webp",
+          "width": 800,
+          "height": 450,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 70080,
+          "sha256": "d3b66e253fba53356b8822c8cffec1928763875bc8090466c981aa9004801f54"
+        },
+        {
+          "key": "optimized/hero/flower-bouquet-517d49922615c0c9-1200w.webp",
+          "width": 1200,
+          "height": 675,
+          "contentType": "image/webp",
+          "descriptor": "1200w",
+          "bytes": 132998,
+          "sha256": "c107db7f53345e8f8bbd49919d4f643949486a923fcb5c4af1a384c206fb5869"
+        },
+        {
+          "key": "optimized/hero/flower-bouquet-517d49922615c0c9-1600w.webp",
+          "width": 1600,
+          "height": 900,
+          "contentType": "image/webp",
+          "descriptor": "1600w",
+          "bytes": 198846,
+          "sha256": "74165b15ab588d204e460687de471ede8c76de94feace09eae96a11ab6412263"
+        },
+        {
+          "key": "optimized/hero/flower-bouquet-517d49922615c0c9-1672w.webp",
+          "width": 1672,
+          "height": 941,
+          "contentType": "image/webp",
+          "descriptor": "1672w",
+          "bytes": 213698,
+          "sha256": "48450666ceaa45cb83d6365f64dbafbad8ef26ab0fc1ff74f47870e1a7258942"
+        }
+      ]
+    },
+    {
+      "key": "hero/heritage.png",
+      "sha256": "6c4c18d4511ed216b8cc6af4259c5e8640a5258f9fb2413d5c1478a39e25b677",
+      "bytes": 2172121,
+      "width": 1672,
+      "height": 941,
+      "variants": [
+        {
+          "key": "optimized/hero/heritage-5a9bd0025b015ad5-480w.webp",
+          "width": 480,
+          "height": 270,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 26748,
+          "sha256": "0120d04299d39cd9099253958439e30f60a9fa26d5ed574a6a5a58849345068a"
+        },
+        {
+          "key": "optimized/hero/heritage-5a9bd0025b015ad5-800w.webp",
+          "width": 800,
+          "height": 450,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 58494,
+          "sha256": "e3a37ef746c384c019f7c44aa1f4d9ac9501ca13ffb1119cd94942141f726e81"
+        },
+        {
+          "key": "optimized/hero/heritage-5a9bd0025b015ad5-1200w.webp",
+          "width": 1200,
+          "height": 675,
+          "contentType": "image/webp",
+          "descriptor": "1200w",
+          "bytes": 102278,
+          "sha256": "4dd95af84fb6190456ac3c488319b946ee38b6599c6cdae3a5b549d230919fd9"
+        },
+        {
+          "key": "optimized/hero/heritage-5a9bd0025b015ad5-1600w.webp",
+          "width": 1600,
+          "height": 900,
+          "contentType": "image/webp",
+          "descriptor": "1600w",
+          "bytes": 144170,
+          "sha256": "2feebbbc8eeab5d61d5c8f1071498b7c08c92238af05ddfbcb9f72ca943fd1e1"
+        },
+        {
+          "key": "optimized/hero/heritage-5a9bd0025b015ad5-1672w.webp",
+          "width": 1672,
+          "height": 941,
+          "contentType": "image/webp",
+          "descriptor": "1672w",
+          "bytes": 153118,
+          "sha256": "735b1f807cd11f6e4251eecca646c5379eb987a68c0ac47c28ac1c35d5a2e622"
+        }
+      ]
+    },
+    {
+      "key": "hero/home-decor.png",
+      "sha256": "ee7d956850c0f74a43783e69f72befac0bf1a2b216136ee65e69a8c08075af97",
+      "bytes": 2285918,
+      "width": 1672,
+      "height": 941,
+      "variants": [
+        {
+          "key": "optimized/hero/home-decor-d12b7c67a20f9048-480w.webp",
+          "width": 480,
+          "height": 270,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 31942,
+          "sha256": "77ca9f05b9b97e53035af2641f3a72a18db34bba554fab370e9f8fc3b2afa056"
+        },
+        {
+          "key": "optimized/hero/home-decor-d12b7c67a20f9048-800w.webp",
+          "width": 800,
+          "height": 450,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 72880,
+          "sha256": "50542c4ae0d18d3a9c09fcc4131a8ce7a12c2c0d1f51fb2caa76b67754465dc2"
+        },
+        {
+          "key": "optimized/hero/home-decor-d12b7c67a20f9048-1200w.webp",
+          "width": 1200,
+          "height": 675,
+          "contentType": "image/webp",
+          "descriptor": "1200w",
+          "bytes": 131028,
+          "sha256": "e8be9a93545e5e71690ca26e74ff442731da89e9b20d56b09b1cedba1473a6fc"
+        },
+        {
+          "key": "optimized/hero/home-decor-d12b7c67a20f9048-1600w.webp",
+          "width": 1600,
+          "height": 900,
+          "contentType": "image/webp",
+          "descriptor": "1600w",
+          "bytes": 188848,
+          "sha256": "d168d15258845aebf434436eb3f1cec690f583978bc755b0b6f8c37b90231057"
+        },
+        {
+          "key": "optimized/hero/home-decor-d12b7c67a20f9048-1672w.webp",
+          "width": 1672,
+          "height": 941,
+          "contentType": "image/webp",
+          "descriptor": "1672w",
+          "bytes": 200166,
+          "sha256": "348d25d9ebfc68a623119963f33e12b579a7369b565a09128e75f18c12224852"
+        }
+      ]
+    },
+    {
+      "key": "occasions/anniversary-gifting-v2.png",
+      "sha256": "61b00e98de17dfb9c4d9bb23c069a741b9aebd534c0c1e0b0cc83813cbcc11d1",
+      "bytes": 2429998,
+      "width": 1448,
+      "height": 1086,
+      "variants": [
+        {
+          "key": "optimized/occasions/anniversary-gifting-v2-117b5de9c680bd92-480w.webp",
+          "width": 480,
+          "height": 360,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 36632,
+          "sha256": "dff1b63132b179b9583f50a826dd31c44893b39a5ed7e9232acda4783def4555"
+        },
+        {
+          "key": "optimized/occasions/anniversary-gifting-v2-117b5de9c680bd92-800w.webp",
+          "width": 800,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 83882,
+          "sha256": "5c4f54976470aec67044edd6dc816dc6369b6ed7114ab10800a671bba9fdcafe"
+        },
+        {
+          "key": "optimized/occasions/anniversary-gifting-v2-117b5de9c680bd92-1200w.webp",
+          "width": 1200,
+          "height": 900,
+          "contentType": "image/webp",
+          "descriptor": "1200w",
+          "bytes": 150116,
+          "sha256": "beca01ca3e090b96860c959f5be530e1fed863fb78f9719ab03ae17b6948f9b1"
+        },
+        {
+          "key": "optimized/occasions/anniversary-gifting-v2-117b5de9c680bd92-1448w.webp",
+          "width": 1448,
+          "height": 1086,
+          "contentType": "image/webp",
+          "descriptor": "1448w",
+          "bytes": 194620,
+          "sha256": "08fbc058ea696919164a813602feff22131d1fead1317b28c92e297a20a160a0"
+        }
+      ]
+    },
+    {
+      "key": "occasions/babyshower-gifting.png",
+      "sha256": "c62475f052822eec3ec56d0076895020e403de41bae0f611b50fe9af5dae3817",
+      "bytes": 2484507,
+      "width": 1087,
+      "height": 1447,
+      "variants": [
+        {
+          "key": "optimized/occasions/babyshower-gifting-e51ba3ce8f5d9348-480w.webp",
+          "width": 480,
+          "height": 639,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 65070,
+          "sha256": "0f796edd4a073ba486be6c09811fc6067008b7aa3bd95abfa34948dc31a001bd"
+        },
+        {
+          "key": "optimized/occasions/babyshower-gifting-e51ba3ce8f5d9348-800w.webp",
+          "width": 800,
+          "height": 1065,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 145480,
+          "sha256": "4694472193e712bbf683dd44382ed213d7cea744cf0bc75ac70973168535589a"
+        },
+        {
+          "key": "optimized/occasions/babyshower-gifting-e51ba3ce8f5d9348-1087w.webp",
+          "width": 1087,
+          "height": 1447,
+          "contentType": "image/webp",
+          "descriptor": "1087w",
+          "bytes": 219476,
+          "sha256": "9ba6d0d3d6a4a6665de111f4884a058cb7af26cf0f2364bf67d9a9315fd28ac6"
+        }
+      ]
+    },
+    {
+      "key": "occasions/birthday-gifting-v2.png",
+      "sha256": "60a7fbce08e95da4f70682d5b4272ef51a315d2eed89e3b9423365af576ded16",
+      "bytes": 2417891,
+      "width": 1448,
+      "height": 1086,
+      "variants": [
+        {
+          "key": "optimized/occasions/birthday-gifting-v2-b24c609a3cf760ff-480w.webp",
+          "width": 480,
+          "height": 360,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 42282,
+          "sha256": "c44408033dff659aa3a51ef63e1622493c5c84db32d3032d53329061b6349eac"
+        },
+        {
+          "key": "optimized/occasions/birthday-gifting-v2-b24c609a3cf760ff-800w.webp",
+          "width": 800,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 91638,
+          "sha256": "375f1ff79e705848b0c6a096cb94b13dd300d9c1bf4fa11fee04d1b92cddb0a4"
+        },
+        {
+          "key": "optimized/occasions/birthday-gifting-v2-b24c609a3cf760ff-1200w.webp",
+          "width": 1200,
+          "height": 900,
+          "contentType": "image/webp",
+          "descriptor": "1200w",
+          "bytes": 159458,
+          "sha256": "eed2a702cba487068bf09f0bd463c9576a90b68b0231151d105a51d850b2be9b"
+        },
+        {
+          "key": "optimized/occasions/birthday-gifting-v2-b24c609a3cf760ff-1448w.webp",
+          "width": 1448,
+          "height": 1086,
+          "contentType": "image/webp",
+          "descriptor": "1448w",
+          "bytes": 203640,
+          "sha256": "49114d9196930b7e9cbbadd6c3b57ba02ae63182c10eafaa8338bf57e9c59786"
+        }
+      ]
+    },
+    {
+      "key": "occasions/christmas-gifting.png",
+      "sha256": "3baf1d7b6b892d8aa7b4127ad1d96b5794130b486a89ce511f640f098c77025a",
+      "bytes": 2383920,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/occasions/christmas-gifting-4fcbe89f89007f95-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 38214,
+          "sha256": "ad43f15e2f0782f79cd311ff5c459dee6562ff26e0d8b5eada71464e27177344"
+        },
+        {
+          "key": "optimized/occasions/christmas-gifting-4fcbe89f89007f95-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 101728,
+          "sha256": "af287f8bad2c6a64018d2202cf2adcb005154956ca7481a7a864e8997b61d8a8"
+        },
+        {
+          "key": "optimized/occasions/christmas-gifting-4fcbe89f89007f95-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 183470,
+          "sha256": "420c65e92ee448c92bbb94427d3caf0813822ab6870678d9cae5c39f594dd44b"
+        }
+      ]
+    },
+    {
+      "key": "occasions/decor-gifting.png",
+      "sha256": "6961b034fc829704df0b3df71999ecf87ba02b889e5705804858ba1c20a1f0e1",
+      "bytes": 2719269,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/occasions/decor-gifting-1ecaaaa7790f7264-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 58712,
+          "sha256": "2f9266968dd8939b1991a8cef3f533986d03dcd168873e379c895eeba400e00e"
+        },
+        {
+          "key": "optimized/occasions/decor-gifting-1ecaaaa7790f7264-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 148950,
+          "sha256": "4f44a1da84e20dadb5caad789912672b6b68a984f0d71bb4af6960d464f2a615"
+        },
+        {
+          "key": "optimized/occasions/decor-gifting-1ecaaaa7790f7264-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 257846,
+          "sha256": "6e459f55c17049950c2e53534bd02a3c50f7bf405240c20e8351cb0fe8522780"
+        }
+      ]
+    },
+    {
+      "key": "occasions/diwali-gifting.png",
+      "sha256": "47d193f26b149070b7869cbf818916594d58878e07d9ec66aa22166fa3d82cb8",
+      "bytes": 1941997,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/occasions/diwali-gifting-cb1ca8e42dcd8b27-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 45142,
+          "sha256": "45dc8c74b2c40beaaf66206e26c464b4c48352fa15606a9425a2c9db52b7c3cb"
+        },
+        {
+          "key": "optimized/occasions/diwali-gifting-cb1ca8e42dcd8b27-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 92732,
+          "sha256": "d4371e2a0950022d95e06727c2c7d7a5f84a59055c503e82af848205b7627ff2"
+        },
+        {
+          "key": "optimized/occasions/diwali-gifting-cb1ca8e42dcd8b27-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 140856,
+          "sha256": "f2f13e12c0e412545a94035d678a768f327963dfb6983cde7323c6014be08b34"
+        }
+      ]
+    },
+    {
+      "key": "occasions/father-gifting.png",
+      "sha256": "c1fe8b0154a3133b3ae39dfcd648a2ce922ac60a211d16db92309737bc8d01f3",
+      "bytes": 2337609,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/occasions/father-gifting-2f737b4dcf6f2608-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 52454,
+          "sha256": "d8f78f15c5fdf32db336a941ce08f9a508f31f5d9f13d8e904d48b3d075edd4c"
+        },
+        {
+          "key": "optimized/occasions/father-gifting-2f737b4dcf6f2608-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 113786,
+          "sha256": "72704388c488f668e266e6edcff6c7b26ec4e9fe8d9ce829277e4a3abd3041a1"
+        },
+        {
+          "key": "optimized/occasions/father-gifting-2f737b4dcf6f2608-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 178256,
+          "sha256": "108f2d1a16b6e10144dc7d982e639fc607819af9fa9e6bc03105927e93ce5c7a"
+        }
+      ]
+    },
+    {
+      "key": "occasions/housewarming-gifting.png",
+      "sha256": "e6e8068eba618c0b4e25d2b48ab0321e8c289135969aa91586271c7612ca4e74",
+      "bytes": 1880871,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/occasions/housewarming-gifting-dcfc0aabd16b8b6f-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 31538,
+          "sha256": "0701751ffb10f2966179583d27ebb3fe082c8120ee6e8ca3cb0119afb2fbce03"
+        },
+        {
+          "key": "optimized/occasions/housewarming-gifting-dcfc0aabd16b8b6f-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 67936,
+          "sha256": "da2dcbecd81fd32710bf2ac7c83ec1529f2f92d030f90e191f85cb79b0b05a6f"
+        },
+        {
+          "key": "optimized/occasions/housewarming-gifting-dcfc0aabd16b8b6f-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 106074,
+          "sha256": "a33aa03460666bfcf346ab91f30b98d0fc0bb6827efdf98084d51fe9fcaa8a42"
+        }
+      ]
+    },
+    {
+      "key": "occasions/justbecause-gifting.png",
+      "sha256": "e8cf68eab35d2ba71550c299e19d725b7c8d2c075b27d4d2a140b2eb12356d51",
+      "bytes": 2016319,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/occasions/justbecause-gifting-44e95a593b5ca923-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 34216,
+          "sha256": "584631865b9eb309a93c76dcc9c68e3337827224e595b979e70e92d7e09a6a4e"
+        },
+        {
+          "key": "optimized/occasions/justbecause-gifting-44e95a593b5ca923-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 76330,
+          "sha256": "7fee0cd677e973e081da7b2ff71d86905ad42c70ec187d394db968f1d6004cbf"
+        },
+        {
+          "key": "optimized/occasions/justbecause-gifting-44e95a593b5ca923-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 123292,
+          "sha256": "8f2a4fcd41cc72508b2be29421c213c1aebe43f0d10b21ce8dd797e77b4c953d"
+        }
+      ]
+    },
+    {
+      "key": "occasions/mother-gifting.png",
+      "sha256": "55d9cb0c5acc440570103f5081e5ea52cbb9db13c7fbfe7f73619b5966bcaa9e",
+      "bytes": 2043306,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/occasions/mother-gifting-8d535f1a87c9aaf2-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 37888,
+          "sha256": "c0fc193fcc74c958f5cef05c6dbdeb68244db90c40a8b545c404f9d3fcd828d9"
+        },
+        {
+          "key": "optimized/occasions/mother-gifting-8d535f1a87c9aaf2-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 86978,
+          "sha256": "ce60ec97e97cfafe9f56602f0b1e2e4ff18fee1532a93f3a98610bae11ecfa2a"
+        },
+        {
+          "key": "optimized/occasions/mother-gifting-8d535f1a87c9aaf2-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 138124,
+          "sha256": "62d5494cda1db05693bd914f07b55863139fc90e9d6aed9305296402ea104295"
+        }
+      ]
+    },
+    {
+      "key": "occasions/rakhi-gifting.png",
+      "sha256": "8145cc83a54430aba3823330e437a976a38a4a6eefb8e426365f195c4693b490",
+      "bytes": 2180036,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/occasions/rakhi-gifting-76e53fdd2c58778a-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 52620,
+          "sha256": "22acdffa27cc8847c405bdc2f5d211b36ae1d8fb1c3085ccfeca6307c02d40d9"
+        },
+        {
+          "key": "optimized/occasions/rakhi-gifting-76e53fdd2c58778a-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 117012,
+          "sha256": "90ccc8957b46c2efb07e3440608eff814bd1a7673e40ecefb562361215fdab03"
+        },
+        {
+          "key": "optimized/occasions/rakhi-gifting-76e53fdd2c58778a-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 196620,
+          "sha256": "81ef368c931e6391e485e7bd159289fe60fe858c932b3c67e4bd7300be4190e8"
+        }
+      ]
+    },
+    {
+      "key": "occasions/valentine-gifting.png",
+      "sha256": "1ef523766fbdec883c0d2a8ec229871604d3a21abc26eea4edc8f9b2058d183f",
+      "bytes": 2098082,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/occasions/valentine-gifting-981c26f80b0d6206-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 39022,
+          "sha256": "8f797e505d783e4c59e806f565d39a601e5f633aa9f56db8f506538f493b2d60"
+        },
+        {
+          "key": "optimized/occasions/valentine-gifting-981c26f80b0d6206-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 83568,
+          "sha256": "764024fe0b9150fb4cf26c3ec6775f2e6ae7407f286c0e854c352dda981e05cd"
+        },
+        {
+          "key": "optimized/occasions/valentine-gifting-981c26f80b0d6206-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 136234,
+          "sha256": "18bd2834dce042eda7e7a2f32f6cb99868ce3acadf92dce5940e647930738439"
+        }
+      ]
+    },
+    {
+      "key": "occasions/wedding-gifting-v2.png",
+      "sha256": "8d3b6da1506e32b9a662df21192990fe80fe5e1b7f61427c55efd70c209a3049",
+      "bytes": 2603452,
+      "width": 1448,
+      "height": 1086,
+      "variants": [
+        {
+          "key": "optimized/occasions/wedding-gifting-v2-5c59f1afeb63c0b9-480w.webp",
+          "width": 480,
+          "height": 360,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 54052,
+          "sha256": "41cd2c8ca9b2215b527c3217542a0c147db9087de6678f5010ed69d9e4ff6b28"
+        },
+        {
+          "key": "optimized/occasions/wedding-gifting-v2-5c59f1afeb63c0b9-800w.webp",
+          "width": 800,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 119918,
+          "sha256": "0d3d858e71581bb0eac1b6cff86aff0e70b8fd30e72bc26354345814c8d9190b"
+        },
+        {
+          "key": "optimized/occasions/wedding-gifting-v2-5c59f1afeb63c0b9-1200w.webp",
+          "width": 1200,
+          "height": 900,
+          "contentType": "image/webp",
+          "descriptor": "1200w",
+          "bytes": 206542,
+          "sha256": "058b23084d278a96d011528a0ccce0648c7b9e891c112a2f99cda37a38ff1666"
+        },
+        {
+          "key": "optimized/occasions/wedding-gifting-v2-5c59f1afeb63c0b9-1448w.webp",
+          "width": 1448,
+          "height": 1086,
+          "contentType": "image/webp",
+          "descriptor": "1448w",
+          "bytes": 257426,
+          "sha256": "301d4c901512175ddc06c8a50dd3313fb77320a8ecba62000af0a611d75cb43d"
+        }
+      ]
+    },
+    {
+      "key": "products/amigurumi-flower-bouquet/primary.png",
+      "sha256": "350f2e0303125a13fc25d8b17b9ec1f46e94907adf5adfcbfc2336d41cdf68c6",
+      "bytes": 2376520,
+      "width": 1086,
+      "height": 1448,
+      "variants": [
+        {
+          "key": "optimized/products/amigurumi-flower-bouquet/primary-4e48a4f22e8576be-480w.webp",
+          "width": 480,
+          "height": 640,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 54712,
+          "sha256": "040b372130be48b83981256944a4a6c56f6bc51303a9d2c37ba1219731faf1b6"
+        },
+        {
+          "key": "optimized/products/amigurumi-flower-bouquet/primary-4e48a4f22e8576be-800w.webp",
+          "width": 800,
+          "height": 1067,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 120946,
+          "sha256": "69038f60054c1cfae6a555fbc4bf8eefd957044cf3248643190eaf7e6c1c3a26"
+        },
+        {
+          "key": "optimized/products/amigurumi-flower-bouquet/primary-4e48a4f22e8576be-1086w.webp",
+          "width": 1086,
+          "height": 1448,
+          "contentType": "image/webp",
+          "descriptor": "1086w",
+          "bytes": 183290,
+          "sha256": "0db441b5e59bba83ffcd5a7212ec0f1761c873f432e4b1c703f08e534ebec897"
+        }
+      ]
+    },
+    {
+      "key": "products/baby-blanket/primary.png",
+      "sha256": "196eff508ace47db514c7c12b9cc232e974fbfb93e23e5db3b0f143b49ede712",
+      "bytes": 3223374,
+      "width": 1086,
+      "height": 1448,
+      "variants": [
+        {
+          "key": "optimized/products/baby-blanket/primary-fc81274547b8e02e-480w.webp",
+          "width": 480,
+          "height": 640,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 113704,
+          "sha256": "b46e3ea238dab4fe8616e3d88ebc4304da2a882bbe92530ffa50975de0cd737b"
+        },
+        {
+          "key": "optimized/products/baby-blanket/primary-fc81274547b8e02e-800w.webp",
+          "width": 800,
+          "height": 1067,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 265648,
+          "sha256": "a1402b953575857ef764dec4c1093e5be49514efe1101c1e3d95f2a5dcc7f570"
+        },
+        {
+          "key": "optimized/products/baby-blanket/primary-fc81274547b8e02e-1086w.webp",
+          "width": 1086,
+          "height": 1448,
+          "contentType": "image/webp",
+          "descriptor": "1086w",
+          "bytes": 406934,
+          "sha256": "0952d95f3afda0a164381bcbd0d43e47e81545a71148e849a38dd35b32e31b97"
+        }
+      ]
+    },
+    {
+      "key": "products/baby-gift-hamper/primary.png",
+      "sha256": "c62475f052822eec3ec56d0076895020e403de41bae0f611b50fe9af5dae3817",
+      "bytes": 2484507,
+      "width": 1087,
+      "height": 1447,
+      "variants": [
+        {
+          "key": "optimized/products/baby-gift-hamper/primary-e51ba3ce8f5d9348-480w.webp",
+          "width": 480,
+          "height": 639,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 65070,
+          "sha256": "0f796edd4a073ba486be6c09811fc6067008b7aa3bd95abfa34948dc31a001bd"
+        },
+        {
+          "key": "optimized/products/baby-gift-hamper/primary-e51ba3ce8f5d9348-800w.webp",
+          "width": 800,
+          "height": 1065,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 145480,
+          "sha256": "4694472193e712bbf683dd44382ed213d7cea744cf0bc75ac70973168535589a"
+        },
+        {
+          "key": "optimized/products/baby-gift-hamper/primary-e51ba3ce8f5d9348-1087w.webp",
+          "width": 1087,
+          "height": 1447,
+          "contentType": "image/webp",
+          "descriptor": "1087w",
+          "bytes": 219476,
+          "sha256": "9ba6d0d3d6a4a6665de111f4884a058cb7af26cf0f2364bf67d9a9315fd28ac6"
+        }
+      ]
+    },
+    {
+      "key": "products/boho-wall-hanging/primary.png",
+      "sha256": "6961b034fc829704df0b3df71999ecf87ba02b889e5705804858ba1c20a1f0e1",
+      "bytes": 2719269,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/products/boho-wall-hanging/primary-1ecaaaa7790f7264-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 58712,
+          "sha256": "2f9266968dd8939b1991a8cef3f533986d03dcd168873e379c895eeba400e00e"
+        },
+        {
+          "key": "optimized/products/boho-wall-hanging/primary-1ecaaaa7790f7264-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 148950,
+          "sha256": "4f44a1da84e20dadb5caad789912672b6b68a984f0d71bb4af6960d464f2a615"
+        },
+        {
+          "key": "optimized/products/boho-wall-hanging/primary-1ecaaaa7790f7264-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 257846,
+          "sha256": "6e459f55c17049950c2e53534bd02a3c50f7bf405240c20e8351cb0fe8522780"
+        }
+      ]
+    },
+    {
+      "key": "products/bunny-amigurami-set/primary.png",
+      "sha256": "18627f35b514627e458afcebd1d884c3cc30cd38b02670f1cd0385d072b057db",
+      "bytes": 2626601,
+      "width": 1086,
+      "height": 1448,
+      "variants": [
+        {
+          "key": "optimized/products/bunny-amigurami-set/primary-54666e97fa923d64-480w.webp",
+          "width": 480,
+          "height": 640,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 80862,
+          "sha256": "bbd08d183533b6479651c7cb08afce3b1fedad3d1fd1403a8dce0581f2fedd0d"
+        },
+        {
+          "key": "optimized/products/bunny-amigurami-set/primary-54666e97fa923d64-800w.webp",
+          "width": 800,
+          "height": 1067,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 181952,
+          "sha256": "7f773bfd87460e65d1a0efec4bb33df1dd60d1814b2c5c49948745e23c49a880"
+        },
+        {
+          "key": "optimized/products/bunny-amigurami-set/primary-54666e97fa923d64-1086w.webp",
+          "width": 1086,
+          "height": 1448,
+          "contentType": "image/webp",
+          "descriptor": "1086w",
+          "bytes": 269764,
+          "sha256": "3e6d7cd2c38bed6bd3a716c7b2f87deb0a8641dbbdb57d3c67385bddbe53c2e2"
+        }
+      ]
+    },
+    {
+      "key": "products/couple-bunny-set/gallery-01.png",
+      "sha256": "6f00c326bed1876d163b4ba0da278dc7a793b4d0573e18cf0037c761f8f7743d",
+      "bytes": 2183759,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/products/couple-bunny-set/gallery-01-5f36c60a568dd69f-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 47564,
+          "sha256": "c1b3b96308ad8eb237a35f853da148256896f466cc6a8598f4e5795f46d6d1c2"
+        },
+        {
+          "key": "optimized/products/couple-bunny-set/gallery-01-5f36c60a568dd69f-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 106506,
+          "sha256": "61c18979afeb9ecd4e6d3dcba5f0073acbe7997cd198138babd8b34d1397893a"
+        },
+        {
+          "key": "optimized/products/couple-bunny-set/gallery-01-5f36c60a568dd69f-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 163142,
+          "sha256": "cace4f3e1df4bc0034cd4263c3d3f5a8dd32607d132e86abb2565d7b497f7f36"
+        }
+      ]
+    },
+    {
+      "key": "products/couple-bunny-set/primary.png",
+      "sha256": "d5abc44f093708728e5820314136fc817fe543e11dc24b2a8f5a618749964b5e",
+      "bytes": 2252290,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/products/couple-bunny-set/primary-23f8e6812604fdc3-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 50066,
+          "sha256": "f63086e222104666d356c60bb19e1b382046d71b7d0503c602bf1089b02b0a7c"
+        },
+        {
+          "key": "optimized/products/couple-bunny-set/primary-23f8e6812604fdc3-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 112666,
+          "sha256": "c8099f99041adf10004b2ba64cfd8109d89febcb3b02ecf18b99e43ba2f9828e"
+        },
+        {
+          "key": "optimized/products/couple-bunny-set/primary-23f8e6812604fdc3-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 172480,
+          "sha256": "9a2d4ff1f39b82a12c099989728c92bf3e508e9da9d3c548e4d1c31c8a5b8ecc"
+        }
+      ]
+    },
+    {
+      "key": "products/crochet-bunny/gallery-01-owner-collage.png",
+      "sha256": "e1de0927f2c4ac600b3063e63ce1815b1efe4ec010c11b96d286a55d8251656d",
+      "bytes": 2709201,
+      "width": 1024,
+      "height": 1536,
+      "variants": [
+        {
+          "key": "optimized/products/crochet-bunny/gallery-01-owner-collage-3e223351631ece68-480w.webp",
+          "width": 480,
+          "height": 720,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 84732,
+          "sha256": "deff5ebac8b3393e70264f5407e89cb7a0f340b1bc2702eff585240b10741472"
+        },
+        {
+          "key": "optimized/products/crochet-bunny/gallery-01-owner-collage-3e223351631ece68-800w.webp",
+          "width": 800,
+          "height": 1200,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 171062,
+          "sha256": "fee5547add56d7ee2c672a9d0410cc702a087ed19b7601b42c04cd7e63f34d43"
+        },
+        {
+          "key": "optimized/products/crochet-bunny/gallery-01-owner-collage-3e223351631ece68-1024w.webp",
+          "width": 1024,
+          "height": 1536,
+          "contentType": "image/webp",
+          "descriptor": "1024w",
+          "bytes": 236256,
+          "sha256": "301ba66e7057d2d2deed8ba520e5246ba8c7948734df63d24b0fcb23dbdad00b"
+        }
+      ]
+    },
+    {
+      "key": "products/crochet-bunny/owner-pink-bunny.png",
+      "sha256": "bc01aceaa563192b162567eae5ee98c2d19e06b2693ead0ccf1e660ad277cea1",
+      "bytes": 2315399,
+      "width": 1086,
+      "height": 1448,
+      "variants": [
+        {
+          "key": "optimized/products/crochet-bunny/owner-pink-bunny-e6fb6124fa376edd-480w.webp",
+          "width": 480,
+          "height": 640,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 64556,
+          "sha256": "f70c870b4e3e6d2ef90ac205cac4f3f0dfc6d11f56a5be1f37783be0ad55c3a6"
+        },
+        {
+          "key": "optimized/products/crochet-bunny/owner-pink-bunny-e6fb6124fa376edd-800w.webp",
+          "width": 800,
+          "height": 1067,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 124208,
+          "sha256": "f5c025895006f3a65501318f561955b682bdf3e4a8ce0f61e23aed5d3607f0ff"
+        },
+        {
+          "key": "optimized/products/crochet-bunny/owner-pink-bunny-e6fb6124fa376edd-1086w.webp",
+          "width": 1086,
+          "height": 1448,
+          "contentType": "image/webp",
+          "descriptor": "1086w",
+          "bytes": 175716,
+          "sha256": "13b75643f2faca76e00648b27d3c699ef65c41919aa5b4230a7de405efeb2439"
+        }
+      ]
+    },
+    {
+      "key": "products/crochet-bunny/primary.png",
+      "sha256": "766131bd9cb171d990dfdca03395c792fda74434dd810b6ba157fe9ea18b0098",
+      "bytes": 2034211,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/products/crochet-bunny/primary-99d48dfe51725993-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 30768,
+          "sha256": "eccd207023d3b05e87882d4cf3a0645faaf7a9a89f977371770f10378088cd6b"
+        },
+        {
+          "key": "optimized/products/crochet-bunny/primary-99d48dfe51725993-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 69782,
+          "sha256": "73f9667cae13ba2ac67ee824e49b8be0f20fb328d41194d9f281f0411998ca30"
+        },
+        {
+          "key": "optimized/products/crochet-bunny/primary-99d48dfe51725993-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 111326,
+          "sha256": "ec459f32492dcb9148b740ef96eb4e330dec580f75d8625de8075933aa7d01e6"
+        }
+      ]
+    },
+    {
+      "key": "products/crochet-hanging-planter/primary.png",
+      "sha256": "e6e8068eba618c0b4e25d2b48ab0321e8c289135969aa91586271c7612ca4e74",
+      "bytes": 1880871,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/products/crochet-hanging-planter/primary-dcfc0aabd16b8b6f-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 31538,
+          "sha256": "0701751ffb10f2966179583d27ebb3fe082c8120ee6e8ca3cb0119afb2fbce03"
+        },
+        {
+          "key": "optimized/products/crochet-hanging-planter/primary-dcfc0aabd16b8b6f-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 67936,
+          "sha256": "da2dcbecd81fd32710bf2ac7c83ec1529f2f92d030f90e191f85cb79b0b05a6f"
+        },
+        {
+          "key": "optimized/products/crochet-hanging-planter/primary-dcfc0aabd16b8b6f-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 106074,
+          "sha256": "a33aa03460666bfcf346ab91f30b98d0fc0bb6827efdf98084d51fe9fcaa8a42"
+        }
+      ]
+    },
+    {
+      "key": "products/crochet-heart-planter/primary.png",
+      "sha256": "0d4fa9b3d2a90537941f9edc8974fa64e3c0beb0491b1581cfbc3279fd169962",
+      "bytes": 2413350,
+      "width": 1086,
+      "height": 1448,
+      "variants": [
+        {
+          "key": "optimized/products/crochet-heart-planter/primary-065614d25b1394c2-480w.webp",
+          "width": 480,
+          "height": 640,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 59408,
+          "sha256": "1eff03514d9415c03dd11eed446defea768b50b2d9515777805ef921c6bffb4e"
+        },
+        {
+          "key": "optimized/products/crochet-heart-planter/primary-065614d25b1394c2-800w.webp",
+          "width": 800,
+          "height": 1067,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 120522,
+          "sha256": "388487cfb001efdcff09f9600951d365e5bfefb27fe433d09bb8b0e6f7d00844"
+        },
+        {
+          "key": "optimized/products/crochet-heart-planter/primary-065614d25b1394c2-1086w.webp",
+          "width": 1086,
+          "height": 1448,
+          "contentType": "image/webp",
+          "descriptor": "1086w",
+          "bytes": 175296,
+          "sha256": "f5f498e8cf28fa9bf38766be2f6e2ce8cf3ac9d8cc1b4a1b6935461594f996bb"
+        }
+      ]
+    },
+    {
+      "key": "products/crochet-marigold-garland/primary.png",
+      "sha256": "47d193f26b149070b7869cbf818916594d58878e07d9ec66aa22166fa3d82cb8",
+      "bytes": 1941997,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/products/crochet-marigold-garland/primary-cb1ca8e42dcd8b27-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 45142,
+          "sha256": "45dc8c74b2c40beaaf66206e26c464b4c48352fa15606a9425a2c9db52b7c3cb"
+        },
+        {
+          "key": "optimized/products/crochet-marigold-garland/primary-cb1ca8e42dcd8b27-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 92732,
+          "sha256": "d4371e2a0950022d95e06727c2c7d7a5f84a59055c503e82af848205b7627ff2"
+        },
+        {
+          "key": "optimized/products/crochet-marigold-garland/primary-cb1ca8e42dcd8b27-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 140856,
+          "sha256": "f2f13e12c0e412545a94035d678a768f327963dfb6983cde7323c6014be08b34"
+        }
+      ]
+    },
+    {
+      "key": "products/crochet-toran/primary.png",
+      "sha256": "8145cc83a54430aba3823330e437a976a38a4a6eefb8e426365f195c4693b490",
+      "bytes": 2180036,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/products/crochet-toran/primary-76e53fdd2c58778a-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 52620,
+          "sha256": "22acdffa27cc8847c405bdc2f5d211b36ae1d8fb1c3085ccfeca6307c02d40d9"
+        },
+        {
+          "key": "optimized/products/crochet-toran/primary-76e53fdd2c58778a-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 117012,
+          "sha256": "90ccc8957b46c2efb07e3440608eff814bd1a7673e40ecefb562361215fdab03"
+        },
+        {
+          "key": "optimized/products/crochet-toran/primary-76e53fdd2c58778a-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 196620,
+          "sha256": "81ef368c931e6391e485e7bd159289fe60fe858c932b3c67e4bd7300be4190e8"
+        }
+      ]
+    },
+    {
+      "key": "products/crochet-tulip-bouquet/gallery-01.png",
+      "sha256": "19b23b8176b1431a954a24d2bc46d7de200aa1baf99aaa93ce2448b5806d1a25",
+      "bytes": 1991864,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/products/crochet-tulip-bouquet/gallery-01-23944224832121aa-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 37650,
+          "sha256": "09f52e4be64bb77c9e1aec5fdef5ef6466ebb36f113ffc1932f1be3ed5df6463"
+        },
+        {
+          "key": "optimized/products/crochet-tulip-bouquet/gallery-01-23944224832121aa-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 83670,
+          "sha256": "91b7dcee0da86ef2626fc747ed6450a822104612756147dd0e39623cf139914a"
+        },
+        {
+          "key": "optimized/products/crochet-tulip-bouquet/gallery-01-23944224832121aa-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 129850,
+          "sha256": "d3eedd5858d2a214da6dda7fdf0936019c0ba22e5dd3ece819a65d001c3a7336"
+        }
+      ]
+    },
+    {
+      "key": "products/crochet-tulip-bouquet/primary.png",
+      "sha256": "55d9cb0c5acc440570103f5081e5ea52cbb9db13c7fbfe7f73619b5966bcaa9e",
+      "bytes": 2043306,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/products/crochet-tulip-bouquet/primary-8d535f1a87c9aaf2-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 37888,
+          "sha256": "c0fc193fcc74c958f5cef05c6dbdeb68244db90c40a8b545c404f9d3fcd828d9"
+        },
+        {
+          "key": "optimized/products/crochet-tulip-bouquet/primary-8d535f1a87c9aaf2-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 86978,
+          "sha256": "ce60ec97e97cfafe9f56602f0b1e2e4ff18fee1532a93f3a98610bae11ecfa2a"
+        },
+        {
+          "key": "optimized/products/crochet-tulip-bouquet/primary-8d535f1a87c9aaf2-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 138124,
+          "sha256": "62d5494cda1db05693bd914f07b55863139fc90e9d6aed9305296402ea104295"
+        }
+      ]
+    },
+    {
+      "key": "products/daisy-coaster-set/primary.png",
+      "sha256": "c1fe8b0154a3133b3ae39dfcd648a2ce922ac60a211d16db92309737bc8d01f3",
+      "bytes": 2337609,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/products/daisy-coaster-set/primary-2f737b4dcf6f2608-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 52454,
+          "sha256": "d8f78f15c5fdf32db336a941ce08f9a508f31f5d9f13d8e904d48b3d075edd4c"
+        },
+        {
+          "key": "optimized/products/daisy-coaster-set/primary-2f737b4dcf6f2608-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 113786,
+          "sha256": "72704388c488f668e266e6edcff6c7b26ec4e9fe8d9ce829277e4a3abd3041a1"
+        },
+        {
+          "key": "optimized/products/daisy-coaster-set/primary-2f737b4dcf6f2608-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 178256,
+          "sha256": "108f2d1a16b6e10144dc7d982e639fc607819af9fa9e6bc03105927e93ce5c7a"
+        }
+      ]
+    },
+    {
+      "key": "products/forever-crochet-rose-bouquet/gallery-01.png",
+      "sha256": "93ab14e198656b36716d28722af3bd82d82fb603c3a249f58062666f6ca62c41",
+      "bytes": 2358813,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/products/forever-crochet-rose-bouquet/gallery-01-e2b76c1a612c29f1-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 46930,
+          "sha256": "bacb267cbd6fbb8febcb7eed6cde0d5a711524fa61d55fee4bf49f8c694ecfd6"
+        },
+        {
+          "key": "optimized/products/forever-crochet-rose-bouquet/gallery-01-e2b76c1a612c29f1-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 110932,
+          "sha256": "a99c9a0043e67b95fc5d82bb1422fd4d74d94e16858643dea4cd0e662fb87cf4"
+        },
+        {
+          "key": "optimized/products/forever-crochet-rose-bouquet/gallery-01-e2b76c1a612c29f1-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 185710,
+          "sha256": "34fbb24542e8018277a50513ec70e419550b820070303026724a971b09bc441c"
+        }
+      ]
+    },
+    {
+      "key": "products/forever-crochet-rose-bouquet/primary.png",
+      "sha256": "f726d230b2969da1908f7d07616855b54944f7ba50b182c8f0a9cb81d53fbefa",
+      "bytes": 2449035,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/products/forever-crochet-rose-bouquet/primary-234ba05b8d8adbb3-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 47788,
+          "sha256": "52ce3432220dc740f8db756906fc73d8296f00a1e082cb73a55502ca8d032d35"
+        },
+        {
+          "key": "optimized/products/forever-crochet-rose-bouquet/primary-234ba05b8d8adbb3-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 120200,
+          "sha256": "479c8b26522cad9f7606e318d97296db2811784b259aa9f98e0ce57852fc799a"
+        },
+        {
+          "key": "optimized/products/forever-crochet-rose-bouquet/primary-234ba05b8d8adbb3-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 203252,
+          "sha256": "4eb2a64965a2d740ea617f137a6d905c5f54f4ed27cfda5420679473a042f291"
+        }
+      ]
+    },
+    {
+      "key": "products/heart-bear/gallery-01.png",
+      "sha256": "68afdf3f1224b8734fdbbd067f625fb8d78fc4b1068ae435a1088560fdbda3af",
+      "bytes": 2344350,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/products/heart-bear/gallery-01-ce4dcb1922346bf3-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 57056,
+          "sha256": "38d6b8652fe70eb2ee90a94e583b2dcd568418dc53f900f819e0da7005cd92bd"
+        },
+        {
+          "key": "optimized/products/heart-bear/gallery-01-ce4dcb1922346bf3-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 125044,
+          "sha256": "dcb68957698ede235416df422073dfe898b24f019bcdeedbd88af46641168866"
+        },
+        {
+          "key": "optimized/products/heart-bear/gallery-01-ce4dcb1922346bf3-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 191504,
+          "sha256": "d58dbfbc345a18593ca1cd018c3c3b95c408e42f2dd0c7a923e8b09b39bd17ff"
+        }
+      ]
+    },
+    {
+      "key": "products/heart-bear/primary.png",
+      "sha256": "cb4443fea88ab3e12e7d9797fb0ca030f568567315de998c8d54f0a237edb2f5",
+      "bytes": 2428441,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/products/heart-bear/primary-be9bf8ba4d56d8c6-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 57586,
+          "sha256": "bb7d54deef4b67f0fbae101b9a412fceab24a7298df52cca109eaa51d4dbd83f"
+        },
+        {
+          "key": "optimized/products/heart-bear/primary-be9bf8ba4d56d8c6-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 128584,
+          "sha256": "b3a835afe42efcc3d6e4b0e54772587031836a5e4b70853db5653e34e27ecbb6"
+        },
+        {
+          "key": "optimized/products/heart-bear/primary-be9bf8ba4d56d8c6-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 204604,
+          "sha256": "d10a87f4a8a84162d6db7383734a4b496952f7c5aef330113eb091e4854d7c6c"
+        }
+      ]
+    },
+    {
+      "key": "products/lotus-mala/primary.png",
+      "sha256": "6f4c87e7b75eb921b724038ff7e3a31eed4d870c565d24c8be520094af8afa0b",
+      "bytes": 2005243,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/products/lotus-mala/primary-b768b8e4069f402a-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 35072,
+          "sha256": "fa2f988338acdf10f0b3bc1391d0e64c3d2bc27bbf6e02ee4ff01be205d6d32e"
+        },
+        {
+          "key": "optimized/products/lotus-mala/primary-b768b8e4069f402a-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 75820,
+          "sha256": "577ec11dec8596c27decb5fd03dcad16b98d607a394fbc8d460e46991235dc41"
+        },
+        {
+          "key": "optimized/products/lotus-mala/primary-b768b8e4069f402a-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 119446,
+          "sha256": "2cdb366841a80ad267d0fa455fb3786f9c0d3e3a2c42f2cffc47d05b7fda9581"
+        }
+      ]
+    },
+    {
+      "key": "products/love-letter-crochet-set/primary.png",
+      "sha256": "1ef523766fbdec883c0d2a8ec229871604d3a21abc26eea4edc8f9b2058d183f",
+      "bytes": 2098082,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/products/love-letter-crochet-set/primary-981c26f80b0d6206-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 39022,
+          "sha256": "8f797e505d783e4c59e806f565d39a601e5f633aa9f56db8f506538f493b2d60"
+        },
+        {
+          "key": "optimized/products/love-letter-crochet-set/primary-981c26f80b0d6206-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 83568,
+          "sha256": "764024fe0b9150fb4cf26c3ec6775f2e6ae7407f286c0e854c352dda981e05cd"
+        },
+        {
+          "key": "optimized/products/love-letter-crochet-set/primary-981c26f80b0d6206-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 136234,
+          "sha256": "18bd2834dce042eda7e7a2f32f6cb99868ce3acadf92dce5940e647930738439"
+        }
+      ]
+    },
+    {
+      "key": "products/mini-panda-amigurumi/primary.png",
+      "sha256": "47f365fe8eeb82a50111df60f82e1bd56ae2679fdc69a2dd29961d2e918fadc0",
+      "bytes": 1822518,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/products/mini-panda-amigurumi/primary-0dc86934c6625c7a-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 24230,
+          "sha256": "0ffe0925c1a2cda5c5745128871688b5e75e40030d974ace2e2331708ec098d7"
+        },
+        {
+          "key": "optimized/products/mini-panda-amigurumi/primary-0dc86934c6625c7a-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 55190,
+          "sha256": "05fd1762493afb0e436d0f59ea54beeb7bce1471a6e4e01a551fd77f5a968df8"
+        },
+        {
+          "key": "optimized/products/mini-panda-amigurumi/primary-0dc86934c6625c7a-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 88274,
+          "sha256": "6a1a3c95419e1f615ed97638adc85185966c2ceec550cf1564434382b7649284"
+        }
+      ]
+    },
+    {
+      "key": "products/mini-rose-box/primary.png",
+      "sha256": "3baf1d7b6b892d8aa7b4127ad1d96b5794130b486a89ce511f640f098c77025a",
+      "bytes": 2383920,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/products/mini-rose-box/primary-4fcbe89f89007f95-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 38214,
+          "sha256": "ad43f15e2f0782f79cd311ff5c459dee6562ff26e0d8b5eada71464e27177344"
+        },
+        {
+          "key": "optimized/products/mini-rose-box/primary-4fcbe89f89007f95-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 101728,
+          "sha256": "af287f8bad2c6a64018d2202cf2adcb005154956ca7481a7a864e8997b61d8a8"
+        },
+        {
+          "key": "optimized/products/mini-rose-box/primary-4fcbe89f89007f95-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 183470,
+          "sha256": "420c65e92ee448c92bbb94427d3caf0813822ab6870678d9cae5c39f594dd44b"
+        }
+      ]
+    },
+    {
+      "key": "products/mini-teddy-bear/primary.png",
+      "sha256": "e8cf68eab35d2ba71550c299e19d725b7c8d2c075b27d4d2a140b2eb12356d51",
+      "bytes": 2016319,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/products/mini-teddy-bear/primary-44e95a593b5ca923-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 34216,
+          "sha256": "584631865b9eb309a93c76dcc9c68e3337827224e595b979e70e92d7e09a6a4e"
+        },
+        {
+          "key": "optimized/products/mini-teddy-bear/primary-44e95a593b5ca923-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 76330,
+          "sha256": "7fee0cd677e973e081da7b2ff71d86905ad42c70ec187d394db968f1d6004cbf"
+        },
+        {
+          "key": "optimized/products/mini-teddy-bear/primary-44e95a593b5ca923-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 123292,
+          "sha256": "8f2a4fcd41cc72508b2be29421c213c1aebe43f0d10b21ce8dd797e77b4c953d"
+        }
+      ]
+    },
+    {
+      "key": "products/octopus-amigurami-set/primary.png",
+      "sha256": "c6a24ad1fbb1b6f79f15ae648edd15b2e13d57fa4b7930fe821ca4fe052096f9",
+      "bytes": 2310441,
+      "width": 1086,
+      "height": 1448,
+      "variants": [
+        {
+          "key": "optimized/products/octopus-amigurami-set/primary-9ad390991df08393-480w.webp",
+          "width": 480,
+          "height": 640,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 64642,
+          "sha256": "0db27a828f243b7734d6f44ede2dfcdb4b16d370a4023f07b776ec4e3a0642cf"
+        },
+        {
+          "key": "optimized/products/octopus-amigurami-set/primary-9ad390991df08393-800w.webp",
+          "width": 800,
+          "height": 1067,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 132280,
+          "sha256": "6d6004d05d0709df95bb9b329ab19abdfa2d7b11b9b67da1c9954c2dff027a78"
+        },
+        {
+          "key": "optimized/products/octopus-amigurami-set/primary-9ad390991df08393-1086w.webp",
+          "width": 1086,
+          "height": 1448,
+          "contentType": "image/webp",
+          "descriptor": "1086w",
+          "bytes": 190736,
+          "sha256": "99cc332f71e05e06b6d3aabc88dfd2d76dbf7282371973c3d9e1c186275f3f53"
+        }
+      ]
+    },
+    {
+      "key": "products/pooja-dress/gallery-01.png",
+      "sha256": "5c073798b8cd4da51108b7ea465cb3accffc5411c1ada46021c80a737640a713",
+      "bytes": 2907351,
+      "width": 1086,
+      "height": 1448,
+      "variants": [
+        {
+          "key": "optimized/products/pooja-dress/gallery-01-0a3c34116c8e87ab-480w.webp",
+          "width": 480,
+          "height": 640,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 80240,
+          "sha256": "b60bd165615af6dc928d9aa88bc118c61f56f9666a7d8187d6576f71ab22e0bc"
+        },
+        {
+          "key": "optimized/products/pooja-dress/gallery-01-0a3c34116c8e87ab-800w.webp",
+          "width": 800,
+          "height": 1067,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 196598,
+          "sha256": "dff2b9c63d8f4b14c424d5b9b9c9d303a26143a03e75cdfb639cfbc947726c7d"
+        },
+        {
+          "key": "optimized/products/pooja-dress/gallery-01-0a3c34116c8e87ab-1086w.webp",
+          "width": 1086,
+          "height": 1448,
+          "contentType": "image/webp",
+          "descriptor": "1086w",
+          "bytes": 307396,
+          "sha256": "1ca9bdabeb5b8272a953c903fd5041ea241880caf73de8e414e4f6e3d1a808d8"
+        }
+      ]
+    },
+    {
+      "key": "products/pooja-dress/gallery-02.png",
+      "sha256": "01154304ef11e51c6bfd9bc31641748922d0d5974a578157a8fc03df7936fa15",
+      "bytes": 2115236,
+      "width": 1230,
+      "height": 1279,
+      "variants": [
+        {
+          "key": "optimized/products/pooja-dress/gallery-02-7351159252ed6a92-480w.webp",
+          "width": 480,
+          "height": 499,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 39408,
+          "sha256": "9cfb7dd4c2f2d03ad855680f52f8927b0f3e2361a31858045a70076c3db42679"
+        },
+        {
+          "key": "optimized/products/pooja-dress/gallery-02-7351159252ed6a92-800w.webp",
+          "width": 800,
+          "height": 832,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 83942,
+          "sha256": "92292d18efbe2148c01ae4455526c401039f4338cb0e30acec735923a2cce5c0"
+        },
+        {
+          "key": "optimized/products/pooja-dress/gallery-02-7351159252ed6a92-1200w.webp",
+          "width": 1200,
+          "height": 1248,
+          "contentType": "image/webp",
+          "descriptor": "1200w",
+          "bytes": 145018,
+          "sha256": "d1f49d0482177d886bd815eb4e770e8e107883cd853c707c79c76de2acb735b9"
+        },
+        {
+          "key": "optimized/products/pooja-dress/gallery-02-7351159252ed6a92-1230w.webp",
+          "width": 1230,
+          "height": 1279,
+          "contentType": "image/webp",
+          "descriptor": "1230w",
+          "bytes": 149524,
+          "sha256": "425f5d8207ebea7296836e0d450af98d5814831633c8366adae5fe3da0740423"
+        }
+      ]
+    },
+    {
+      "key": "products/pooja-dress/gallery-03.png",
+      "sha256": "71727e24415911d7403fde5cbbfeb0dcf9c63a95d504a094714cb1cc95fbe164",
+      "bytes": 3134211,
+      "width": 1086,
+      "height": 1448,
+      "variants": [
+        {
+          "key": "optimized/products/pooja-dress/gallery-03-d908e75707b29b0e-480w.webp",
+          "width": 480,
+          "height": 640,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 90046,
+          "sha256": "eb7b39bf6eed5a8a98b87c9209f0887aec889adbc38229ec9d5b69a656fd7466"
+        },
+        {
+          "key": "optimized/products/pooja-dress/gallery-03-d908e75707b29b0e-800w.webp",
+          "width": 800,
+          "height": 1067,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 234092,
+          "sha256": "9148ead8d6132b6fae7e9722bab2309831dea0e090940789108dbf46f752ad58"
+        },
+        {
+          "key": "optimized/products/pooja-dress/gallery-03-d908e75707b29b0e-1086w.webp",
+          "width": 1086,
+          "height": 1448,
+          "contentType": "image/webp",
+          "descriptor": "1086w",
+          "bytes": 373368,
+          "sha256": "bb8a21f8dc915308ce104b217fa4cddcd9dd25f97ef5b9296f809dc436b72b95"
+        }
+      ]
+    },
+    {
+      "key": "products/pooja-dress/primary.png",
+      "sha256": "b28e48d3c99dd55ae0ee0465738d3146dd3d3562f11b3152018d7bf9f83ffa5e",
+      "bytes": 2458913,
+      "width": 1188,
+      "height": 1324,
+      "variants": [
+        {
+          "key": "optimized/products/pooja-dress/primary-3eeb85494a51c001-480w.webp",
+          "width": 480,
+          "height": 535,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 63040,
+          "sha256": "f461e54808662ba8ca41772bf67331d4213e0a8da395b6a840d7c672af940f3e"
+        },
+        {
+          "key": "optimized/products/pooja-dress/primary-3eeb85494a51c001-800w.webp",
+          "width": 800,
+          "height": 892,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 137774,
+          "sha256": "14b1f21f97bd0d81cf22b588685c252a6a64004afeed267dea6c28c99da72a8a"
+        },
+        {
+          "key": "optimized/products/pooja-dress/primary-3eeb85494a51c001-1188w.webp",
+          "width": 1188,
+          "height": 1324,
+          "contentType": "image/webp",
+          "descriptor": "1188w",
+          "bytes": 231236,
+          "sha256": "c919b7969094f6937b96ca2be425180ef52f5aeb74045eeae4922d25475b17bc"
+        }
+      ]
+    },
+    {
+      "key": "products/potli-handbag/gallery-01.png",
+      "sha256": "6037872f496faf816851f9850a651b2536b81edac1c924b0c046a7b00c7cdb7f",
+      "bytes": 2213524,
+      "width": 1086,
+      "height": 1448,
+      "variants": [
+        {
+          "key": "optimized/products/potli-handbag/gallery-01-bd736df9c442040c-480w.webp",
+          "width": 480,
+          "height": 640,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 52352,
+          "sha256": "043ac011d19725ee388e7b5d74e9429b0ced553b6ba1b2536b2aeb5144eb894f"
+        },
+        {
+          "key": "optimized/products/potli-handbag/gallery-01-bd736df9c442040c-800w.webp",
+          "width": 800,
+          "height": 1067,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 112258,
+          "sha256": "40ade651331a6dfabb29c339e71bda7d507568fd3686211c4a2a3072949c3e49"
+        },
+        {
+          "key": "optimized/products/potli-handbag/gallery-01-bd736df9c442040c-1086w.webp",
+          "width": 1086,
+          "height": 1448,
+          "contentType": "image/webp",
+          "descriptor": "1086w",
+          "bytes": 162918,
+          "sha256": "31c936443f4224a76f87affe28ed13885e56e7638201d93f126f1136c3df8d2b"
+        }
+      ]
+    },
+    {
+      "key": "products/potli-handbag/primary.png",
+      "sha256": "5e6adfa4871fb720065f3dd5c83561b91c3ec8970305de3f59da5bf06bfe3add",
+      "bytes": 1869709,
+      "width": 1086,
+      "height": 1448,
+      "variants": [
+        {
+          "key": "optimized/products/potli-handbag/primary-293a4643343ed2d5-480w.webp",
+          "width": 480,
+          "height": 640,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 36124,
+          "sha256": "89142fc7c601b754f983a2005a4e6c577ee16bad87fa5640767ebb014a60ac8b"
+        },
+        {
+          "key": "optimized/products/potli-handbag/primary-293a4643343ed2d5-800w.webp",
+          "width": 800,
+          "height": 1067,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 74154,
+          "sha256": "2104cb41cb644a5499d697f55af2a90437ec62fb960107c74f6886cc8b84c915"
+        },
+        {
+          "key": "optimized/products/potli-handbag/primary-293a4643343ed2d5-1086w.webp",
+          "width": 1086,
+          "height": 1448,
+          "contentType": "image/webp",
+          "descriptor": "1086w",
+          "bytes": 105792,
+          "sha256": "5a696c25743291b9583a6ff10664d17f985f4279ddbc23646f1d63b2b501c422"
+        }
+      ]
+    },
+    {
+      "key": "products/sunflower-bouquet/gallery-01-owner-lifestyle.png",
+      "sha256": "e4c74173934e2af5ca4579dba15c854270911753596b35632d2d69710d477e28",
+      "bytes": 2453288,
+      "width": 1086,
+      "height": 1448,
+      "variants": [
+        {
+          "key": "optimized/products/sunflower-bouquet/gallery-01-owner-lifestyle-f02c5d161d9017cf-480w.webp",
+          "width": 480,
+          "height": 640,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 65484,
+          "sha256": "eea5d163e780664781193b95128a4882024c8ee57ac2cb4ce6d223dd97768a3e"
+        },
+        {
+          "key": "optimized/products/sunflower-bouquet/gallery-01-owner-lifestyle-f02c5d161d9017cf-800w.webp",
+          "width": 800,
+          "height": 1067,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 138938,
+          "sha256": "5142a127a26ec066a2ea8aa5d1e88fa0014e94b54678b3e5e83aa3cf46fefa8c"
+        },
+        {
+          "key": "optimized/products/sunflower-bouquet/gallery-01-owner-lifestyle-f02c5d161d9017cf-1086w.webp",
+          "width": 1086,
+          "height": 1448,
+          "contentType": "image/webp",
+          "descriptor": "1086w",
+          "bytes": 205230,
+          "sha256": "e76dcc781364e7b54d0f1b38376bf676f236f91b459dd7299de81d94e278f88d"
+        }
+      ]
+    },
+    {
+      "key": "products/sunflower-bouquet/primary.png",
+      "sha256": "ad2d485b696b8447d73e36bb41607766d74cbcc3046d20e954cd7ad1ce7e1130",
+      "bytes": 2439846,
+      "width": 1122,
+      "height": 1402,
+      "variants": [
+        {
+          "key": "optimized/products/sunflower-bouquet/primary-af02ea429f330d40-480w.webp",
+          "width": 480,
+          "height": 600,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 66206,
+          "sha256": "8fc41caca0943890824fd6daec893b37c534de82b13238f7d14b9a508b680898"
+        },
+        {
+          "key": "optimized/products/sunflower-bouquet/primary-af02ea429f330d40-800w.webp",
+          "width": 800,
+          "height": 1000,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 153808,
+          "sha256": "dd793775ff51266b9406d42ec76d1f23c299b9ed532690a33b076e250cf4f9f4"
+        },
+        {
+          "key": "optimized/products/sunflower-bouquet/primary-af02ea429f330d40-1122w.webp",
+          "width": 1122,
+          "height": 1402,
+          "contentType": "image/webp",
+          "descriptor": "1122w",
+          "bytes": 247262,
+          "sha256": "c3b8304bf9c2ee5b9d4850e967ebc99ba892f3ece8278072be46ea3644ac6599"
+        }
+      ]
+    },
+    {
+      "key": "sections/gift-handcrafted-warmth.png",
+      "sha256": "cff9fccb14858e981fc820ef9f0b7c27f288509076ad14a3c148799e206462b8",
+      "bytes": 2264477,
+      "width": 1672,
+      "height": 941,
+      "variants": [
+        {
+          "key": "optimized/sections/gift-handcrafted-warmth-27e4ed1944d2f9c2-480w.webp",
+          "width": 480,
+          "height": 270,
+          "contentType": "image/webp",
+          "descriptor": "480w",
+          "bytes": 31010,
+          "sha256": "1bae7c804184ab5df9803751cd63e1930cbbd3d40bd4f59376f899439dbe711a"
+        },
+        {
+          "key": "optimized/sections/gift-handcrafted-warmth-27e4ed1944d2f9c2-800w.webp",
+          "width": 800,
+          "height": 450,
+          "contentType": "image/webp",
+          "descriptor": "800w",
+          "bytes": 69662,
+          "sha256": "5e6c998aca21aa5591e7a87086b1c1a8f1e53fa6e870e1320966c9bcd09e031a"
+        },
+        {
+          "key": "optimized/sections/gift-handcrafted-warmth-27e4ed1944d2f9c2-1200w.webp",
+          "width": 1200,
+          "height": 675,
+          "contentType": "image/webp",
+          "descriptor": "1200w",
+          "bytes": 125060,
+          "sha256": "644229ccde37430971852af13bd5c7874d5c0f869aa75e27d26971010c1d7321"
+        },
+        {
+          "key": "optimized/sections/gift-handcrafted-warmth-27e4ed1944d2f9c2-1600w.webp",
+          "width": 1600,
+          "height": 900,
+          "contentType": "image/webp",
+          "descriptor": "1600w",
+          "bytes": 177792,
+          "sha256": "79eb9b6564dbc4b644c6891b4e57afcefaa3995b74743764269292f7a34a3f52"
+        },
+        {
+          "key": "optimized/sections/gift-handcrafted-warmth-27e4ed1944d2f9c2-1672w.webp",
+          "width": 1672,
+          "height": 941,
+          "contentType": "image/webp",
+          "descriptor": "1672w",
+          "bytes": 188462,
+          "sha256": "2aa9a80215d51bd06e8bbdc460e0f9f48a6bb7f441b4f74e8167baefaed4b4f4"
+        }
+      ]
+    }
+  ]
+}

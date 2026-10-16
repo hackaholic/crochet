@@ -66,6 +66,11 @@ class Settings:
     )
     public_api_url: str = os.getenv("PUBLIC_API_URL") or _default_public_api_url(os.getenv("APP_ENV", os.getenv("TARGET_ENV", "development")))
 
+    # SEO & Origin Policy (DEC-005-7 & Task 5.18.2)
+    seo_public_origin: str | None = os.getenv("SEO_PUBLIC_ORIGIN")
+    canonical_base_url: str | None = os.getenv("CANONICAL_BASE_URL")
+    seo_indexing_enabled: str | None = os.getenv("SEO_INDEXING_ENABLED")
+
     # Cookies
     # In production, set COOKIE_DOMAIN to ".sulocraft.com" for cross-subdomain auth
     cookie_domain: str | None = os.getenv("COOKIE_DOMAIN") or (
@@ -90,6 +95,7 @@ class Settings:
             else os.getenv("R2_PUBLIC_BASE_URL", "https://images.sulocraft.com")
         ),
     )
+    media_manifest_path: str | None = os.getenv("MEDIA_MANIFEST_PATH")
 
     # Auth Providers
     google_client_id: str | None = os.getenv("GOOGLE_CLIENT_ID")

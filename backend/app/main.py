@@ -150,28 +150,27 @@ def get_mock_static_image(image_path: str):
 
 
     clean_path = image_path.lstrip("/")
-    # Check if file exists locally on disk in public/images/
-    candidates = [
-        Path(f"public/images/{clean_path}"),
-        Path(f"../public/images/{clean_path}"),
-        Path(f"/app/public/images/{clean_path}"),
-    ]
-    for candidate in candidates:
-        if candidate.is_file():
-            return FileResponse(candidate)
+    if ".." in Path(clean_path).parts or "\\" in clean_path or "\x00" in clean_path:
+        raise HTTPException(status_code=404, detail="Image not found")
+    def local_response(key: str):
+        for root in (Path("public/images"), Path("../public/images"), Path("/app/public/images")):
+            base = root.resolve()
+            candidate = (base / key).resolve()
+            if candidate.is_relative_to(base) and candidate.is_file():
+                # Minimal container OS MIME databases may not know WebP.
+                return FileResponse(candidate, media_type="image/webp" if candidate.suffix.lower() == ".webp" else None)
+        return None
 
-    # Occasion DB/R2 object keys can differ from the checked-in local filenames.
-    # Serve the corresponding approved artwork in development instead of the
-    # generic upstream photo fallback.
+    response = local_response(clean_path)
+    if response is not None:
+        return response
+
+    # DB/R2 keys may reference an approved checked-in artwork alias.
     local_asset = LOCAL_IMAGE_ASSET_MAP.get(clean_path)
     if local_asset:
-        for candidate in (
-            Path(f"public/images/{local_asset}"),
-            Path(f"../public/images/{local_asset}"),
-            Path(f"/app/public/images/{local_asset}"),
-        ):
-            if candidate.is_file():
-                return FileResponse(candidate)
+        response = local_response(local_asset)
+        if response is not None:
+            return response
 
     upstream_url = resolve_mock_image_source(image_path)
     if upstream_url:

@@ -45,7 +45,9 @@ from app.schemas.catalogue import (
     VariantOut,
 )
 from app.services.search import maybe_schedule_opportunistic_pruning
+from app.services.seo import SeoService
 from app.schemas.review import ReviewCreateRequest
+from app.schemas.seo import SeoAggregateRating
 
 logger = logging.getLogger(__name__)
 
@@ -239,8 +241,16 @@ def get_category_by_slug(
     })
 
 
-def _to_product_list_item(p: Product) -> ProductListItem:
+def _to_product_list_item(
+    p: Product,
+    aggregate_rating: SeoAggregateRating | None = None,
+    db: Session | None = None,
+) -> ProductListItem:
     """Helper to convert ORM Product to ProductListItem schema."""
+    if aggregate_rating is None and db is not None:
+        ratings_map = SeoService.get_products_aggregate_ratings(db, [p.id])
+        aggregate_rating = ratings_map.get(p.id)
+
     prim_cat = p.primary_category
     primary_category_name = prim_cat.name if prim_cat else (p.categories[0].name if p.categories else "Other")
     primary_cat_summary = (
@@ -280,6 +290,7 @@ def _to_product_list_item(p: Product) -> ProductListItem:
         rating=p.rating,
         reviews=p.reviews_count,
         review_count=p.reviews_count,
+        aggregate_rating=aggregate_rating,
         image=p.primary_image,
         image_urls=gallery_urls,
         category=primary_category_name,
@@ -294,6 +305,15 @@ def _to_product_list_item(p: Product) -> ProductListItem:
         in_stock=in_stock,
         inventory_status=inventory_status,
     )
+
+
+def _to_product_list_items(products: list[Product], db: Session) -> list[ProductListItem]:
+    """Helper to convert a list of ORM Products to ProductListItem schemas with batched review aggregation."""
+    if not products:
+        return []
+    prod_ids = [p.id for p in products]
+    ratings_map = SeoService.get_products_aggregate_ratings(db, prod_ids)
+    return [_to_product_list_item(p, aggregate_rating=ratings_map.get(p.id)) for p in products]
 
 
 @router.get("/categories/{slug}/products", response_model=list[ProductListItem])
@@ -336,7 +356,7 @@ def get_category_products(
     response.headers["X-Total-Count"] = str(total_count)
 
     products = query.offset(offset).limit(limit).all()
-    return [_to_product_list_item(p) for p in products]
+    return _to_product_list_items(products, db)
 
 
 # -----------------------------------------------------------------------------
@@ -483,7 +503,7 @@ def get_collection_products(
     response.headers["X-Total-Count"] = str(total_count)
 
     products = query.offset(offset).limit(limit).all()
-    return [_to_product_list_item(p) for p in products]
+    return _to_product_list_items(products, db)
 
 
 
@@ -643,7 +663,7 @@ def list_products(
     calc_offset = offset if offset is not None else (page - 1) * limit
     products = query.offset(calc_offset).limit(limit).all()
 
-    return [_to_product_list_item(p) for p in products]
+    return _to_product_list_items(products, db)
 
 
 @router.get("/products/search", response_model=list[ProductListItem])
@@ -680,7 +700,7 @@ def search_products(
         .limit(limit)
         .all()
     )
-    return [_to_product_list_item(p) for p in products]
+    return _to_product_list_items(products, db)
 
 
 def sanitize_search_query(raw_query: str) -> str | None:
@@ -915,7 +935,7 @@ def get_search_suggestions(
             if pid in candidate_map
         ][:product_limit]
 
-        trending_products = [_to_product_list_item(p) for p in ordered_candidates]
+        trending_products = _to_product_list_items(ordered_candidates, db)
 
     return SearchSuggestionsResponse(
         trending_keywords=trending_keywords,
@@ -1027,6 +1047,8 @@ def get_product_detail(
         for r in product.reviews
     ]
 
+    aggregate_rating = SeoService.get_products_aggregate_ratings(db, [product.id]).get(product.id)
+
     return ProductDetail(
         id=product.id,
         name=product.name,
@@ -1051,6 +1073,7 @@ def get_product_detail(
         rating=product.rating,
         reviews=product.reviews_count,
         review_count=product.reviews_count,
+        aggregate_rating=aggregate_rating,
         in_stock=stock > 0,
         inventory_status=inventory_status,
         badge=product.badge,

@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from app.api.v1.catalogue import _to_product_list_item
+from app.api.v1.catalogue import _to_product_list_item, _to_product_list_items
 from app.db.session import get_db
 from app.models.catalogue import Category, Collection, Occasion, Product, Review, Tag
 from app.models.storefront import BrandSettings, HomepageCampaign, HomepageSection
@@ -122,7 +122,7 @@ def _resolve_homepage_section(db: Session, section: HomepageSection):
                     else:
                         products = query.limit(limit).all()
 
-        items = [_to_product_list_item(p) for p in products]
+        items = _to_product_list_items(products, db)
         return ProductCollectionSectionOut(
             id=section.id,
             order=section.display_order,

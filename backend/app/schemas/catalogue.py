@@ -3,6 +3,8 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.core.images import build_image_url
+from app.schemas.media import MediaMetadataOut, MediaVariantOut
+from app.schemas.seo import SeoAggregateRating
 
 
 class CategorySummary(BaseModel):
@@ -257,11 +259,31 @@ class ProductImageOut(BaseModel):
     sort_order: int = 0
     is_primary: bool = False
     variant_id: int | None = None
+    width: int | None = None
+    height: int | None = None
+    content_type: str | None = Field(default=None, serialization_alias="contentType", alias="contentType")
+    variants: list[MediaVariantOut] = Field(default_factory=list)
 
     @field_validator("url", mode="after")
     @classmethod
     def resolve_url(cls, v: str) -> str:
         return build_image_url(v)
+
+    @model_validator(mode="after")
+    def resolve_dimensions(self) -> "ProductImageOut":
+        if self.width is None or self.height is None or self.content_type is None:
+            from app.services.media import get_image_dimensions
+            w, h, mime = get_image_dimensions(self.url)
+            if self.width is None:
+                self.width = w
+            if self.height is None:
+                self.height = h
+            if self.content_type is None:
+                self.content_type = mime
+        if not self.variants:
+            from app.services.media import get_image_variants
+            self.variants = get_image_variants(self.url)
+        return self
 
 
 class ProductListItem(BaseModel):
@@ -280,6 +302,7 @@ class ProductListItem(BaseModel):
     rating: float = 5.0
     reviews: int = Field(default=0, serialization_alias="reviews")
     review_count: int = Field(default=0, serialization_alias="reviewCount")
+    aggregate_rating: SeoAggregateRating | None = Field(default=None, serialization_alias="aggregateRating", alias="aggregateRating")
     image: str
     image_urls: list[str] = Field(default_factory=list, serialization_alias="imageUrls")
     category: str = ""
@@ -293,6 +316,7 @@ class ProductListItem(BaseModel):
     customizable: bool = False
     in_stock: bool = Field(default=True, serialization_alias="inStock")
     inventory_status: str = Field(default="IN_STOCK", serialization_alias="inventoryStatus")
+    primary_image_metadata: MediaMetadataOut | None = Field(default=None, serialization_alias="primaryImageMetadata")
 
     @field_validator("image", mode="after")
     @classmethod
@@ -303,6 +327,13 @@ class ProductListItem(BaseModel):
     @classmethod
     def resolve_image_urls(cls, v: list[str]) -> list[str]:
         return [build_image_url(x) for x in v]
+
+    @model_validator(mode="after")
+    def populate_primary_metadata(self) -> "ProductListItem":
+        if self.primary_image_metadata is None and self.image:
+            from app.services.media import build_media_metadata
+            self.primary_image_metadata = build_media_metadata(self.image, alt_text=self.name)
+        return self
 
 
 class ProductDetail(BaseModel):
@@ -333,6 +364,7 @@ class ProductDetail(BaseModel):
     rating: float = 5.0
     reviews: int = Field(default=0, serialization_alias="reviews")
     review_count: int = Field(default=0, serialization_alias="reviewCount")
+    aggregate_rating: SeoAggregateRating | None = Field(default=None, serialization_alias="aggregateRating", alias="aggregateRating")
     in_stock: bool = Field(default=True, serialization_alias="inStock")
     inventory_status: str = Field(default="IN_STOCK", serialization_alias="inventoryStatus")
     badge: str | None = None
@@ -346,6 +378,7 @@ class ProductDetail(BaseModel):
     processing_time: str | None = Field(default=None, serialization_alias="processingTime", alias="processingTime")
     care_instructions: str | None = Field(default=None, serialization_alias="careInstructions", alias="careInstructions")
     shipping_delivery: str | None = Field(default=None, serialization_alias="shippingDelivery", alias="shippingDelivery")
+    primary_image_metadata: MediaMetadataOut | None = Field(default=None, serialization_alias="primaryImageMetadata")
 
     @field_validator("images", mode="after")
     @classmethod
@@ -356,6 +389,27 @@ class ProductDetail(BaseModel):
     @classmethod
     def resolve_image_urls(cls, v: list[str]) -> list[str]:
         return [build_image_url(x) for x in v]
+
+    @model_validator(mode="after")
+    def populate_primary_metadata(self) -> "ProductDetail":
+        if self.primary_image_metadata is None:
+            primary_src = None
+            if self.gallery:
+                for img in self.gallery:
+                    if img.is_primary:
+                        primary_src = img.url
+                        break
+                if not primary_src and self.gallery:
+                    primary_src = self.gallery[0].url
+            elif self.images:
+                primary_src = self.images[0]
+            elif self.image_urls:
+                primary_src = self.image_urls[0]
+
+            if primary_src:
+                from app.services.media import build_media_metadata
+                self.primary_image_metadata = build_media_metadata(primary_src, alt_text=self.name)
+        return self
 
 
 class ProductListResponse(BaseModel):

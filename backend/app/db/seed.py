@@ -33,6 +33,7 @@ from app.models.catalogue import (
 )
 from app.models.storefront import BrandSettings, HomepageCampaign, HomepageSection
 from app.models.user import User, UserIdentity
+from app.services.media import get_image_dimensions
 
 
 APP_ROOT = Path(__file__).resolve().parents[2]
@@ -1135,12 +1136,16 @@ def _seed_taxonomy_and_products(db: Session) -> None:
                 db.delete(extra)
         for idx, img_url in enumerate(new_image_urls):
             alt = f"{product.name} handcrafted photo {idx + 1}"
+            img_w, img_h, img_mime = get_image_dimensions(img_url)
             if idx < len(existing_images):
                 img_obj = existing_images[idx]
                 img_obj.url = img_url
                 img_obj.alt_text = alt
                 img_obj.sort_order = idx
                 img_obj.is_primary = (idx == 0)
+                img_obj.width = img_w
+                img_obj.height = img_h
+                img_obj.content_type = img_mime
             else:
                 db.add(
                     ProductImage(
@@ -1149,6 +1154,9 @@ def _seed_taxonomy_and_products(db: Session) -> None:
                         alt_text=alt,
                         sort_order=idx,
                         is_primary=(idx == 0),
+                        width=img_w,
+                        height=img_h,
+                        content_type=img_mime,
                     )
                 )
 

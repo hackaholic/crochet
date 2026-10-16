@@ -21,6 +21,7 @@ from app.db.session import get_db
 from app.services.notification import dispatch_order_status_background, dispatch_welcome_background
 from app.services.payment.factory import get_payment_provider
 from app.services.storage import get_storage_provider
+from app.services.media import get_image_dimensions
 from app.models.catalogue import (
     Category,
     Collection,
@@ -34,6 +35,7 @@ from app.models.catalogue import (
     ProductVariant,
     Review,
     Tag,
+    UrlRedirect,
 )
 from app.models.order import (
     Order,
@@ -547,11 +549,15 @@ def create_product(
     # Attach gallery images
     all_images = [payload.primary_image] + [img for img in payload.gallery_images if img != payload.primary_image]
     for idx, img_url in enumerate(all_images):
+        img_w, img_h, img_mime = get_image_dimensions(img_url)
         product.images.append(
             ProductImage(
                 url=img_url,
                 sort_order=idx,
                 is_primary=(idx == 0),
+                width=img_w,
+                height=img_h,
+                content_type=img_mime,
             )
         )
 
@@ -621,6 +627,51 @@ def get_admin_product(
     return _product_to_admin_out(product)
 
 
+def _record_slug_redirect(
+    db: Session,
+    old_path: str,
+    new_path: str,
+    entity_type: str,
+    entity_id: int | None = None,
+) -> None:
+    """Safely record a 301 URL redirect from old_path to new_path, flattening chains and preventing redirect loops."""
+    if old_path == new_path:
+        return
+
+    # 1. Update or create redirect from old_path -> new_path
+    existing = db.query(UrlRedirect).filter(UrlRedirect.old_path == old_path).first()
+    if existing:
+        existing.target_path = new_path
+        existing.status_code = 301
+        existing.entity_type = entity_type
+        existing.entity_id = entity_id
+        existing.updated_at = datetime.now(timezone.utc)
+    else:
+        db.add(
+            UrlRedirect(
+                old_path=old_path,
+                target_path=new_path,
+                status_code=301,
+                entity_type=entity_type,
+                entity_id=entity_id,
+            )
+        )
+
+    # 2. Flatten any existing redirects that were pointing to old_path -> point directly to new_path (chain prevention)
+    pointing_to_old = db.query(UrlRedirect).filter(UrlRedirect.target_path == old_path).all()
+    for r in pointing_to_old:
+        if r.old_path == new_path:
+            # If the new path was previously redirected to the old path (circular rename: A -> B, now B -> A), remove it
+            db.delete(r)
+        else:
+            r.target_path = new_path
+            r.updated_at = datetime.now(timezone.utc)
+
+    # 3. Clean up any redirect where old_path == new_path (loop prevention)
+    db.query(UrlRedirect).filter(UrlRedirect.old_path == new_path).delete()
+
+
+
 @router.patch("/products/{product_id}", response_model=AdminProductOut)
 @router.put("/products/{product_id}", response_model=AdminProductOut)
 def update_product(
@@ -652,8 +703,18 @@ def update_product(
 
     if payload.name is not None:
         product.name = payload.name
-    if payload.slug is not None:
+    if payload.slug is not None and payload.slug != product.slug:
+        # Check collision with other products
+        collision = db.query(Product).filter(Product.slug == payload.slug, Product.id != product.id).first()
+        if collision:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Product with slug '{payload.slug}' already exists.",
+            )
+        old_slug_path = f"/products/{product.slug}"
+        new_slug_path = f"/products/{payload.slug}"
         product.slug = payload.slug
+        _record_slug_redirect(db, old_slug_path, new_slug_path, entity_type="PRODUCT", entity_id=product.id)
     if payload.short_description is not None:
         product.short_description = payload.short_description
     if payload.description is not None:
@@ -719,7 +780,17 @@ def update_product(
         if all_imgs != [image.url for image in existing_images]:
             product.images.clear()
             for idx, url in enumerate(all_imgs):
-                product.images.append(ProductImage(url=url, sort_order=idx, is_primary=(idx == 0)))
+                img_w, img_h, img_mime = get_image_dimensions(url)
+                product.images.append(
+                    ProductImage(
+                        url=url,
+                        sort_order=idx,
+                        is_primary=(idx == 0),
+                        width=img_w,
+                        height=img_h,
+                        content_type=img_mime,
+                    )
+                )
 
     product.updated_at = datetime.now(timezone.utc)
     db.commit()
@@ -923,8 +994,18 @@ def update_category(
 
     if payload.name is not None:
         category.name = payload.name
-    if payload.slug is not None:
+    if payload.slug is not None and payload.slug != category.slug:
+        # Check collision with other categories
+        collision = db.query(Category).filter(Category.slug == payload.slug, Category.id != category.id).first()
+        if collision:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Category with slug '{payload.slug}' already exists.",
+            )
+        old_slug_path = f"/categories/{category.slug}"
+        new_slug_path = f"/categories/{payload.slug}"
         category.slug = payload.slug
+        _record_slug_redirect(db, old_slug_path, new_slug_path, entity_type="CATEGORY", entity_id=category.id)
     if payload.description is not None:
         category.description = payload.description
     if payload.image_key is not None:
@@ -1049,8 +1130,18 @@ def update_collection(
 
     if payload.name is not None:
         col.name = payload.name
-    if payload.slug is not None:
+    if payload.slug is not None and payload.slug != col.slug:
+        # Check collision with other collections
+        collision = db.query(Collection).filter(Collection.slug == payload.slug, Collection.id != col.id).first()
+        if collision:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Collection with slug '{payload.slug}' already exists.",
+            )
+        old_slug_path = f"/collections/{col.slug}"
+        new_slug_path = f"/collections/{payload.slug}"
         col.slug = payload.slug
+        _record_slug_redirect(db, old_slug_path, new_slug_path, entity_type="COLLECTION", entity_id=col.id)
     if payload.description is not None:
         col.description = payload.description
     if payload.image_key is not None:

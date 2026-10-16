@@ -3,10 +3,11 @@
 from datetime import datetime
 from typing import Annotated, Any, Literal, Union
 from urllib.parse import urlparse
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.core.images import build_image_url
 from app.schemas.catalogue import ProductListItem
+from app.schemas.media import MediaMetadataOut
 
 
 class BrandSettingsOut(BaseModel):
@@ -125,10 +126,18 @@ class HomepageCampaignOut(BaseModel):
     image_alt: str = Field(..., serialization_alias="imageAlt", alias="imageAlt")
     mobile_image_url: str | None = Field(default=None, serialization_alias="mobileImageUrl", alias="mobileImageUrl")
     mobile_image_position: CampaignImagePosition | None = Field(default=None, serialization_alias="mobileImagePosition", alias="mobileImagePosition")
+    image_width: int | None = Field(default=None, serialization_alias="imageWidth")
+    image_height: int | None = Field(default=None, serialization_alias="imageHeight")
+    image_type: str | None = Field(default=None, serialization_alias="imageType")
+    mobile_image_width: int | None = Field(default=None, serialization_alias="mobileImageWidth")
+    mobile_image_height: int | None = Field(default=None, serialization_alias="mobileImageHeight")
+    mobile_image_type: str | None = Field(default=None, serialization_alias="mobileImageType")
     destination: str | None = None
     priority: int = 0
     starts_at: datetime | None = Field(default=None, serialization_alias="startsAt", alias="startsAt")
     ends_at: datetime | None = Field(default=None, serialization_alias="endsAt", alias="endsAt")
+    image_metadata: MediaMetadataOut | None = Field(default=None, serialization_alias="imageMetadata", alias="imageMetadata")
+    mobile_image_metadata: MediaMetadataOut | None = Field(default=None, serialization_alias="mobileImageMetadata", alias="mobileImageMetadata")
 
     @field_validator("image_url", mode="after")
     @classmethod
@@ -139,6 +148,37 @@ class HomepageCampaignOut(BaseModel):
     @classmethod
     def resolve_mobile_image_url(cls, v: str | None) -> str | None:
         return build_image_url(v) if v else v
+
+    @model_validator(mode="after")
+    def populate_dimensions(self) -> "HomepageCampaignOut":
+        from app.services.media import build_media_metadata, get_image_dimensions
+        if self.image_width is None or self.image_height is None:
+            w, h, mime = get_image_dimensions(self.image_url)
+            self.image_width = w
+            self.image_height = h
+            self.image_type = mime
+        if self.mobile_image_url and (self.mobile_image_width is None or self.mobile_image_height is None):
+            w, h, mime = get_image_dimensions(self.mobile_image_url)
+            self.mobile_image_width = w
+            self.mobile_image_height = h
+            self.mobile_image_type = mime
+        if self.image_metadata is None and self.image_url:
+            self.image_metadata = build_media_metadata(
+                self.image_url,
+                alt_text=self.image_alt,
+                db_width=self.image_width,
+                db_height=self.image_height,
+                db_content_type=self.image_type,
+            )
+        if self.mobile_image_metadata is None and self.mobile_image_url:
+            self.mobile_image_metadata = build_media_metadata(
+                self.mobile_image_url,
+                alt_text=self.image_alt,
+                db_width=self.mobile_image_width,
+                db_height=self.mobile_image_height,
+                db_content_type=self.mobile_image_type,
+            )
+        return self
 
 
 class StorefrontResponse(BaseModel):
@@ -164,11 +204,36 @@ class CategorySummary(BaseModel):
     slug: str
     description: str | None = None
     image_url: str = Field(default="", serialization_alias="imageUrl", alias="imageUrl")
+    image_alt: str | None = Field(default=None, serialization_alias="imageAlt", alias="imageAlt")
+    image_width: int | None = Field(default=None, serialization_alias="imageWidth", alias="imageWidth")
+    image_height: int | None = Field(default=None, serialization_alias="imageHeight", alias="imageHeight")
+    image_type: str | None = Field(default=None, serialization_alias="imageType", alias="imageType")
+    image_metadata: MediaMetadataOut | None = Field(default=None, serialization_alias="imageMetadata", alias="imageMetadata")
 
     @field_validator("image_url", mode="after")
     @classmethod
     def resolve_image_url(cls, v: str) -> str:
         return build_image_url(v) if v else v
+
+    @model_validator(mode="after")
+    def populate_dimensions(self) -> "CategorySummary":
+        from app.services.media import build_media_metadata, get_image_dimensions
+        if self.image_url and (self.image_width is None or self.image_height is None):
+            w, h, mime = get_image_dimensions(self.image_url)
+            self.image_width = w
+            self.image_height = h
+            self.image_type = mime
+        if self.image_alt is None and self.name:
+            self.image_alt = f"{self.name} category"
+        if self.image_metadata is None and self.image_url:
+            self.image_metadata = build_media_metadata(
+                self.image_url,
+                alt_text=self.image_alt,
+                db_width=self.image_width,
+                db_height=self.image_height,
+                db_content_type=self.image_type,
+            )
+        return self
 
 
 class ReviewSummary(BaseModel):
@@ -227,6 +292,7 @@ class PromoBannerSectionOut(BaseHomepageSectionOut):
     description: str | None = None
     image_url: str | None = Field(default=None, serialization_alias="imageUrl", alias="imageUrl")
     image_alt: str | None = Field(default=None, serialization_alias="imageAlt", alias="imageAlt")
+    image_metadata: MediaMetadataOut | None = Field(default=None, serialization_alias="imageMetadata", alias="imageMetadata")
     cta_text: str | None = Field(default=None, serialization_alias="ctaText", alias="ctaText")
     cta_url: str | None = Field(default=None, serialization_alias="ctaUrl", alias="ctaUrl")
 
@@ -234,6 +300,13 @@ class PromoBannerSectionOut(BaseHomepageSectionOut):
     @classmethod
     def resolve_image_url(cls, v: str | None) -> str | None:
         return build_image_url(v) if v else None
+
+    @model_validator(mode="after")
+    def populate_media_metadata(self) -> "PromoBannerSectionOut":
+        if self.image_metadata is None and self.image_url:
+            from app.services.media import build_media_metadata
+            self.image_metadata = build_media_metadata(self.image_url, alt_text=self.image_alt or self.title)
+        return self
 
 
 class ReviewSectionOut(BaseHomepageSectionOut):
@@ -252,6 +325,7 @@ class ImageTextSectionOut(BaseHomepageSectionOut):
     description: str
     image_url: str = Field(default="", serialization_alias="imageUrl", alias="imageUrl")
     image_alt: str = Field(default="", serialization_alias="imageAlt", alias="imageAlt")
+    image_metadata: MediaMetadataOut | None = Field(default=None, serialization_alias="imageMetadata", alias="imageMetadata")
     image_position: Literal["left", "right"] = Field(
         default="left",
         serialization_alias="imagePosition",
@@ -265,6 +339,13 @@ class ImageTextSectionOut(BaseHomepageSectionOut):
     def resolve_image_url(cls, v: str) -> str:
         return build_image_url(v) if v else v
 
+    @model_validator(mode="after")
+    def populate_media_metadata(self) -> "ImageTextSectionOut":
+        if self.image_metadata is None and self.image_url:
+            from app.services.media import build_media_metadata
+            self.image_metadata = build_media_metadata(self.image_url, alt_text=self.image_alt or self.title)
+        return self
+
 
 class OccasionSummary(BaseModel):
     """Occasion item representation for storefront navigation."""
@@ -275,6 +356,7 @@ class OccasionSummary(BaseModel):
     name: str
     icon: str | None = None
     image_url: str | None = Field(default=None, serialization_alias="imageUrl", alias="imageUrl")
+    image_metadata: MediaMetadataOut | None = Field(default=None, serialization_alias="imageMetadata", alias="imageMetadata")
     display_order: int = Field(default=0, serialization_alias="displayOrder", alias="displayOrder")
     description: str | None = None
 
@@ -282,6 +364,13 @@ class OccasionSummary(BaseModel):
     @classmethod
     def resolve_image_url(cls, v: str | None) -> str | None:
         return build_image_url(v) if v else v
+
+    @model_validator(mode="after")
+    def populate_media_metadata(self) -> "OccasionSummary":
+        if self.image_metadata is None and self.image_url:
+            from app.services.media import build_media_metadata
+            self.image_metadata = build_media_metadata(self.image_url, alt_text=self.name)
+        return self
 
 
 class OccasionGridSectionOut(BaseHomepageSectionOut):

@@ -304,6 +304,9 @@ class ProductImage(Base):
     alt_text = Column(String(255), nullable=True)
     sort_order = Column(Integer, default=0)
     is_primary = Column(Boolean, default=False)
+    width = Column(Integer, nullable=True)
+    height = Column(Integer, nullable=True)
+    content_type = Column(String(50), nullable=True)
 
     product = relationship("Product", back_populates="images")
     variant = relationship("ProductVariant", back_populates="images")
@@ -428,4 +431,25 @@ class ProductInformationDefaults(Base):
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
     )
+
+
+class UrlRedirect(Base):
+    """Canonical path redirects and historical slug aliases for SEO lifecycle management."""
+
+    __tablename__ = "url_redirects"
+
+    id = Column(Integer, primary_key=True, index=True)
+    old_path = Column(String(500), unique=True, index=True, nullable=False)
+    target_path = Column(String(500), nullable=True)  # Nullable when status_code is 410 Gone
+    status_code = Column(Integer, default=301, nullable=False)  # 301 (Moved Permanently) or 410 (Gone)
+    entity_type = Column(String(50), nullable=True)  # PRODUCT, CATEGORY, COLLECTION, STATIC
+    entity_id = Column(Integer, nullable=True)
+
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
 

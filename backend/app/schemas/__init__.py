@@ -25,6 +25,14 @@ from app.schemas.catalogue import (
     ReviewOut,
     VariantOut,
 )
+from app.schemas.media import (
+    MediaMetadataOut,
+    MediaVariantOut,
+)
+from app.schemas.merchant import (
+    MerchantFeedItemOut,
+    MerchantFeedResponse,
+)
 
 __all__ = [
     "AuthResponse",
@@ -38,6 +46,10 @@ __all__ = [
     "EmailStartResponse",
     "FacebookAuthRequest",
     "GoogleAuthRequest",
+    "MediaMetadataOut",
+    "MediaVariantOut",
+    "MerchantFeedItemOut",
+    "MerchantFeedResponse",
     "OccasionOut",
     "ProductDetail",
     "ProductImageOut",
