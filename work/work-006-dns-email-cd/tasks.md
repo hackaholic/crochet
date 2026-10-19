@@ -2,7 +2,6 @@
 
 ## In Progress
 
-- [ ] 6.10 Codex: Local verification complete; commit and push coordinated changes to dev (owner authorized).
 
 
 ## Pending
@@ -12,6 +11,8 @@
 - [ ] 6.4 Owner + Codex: Cloudflare Workers dev access-policy verification (storefront setup already completed) per [task-004-dev-storefront-access.md](tasks/task-004-dev-storefront-access.md).
 
 ## Completed
+
+- [x] 6.10 Codex: All coordinated changes committed and pushed to dev as `1e46918`; local checks passed. CI deployment is separate and not yet accepted.
 
 - [x] 6.8 Codex: [Preprod reboot recovery](tasks/task-008-preprod-reboot-recovery.md) — existing vault runtime restored; both containers healthy, public health/home200 and actual browser catalogue verified.
 
