@@ -1,0 +1,117 @@
+/* Mobile density configuration: every section template consumes these tokens.
+   Desktop keeps its existing utility styles. No content-specific overrides. */
+:root {
+  --storefront-mobile-section-space: 1rem;
+  --storefront-mobile-heading-gap: .75rem;
+  --storefront-mobile-copy-gap: .375rem;
+  --storefront-mobile-grid-gap: .75rem;
+  --storefront-mobile-title-size: clamp(1.5rem, 6vw, 1.75rem);
+  --storefront-mobile-copy-size: .875rem;
+  --storefront-mobile-card-inset: .75rem;
+  --storefront-mobile-footer-space: 1.5rem;
+  --storefront-mobile-nav-inset: 1rem;
+  --storefront-mobile-nav-block-space: .25rem;
+  --storefront-mobile-tap-size: 2.75rem;
+  --storefront-mobile-brand-height: 2.375rem;
+  --storefront-mobile-brand-max-width: 10rem;
+}
+
+@media (width < 640px) {
+  .storefront-nav { padding-block: var(--storefront-mobile-nav-block-space); }
+  .storefront-nav-row {
+    min-height: var(--storefront-mobile-tap-size);
+    padding-inline: var(--storefront-mobile-nav-inset);
+    gap: .5rem;
+  }
+  .storefront-nav-brand {
+    flex: 1 1 0%;
+    min-width: 0;
+    max-width: var(--storefront-mobile-brand-max-width);
+  }
+  .storefront-nav-brand > span {
+    max-width: 100%;
+    max-height: var(--storefront-mobile-brand-height);
+  }
+  .storefront-nav-brand img {
+    max-width: 100%;
+    max-height: var(--storefront-mobile-brand-height);
+  }
+  .storefront-nav-actions { flex-shrink: 0; gap: 0; }
+  .storefront-nav-actions > button {
+    flex-shrink: 0;
+    width: var(--storefront-mobile-tap-size);
+    height: var(--storefront-mobile-tap-size);
+    padding: 0;
+  }
+  .storefront-nav-actions > button:not(.hidden) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .storefront-section {
+    padding-block: var(--storefront-mobile-section-space);
+  }
+  .storefront-section-header {
+    margin-bottom: var(--storefront-mobile-heading-gap);
+    gap: var(--storefront-mobile-heading-gap);
+  }
+  .storefront-section-title {
+    margin-top: 0;
+    font-size: var(--storefront-mobile-title-size);
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+    text-wrap: pretty;
+  }
+  .storefront-section-header .storefront-section-title {
+    margin-top: var(--storefront-mobile-copy-gap);
+  }
+  .storefront-section-header > p {
+    margin-block: 0;
+    font-size: var(--storefront-mobile-copy-size);
+    line-height: 1.45;
+  }
+  .storefront-section-header > p:first-child {
+    font-size: .6875rem;
+    line-height: 1.45;
+  }
+  .storefront-section-header > p:last-child:not(:first-child) {
+    margin-top: var(--storefront-mobile-copy-gap);
+  }
+  .storefront-card-grid { gap: var(--storefront-mobile-grid-gap); }
+  .storefront-section-content { margin-top: var(--storefront-mobile-heading-gap); }
+  .storefront-section-copy {
+    margin-top: var(--storefront-mobile-copy-gap);
+    font-size: var(--storefront-mobile-copy-size);
+    line-height: 1.5;
+  }
+  .storefront-section-action { margin-top: var(--storefront-mobile-heading-gap); }
+  .storefront-image-text { gap: var(--storefront-mobile-section-space); }
+  .storefront-promo { min-height: 12rem; }
+  .storefront-product-info { padding: var(--storefront-mobile-card-inset); }
+  .storefront-product-title { min-height: 2.25rem; margin-bottom: .25rem; }
+  .storefront-product-price { flex-wrap: wrap; gap: .25rem .5rem; }
+  .storefront-product-rating { margin-bottom: .375rem; }
+
+  .storefront-footer { margin-top: var(--storefront-mobile-footer-space); }
+  .storefront-footer-wave { height: 1.25rem; }
+  .storefront-footer-body { padding-block: var(--storefront-mobile-footer-space); }
+  .storefront-newsletter {
+    margin-bottom: var(--storefront-mobile-footer-space);
+    padding-bottom: var(--storefront-mobile-footer-space);
+  }
+  .storefront-newsletter h3 {
+    font-size: var(--storefront-mobile-title-size);
+    line-height: 1.25;
+    margin-bottom: var(--storefront-mobile-heading-gap);
+  }
+  .storefront-newsletter > p { margin-bottom: var(--storefront-mobile-heading-gap); }
+  .storefront-footer-links {
+    gap: var(--storefront-mobile-footer-space);
+    margin-bottom: var(--storefront-mobile-footer-space);
+  }
+  .storefront-footer-bottom {
+    gap: var(--storefront-mobile-section-space);
+    padding-top: var(--storefront-mobile-section-space);
+  }
+}

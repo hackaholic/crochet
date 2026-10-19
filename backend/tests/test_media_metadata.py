@@ -458,3 +458,45 @@ def test_webp_asset_response_type_and_root_boundary(tmp_path, monkeypatch, metho
             response = browser.request(method, f"/static/images/{key}", follow_redirects=False)
             assert response.status_code == 404
             assert b"must remain private" not in response.content
+
+
+def test_root_relative_media_preserves_key_dimensions_and_variants(tmp_path, monkeypatch):
+    """25-TC01: Same-origin media remains idempotent and keeps real metadata."""
+    import struct
+    from app.core.config import settings
+    from app.core.images import build_image_url
+    import app.services.media as media
+
+    monkeypatch.setattr(settings, "image_base_url", "/static/images")
+    monkeypatch.setattr(media, "IMAGE_ROOT_CANDIDATES", [tmp_path])
+    monkeypatch.setattr(media, "_DIMENSION_CACHE", {})
+    image = tmp_path / "products" / "sample.png"
+    image.parent.mkdir()
+    image.write_bytes(b"\x89PNG\r\n\x1a\n" + b"\x00\x00\x00\rIHDR" + struct.pack(">II", 100, 200) + b"\x08\x06\x00\x00\x00")
+    monkeypatch.setattr(media, "_load_media_manifest", lambda: {
+        "products/sample.png": [{"key": "optimized/sample.webp", "width": 50, "height": 100, "descriptor": "50w"}]
+    })
+    src = "/static/images/products/sample.png"
+    assert build_image_url("products/sample.png") == src
+    assert build_image_url(src) == src
+    assert media.extract_asset_key(src) == "products/sample.png"
+    assert get_image_dimensions(src) == (100, 200, "image/png")
+    variants = get_image_variants(src)
+    assert [(v.url, v.width) for v in variants] == [("/static/images/optimized/sample.webp", 50)]
+
+
+def test_configured_cdn_and_unrelated_media_remain_unchanged(monkeypatch):
+    """25-TC02/03: No URL rewriting/probing of unrelated hosts or unsafe paths."""
+    from app.core.config import settings
+    from app.core.images import build_image_url
+    import app.services.media as media
+
+    monkeypatch.setattr(settings, "image_base_url", "https://cdn.example.test/media")
+    assert build_image_url("products/sample.png") == "https://cdn.example.test/media/products/sample.png"
+    assert build_image_url("") == ""
+    external = "https://other.example.test/sample.png"
+    assert build_image_url(external) == external
+    assert get_image_variants(external) == []
+    monkeypatch.setattr(settings, "image_base_url", "/static/images")
+    assert get_image_variants("/static/images/../secret.png") == []
+    assert media._resolve_local_image_path("../secret.png") is None

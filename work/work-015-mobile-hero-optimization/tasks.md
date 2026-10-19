@@ -10,6 +10,8 @@
 
 ## Completed
 
+- [x] 15.9 Codex — [Fixed-header overlap regression](tasks/task-008-header-overlap-regression.md): measured persistent header clearance; all five slides checked at320/390/430px locally.
+
 - [x] 15.1 — Audit current hero behavior and API fields. Findings are recorded in the contract and `notes.md`.
 - [x] 15.2 — Implement compact responsive layout and mobile height. Contract: [task-002-responsive-layout.md](tasks/task-002-responsive-layout.md).
 - [x] 15.3 — Support responsive hero images (frontend integration, backend persistence/API/admin, Alembic migration, and test coverage completed). Contract: [task-003-responsive-images.md](tasks/task-003-responsive-images.md).

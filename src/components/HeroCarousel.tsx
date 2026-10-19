@@ -1,3 +1,4 @@
+import './heroLayout.css';
 import DestinationLink from './DestinationLink';
 import { imageAttributes, sourceAttributes } from '../lib/media/image';
 import { useEffect, useState, type CSSProperties } from 'react';
@@ -42,11 +43,11 @@ export default function HeroCarousel({ campaigns, loading = false, onShop, onCus
     return (
       <section
         data-testid="hero-section"
-        className="relative h-[408px] overflow-hidden bg-[#2C1810] pt-24 sm:h-[540px] sm:pt-28 lg:h-[620px]"
+        className="hero-layout relative h-[408px] overflow-hidden bg-[#2C1810] pt-24 sm:h-[540px] sm:pt-28 lg:h-[620px]"
         aria-busy={loading}
       >
-        <div className="absolute inset-x-0 bottom-0 top-24 sm:top-28 animate-pulse bg-gradient-to-br from-[#2C1810] via-[#5C3D2E] to-[#8B6B4A]" aria-hidden="true" />
-        <div className="storefront-shell relative flex h-[calc(100%-6rem)] sm:h-[calc(100%-7rem)] items-start pb-6 sm:pb-16 pt-3 sm:pt-6" aria-hidden="true">
+        <div className="hero-visual-layer absolute inset-x-0 bottom-0 top-24 sm:top-28 animate-pulse bg-gradient-to-br from-[#2C1810] via-[#5C3D2E] to-[#8B6B4A]" aria-hidden="true" />
+        <div className="hero-slide-frame storefront-shell relative flex h-[calc(100%-6rem)] sm:h-[calc(100%-7rem)] items-start pb-6 sm:pb-16 pt-3 sm:pt-6" aria-hidden="true">
           <div className="w-full max-w-2xl">
             <div className="h-6 w-28 sm:h-8 sm:w-36 animate-pulse rounded-full bg-white/20" />
             <div className="mt-3 sm:mt-5 h-8 sm:h-12 w-full max-w-xl animate-pulse rounded-xl bg-white/18" />
@@ -109,7 +110,7 @@ export default function HeroCarousel({ campaigns, loading = false, onShop, onCus
     <section
       data-testid="hero-section"
       tabIndex={0}
-      className="relative h-[408px] touch-pan-y overflow-hidden bg-[#2C1810] pt-24 focus:outline-none sm:h-[540px] sm:pt-28 lg:h-[620px]"
+      className="hero-layout relative h-[408px] touch-pan-y overflow-hidden bg-[#2C1810] pt-24 focus:outline-none sm:h-[540px] sm:pt-28 lg:h-[620px]"
       aria-roledescription="carousel"
       aria-label="Featured Sulocraft campaigns"
       onMouseEnter={() => setPaused(true)}
@@ -123,7 +124,7 @@ export default function HeroCarousel({ campaigns, loading = false, onShop, onCus
       onKeyDown={handleKeyDown}
     >
       <picture
-        className="absolute inset-x-0 bottom-0 top-24 sm:top-28 h-[calc(100%-6rem)] sm:h-[calc(100%-7rem)] w-full"
+        className="hero-visual-layer absolute inset-x-0 bottom-0 top-24 sm:top-28 h-[calc(100%-6rem)] sm:h-[calc(100%-7rem)] w-full"
         style={{ '--hero-mobile-object-position': mobileObjectPosition(activeCampaign.mobileImagePosition) } as CSSProperties}
       >
         {activeCampaign.mobileImageUrl && <source media="(max-width: 639px)" {...sourceAttributes(activeCampaign.mobileImageUrl, activeCampaign.mobileImageMetadata ?? { url: activeCampaign.mobileImageUrl, width: activeCampaign.mobileImageWidth, height: activeCampaign.mobileImageHeight })} srcSet={sourceAttributes(activeCampaign.mobileImageUrl, activeCampaign.mobileImageMetadata).srcSet ?? activeCampaign.mobileImageUrl} sizes="100vw" />}
@@ -139,10 +140,10 @@ export default function HeroCarousel({ campaigns, loading = false, onShop, onCus
           sizes="100vw"
         />
       </picture>
-      <div className="absolute inset-x-0 bottom-0 top-24 sm:top-28 bg-gradient-to-r from-[#1F100B]/95 via-[#2C1810]/68 to-[#2C1810]/5" />
+      <div className="hero-visual-layer absolute inset-x-0 bottom-0 top-24 sm:top-28 bg-gradient-to-r from-[#1F100B]/95 via-[#2C1810]/68 to-[#2C1810]/5" />
       <div className="absolute inset-x-0 bottom-0 h-32 sm:h-48 bg-gradient-to-t from-[#1F100B]/65 to-transparent" />
 
-      <div data-testid="hero-slide-frame" className="storefront-shell relative flex h-[calc(100%-6rem)] sm:h-[calc(100%-7rem)] items-start pb-6 sm:pb-16 pt-3 sm:pt-6">
+      <div data-testid="hero-slide-frame" className="hero-slide-frame storefront-shell relative flex h-[calc(100%-6rem)] sm:h-[calc(100%-7rem)] items-start pb-6 sm:pb-16 pt-3 sm:pt-6">
         <div className="flex w-full max-w-3xl flex-col text-white lg:max-w-2xl">
           <div className="h-6 sm:h-8">
             <p className={`inline-flex rounded-full border border-white/25 bg-white/12 px-3 py-1 text-[11px] sm:px-4 sm:py-1.5 sm:text-xs font-semibold uppercase tracking-widest text-white backdrop-blur-sm ${activeCampaign.eyebrow ? '' : 'invisible'}`}>

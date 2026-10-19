@@ -1,0 +1,15 @@
+# Notes
+
+Baseline at430×900: Tiny Friends API section has56px top+56px bottom padding,168px header,32px header margin. Title alone80px. Adjacent section padding compounds the blank space. Screenshot from owner is mobile; desktop untouched. User requests shared configurable template, not repeated hardcoded per-section values.
+
+Implementation: shared CSS tokens in`src/mobileDensity.css` consumed by semantic classes in all six API section templates, fallback homepage, product card information and footer. Mobile-only `<640px`; original desktop utilities retained. No backend/content changes or new package.
+
+Local browser:430×900 screenshot section top/bottom padding16px(vs56), header79.19px(vs168), title30.95px(vs80), header gap12px(vs32). All7rendered homepage sections16pxpadding.320/390/430px no document or section horizontal overflow; real product imagery visible.1280px retains64pxsectionpadding,36pxtitle,40pxheadergap,96pxfootermargin. API data/order/visibility retained.
+
+Verification: Docker frontend typecheck+17relevant tests passed; rebuilt/restarted frontend, API remains healthy. Footer targeted check passed(1test);18total tests passed. Native Firefox and actual phone engines not connected; viewport checks use in-app browser, not claims of device/engine validation. Screenshot:reports/mobile-430.jpg.
+
+Completion: self-review/security disposition Pass for CSS/template-only scope; no new trust boundary. Local result ready for owner review; nothing pushed.
+
+2026-10-19 /24.3: Fixed menu icon edge crowding by letting brand allocation shrink and preserving a16pxrowgutter. Mobile nav75→53px; actiontargets44px, logoheight38px retained.320/390/430px nooverflow, labelclearance13px; allfiveheroCTAsclearcontrols21pxat320px. Desktop nav73px/hero620px unchanged.17tests/typecheckpassed, frontendrebuilt. Self-review/securityPass for presentation-only change. Screenshot inreports/mobile-navigation-390.jpg; no push.
+
+2026-10-20 release authorization: Owner requested commit/push of current verified changes to dev, including Work024 mobile density/navigation, Work015 header-clearance regression and Work025 configurable LAN API/media support. Existing local Docker/browser and test evidence retained; private local .env stays ignored. Deployment acceptance is separate from successful Git push.

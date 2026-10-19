@@ -78,7 +78,7 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
       <HeroCarousel campaigns={heroCampaigns} loading={heroLoading} onShop={() => onNavigate('shop')} onCustom={() => onNavigate('about')} />
 
       {heroLoading ? (
-        <section className="storefront-shell py-12 sm:py-16" aria-busy="true" aria-label="Loading homepage sections">
+        <section className="storefront-section storefront-shell py-12 sm:py-16" aria-busy="true" aria-label="Loading homepage sections">
           <div className="mb-8 h-8 w-64 animate-pulse rounded-lg bg-[#EDE4D0]" />
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {Array.from({ length: 4 }, (_, index) => <div key={index} className="aspect-[3/4] animate-pulse rounded-2xl bg-[#EDE4D0]" />)}
@@ -95,10 +95,10 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
         />
       ) : <>
       {/* ── CATEGORIES ── */}
-      <section className="py-16 sm:py-20 storefront-shell">
-        <div className="text-center mb-12">
+      <section className="storefront-section py-16 sm:py-20 storefront-shell">
+        <div className="storefront-section-header text-center mb-12">
           <p className="text-xs text-[#C4622D] font-semibold tracking-widest uppercase mb-3">Browse by Collection</p>
-          <h2 className="text-4xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>Shop by Category</h2>
+          <h2 className="storefront-section-title text-4xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>Shop by Category</h2>
           <div className="flex justify-center mt-4">
             <ThreadCurve width={200} color="#C4622D" opacity={0.4} />
           </div>
@@ -126,12 +126,12 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
       </section>
 
       {/* ── ROMANTIC COLLECTION ── */}
-      <section className="py-16 sm:py-20 bg-white">
+      <section className="storefront-section py-16 sm:py-20 bg-white">
         <div className="storefront-shell">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+          <div className="storefront-section-header flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
             <div>
               <p className="text-xs text-[#C4622D] font-semibold tracking-widest uppercase mb-3">For Someone Special</p>
-              <h2 className="text-4xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>
+              <h2 className="storefront-section-title text-4xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>
                 Made for Someone Special ❤️
               </h2>
               <p className="text-[#8B6B4A] mt-3 max-w-md">
@@ -158,12 +158,12 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
       </section>
 
       {/* ── BESTSELLERS (horizontal scroll) ── */}
-      <section className="py-16 sm:py-20">
+      <section className="storefront-section py-16 sm:py-20">
         <div className="storefront-shell">
           <div className="flex items-end justify-between mb-10">
             <div>
               <p className="text-xs text-[#C4622D] font-semibold tracking-widest uppercase mb-3">Community Favourites</p>
-              <h2 className="text-4xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>Bestsellers</h2>
+              <h2 className="storefront-section-title text-4xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>Bestsellers</h2>
             </div>
             <div className="flex gap-2">
               <button onClick={() => scroll('l')} className="w-10 h-10 rounded-full border border-[#EDE4D0] flex items-center justify-center hover:bg-[#F5EDE0] text-[#5C3D2E] transition-colors">
@@ -191,13 +191,13 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
       </section>
 
       {/* ── POOJA COLLECTION ── */}
-      <section className="py-16 sm:py-20 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #FAF7F2 0%, #F5E8D5 100%)' }}>
+      <section className="storefront-section py-16 sm:py-20 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #FAF7F2 0%, #F5E8D5 100%)' }}>
         {/* Decorative top border */}
         <div className="absolute top-0 left-0 right-0 h-1" style={{ background: 'linear-gradient(90deg, #C4622D, #EDE4D0, #C4622D)' }} />
         <div className="storefront-shell">
-          <div className="text-center mb-12">
+          <div className="storefront-section-header text-center mb-12">
             <p className="text-xs text-[#8B6B4A] font-semibold tracking-widest uppercase mb-3">Crafted for Devotion</p>
-            <h2 className="text-4xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>
+            <h2 className="storefront-section-title text-4xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>
               Handcrafted for Your Sacred Spaces
             </h2>
             <p className="text-[#8B6B4A] mt-3 max-w-xl mx-auto">
@@ -228,7 +228,7 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
       </section>
 
       {/* ── CUSTOM ORDERS ── */}
-      <section className="py-16 sm:py-20 bg-[#2C1810] relative overflow-hidden">
+      <section className="storefront-section py-16 sm:py-20 bg-[#2C1810] relative overflow-hidden">
         {/* Decorative */}
         <div className="absolute top-0 right-0 opacity-10">
           <FlowerDecor size={300} color="#F2C4CE" />
@@ -238,7 +238,7 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
         </div>
         <div className="storefront-shell text-center relative">
           <p className="text-[#F2C4CE] text-xs tracking-widest uppercase font-semibold mb-4">Bespoke Creations</p>
-          <h2 className="text-4xl lg:text-5xl font-medium text-white mb-6" style={{ fontFamily: 'var(--font-serif)' }}>
+          <h2 className="storefront-section-title text-4xl lg:text-5xl font-medium text-white mb-6" style={{ fontFamily: 'var(--font-serif)' }}>
             Have Something Special in Mind?
           </h2>
           <p className="text-white/60 text-lg max-w-2xl mx-auto mb-14">
@@ -269,11 +269,11 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
       </section>
 
       {/* ── AMIGURUMI ── */}
-      <section className="py-16 sm:py-20 bg-white">
+      <section className="storefront-section py-16 sm:py-20 bg-white">
         <div className="storefront-shell">
-          <div className="text-center mb-12">
+          <div className="storefront-section-header text-center mb-12">
             <p className="text-xs text-[#C4622D] font-semibold tracking-widest uppercase mb-3">Handmade Companions</p>
-            <h2 className="text-4xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>
+            <h2 className="storefront-section-title text-4xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>
               Tiny Friends, Big Smiles 🐾
             </h2>
             <p className="text-[#8B6B4A] mt-3">Each little creature is stitched with personality and charm</p>
@@ -294,11 +294,11 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
       </section>
 
       {/* ── OCCASIONS ── */}
-      <section className="py-16 sm:py-20" style={{ background: '#FAF7F2' }}>
+      <section className="storefront-section py-16 sm:py-20" style={{ background: '#FAF7F2' }}>
         <div className="storefront-shell">
-          <div className="text-center mb-12">
+          <div className="storefront-section-header text-center mb-12">
             <p className="text-xs text-[#C4622D] font-semibold tracking-widest uppercase mb-3">Every Moment Counts</p>
-            <h2 className="text-4xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>Gift by Occasion</h2>
+            <h2 className="storefront-section-title text-4xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>Gift by Occasion</h2>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
             {collections.map(collection => (
@@ -320,7 +320,7 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
       </section>
 
       {/* ── PROCESS / CRAFTSMANSHIP ── */}
-      <section className="py-16 sm:py-20 bg-[#2C1810] text-white relative overflow-hidden">
+      <section className="storefront-section py-16 sm:py-20 bg-[#2C1810] text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-5">
           <svg width="100%" height="100%">
             <defs>
@@ -333,9 +333,9 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
           </svg>
         </div>
         <div className="storefront-shell relative">
-          <div className="text-center mb-16">
+          <div className="storefront-section-header text-center mb-16">
             <p className="text-[#F2C4CE] text-xs tracking-widest uppercase font-semibold mb-4">Our Process</p>
-            <h2 className="text-4xl lg:text-5xl font-medium" style={{ fontFamily: 'var(--font-serif)' }}>
+            <h2 className="storefront-section-title text-4xl lg:text-5xl font-medium" style={{ fontFamily: 'var(--font-serif)' }}>
               Not Manufactured.<br /><em>Made by Hand.</em>
             </h2>
             <p className="text-white/50 mt-4 max-w-xl mx-auto">
@@ -360,11 +360,11 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
       </section>
 
       {/* ── REVIEWS ── */}
-      <section className="py-16 sm:py-20 bg-white">
+      <section className="storefront-section py-16 sm:py-20 bg-white">
         <div className="storefront-shell">
-          <div className="text-center mb-12">
+          <div className="storefront-section-header text-center mb-12">
             <p className="text-xs text-[#C4622D] font-semibold tracking-widest uppercase mb-3">From Our Community</p>
-            <h2 className="text-4xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>
+            <h2 className="storefront-section-title text-4xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>
               Made with Love. Loved by You.
             </h2>
           </div>
@@ -391,11 +391,11 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
       </section>
 
       {/* ── INSTAGRAM / SOCIAL ── */}
-      <section className="py-16 sm:py-20" style={{ background: '#FAF7F2' }}>
+      <section className="storefront-section py-16 sm:py-20" style={{ background: '#FAF7F2' }}>
         <div className="storefront-shell">
           <div className="text-center mb-10">
             <p className="text-xs text-[#C4622D] font-semibold tracking-widest uppercase mb-3">@crochetbloom</p>
-            <h2 className="text-4xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>Stitched Stories</h2>
+            <h2 className="storefront-section-title text-4xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>Stitched Stories</h2>
             <p className="text-[#8B6B4A] mt-3">Follow our journey — behind the scenes, in bloom</p>
           </div>
           <div className="grid grid-cols-3 lg:grid-cols-9 gap-2">
@@ -421,12 +421,12 @@ export default function HomePage({ onNavigate, onAddToCart, onToggleWishlist, wi
       </section>
 
       {/* ── PERSONALIZATION ── */}
-      <section className="py-16 sm:py-20 bg-white">
+      <section className="storefront-section py-16 sm:py-20 bg-white">
         <div className="storefront-shell">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
               <p className="text-xs text-[#C4622D] font-semibold tracking-widest uppercase mb-4">Make It Yours</p>
-              <h2 className="text-4xl font-medium text-[#2C1810] mb-6" style={{ fontFamily: 'var(--font-serif)' }}>
+              <h2 className="storefront-section-title text-4xl font-medium text-[#2C1810] mb-6" style={{ fontFamily: 'var(--font-serif)' }}>
                 Personalize Your<br />Crochet Gift
               </h2>
               <p className="text-[#8B6B4A] mb-8 leading-relaxed">

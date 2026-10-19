@@ -1,6 +1,7 @@
 import DestinationLink from './DestinationLink';
 import { pagePath } from '../lib/routes';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useHeaderOffset } from '../hooks/useHeaderOffset';
 import { useNavigate } from 'react-router';
 import { SearchIcon, HeartIcon, ShoppingBagIcon, UserIcon, MenuIcon, XIcon, YarnLogo } from './Icons';
 import type { AppPage } from '../lib/routes';
@@ -38,6 +39,9 @@ function useSafeNavigate() {
 }
 
 export default function Header({ currentPage, onNavigate, cartCount, wishlistCount, onSearchOpen, onCartOpen, onAccountOpen }: HeaderProps) {
+  const headerRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  useHeaderOffset(headerRef, menuRef);
   const navigate = useSafeNavigate();
   const { categories } = useCatalogue();
   const navLinks: NavLink[] = [
@@ -69,7 +73,7 @@ export default function Header({ currentPage, onNavigate, cartCount, wishlistCou
   }, []);
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50">
+    <div ref={headerRef} data-testid="storefront-fixed-header" className="fixed top-0 left-0 right-0 z-50">
       {/* Announcement bar */}
       <div className="bg-[#2C1810] text-white text-center py-2 text-xs font-medium tracking-wide">
         <span>Free shipping on orders above ₹999</span>
@@ -79,15 +83,15 @@ export default function Header({ currentPage, onNavigate, cartCount, wishlistCou
 
       {/* Main header */}
       <header
-        className={`transition-all duration-300 ${scrolled ? 'bg-white/95 backdrop-blur-md shadow-sm py-3' : 'bg-[#FAF7F2] py-4'}`}
+        className={`storefront-nav transition-all duration-300 ${scrolled ? 'bg-white/95 backdrop-blur-md shadow-sm py-3' : 'bg-[#FAF7F2] py-4'}`}
         style={{ borderBottom: '1px solid #EDE4D0' }}
       >
-        <div className="storefront-shell flex items-center justify-between gap-4">
+        <div className="storefront-nav-row storefront-shell flex items-center justify-between gap-4">
           {/* Logo */}
           <DestinationLink href="/"
             onNavigate={() => onNavigate('home')}
             aria-label="Sulocraft home"
-            className="flex items-center gap-2.5 shrink-0"
+            className="storefront-nav-brand flex items-center gap-2.5 shrink-0"
           >
             <YarnLogo size={38} wordmark />
           </DestinationLink>
@@ -107,7 +111,7 @@ export default function Header({ currentPage, onNavigate, cartCount, wishlistCou
           </nav>
 
           {/* Icons */}
-          <div className="flex items-center gap-1">
+          <div className="storefront-nav-actions flex items-center gap-1">
             <button onClick={onSearchOpen} className="p-2.5 rounded-full hover:bg-[#F5EDE0] text-[#5C3D2E] hover:text-[#C4622D] transition-colors" aria-label="Search">
               <SearchIcon size={20} />
             </button>
@@ -143,6 +147,8 @@ export default function Header({ currentPage, onNavigate, cartCount, wishlistCou
               className="p-2.5 rounded-full hover:bg-[#F5EDE0] text-[#5C3D2E] lg:hidden"
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-label="Menu"
+              aria-expanded={mobileOpen}
+              aria-controls="storefront-mobile-menu"
             >
               {mobileOpen ? <XIcon size={22} /> : <MenuIcon size={22} />}
             </button>
@@ -151,7 +157,7 @@ export default function Header({ currentPage, onNavigate, cartCount, wishlistCou
 
         {/* Mobile menu */}
         {mobileOpen && (
-          <div className="lg:hidden border-t border-[#EDE4D0] bg-white px-4 pb-4 pt-2">
+          <div ref={menuRef} id="storefront-mobile-menu" className="lg:hidden border-t border-[#EDE4D0] bg-white px-4 pb-4 pt-2">
             {navLinks.map(({ label, page, href }) => (
               <DestinationLink href={href ?? pagePath(page as Exclude<Page, 'product' | 'notFound'>)}
                 key={label}

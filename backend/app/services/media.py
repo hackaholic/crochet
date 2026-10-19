@@ -154,6 +154,9 @@ def extract_asset_key(relative_path_or_url: str) -> str:
     if not relative_path_or_url:
         return ""
     val = relative_path_or_url.strip()
+    image_base = settings.image_base_url.rstrip("/")
+    if image_base and val.startswith(f"{image_base}/"):
+        return val[len(image_base):].lstrip("/")
     if val.startswith(("http://", "https://")):
         parsed = urlparse(val)
         # Check if URL belongs to our configured image base URL or local static route
@@ -216,7 +219,7 @@ def get_image_dimensions(relative_path_or_url: str) -> tuple[int | None, int | N
             return None, None, guessed
         clean_path = key
     else:
-        clean_path = raw.lstrip("/")
+        clean_path = extract_asset_key(raw)
 
     w, h, mime = inspect_image_file(clean_path)
     _DIMENSION_CACHE[raw] = (w, h, mime)
@@ -400,7 +403,7 @@ def get_image_variants(key_or_url: str) -> list[MediaVariantOut]:
             return []
         clean_key = key
     else:
-        clean_key = raw.lstrip("/")
+        clean_key = extract_asset_key(raw)
 
     manifest = _load_media_manifest()
     variants_data = manifest.get(clean_key)

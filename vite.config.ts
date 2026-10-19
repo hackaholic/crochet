@@ -17,6 +17,10 @@ export default defineConfig(({ mode }) => ({
     port: 5173,
     strictPort: true,
     proxy: {
+      '/static/images': {
+        target: process.env.VITE_LOCAL_API_PROXY_TARGET || 'http://localhost:8000',
+        changeOrigin: true,
+      },
       '/api/v1': {
         target: process.env.VITE_LOCAL_API_PROXY_TARGET || 'http://localhost:8000',
         changeOrigin: true,

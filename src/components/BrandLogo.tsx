@@ -1,6 +1,7 @@
 import { usePublicBootstrap } from '../lib/seo/bootstrap';
 import { useEffect, useState } from 'react';
 import { getStorefrontContent } from '../lib/api/storefront';
+import { isSafeMediaUrl } from '../lib/media/image';
 
 let brandRequest: ReturnType<typeof getStorefrontContent> | undefined;
 
@@ -12,7 +13,7 @@ export default function BrandLogo({ size = 40, wordmark = false }: { size?: numb
     let active = true;
     brandRequest ??= getStorefrontContent();
     brandRequest.then(content => {
-      if (active && /^https?:\/\//i.test(content.brand.logoUrl || '')) setUrl(content.brand.logoUrl!);
+      if (active && isSafeMediaUrl(content.brand.logoUrl || '')) setUrl(content.brand.logoUrl!);
     }).catch(() => { brandRequest = undefined; });
     return () => { active = false; };
   }, []);

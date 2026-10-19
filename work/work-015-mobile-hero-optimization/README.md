@@ -4,7 +4,7 @@
 
 **Scope:** Audit and improve hero responsiveness, responsive image selection/cropping, mobile content density, controls, loading performance, and browser validation.
 
-**Current state:** Completed. All frontend and backend tasks (15.1–15.8), Alembic migration, API schemas, responsive image integration, and local verification are complete.
+**Current state:** Completed locally, including15.9mobile header-overlap regression. Previous delivery: Completed. All frontend and backend tasks (15.1–15.8), Alembic migration, API schemas, responsive image integration, and local verification are complete.
 
 **Relevant entry points:** `src/components/HeroCarousel.tsx`, `src/components/HeroCarousel.test.tsx`, `src/pages/HomePage.tsx`, `src/lib/api/storefront.ts`, `backend/app/models/storefront.py`, `backend/app/schemas/storefront.py`, `backend/app/api/v1/admin.py`, and `backend/alembic/versions/e1b2c3d4e5f6_add_campaign_mobile_image_fields.py`.
 

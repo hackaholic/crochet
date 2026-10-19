@@ -80,12 +80,12 @@ export default function ProductCard({ product, onAddToCart, onToggleWishlist, is
         </div>
       </div>
       {/* Info */}
-      <div className="flex flex-1 flex-col p-4">
+      <div className="storefront-product-info flex flex-1 flex-col p-4">
         <p className="text-xs text-[#8B6B4A] font-medium mb-1">{product.category}</p>
-        <h3 className="mb-2 min-h-10 line-clamp-2 text-sm font-semibold leading-snug text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>
+        <h3 className="storefront-product-title mb-2 min-h-10 line-clamp-2 text-sm font-semibold leading-snug text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>
           <DestinationLink href={productPath(product)} onNavigate={() => onProductClick(product)} className="after:absolute after:inset-0 after:z-10 after:rounded-2xl focus-visible:outline-2 focus-visible:outline-[#C4622D]">{product.name}</DestinationLink>
         </h3>
-        {verified && <div className="flex items-center gap-1.5 mb-3">
+        {verified && <div className="storefront-product-rating flex items-center gap-1.5 mb-3">
           <div className="flex">
             {[1,2,3,4,5].map(i => (
               <StarIcon key={i} size={12} filled={i <= Math.floor(verified.ratingValue)} className="text-[#C4622D]" />
@@ -93,7 +93,7 @@ export default function ProductCard({ product, onAddToCart, onToggleWishlist, is
           </div>
           <span className="text-xs text-[#8B6B4A]">({verified.reviewCount})</span>
         </div>}
-        <div className="mt-auto flex items-center justify-between">
+        <div className="storefront-product-price mt-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="font-bold text-[#2C1810]">₹{product.price}</span>
             {product.originalPrice && (

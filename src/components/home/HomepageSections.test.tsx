@@ -46,3 +46,27 @@ describe('HomepageSections', () => {
     expect(screen.queryByText('Hidden')).not.toBeInTheDocument();
   });
 });
+
+it('uses the shared density template for every section while preserving API text, media and links', () => {
+  const sections: HomepageSection[] = [
+    { id: 1, type: 'category_grid', enabled: true, order: 1, title: 'Categories', categories: [] },
+    { id: 2, type: 'product_collection', enabled: true, order: 2, title: 'Tiny Friends, Big Smiles 🐾', description: '<script>API description</script>', collectionSlug: 'toys', products: [] },
+    { id: 3, type: 'occasion_grid', enabled: true, order: 3, title: 'Occasions', occasions: [{ id: 'birthday', name: 'Birthday', imageUrl: '/birthday.webp' }] },
+    { id: 4, type: 'promo_banner', enabled: true, order: 4, title: 'Gifts', description: 'API campaign', ctaText: 'Browse gifts', ctaUrl: '/shop', imageUrl: '/gift.webp', imageAlt: 'Gift photograph' },
+    { id: 5, type: 'image_text', enabled: true, order: 5, title: 'Our craft', description: 'API story', imageUrl: '/owner.webp', imageAlt: 'Owner photograph', imagePosition: 'left' },
+    { id: 6, type: 'review_section', enabled: true, order: 6, title: 'Reviews', reviews: [{ id: 1, authorName: 'Customer', rating: 5, text: 'API review' }] },
+  ];
+  const { container } = render(<HomepageSections sections={sections} wishlist={[]} onNavigate={vi.fn()} onAddToCart={vi.fn()} onToggleWishlist={vi.fn()} onProductClick={vi.fn()} />);
+  const headings = screen.getAllByRole('heading', { level: 2 });
+  expect(headings).toHaveLength(6);
+  for (const heading of headings) {
+    expect(heading).toHaveClass('storefront-section-title');
+    expect(heading.closest('section')).toHaveClass('storefront-section');
+  }
+  expect(screen.getByText('<script>API description</script>')).toBeVisible();
+  expect(container.querySelector('script')).toBeNull();
+  expect(screen.getByRole('link', { name: 'Browse gifts' })).toHaveAttribute('href', '/shop');
+  expect(screen.getByAltText('Gift photograph')).toHaveAttribute('src', '/gift.webp');
+  expect(screen.getByAltText('Owner photograph')).toHaveAttribute('src', '/owner.webp');
+  expect(screen.getByText('API review', { exact: false })).toBeVisible();
+});

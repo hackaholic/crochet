@@ -1,0 +1,13 @@
+/* The visible mobile hero stays compact; only its fixed-header clearance varies. */
+@media (width < 640px) {
+  .hero-layout {
+    --hero-mobile-content-height: 19.5rem;
+    height: calc(var(--storefront-header-height, 8rem) + var(--hero-mobile-content-height));
+    padding-top: var(--storefront-header-height, 8rem);
+  }
+  .hero-layout .hero-visual-layer {
+    top: var(--storefront-header-height, 8rem);
+    height: auto;
+  }
+  .hero-layout .hero-slide-frame { height: 100%; }
+}

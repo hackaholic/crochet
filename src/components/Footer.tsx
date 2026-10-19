@@ -50,17 +50,17 @@ export default function Footer({ onNavigate }: FooterProps) {
   };
 
   return (
-    <footer className="bg-[#2C1810] text-white mt-24">
+    <footer className="storefront-footer bg-[#2C1810] text-white mt-24">
       {/* Top wave */}
-      <div className="bg-[#FAF7F2] h-12 relative">
+      <div className="storefront-footer-wave bg-[#FAF7F2] h-12 relative">
         <svg viewBox="0 0 1440 48" preserveAspectRatio="none" className="absolute bottom-0 left-0 w-full h-full" fill="#2C1810">
           <path d="M0,48 L0,24 Q180,0 360,24 Q540,48 720,24 Q900,0 1080,24 Q1260,48 1440,24 L1440,48 Z" />
         </svg>
       </div>
 
-      <div className="storefront-shell pt-16 pb-12">
+      <div className="storefront-footer-body storefront-shell pt-16 pb-12">
         {/* Newsletter */}
-        <div className="text-center mb-16 pb-16 border-b border-white/10">
+        <div className="storefront-newsletter text-center mb-16 pb-16 border-b border-white/10">
           <p className="text-[#F2C4CE] text-xs tracking-widest uppercase mb-3">Stay Connected</p>
           <h3 className="text-3xl font-medium mb-4" style={{ fontFamily: 'var(--font-serif)' }}>
             A little handmade happiness in your inbox.
@@ -77,7 +77,7 @@ export default function Footer({ onNavigate }: FooterProps) {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="Your email address"
-                className="flex-1 px-5 py-3 rounded-full bg-white/10 border border-white/20 text-white placeholder-white/40 text-sm focus:outline-none focus:border-[#F2C4CE] transition-colors"
+                className="min-w-0 flex-1 px-5 py-3 rounded-full bg-white/10 border border-white/20 text-white placeholder-white/40 text-sm focus:outline-none focus:border-[#F2C4CE] transition-colors"
                 required
               />
               <button
@@ -91,7 +91,7 @@ export default function Footer({ onNavigate }: FooterProps) {
         </div>
 
         {/* Links */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-16">
+        <div className="storefront-footer-links grid grid-cols-2 md:grid-cols-4 gap-10 mb-16">
           <div>
             <h4 className="text-[#F2C4CE] text-xs tracking-widest uppercase mb-4 font-semibold">Shop</h4>
             <ul className="space-y-2.5">
@@ -146,7 +146,7 @@ export default function Footer({ onNavigate }: FooterProps) {
         </div>
 
         {/* Bottom */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-8 border-t border-white/10">
+        <div className="storefront-footer-bottom flex flex-col md:flex-row items-center justify-between gap-6 pt-8 border-t border-white/10">
           <div className="flex items-center gap-2">
             <YarnLogo size={28} wordmark />
 

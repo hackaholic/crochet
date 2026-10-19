@@ -1,0 +1,122 @@
+[
+  {
+    "controlsClearance": 21,
+    "frameHeight": 312,
+    "headerClearance": 13,
+    "label": "Our Heritage",
+    "overflow": false,
+    "width": 320
+  },
+  {
+    "controlsClearance": 21,
+    "frameHeight": 312,
+    "headerClearance": 13,
+    "label": "Festive Collection",
+    "overflow": false,
+    "width": 320
+  },
+  {
+    "controlsClearance": 21,
+    "frameHeight": 312,
+    "headerClearance": 13,
+    "label": "New Releases",
+    "overflow": false,
+    "width": 320
+  },
+  {
+    "controlsClearance": 21,
+    "frameHeight": 312,
+    "headerClearance": 13,
+    "label": "Home & Living",
+    "overflow": false,
+    "width": 320
+  },
+  {
+    "controlsClearance": 21,
+    "frameHeight": 312,
+    "headerClearance": 13,
+    "label": "Custom Orders",
+    "overflow": false,
+    "width": 320
+  },
+  {
+    "controlsClearance": 21,
+    "frameHeight": 312,
+    "headerClearance": 13,
+    "label": "Our Heritage",
+    "overflow": false,
+    "width": 390
+  },
+  {
+    "controlsClearance": 21,
+    "frameHeight": 312,
+    "headerClearance": 13,
+    "label": "Festive Collection",
+    "overflow": false,
+    "width": 390
+  },
+  {
+    "controlsClearance": 21,
+    "frameHeight": 312,
+    "headerClearance": 13,
+    "label": "New Releases",
+    "overflow": false,
+    "width": 390
+  },
+  {
+    "controlsClearance": 21,
+    "frameHeight": 312,
+    "headerClearance": 13,
+    "label": "Home & Living",
+    "overflow": false,
+    "width": 390
+  },
+  {
+    "controlsClearance": 21,
+    "frameHeight": 312,
+    "headerClearance": 13,
+    "label": "Custom Orders",
+    "overflow": false,
+    "width": 390
+  },
+  {
+    "controlsClearance": 51,
+    "frameHeight": 312,
+    "headerClearance": 13,
+    "label": "Our Heritage",
+    "overflow": false,
+    "width": 430
+  },
+  {
+    "controlsClearance": 21,
+    "frameHeight": 312,
+    "headerClearance": 13,
+    "label": "Festive Collection",
+    "overflow": false,
+    "width": 430
+  },
+  {
+    "controlsClearance": 21,
+    "frameHeight": 312,
+    "headerClearance": 13,
+    "label": "New Releases",
+    "overflow": false,
+    "width": 430
+  },
+  {
+    "controlsClearance": 51,
+    "frameHeight": 312,
+    "headerClearance": 13,
+    "label": "Home & Living",
+    "overflow": false,
+    "width": 430
+  },
+  {
+    "controlsClearance": 21,
+    "frameHeight": 312,
+    "headerClearance": 13,
+    "label": "Custom Orders",
+    "overflow": false,
+    "width": 430
+  }
+]

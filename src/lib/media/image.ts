@@ -15,7 +15,7 @@ export interface MediaMetadata {
 }
 
 const dimension = (value: unknown): value is number => Number.isSafeInteger(value) && Number(value) > 0;
-function safeVariantUrl(url: string): boolean {
+export function isSafeMediaUrl(url: string): boolean {
   if (!url || /[\s,\u0000-\u001f]/.test(url) || url.startsWith('//')) return false;
   if (url.startsWith('/')) return !url.includes('\\');
   try { const parsed = new URL(url); return ['https:', 'http:'].includes(parsed.protocol) && !parsed.username && !parsed.password; }
@@ -29,7 +29,7 @@ export function imageAttributes(src: string, metadata?: MediaMetadata | null, fa
     ? { width: metadata.width, height: metadata.height } : {};
   const seen = new Set<number>();
   const variants = (metadata.variants ?? []).filter(variant => {
-    if (!dimension(variant.width) || !safeVariantUrl(variant.url) || seen.has(variant.width)) return false;
+    if (!dimension(variant.width) || !isSafeMediaUrl(variant.url) || seen.has(variant.width)) return false;
     // Only width descriptors backed by actual dimensions; never infer derivatives.
     if (variant.descriptor && variant.descriptor !== `${variant.width}w`) return false;
     seen.add(variant.width);

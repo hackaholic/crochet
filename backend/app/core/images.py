@@ -168,8 +168,11 @@ def build_image_url(relative_path: str) -> str:
         return ""
     if relative_path.startswith(("http://", "https://")):
         return relative_path
-    clean_path = relative_path.lstrip("/")
     base = settings.image_base_url.rstrip("/")
+    # Same-origin media is already resolved; avoid duplicating its route prefix.
+    if base.startswith("/") and relative_path.startswith(f"{base}/"):
+        return relative_path
+    clean_path = relative_path.lstrip("/")
     return f"{base}/{clean_path}"
 
 

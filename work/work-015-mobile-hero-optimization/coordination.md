@@ -13,3 +13,9 @@ This work folder is the source of truth for task ownership, status, decisions, a
 ## Return protocol
 
 Each owner updates only their assigned contract and this work folder before returning. Add a row to `docs/handoffs.md` only when a specific cross-agent task is assigned, active, returned, or blocked.
+
+## 2026-10-19 regression pickup
+**Current Owner:** Codex
+**Status:** Returned / Completed
+**Active Task:** [15.9](tasks/task-008-header-overlap-regression.md)
+**Next Action:** Owner can review corrected mobile hero locally; no Gemini dependency or push requested. All five slides verified at320/390/430px; desktop preserved.
