@@ -332,7 +332,7 @@ def merge_guest_cart(
     source_cart = (
         db.query(Cart)
         .options(joinedload(Cart.items).joinedload(CartItem.variant))
-        .filter(Cart.guest_token == payload.guest_token, Cart.status == "ACTIVE")
+        .filter(Cart.guest_token == payload.guest_token, Cart.status == "ACTIVE", Cart.user_id.is_(None))
         .first()
     )
 

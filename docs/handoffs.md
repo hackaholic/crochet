@@ -51,3 +51,7 @@ Work005 responsive media: [5.11.2 backend contract](../work/work-005-seo-optimiz
 
 
 Work005: [work-local coordination and launch acceptance](../work/work-005-seo-optimization/coordination.md). Completed backend contracts and current owner gates are recorded there.
+
+Work007: [7.2.1 payment provider hardening](../work/work-007-e2e-qa/tasks/task-005-payment-provider-hardening.md) — Gemini Completed / Returned; Codex unblocked for [7.2.2 hosted checkout integration](../work/work-007-e2e-qa/tasks/task-006-hosted-checkout-integration.md); coordinated in [work-local state](../work/work-007-e2e-qa/coordination.md).
+
+- Work023: [coordination](../work/work-023-basket-recommendations-glass/coordination.md); [23.3 basket recommendation API](../work/work-023-basket-recommendations-glass/tasks/task-003-recommendation-api.md).

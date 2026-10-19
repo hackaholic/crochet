@@ -38,7 +38,7 @@ async function requestCart(path: string, init?: RequestInit): Promise<CartPayloa
 
 export const cartApi = {
   get: () => requestCart(''),
-  add: (productId: number, quantity: number) => requestCart('/items', { method: 'POST', body: JSON.stringify({ product_id: productId, quantity }) }),
+  add: (productId: number, quantity: number, personalization?: Record<string, unknown>) => requestCart('/items', { method: 'POST', body: JSON.stringify({ product_id: productId, quantity, ...(personalization ? {personalization} : {}) }) }),
   update: (itemId: number, quantity: number) => requestCart(`/items/${itemId}`, { method: 'PATCH', body: JSON.stringify({ quantity }) }),
   remove: (itemId: number) => requestCart(`/items/${itemId}`, { method: 'DELETE' }),
 };

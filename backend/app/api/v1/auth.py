@@ -140,7 +140,7 @@ def _merge_guest_cart_to_user(db: Session, user_id: int, guest_token: str | None
     guest_cart = (
         db.query(Cart)
         .options(joinedload(Cart.items).joinedload(CartItem.variant))
-        .filter(Cart.guest_token == guest_token, Cart.status == "ACTIVE")
+        .filter(Cart.guest_token == guest_token, Cart.status == "ACTIVE", Cart.user_id.is_(None))
         .first()
     )
 
@@ -731,4 +731,6 @@ def logout(
         db.commit()
 
     response.delete_cookie(key=SESSION_COOKIE_NAME, path="/", domain=settings.cookie_domain)
+    # A claimed cart belongs to its customer, not the next anonymous session.
+    response.delete_cookie(key="guest_cart_token", path="/", domain=settings.cookie_domain)
     return {"status": "ok", "message": "Logged out successfully"}

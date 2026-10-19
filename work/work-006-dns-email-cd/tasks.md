@@ -2,11 +2,18 @@
 
 ## In Progress
 
+- [ ] 6.10 Codex: Local verification complete; commit and push coordinated changes to dev (owner authorized).
+
+
 ## Pending
+
+- [ ] 6.9 Codex: [Automatic runtime secret recovery on reboot](tasks/task-009-reboot-secret-rehydration.md).
 
 - [ ] 6.4 Owner + Codex: Cloudflare Workers dev access-policy verification (storefront setup already completed) per [task-004-dev-storefront-access.md](tasks/task-004-dev-storefront-access.md).
 
 ## Completed
+
+- [x] 6.8 Codex: [Preprod reboot recovery](tasks/task-008-preprod-reboot-recovery.md) — existing vault runtime restored; both containers healthy, public health/home200 and actual browser catalogue verified.
 
 - [x] 6.2 Gemini + Codex: Transactional email verification on preprod domain per [task-002-email-deliverability.md](tasks/task-002-email-deliverability.md). Magic link auth email dispatched, Resend delivered, SPF/DKIM/DMARC alignment verified, Cloudflare Email Routing forwarded to Gmail inbox.
 - [x] 6.1 Owner + Codex: Cloudflare & Resend DNS records per [task-001-cloudflare-resend-dns.md](tasks/task-001-cloudflare-resend-dns.md). DMARC, SPF with resend include, DKIM, and Email Routing verified live in DNS.

@@ -7,7 +7,7 @@ import { useCatalogue } from './CatalogueProvider';
 interface CartState {
   items: CartItem[];
   loading: boolean;
-  add: (product: Product, quantity?: number) => Promise<void>;
+  add: (product: Product, quantity?: number, personalization?: Record<string, unknown>) => Promise<void>;
   update: (lineItemId: number, quantity: number) => Promise<void>;
   remove: (lineItemId: number) => Promise<void>;
   refresh: () => Promise<void>;
@@ -33,6 +33,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return {
       lineItemId: item.id,
       quantity: item.quantity,
+      personalization: item.personalization,
       product: catalogueProduct ?? {
         id: item.productId, name: item.productName, slug: item.productSlug, price: item.unitPrice,
         originalPrice: item.compareAtPrice ?? undefined, rating: 5, reviews: 0, image: item.productImage,
@@ -41,7 +42,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     };
   });
 
-  const add = useCallback(async (product: Product, quantity = 1) => apply(await cartApi.add(product.id, quantity)), [apply]);
+  const add = useCallback(async (product: Product, quantity = 1, personalization?: Record<string, unknown>) => apply(await cartApi.add(product.id, quantity, personalization)), [apply]);
   const update = useCallback(async (lineItemId: number, quantity: number) => apply(await cartApi.update(lineItemId, quantity)), [apply]);
   const remove = useCallback(async (lineItemId: number) => apply(await cartApi.remove(lineItemId)), [apply]);
 

@@ -9,6 +9,16 @@ from app.models.order import Order
 from app.models.payment import Payment
 
 
+class PaymentGatewayError(Exception):
+    """Base exception for payment gateway operations."""
+    pass
+
+
+class PaymentGatewayConfigurationError(PaymentGatewayError):
+    """Raised when payment gateway credentials or configuration are missing or invalid."""
+    pass
+
+
 class BasePaymentProvider(ABC):
     """Payment provider interface decoupling orders from specific gateway vendors."""
 

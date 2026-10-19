@@ -6,7 +6,7 @@
 - **Work 004 — Agent task workflow** · Completed · [work folder](work-004-task-workflow/)
 - **Work 005 — Complete ecommerce SEO** · Completed (implementation/preprod; production launch checklist retained) · [work folder](work-005-seo-optimization/)
 - **Work 006 — Preprod DNS, email deliverability & continuous deployment** · In Progress · [work folder](work-006-dns-email-cd/)
-- **Work 007 — End-to-end purchase & mobile rendering QA** · Pending · [work folder](work-007-e2e-qa/)
+- **Work 007 — End-to-end purchase & mobile rendering QA** · In Progress · [work folder](work-007-e2e-qa/)
 - **Work 008 — Customer promotions & reviews engine** · Pending · [work folder](work-008-promotions-reviews/)
 - **Work 009 — Storefront search typeahead** · Completed · [work folder](work-009-storefront-search/)
 - **Work 010 — Seasonal Gift by Occasion** · In Progress · [work folder](work-010-gift-by-occasion/)
@@ -29,3 +29,5 @@
 - **Work 021 — Official brand logo** · In Progress · [work folder](work-021-brand-logo/)
 
 - **Work 022 — Warnings and deprecation cleanup** · Pending · [work folder](work-022-warning-deprecation-cleanup/)
+
+- **Work 023 — Basket recommendations and glass presentation** · In Progress · [work folder](work-023-basket-recommendations-glass/)

@@ -9,3 +9,8 @@ Current implementation owner and status are recorded in the selected task entry 
 ## Return protocol
 
 The assigned agent updates the exact contract, tasks.md, notes.md, and this file before returning the task. The global registry at docs/handoffs.md points here; it does not duplicate this work's status.
+
+## Active pickup — 2026-10-19
+- Codex: 7.1 In Progress (guest merge & cart regression).
+- Gemini: 7.2.1 Completed ([task-005-payment-provider-hardening.md](tasks/task-005-payment-provider-hardening.md)). Provider abstraction and Razorpay boundary hardened; 11/11 payment tests passed. Unblocks 7.2.2 for Codex.
+- Codex: 7.2.2 Ready for pickup ([task-006-hosted-checkout-integration.md](tasks/task-006-hosted-checkout-integration.md)).

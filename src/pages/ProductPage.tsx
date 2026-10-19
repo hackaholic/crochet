@@ -13,7 +13,7 @@ import { submitReview } from '../lib/api/promotions';
 interface ProductPageProps {
   seoMetadata?: SeoMetadata;
   product: Product | null;
-  onAddToCart: (product: Product, quantity?: number) => void;
+  onAddToCart: (product: Product, quantity?: number, personalization?: Record<string, unknown>) => void;
   onToggleWishlist: (product: Product) => void;
   wishlist: number[];
   onProductClick: (product: Product) => void;
@@ -42,13 +42,13 @@ export default function ProductPage({ seoMetadata, product: initialProduct, onAd
   const isWishlisted = wishlist.includes(product.id);
 
   const handleAddToCart = () => {
-    onAddToCart(product, quantity);
+    onAddToCart(product, quantity, note.trim() ? {note: note.trim()} : undefined);
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
   };
 
   const handleBuyNow = () => {
-    onAddToCart(product, quantity);
+    onAddToCart(product, quantity, note.trim() ? {note: note.trim()} : undefined);
     onNavigate('cart');
   };
 
@@ -166,8 +166,9 @@ export default function ProductPage({ seoMetadata, product: initialProduct, onAd
 
             {/* Personalized note */}
             <div className="mb-8">
-              <label className="text-sm font-semibold text-[#2C1810] block mb-2">Add a Personalized Note (optional)</label>
+              <label htmlFor="product-personalization-note" className="text-sm font-semibold text-[#2C1810] block mb-2">Add a Personalized Note (optional)</label>
               <textarea
+                id="product-personalization-note"
                 value={note}
                 onChange={e => setNote(e.target.value)}
                 placeholder="e.g. Happy Anniversary! With all my love..."

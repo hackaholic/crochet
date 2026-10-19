@@ -23,7 +23,11 @@ from app.schemas.payment import (
     PaymentVerifyRequest,
     PaymentWebhookResult,
 )
-from app.services.payment.factory import get_payment_provider
+from app.services.payment import (
+    get_payment_provider,
+    PaymentGatewayConfigurationError,
+    PaymentGatewayError,
+)
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 
@@ -108,7 +112,14 @@ def create_payment_intent(
     db.add(payment)
     db.flush()
 
-    intent_data = provider.create_intent(order, payment)
+    try:
+        intent_data = provider.create_intent(order, payment)
+    except (PaymentGatewayConfigurationError, PaymentGatewayError) as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Payment gateway error: {str(exc)}",
+        )
     db.commit()
     db.refresh(payment)
 
@@ -162,6 +173,19 @@ def verify_payment(
     if payment.status == PaymentRecordStatus.SUCCESS.value:
         return _to_payment_out(payment)
 
+    # Strict order binding: verify payload order ID matches payment record if both present
+    if payload.provider_order_id and payment.provider_order_id:
+        if payload.provider_order_id != payment.provider_order_id:
+            now = datetime.now(timezone.utc)
+            payment.status = PaymentRecordStatus.FAILED.value
+            payment.error_message = "Order binding mismatch between payment intent and verification payload."
+            payment.updated_at = now
+            db.commit()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Payment verification failed. Mismatched order binding.",
+            )
+
     provider = get_payment_provider(payment.provider)
     is_valid = provider.verify_payment(payment, payload.model_dump())
 
@@ -179,7 +203,7 @@ def verify_payment(
     # Success updates
     payment.status = PaymentRecordStatus.SUCCESS.value
     payment.provider_payment_id = payload.provider_payment_id
-    if payload.provider_order_id:
+    if not payment.provider_order_id and payload.provider_order_id:
         payment.provider_order_id = payload.provider_order_id
     if payload.payment_method_detail:
         payment.payment_method_detail = payload.payment_method_detail

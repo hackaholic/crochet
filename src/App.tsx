@@ -80,8 +80,8 @@ export default function App() {
     navigate('home');
   }, [navigate, refreshCart, refreshWishlist]);
 
-  const addToCart = useCallback((product: Product, quantity = 1) => {
-    void addCartItem(product, quantity);
+  const addToCart = useCallback((product: Product, quantity = 1, personalization?: Record<string, unknown>) => {
+    void addCartItem(product, quantity, personalization);
     setCartOpen(true);
   }, [addCartItem]);
 
@@ -219,6 +219,7 @@ export default function App() {
         onRemove={removeFromCart}
         onWishlist={toggleWishlist}
         onCheckout={handleCheckout}
+        onProductClick={handleProductClick}
       />}
 
       {/* Search Overlay */}

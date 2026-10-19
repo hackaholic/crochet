@@ -1,3 +1,4 @@
+import PersonalizationNote from '../components/PersonalizationNote';
 import { guestTrackingPath } from '../lib/routes';
 import { useState } from 'react';
 import { CheckIcon, ArrowRightIcon } from '../components/Icons';
@@ -245,11 +246,12 @@ export default function CheckoutPage({ items, onComplete, onNavigate, couponCode
                 <div>
                   <h2 className="text-xl font-semibold text-[#2C1810] mb-6" style={{ fontFamily: 'var(--font-serif)' }}>Review Your Order</h2>
                   <div className="space-y-4 mb-6">
-                    {items.map(({ product, quantity }) => (
+                    {items.map(({ product, quantity, personalization }) => (
                       <div key={product.id} className="flex gap-4">
                         <img src={product.image} alt={product.name} className="w-16 h-16 rounded-xl object-cover bg-[#F5EDE0] shrink-0" />
                         <div className="flex-1">
                           <p className="font-semibold text-sm text-[#2C1810]">{product.name}</p>
+                          <PersonalizationNote personalization={personalization} />
                           <p className="text-xs text-[#8B6B4A]">Qty: {quantity}</p>
                         </div>
                         <p className="font-bold text-sm text-[#2C1810]">₹{product.price * quantity}</p>
@@ -295,7 +297,7 @@ export default function CheckoutPage({ items, onComplete, onNavigate, couponCode
             <div className="bg-white rounded-2xl p-6 border border-[#EDE4D0] sticky top-28">
               <h3 className="text-base font-semibold text-[#2C1810] mb-4" style={{ fontFamily: 'var(--font-serif)' }}>Order Summary</h3>
               <div className="space-y-3 mb-5">
-                {items.map(({ product, quantity }) => (
+                {items.map(({ product, quantity, personalization }) => (
                   <div key={product.id} className="flex items-center gap-3">
                     <div className="relative">
                       <img src={product.image} alt={product.name} className="w-12 h-12 rounded-lg object-cover bg-[#F5EDE0]" />
@@ -303,6 +305,7 @@ export default function CheckoutPage({ items, onComplete, onNavigate, couponCode
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-[#2C1810] truncate">{product.name}</p>
+                          <PersonalizationNote personalization={personalization} />
                     </div>
                     <p className="text-xs font-bold text-[#2C1810]">₹{product.price * quantity}</p>
                   </div>

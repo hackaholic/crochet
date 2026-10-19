@@ -8,6 +8,7 @@ export async function createPaymentIntent(orderNumber: string): Promise<PaymentI
 }
 
 export async function verifyMockPayment(intent: PaymentIntent, detail: string): Promise<void> {
+  if (intent.provider !== 'mock') throw new Error('This payment requires secure gateway checkout. Mock verification is unavailable.');
   const response = await fetch(apiUrl('/payments/verify'), { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: intent.paymentId, providerPaymentId: `pay_mock_${Date.now()}`, providerOrderId: intent.providerOrderId, providerSignature: 'mock_sig_valid', paymentMethodDetail: detail }) });
   if (!response.ok) throw new Error(`Payment verification failed (${response.status})`);
 }

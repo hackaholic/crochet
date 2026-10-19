@@ -4,7 +4,11 @@
 
 **Scope:** Guest-to-customer cart merge regression in Docker, Razorpay/Mock payment intent and webhook verification, mobile rendering matrix (`390×844`, `430×932`, tablet, desktop), cross-browser testing (Chromium, Firefox), and pre-launch acceptance checks.
 
-**Current state:** Pending in the active queue. Foundation unit tests and 6 purchase regression tests pass.
+**Owner:** Codex
+
+**Status:** In Progress
+
+**Current state:**7.1 local guest/login/cart/checkout regression in progress. Existing tests/assets/services reused. Mock-provider local QA only; real OAuth/provider/browser or owner approval gaps are recorded rather than assumed complete.
 
 **Dependencies:** `docs/testing-plan.md`; live local Docker stack.
 

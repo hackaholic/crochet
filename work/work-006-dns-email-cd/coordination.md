@@ -7,3 +7,7 @@
 - **6.3 / 6.5 — Returned:** Initial CI and frontend/API configuration completion retained as historical evidence.
 
 Work 003 owns secrets; Work 012 owns isolation; Work 006 owns CI integration/provider acceptance. Read `work/GEMINI_WORKFLOW_PROMPT.md` before Gemini pickup. Detailed status stays here and in the exact contracts.
+
+- **6.8 — Codex; Returned/Completed:** [preprod incident recovery](tasks/task-008-preprod-reboot-recovery.md). Restore existing containers; no local tree deployment.
+
+- **6.9 — Codex; Pending:** [automatic boot-time secret rehydration](tasks/task-009-reboot-secret-rehydration.md). Immediate incident recovered; durable reboot protection not yet implemented.

@@ -1,3 +1,7 @@
+import { useEffect, useRef } from 'react';
+import './basketGlass.css';
+import BasketRecommendations from './BasketRecommendations';
+import PersonalizationNote from './PersonalizationNote';
 import { XIcon, PlusIcon, MinusIcon, TrashIcon, HeartIcon } from './Icons';
 import type { Product } from '../data/products';
 
@@ -5,6 +9,7 @@ export interface CartItem {
   lineItemId?: number;
   product: Product;
   quantity: number;
+  personalization?: Record<string, unknown>;
 }
 
 interface CartDrawerProps {
@@ -15,35 +20,42 @@ interface CartDrawerProps {
   onRemove: (id: number) => void;
   onWishlist: (product: Product) => void;
   onCheckout: () => void;
+  onProductClick?: (product: Product) => void;
 }
 
-export default function CartDrawer({ open, onClose, items, onUpdateQty, onRemove, onWishlist, onCheckout }: CartDrawerProps) {
+export default function CartDrawer({ open, onClose, items, onUpdateQty, onRemove, onWishlist, onCheckout, onProductClick }: CartDrawerProps) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const element = dialog.current;
+    if (!element) return;
+    if (!open) { element.close(); return; }
+    element.showModal();
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { element.close(); document.body.style.overflow = previousOverflow; };
+  }, [open]);
   const subtotal = items.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
   const shipping = subtotal >= 999 ? 0 : 79;
   const total = subtotal + shipping;
 
   return (
-    <>
-      {/* Overlay */}
-      <div
-        className={`fixed inset-0 bg-black/40 z-60 transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-        onClick={onClose}
-        style={{ zIndex: 60 }}
-      />
-      {/* Drawer */}
-      <div
-        className={`fixed right-0 top-0 bottom-0 w-full max-w-md bg-white z-70 flex flex-col transition-transform duration-300 ease-out ${open ? 'translate-x-0' : 'translate-x-full'}`}
-        style={{ zIndex: 70 }}
-      >
+    <dialog
+      ref={dialog}
+      aria-labelledby="basket-title"
+      className="basket-dialog"
+      onCancel={event => { event.preventDefault(); onClose(); }}
+      onClick={event => { if (event.target === event.currentTarget) onClose(); }}
+    >
+      <div className="basket-glass flex h-full w-full max-w-md flex-col text-[#2C1810]">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-[#EDE4D0]">
           <div>
-            <h2 className="text-xl font-semibold text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>
+            <h2 id="basket-title" className="text-xl font-semibold text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>
               Your Basket
             </h2>
             <p className="text-xs text-[#8B6B4A] mt-0.5">{items.length} item{items.length !== 1 ? 's' : ''}</p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-[#F5EDE0] text-[#5C3D2E] transition-colors">
+          <button aria-label="Close basket" onClick={onClose} className="p-2 min-h-11 min-w-11 rounded-full hover:bg-[#F5EDE0] text-[#5C3D2E] transition-colors">
             <XIcon size={22} />
           </button>
         </div>
@@ -69,9 +81,9 @@ export default function CartDrawer({ open, onClose, items, onUpdateQty, onRemove
         )}
 
         {/* Items */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-4 space-y-4">
           {items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center">
+            <div className="flex flex-col items-center justify-center py-8 text-center">
               <div className="text-6xl mb-4">🧶</div>
               <p className="text-[#8B6B4A] font-medium">Your basket is empty</p>
               <p className="text-[#8B6B4A] text-sm mt-1">Fill it with handmade love!</p>
@@ -79,7 +91,7 @@ export default function CartDrawer({ open, onClose, items, onUpdateQty, onRemove
                 Continue Shopping
               </button>
             </div>
-          ) : items.map(({ lineItemId, product, quantity }) => (
+          ) : items.map(({ lineItemId, product, quantity, personalization }) => (
             <div key={lineItemId ?? product.id} className="flex gap-4">
               <img
                 src={product.image}
@@ -91,6 +103,7 @@ export default function CartDrawer({ open, onClose, items, onUpdateQty, onRemove
                   {product.name}
                 </h4>
                 <p className="text-xs text-[#8B6B4A] mt-0.5">{product.category}</p>
+                <PersonalizationNote personalization={personalization} />
                 <div className="flex items-center justify-between mt-3">
                   {/* Qty controls */}
                   <div className="flex items-center gap-2 border border-[#EDE4D0] rounded-full px-2 py-1">
@@ -121,11 +134,12 @@ export default function CartDrawer({ open, onClose, items, onUpdateQty, onRemove
               </div>
             </div>
           ))}
+          {onProductClick && <BasketRecommendations open={open} excludedIds={items.map(item => item.product.id)} onProductClick={product => { onClose(); onProductClick(product); }} />}
         </div>
 
         {/* Footer */}
         {items.length > 0 && (
-          <div className="px-6 py-5 border-t border-[#EDE4D0] bg-[#FAF7F2]">
+          <div className="basket-glass-footer shrink-0 px-6 py-4 border-t border-[#EDE4D0]">
             <div className="space-y-2 mb-4 text-sm">
               <div className="flex justify-between text-[#8B6B4A]">
                 <span>Subtotal</span>
@@ -165,6 +179,6 @@ export default function CartDrawer({ open, onClose, items, onUpdateQty, onRemove
           </div>
         )}
       </div>
-    </>
+    </dialog>
   );
 }

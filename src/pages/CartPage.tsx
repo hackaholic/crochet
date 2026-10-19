@@ -1,3 +1,4 @@
+import PersonalizationNote from '../components/PersonalizationNote';
 import { useState } from 'react';
 import { PlusIcon, MinusIcon, TrashIcon, HeartIcon, ArrowRightIcon } from '../components/Icons';
 import { applyCoupon, removeCoupon, type CouponApplication } from '../lib/api/promotions';
@@ -38,7 +39,7 @@ export default function CartPage({ items, onUpdateQty, onRemove, onWishlist, onC
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Items */}
             <div className="lg:col-span-2 space-y-4">
-              {items.map(({ lineItemId, product, quantity }) => (
+              {items.map(({ lineItemId, product, quantity, personalization }) => (
                 <div key={lineItemId ?? product.id} className="bg-white rounded-2xl p-5 flex gap-5 border border-[#EDE4D0]" style={{ boxShadow: '0 2px 8px rgba(44,24,16,0.04)' }}>
                   <img
                     src={product.image}
@@ -50,6 +51,7 @@ export default function CartPage({ items, onUpdateQty, onRemove, onWishlist, onC
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-xs text-[#8B6B4A] mb-0.5">{product.category}</p>
+                      <PersonalizationNote personalization={personalization} />
                         <h3 className="font-semibold text-[#2C1810] leading-snug cursor-pointer hover:text-[#C4622D] transition-colors" style={{ fontFamily: 'var(--font-serif)' }} onClick={() => onNavigate('product')}>
                           {product.name}
                         </h3>

@@ -1,7 +1,7 @@
 # Task 7.1 — Guest checkout & user login cart-merge regression
 
-**Owner:** Codex + Gemini
-**Status:** Pending
+**Owner:** Codex
+**Status:** In Progress
 
 ## Objective
 
@@ -37,3 +37,20 @@ Refer to `docs/api-cart.md` and `docs/api-auth.md`. The backend manages `guest_c
 ## Handoff back
 
 - Update `work/work-007-e2e-qa/tasks.md` and `notes.md`.
+
+## Pickup and test matrix —2026-10-19
+Reuse local Docker/mock payment and existing product fixtures; do not reset catalogue/shared DB or create fake public reviews.
+
+| Case | Expected / verification | Status |
+| --- | --- | --- |
+| 7.1-TC01 | Guest item then email login: exact variant/quantity/options/personalization retained, claimed guest token cannot transfer/read a customer cart, customer session works | Pending |
+| 7.1-TC02 | Existing customer cart plus guest cart: identical options merge quantities; different personalization stays separate; repeat login/reload does not duplicate | Pending |
+| 7.1-TC03 | Independent guest/customer cannot read/edit another cart; invalid quantity/variant rejected with no state change | Pending |
+| 7.1-TC04 | Guest COD and authenticated mock-paid checkout, cart cleared, order owned and timeline visible | Existing regression, rerun pending |
+| 7.1-TC05 | Actual localhost browser mobile product/cart/login/checkout; no production account or real charge | Pending |
+
+Security: real isolated test DB/cookies for merge and object isolation. No live credentials/token output in reports. Existing mock social tests are not proof of live Google/Facebook OAuth. Backend model changes remain out of scope; defects get an exact work-local Gemini handoff if needed. Review: Codex self-review, not independent. No push/deploy authorized by this task pickup.
+
+Audit gaps: personalization textarea is not forwarded from ProductPage to cart API; claimed customer cart can be selected as merge source without ownership filter. Codex adds failing real-DB regressions before minimal guards and optional-personalization prop plumbing (no model/schema migration). Test customer carts stay isolated; claimed bearer token is not proof of ownership.
+
+Additional logout regression: auth logout clears session cookie but leaves the claimed cart cookie, causing anonymous cart requests/adds to be rejected. Test retirement of cart cookie, revoked session, independent new guest cart and preservation of saved customer cart; minimal logout cookie fix follows failing test.
