@@ -1,9 +1,12 @@
-/* Mobile density configuration: every section template consumes these tokens.
-   Desktop keeps its existing utility styles. No content-specific overrides. */
+/* Responsive density configuration shared by every homepage section template.
+   Spacing lives here; API content and product image proportions remain unchanged. */
 :root {
-  --storefront-mobile-section-space: 1rem;
-  --storefront-mobile-heading-gap: .75rem;
-  --storefront-mobile-copy-gap: .375rem;
+  --storefront-section-space: 1.5rem;
+  --storefront-heading-gap: 1rem;
+  --storefront-copy-gap: .5rem;
+  --storefront-mobile-section-space: .5rem;
+  --storefront-mobile-heading-gap: .5rem;
+  --storefront-mobile-copy-gap: .25rem;
   --storefront-mobile-grid-gap: .75rem;
   --storefront-mobile-title-size: clamp(1.5rem, 6vw, 1.75rem);
   --storefront-mobile-copy-size: .875rem;
@@ -15,6 +18,16 @@
   --storefront-mobile-brand-height: 2.375rem;
   --storefront-mobile-brand-max-width: 10rem;
 }
+
+/* Override legacy stacked section utilities through shared semantic hooks. */
+.storefront-section { padding-block: var(--storefront-section-space); }
+.storefront-section-header { margin-bottom: var(--storefront-heading-gap); }
+.storefront-section-header .storefront-section-title { margin-top: var(--storefront-copy-gap); }
+.storefront-section-header > p:last-child:not(:first-child) { margin-top: var(--storefront-copy-gap); }
+.storefront-section-content, .storefront-section-action { margin-top: var(--storefront-heading-gap); }
+.storefront-section-copy { margin-top: var(--storefront-copy-gap); }
+/* Let campaign copy determine banner height rather than reserving empty space. */
+.storefront-promo { min-height: 0; }
 
 @media (width < 640px) {
   .storefront-nav { padding-block: var(--storefront-mobile-nav-block-space); }
@@ -87,7 +100,6 @@
   }
   .storefront-section-action { margin-top: var(--storefront-mobile-heading-gap); }
   .storefront-image-text { gap: var(--storefront-mobile-section-space); }
-  .storefront-promo { min-height: 12rem; }
   .storefront-product-info { padding: var(--storefront-mobile-card-inset); }
   .storefront-product-title { min-height: 2.25rem; margin-bottom: .25rem; }
   .storefront-product-price { flex-wrap: wrap; gap: .25rem .5rem; }

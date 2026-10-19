@@ -1,0 +1,38 @@
+[
+  {
+    "cardHeight": 221.328125,
+    "cardWidth": 166,
+    "firstProductTop": 302,
+    "headerHeight": 101,
+    "heading": "All Products",
+    "path": "/shop",
+    "width": 390
+  },
+  {
+    "cardHeight": 221.328125,
+    "cardWidth": 166,
+    "firstProductTop": 398,
+    "headerHeight": 101,
+    "heading": "Baby",
+    "path": "/categories/baby",
+    "width": 390
+  },
+  {
+    "cardHeight": 221.328125,
+    "cardWidth": 166,
+    "firstProductTop": 398,
+    "headerHeight": 101,
+    "heading": "Flowers",
+    "path": "/categories/flowers",
+    "width": 390
+  },
+  {
+    "cardHeight": 221.328125,
+    "cardWidth": 166,
+    "firstProductTop": 346,
+    "headerHeight": 101,
+    "heading": "All Products",
+    "path": "/shop?occasion=birthday",
+    "width": 390
+  }
+]

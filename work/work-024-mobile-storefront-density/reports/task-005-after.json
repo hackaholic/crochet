@@ -1,0 +1,46 @@
+[
+  {
+    "breadcrumbFont": "12px",
+    "headerBottom": 101,
+    "pageWidth": 310,
+    "productTop": 244.5,
+    "sortFont": "12px",
+    "sortHeight": 32,
+    "stripHeight": 32,
+    "stripTop": 101,
+    "width": 320
+  },
+  {
+    "breadcrumbFont": "12px",
+    "headerBottom": 101,
+    "pageWidth": 380,
+    "productTop": 209,
+    "sortFont": "12px",
+    "sortHeight": 32,
+    "stripHeight": 32,
+    "stripTop": 101,
+    "width": 390
+  },
+  {
+    "breadcrumbFont": "12px",
+    "headerBottom": 85,
+    "pageWidth": 420,
+    "productTop": 193,
+    "sortFont": "12px",
+    "sortHeight": 32,
+    "stripHeight": 32,
+    "stripTop": 85,
+    "width": 430
+  },
+  {
+    "breadcrumbFont": "12px",
+    "headerBottom": 104.96875,
+    "pageWidth": 1270,
+    "productTop": 220,
+    "sortFont": "12px",
+    "sortHeight": 32,
+    "stripHeight": 32,
+    "stripTop": 105,
+    "width": 1280
+  }
+]

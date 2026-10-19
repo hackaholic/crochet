@@ -1,0 +1,87 @@
+{
+  "routes": [
+    {
+      "cardHeight": 221.328125,
+      "cardWidth": 166,
+      "descriptionAfter": true,
+      "firstProductTop": 217.640625,
+      "headerHeight": 101,
+      "pageWidth": 380,
+      "path": "/shop",
+      "width": 390
+    },
+    {
+      "cardHeight": 221.328125,
+      "cardWidth": 166,
+      "descriptionAfter": true,
+      "firstProductTop": 249.640625,
+      "headerHeight": 101,
+      "pageWidth": 380,
+      "path": "/categories/baby",
+      "width": 390
+    },
+    {
+      "cardHeight": 221.328125,
+      "cardWidth": 166,
+      "descriptionAfter": true,
+      "firstProductTop": 249.640625,
+      "headerHeight": 101,
+      "pageWidth": 380,
+      "path": "/categories/flowers",
+      "width": 390
+    },
+    {
+      "cardHeight": 221.328125,
+      "cardWidth": 166,
+      "descriptionAfter": true,
+      "firstProductTop": 249.640625,
+      "headerHeight": 101,
+      "pageWidth": 380,
+      "path": "/shop?occasion=birthday",
+      "width": 390
+    }
+  ],
+  "responsive": [
+    {
+      "breadcrumbTop": 101,
+      "filterHeight": 44,
+      "firstProductTop": 249.640625,
+      "headerHeight": 101,
+      "loadedImages": 5,
+      "pageWidth": 310,
+      "sortWidth": 144.328125,
+      "width": 320
+    },
+    {
+      "breadcrumbTop": 85,
+      "filterHeight": 44,
+      "firstProductTop": 233.640625,
+      "headerHeight": 85,
+      "loadedImages": 5,
+      "pageWidth": 420,
+      "sortWidth": 254.328125,
+      "width": 430
+    },
+    {
+      "breadcrumbTop": 105,
+      "filterHeight": 44,
+      "firstProductTop": 222.140625,
+      "headerHeight": 105.09375,
+      "loadedImages": 5,
+      "pageWidth": 758,
+      "sortWidth": 169,
+      "width": 768
+    },
+    {
+      "breadcrumbTop": 105,
+      "filterHeight": 0,
+      "firstProductTop": 222.140625,
+      "headerHeight": 105,
+      "loadedImages": 5,
+      "pageWidth": 1270,
+      "sortWidth": 169,
+      "width": 1280
+    }
+  ],
+  "interaction": "Baby + Flowers yields11 results; remove Flowers restores5; sort low-to-high; drawer close works"
+}

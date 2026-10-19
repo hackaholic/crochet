@@ -1,0 +1,82 @@
+[
+  {
+    "arrowGap": 4,
+    "border": "1px",
+    "controlHeight": 34,
+    "controlWidth": 123.40625,
+    "pageWidth": 310,
+    "productTop": 246.5,
+    "selection": "Featured",
+    "width": 320
+  },
+  {
+    "arrowGap": 4,
+    "border": "1px",
+    "controlHeight": 34,
+    "controlWidth": 173.890625,
+    "pageWidth": 310,
+    "productTop": 262.78125,
+    "selection": "Price: High to Low",
+    "width": 320
+  },
+  {
+    "arrowGap": 4,
+    "border": "1px",
+    "controlHeight": 34,
+    "controlWidth": 123.40625,
+    "pageWidth": 380,
+    "productTop": 211,
+    "selection": "Featured",
+    "width": 390
+  },
+  {
+    "arrowGap": 4,
+    "border": "1px",
+    "controlHeight": 34,
+    "controlWidth": 173.890625,
+    "pageWidth": 380,
+    "productTop": 211,
+    "selection": "Price: High to Low",
+    "width": 390
+  },
+  {
+    "arrowGap": 4,
+    "border": "1px",
+    "controlHeight": 34,
+    "controlWidth": 123.40625,
+    "pageWidth": 420,
+    "productTop": 195,
+    "selection": "Featured",
+    "width": 430
+  },
+  {
+    "arrowGap": 4,
+    "border": "1px",
+    "controlHeight": 34,
+    "controlWidth": 173.890625,
+    "pageWidth": 420,
+    "productTop": 195,
+    "selection": "Price: High to Low",
+    "width": 430
+  },
+  {
+    "arrowGap": 4,
+    "border": "1px",
+    "controlHeight": 34,
+    "controlWidth": 123.40625,
+    "pageWidth": 1270,
+    "productTop": 222,
+    "selection": "Featured",
+    "width": 1280
+  },
+  {
+    "arrowGap": 4,
+    "border": "1px",
+    "controlHeight": 34,
+    "controlWidth": 173.890625,
+    "pageWidth": 1270,
+    "productTop": 222,
+    "selection": "Price: High to Low",
+    "width": 1280
+  }
+]

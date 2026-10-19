@@ -1,0 +1,124 @@
+[
+  {
+    "headerHeight": 101,
+    "heroHeight": 413,
+    "sections": [
+      {
+        "bottom": "16px",
+        "firstImageHeight": 224,
+        "firstImageWidth": 168,
+        "headingGap": "12px",
+        "title": "Shop by Category",
+        "top": "16px"
+      },
+      {
+        "bottom": "16px",
+        "firstImageHeight": 224,
+        "firstImageWidth": 168,
+        "headingGap": "12px",
+        "title": "Most Loved Creations",
+        "top": "16px"
+      },
+      {
+        "bottom": "16px",
+        "firstImageHeight": 224,
+        "firstImageWidth": 168,
+        "headingGap": "12px",
+        "title": "Tiny Friends, Big Smiles 🐾",
+        "top": "16px"
+      },
+      {
+        "bottom": "16px",
+        "firstImageHeight": 126,
+        "firstImageWidth": 168,
+        "headingGap": "12px",
+        "title": "Gift by Occasion",
+        "top": "16px"
+      },
+      {
+        "bottom": "16px",
+        "firstImageHeight": 197.59375,
+        "firstImageWidth": 380,
+        "headingGap": null,
+        "title": "Gift Handcrafted Warmth This Season",
+        "top": "16px"
+      },
+      {
+        "bottom": "16px",
+        "headingGap": null,
+        "title": "Loved by Over 500+ Happy Customers",
+        "top": "16px"
+      },
+      {
+        "bottom": "16px",
+        "firstImageHeight": 261,
+        "firstImageWidth": 348,
+        "headingGap": null,
+        "title": "Handmade with Love, Thread by Thread",
+        "top": "16px"
+      }
+    ],
+    "width": 390
+  },
+  {
+    "headerHeight": 105,
+    "heroHeight": 620,
+    "sections": [
+      {
+        "bottom": "64px",
+        "firstImageHeight": 381.71875,
+        "firstImageWidth": 286.296875,
+        "headingGap": "40px",
+        "title": "Shop by Category",
+        "top": "48px"
+      },
+      {
+        "bottom": "64px",
+        "firstImageHeight": 381.71875,
+        "firstImageWidth": 286.296875,
+        "headingGap": "40px",
+        "title": "Most Loved Creations",
+        "top": "64px"
+      },
+      {
+        "bottom": "64px",
+        "firstImageHeight": 381.71875,
+        "firstImageWidth": 286.296875,
+        "headingGap": "40px",
+        "title": "Tiny Friends, Big Smiles 🐾",
+        "top": "64px"
+      },
+      {
+        "bottom": "64px",
+        "firstImageHeight": 171.765625,
+        "firstImageWidth": 229.03125,
+        "headingGap": "40px",
+        "title": "Gift by Occasion",
+        "top": "64px"
+      },
+      {
+        "bottom": "64px",
+        "firstImageHeight": 348,
+        "firstImageWidth": 1270,
+        "headingGap": null,
+        "title": "Gift Handcrafted Warmth This Season",
+        "top": "64px"
+      },
+      {
+        "bottom": "64px",
+        "headingGap": null,
+        "title": "Loved by Over 500+ Happy Customers",
+        "top": "64px"
+      },
+      {
+        "bottom": "64px",
+        "firstImageHeight": 429.453125,
+        "firstImageWidth": 572.609375,
+        "headingGap": null,
+        "title": "Handmade with Love, Thread by Thread",
+        "top": "64px"
+      }
+    ],
+    "width": 1280
+  }
+]

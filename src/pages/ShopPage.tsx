@@ -1,3 +1,4 @@
+import './catalogueLayout.css';
 import CatalogueIntro from '../components/CatalogueIntro';
 import SeoBreadcrumbs from '../components/SeoBreadcrumbs';
 import type { SeoMetadata } from '../lib/api/seo';
@@ -221,58 +222,59 @@ export default function ShopPage({ seoMetadata, heading, onAddToCart, onToggleWi
   );
 
   return (
-    <div className="min-h-screen bg-[#FAF7F2] pt-28">
-      <SeoBreadcrumbs metadata={seoMetadata} categories={categories} />
-      <div className="storefront-shell pb-10 pt-6 sm:pb-12 sm:pt-8">
+    <div className="catalogue-page min-h-screen bg-[#FAF7F2]">
+      <div className="catalogue-navigation storefront-shell">
+        <SeoBreadcrumbs metadata={seoMetadata} categories={categories} />
+        {/* Sort */}
+        <div className="catalogue-sort">
+          <label htmlFor="shop-sort" className="catalogue-sort-label">Sort by:</label>
+          <span className="catalogue-sort-display" aria-hidden="true">
+            <span>{sortBy}</span><ChevronDownIcon size={12} />
+          </span>
+          <select
+            id="shop-sort"
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value)}
+          >
+            {sortOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+          </select>
+        </div>
+      </div>
+      <div className="catalogue-body storefront-shell pb-10 sm:pb-12">
         {/* Top bar */}
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-4 sm:mb-6">
+        <div className="catalogue-toolbar flex flex-wrap items-center justify-between">
           <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
-            <h1 className="text-3xl font-medium text-[#2C1810] sm:text-4xl" style={{ fontFamily: 'var(--font-serif)' }}>
+            <h1 className="catalogue-heading font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>
               {heading || 'All Products'}
             </h1>
             <p className="text-sm text-[#8B6B4A]">{filtered.length} handmade creations</p>
           </div>
 
-          <div className="ml-auto flex items-center gap-3">
+          <div className="catalogue-controls ml-auto flex items-center gap-3">
             {/* Mobile filter button */}
             <button
               onClick={() => setFilterOpen(true)}
-              className="lg:hidden flex items-center gap-2 px-4 py-2.5 border border-[#EDE4D0] rounded-full text-sm font-medium text-[#5C3D2E] hover:border-[#C4622D] transition-colors"
+              className="lg:hidden flex items-center gap-2 px-2 py-1 border border-[#EDE4D0] rounded-full text-xs font-medium text-[#5C3D2E] hover:border-[#C4622D] transition-colors"
             >
               <FilterIcon size={16} />
               Filters {activeFilters > 0 && <span className="bg-[#C4622D] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{activeFilters}</span>}
             </button>
-
-            {/* Sort */}
-            <div className="flex items-center gap-3">
-              <label htmlFor="shop-sort" className="hidden text-sm text-[#8B6B4A] md:block">Sort by:</label>
-              <select
-                id="shop-sort"
-                value={sortBy}
-                onChange={e => setSortBy(e.target.value)}
-                className="px-4 py-2 border border-[#EDE4D0] rounded-full text-sm text-[#5C3D2E] bg-white focus:outline-none focus:border-[#C4622D] cursor-pointer"
-              >
-                {sortOptions.map(opt => <option key={opt}>{opt}</option>)}
-              </select>
-            </div>
           </div>
         </div>
 
-        <CatalogueIntro metadata={seoMetadata} pathname={location.pathname} />
-
         {/* Active filter chips */}
         {activeFilters > 0 && (
-          <div className="mb-5 flex flex-wrap gap-2">
+          <div className="catalogue-chips flex flex-wrap gap-2">
             {selectedCategories.map(cat => (
               <span key={cat} className="flex items-center gap-1.5 px-3 py-1 bg-[#F2C4CE] text-[#C4622D] rounded-full text-xs font-medium">
                 {categoryName(cat)}
-                <button onClick={() => toggleCategory(cat)}><XIcon size={12} /></button>
+                <button aria-label={`Remove ${categoryName(cat)} filter`} onClick={() => toggleCategory(cat)}><XIcon size={12} /></button>
               </span>
             ))}
             {selectedOccasions.map(slug => (
               <span key={slug} className="flex items-center gap-1.5 px-3 py-1 bg-[#F2C4CE] text-[#C4622D] rounded-full text-xs font-medium">
                 {collections.find(collection => collection.slug === slug)?.name ?? slug.replace(/[-_]+/g, ' ').replace(/\b\w/g, letter => letter.toUpperCase())}
-                <button onClick={() => setSelectedOccasions(previous => previous.filter(value => value !== slug))}><XIcon size={12} /></button>
+                <button aria-label={`Remove ${slug} filter`} onClick={() => setSelectedOccasions(previous => previous.filter(value => value !== slug))}><XIcon size={12} /></button>
               </span>
             ))}
             {selectedPriceRange !== null && <span className="rounded-full bg-[#F2C4CE] px-3 py-1 text-xs font-medium text-[#C4622D]">{priceFilters.find(item => item.index === selectedPriceRange)?.range.label}</span>}
@@ -283,14 +285,14 @@ export default function ShopPage({ seoMetadata, heading, onAddToCart, onToggleWi
         <div className="flex gap-8">
           {/* Desktop sidebar */}
           <aside className="hidden lg:block w-60 shrink-0">
-            <div className="sticky top-28">
+            <div className="catalogue-sidebar sticky">
               <h3 className="font-semibold text-[#2C1810] mb-5">Filters</h3>
               {renderFilterPanel()}
             </div>
           </aside>
 
           {/* Product grid */}
-          <div className="flex-1">
+          <div className="min-w-0 flex-1" data-testid="catalogue-results">
             {filtered.length === 0 ? (
               <div className="text-center py-20">
                 <p className="text-5xl mb-4">🧶</p>
@@ -315,16 +317,17 @@ export default function ShopPage({ seoMetadata, heading, onAddToCart, onToggleWi
             )}
           </div>
         </div>
+        <CatalogueIntro metadata={seoMetadata} pathname={location.pathname} />
       </div>
 
       {/* Mobile filter drawer */}
       {filterOpen && (
         <>
           <div className="fixed inset-0 bg-black/40 z-60" style={{ zIndex: 60 }} onClick={() => setFilterOpen(false)} />
-          <div className="fixed left-0 top-0 bottom-0 w-80 bg-white z-70 flex flex-col" style={{ zIndex: 70 }}>
+          <div className="fixed left-0 top-0 bottom-0 w-80 max-w-full bg-white z-70 flex flex-col" style={{ zIndex: 70 }}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-[#EDE4D0]">
               <h3 className="font-semibold text-[#2C1810]">Filters</h3>
-              <button onClick={() => setFilterOpen(false)} className="p-1"><XIcon size={22} className="text-[#5C3D2E]" /></button>
+              <button aria-label="Close filters" onClick={() => setFilterOpen(false)} className="min-h-11 min-w-11 flex items-center justify-center"><XIcon size={22} className="text-[#5C3D2E]" /></button>
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-4">
               {renderFilterPanel()}

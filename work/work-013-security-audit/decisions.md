@@ -20,3 +20,18 @@
 **Decision:** Security scripts must generate structured JSON/Markdown reports in `work/work-013-security-audit/reports/` and exit non-zero on High/Critical actionable findings. Discovered secret findings must be redacted in all console and CI logs.
 
 **Reason:** Prevents sensitive credential leakage in CI build logs while providing unambiguous pass/fail criteria for deployment gates.
+
+### DEC-013-4 — Schemathesis Contract & Boundary Fuzzing
+
+**Decision:** Integrate Schemathesis in two complementary layers:
+- In-process ASGI test suite (`backend/tests/test_api_schemathesis.py`) directly against `app.main.app` for deterministic, network-free local testing and CI gating.
+- Standalone runner script (`scripts/security/scan-api-schemathesis.sh`) targeting running development instances for live OpenAPI endpoint fuzzing.
+- Require zero unhandled 500 crashes and zero schema violations.
+
+**Reason:** FastAPI automatically generates `/openapi.json`. Schemathesis property-based testing exercises edge-case parameters, numeric boundaries, and malformed inputs to eliminate crashes before production deployment.
+
+### DEC-013-5 — Non-Destructive Preprod DAST Gating
+
+**Decision:** OWASP ZAP dynamic analysis must strictly target preprod/development environments (`https://dev.sulocraft.com` or local Docker). Aggressive vulnerability fuzzing must never target live production.
+
+**Reason:** Protects production uptime and customer transaction states while ensuring automated header, cookie flag, and injection assessments run continuously in preprod.

@@ -13,3 +13,9 @@ Completion: self-review/security disposition Pass for CSS/template-only scope; n
 2026-10-19 /24.3: Fixed menu icon edge crowding by letting brand allocation shrink and preserving a16pxrowgutter. Mobile nav75→53px; actiontargets44px, logoheight38px retained.320/390/430px nooverflow, labelclearance13px; allfiveheroCTAsclearcontrols21pxat320px. Desktop nav73px/hero620px unchanged.17tests/typecheckpassed, frontendrebuilt. Self-review/securityPass for presentation-only change. Screenshot inreports/mobile-navigation-390.jpg; no push.
 
 2026-10-20 release authorization: Owner requested commit/push of current verified changes to dev, including Work024 mobile density/navigation, Work015 header-clearance regression and Work025 configurable LAN API/media support. Existing local Docker/browser and test evidence retained; private local .env stays ignored. Deployment acceptance is separate from successful Git push.
+
+2026-10-20 —24.4 completed locally. Desktop combined section padding128→48px; mobile32→16px, heading gaps40→16/12→8. Shared CSS tokens only; natural promo height.19tests/typecheck passed, Docker rebuilt, no overflow320/390/430/768/1280; header/hero/product frames unchanged at baseline widths. Screenshot/JSON comparison evidence in task-003. CSS-scope security/self-review Pass; no new backend work or push.
+
+2026-10-20 —24.5 completed locally:390px category product start398→250px, shop302→218px; product frames retained.10tests/typecheck and Docker rebuild passed, responsive320–1280 and real filter/sort/remove checks recorded in task-004. No Gemini requirement, push or deployment.
+
+2026-10-20 —24.6 complete locally: sort/breadcrumb both12px,32px strip below menu;390px Baby first product209px (another41px saved).11tests/typecheck, Docker rebuild, responsive/sort acceptance recorded. No push.
