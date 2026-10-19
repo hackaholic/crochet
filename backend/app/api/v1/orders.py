@@ -658,7 +658,14 @@ def get_order_detail(
     )
 
     if order_id_or_number.isdigit():
-        order = query.filter(Order.id == int(order_id_or_number)).first()
+        try:
+            num_id = int(order_id_or_number)
+            if 1 <= num_id <= 2_147_483_647:
+                order = query.filter((Order.id == num_id) | (Order.order_number == order_id_or_number)).first()
+            else:
+                order = query.filter(Order.order_number == order_id_or_number).first()
+        except (ValueError, OverflowError):
+            order = query.filter(Order.order_number == order_id_or_number).first()
     else:
         order = query.filter(Order.order_number == order_id_or_number).first()
 
@@ -823,7 +830,14 @@ def get_order_tracking(
     )
 
     if order_id_or_number.isdigit():
-        order = query.filter(Order.id == int(order_id_or_number)).first()
+        try:
+            num_id = int(order_id_or_number)
+            if 1 <= num_id <= 2_147_483_647:
+                order = query.filter((Order.id == num_id) | (Order.order_number == order_id_or_number)).first()
+            else:
+                order = query.filter(Order.order_number == order_id_or_number).first()
+        except (ValueError, OverflowError):
+            order = query.filter(Order.order_number == order_id_or_number).first()
     else:
         order = query.filter(Order.order_number == order_id_or_number).first()
 
@@ -950,7 +964,14 @@ def cancel_order(
     )
 
     if order_id_or_number.isdigit():
-        order = query.filter(Order.id == int(order_id_or_number)).first()
+        try:
+            num_id = int(order_id_or_number)
+            if 1 <= num_id <= 2_147_483_647:
+                order = query.filter((Order.id == num_id) | (Order.order_number == order_id_or_number)).first()
+            else:
+                order = query.filter(Order.order_number == order_id_or_number).first()
+        except (ValueError, OverflowError):
+            order = query.filter(Order.order_number == order_id_or_number).first()
     else:
         order = query.filter(Order.order_number == order_id_or_number).first()
 

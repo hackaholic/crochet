@@ -1,0 +1,343 @@
+{
+  "source": "Local public product API; read-only audit 2026-10-20",
+  "productsChecked": 24,
+  "productsWithContent": 0,
+  "products": [
+    {
+      "id": 1,
+      "slug": "forever-crochet-rose-bouquet",
+      "nullFields": [
+        "handmadeDetails",
+        "materialsUsed",
+        "sizeDimensions",
+        "processingTime",
+        "careInstructions",
+        "shippingDelivery"
+      ],
+      "blankFields": [],
+      "populatedFields": []
+    },
+    {
+      "id": 2,
+      "slug": "crochet-tulip-bouquet",
+      "nullFields": [
+        "handmadeDetails",
+        "materialsUsed",
+        "sizeDimensions",
+        "processingTime",
+        "careInstructions",
+        "shippingDelivery"
+      ],
+      "blankFields": [],
+      "populatedFields": []
+    },
+    {
+      "id": 3,
+      "slug": "heart-bear",
+      "nullFields": [
+        "handmadeDetails",
+        "materialsUsed",
+        "sizeDimensions",
+        "processingTime",
+        "careInstructions",
+        "shippingDelivery"
+      ],
+      "blankFields": [],
+      "populatedFields": []
+    },
+    {
+      "id": 4,
+      "slug": "couple-bunny-set",
+      "nullFields": [
+        "handmadeDetails",
+        "materialsUsed",
+        "sizeDimensions",
+        "processingTime",
+        "careInstructions",
+        "shippingDelivery"
+      ],
+      "blankFields": [],
+      "populatedFields": []
+    },
+    {
+      "id": 5,
+      "slug": "mini-panda-amigurumi",
+      "nullFields": [
+        "handmadeDetails",
+        "materialsUsed",
+        "sizeDimensions",
+        "processingTime",
+        "careInstructions",
+        "shippingDelivery"
+      ],
+      "blankFields": [],
+      "populatedFields": []
+    },
+    {
+      "id": 6,
+      "slug": "crochet-bunny",
+      "nullFields": [],
+      "blankFields": [
+        "handmadeDetails",
+        "materialsUsed",
+        "sizeDimensions",
+        "processingTime",
+        "careInstructions",
+        "shippingDelivery"
+      ],
+      "populatedFields": []
+    },
+    {
+      "id": 7,
+      "slug": "crochet-marigold-garland",
+      "nullFields": [
+        "handmadeDetails",
+        "materialsUsed",
+        "sizeDimensions",
+        "processingTime",
+        "careInstructions",
+        "shippingDelivery"
+      ],
+      "blankFields": [],
+      "populatedFields": []
+    },
+    {
+      "id": 8,
+      "slug": "sunflower-bouquet",
+      "nullFields": [
+        "handmadeDetails",
+        "materialsUsed",
+        "sizeDimensions",
+        "processingTime",
+        "careInstructions",
+        "shippingDelivery"
+      ],
+      "blankFields": [],
+      "populatedFields": []
+    },
+    {
+      "id": 9,
+      "slug": "crochet-hanging-planter",
+      "nullFields": [
+        "handmadeDetails",
+        "materialsUsed",
+        "sizeDimensions",
+        "processingTime",
+        "careInstructions",
+        "shippingDelivery"
+      ],
+      "blankFields": [],
+      "populatedFields": []
+    },
+    {
+      "id": 10,
+      "slug": "boho-wall-hanging",
+      "nullFields": [
+        "handmadeDetails",
+        "materialsUsed",
+        "sizeDimensions",
+        "processingTime",
+        "careInstructions",
+        "shippingDelivery"
+      ],
+      "blankFields": [],
+      "populatedFields": []
+    },
+    {
+      "id": 11,
+      "slug": "love-letter-crochet-set",
+      "nullFields": [
+        "handmadeDetails",
+        "materialsUsed",
+        "sizeDimensions",
+        "processingTime",
+        "careInstructions",
+        "shippingDelivery"
+      ],
+      "blankFields": [],
+      "populatedFields": []
+    },
+    {
+      "id": 12,
+      "slug": "mini-rose-box",
+      "nullFields": [
+        "handmadeDetails",
+        "materialsUsed",
+        "sizeDimensions",
+        "processingTime",
+        "careInstructions",
+        "shippingDelivery"
+      ],
+      "blankFields": [],
+      "populatedFields": []
+    },
+    {
+      "id": 13,
+      "slug": "lotus-mala",
+      "nullFields": [
+        "handmadeDetails",
+        "materialsUsed",
+        "sizeDimensions",
+        "processingTime",
+        "careInstructions",
+        "shippingDelivery"
+      ],
+      "blankFields": [],
+      "populatedFields": []
+    },
+    {
+      "id": 14,
+      "slug": "crochet-toran",
+      "nullFields": [
+        "handmadeDetails",
+        "materialsUsed",
+        "sizeDimensions",
+        "processingTime",
+        "careInstructions",
+        "shippingDelivery"
+      ],
+      "blankFields": [],
+      "populatedFields": []
+    },
+    {
+      "id": 15,
+      "slug": "daisy-coaster-set",
+      "nullFields": [
+        "handmadeDetails",
+        "materialsUsed",
+        "sizeDimensions",
+        "processingTime",
+        "careInstructions",
+        "shippingDelivery"
+      ],
+      "blankFields": [],
+      "populatedFields": []
+    },
+    {
+      "id": 16,
+      "slug": "mini-teddy-bear",
+      "nullFields": [
+        "handmadeDetails",
+        "materialsUsed",
+        "sizeDimensions",
+        "processingTime",
+        "careInstructions",
+        "shippingDelivery"
+      ],
+      "blankFields": [],
+      "populatedFields": []
+    },
+    {
+      "id": 17,
+      "slug": "baby-gift-hamper",
+      "nullFields": [
+        "handmadeDetails",
+        "materialsUsed",
+        "sizeDimensions",
+        "processingTime",
+        "careInstructions",
+        "shippingDelivery"
+      ],
+      "blankFields": [],
+      "populatedFields": []
+    },
+    {
+      "id": 18,
+      "slug": "crochet-heart-planter",
+      "nullFields": [
+        "handmadeDetails",
+        "materialsUsed",
+        "sizeDimensions",
+        "processingTime",
+        "careInstructions",
+        "shippingDelivery"
+      ],
+      "blankFields": [],
+      "populatedFields": []
+    },
+    {
+      "id": 19,
+      "slug": "baby-blanket",
+      "nullFields": [
+        "handmadeDetails",
+        "materialsUsed",
+        "sizeDimensions",
+        "processingTime",
+        "careInstructions",
+        "shippingDelivery"
+      ],
+      "blankFields": [],
+      "populatedFields": []
+    },
+    {
+      "id": 20,
+      "slug": "bunny-amigurami-set",
+      "nullFields": [
+        "handmadeDetails",
+        "materialsUsed",
+        "sizeDimensions",
+        "processingTime",
+        "careInstructions",
+        "shippingDelivery"
+      ],
+      "blankFields": [],
+      "populatedFields": []
+    },
+    {
+      "id": 21,
+      "slug": "amigurumi-flower-bouquet",
+      "nullFields": [
+        "handmadeDetails",
+        "materialsUsed",
+        "sizeDimensions",
+        "processingTime",
+        "careInstructions",
+        "shippingDelivery"
+      ],
+      "blankFields": [],
+      "populatedFields": []
+    },
+    {
+      "id": 22,
+      "slug": "octopus-amigurami-set",
+      "nullFields": [
+        "handmadeDetails",
+        "materialsUsed",
+        "sizeDimensions",
+        "processingTime",
+        "careInstructions",
+        "shippingDelivery"
+      ],
+      "blankFields": [],
+      "populatedFields": []
+    },
+    {
+      "id": 23,
+      "slug": "pooja-dress",
+      "nullFields": [
+        "handmadeDetails",
+        "materialsUsed",
+        "sizeDimensions",
+        "processingTime",
+        "careInstructions",
+        "shippingDelivery"
+      ],
+      "blankFields": [],
+      "populatedFields": []
+    },
+    {
+      "id": 24,
+      "slug": "potli-handbag",
+      "nullFields": [
+        "handmadeDetails",
+        "materialsUsed",
+        "sizeDimensions",
+        "processingTime",
+        "careInstructions",
+        "shippingDelivery"
+      ],
+      "blankFields": [],
+      "populatedFields": []
+    }
+  ]
+}

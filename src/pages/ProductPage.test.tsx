@@ -1,10 +1,14 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { renderToString } from 'react-dom/server';
 import type { SeoMetadata } from '../lib/api/seo';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ProductPage from './ProductPage';
+import {getProductInformation} from '../lib/api/catalogue';
+import {informationFields} from '../lib/products/information';
 import type { Product } from '../data/products';
 
+vi.mock('../lib/api/catalogue',()=>({getProductInformation:vi.fn()}));
+beforeEach(()=>{vi.mocked(getProductInformation).mockResolvedValue({});});
 vi.mock('../components/CatalogueProvider', () => ({ useCatalogue: () => ({ products: [] }) }));
 
 const product: Product = {
@@ -20,7 +24,7 @@ const product: Product = {
   customizable: true,
 };
 
-afterEach(cleanup);
+afterEach(()=>{cleanup();vi.resetAllMocks();});
 
 describe('ProductPage options', () => {
   it('does not show hardcoded color choices while product color variants are unavailable', () => {
@@ -57,4 +61,28 @@ it('forwards the personalized note for basket and buy-now actions', () => {
   expect(add).toHaveBeenCalledWith(product,1,{note:'For Mum <with love>'});
   fireEvent.click(screen.getByRole('button',{name:'Buy Now'}));
   expect(add).toHaveBeenLastCalledWith(product,1,{note:'For Mum <with love>'});
+});
+
+it('renders and expands all six saved specification fields on the actual product page, including after an empty SEO snapshot',async()=>{
+ const information=Object.fromEntries(informationFields.map(([key,label])=>[key,`Confirmed ${label} <plain text>`]));
+ vi.mocked(getProductInformation).mockResolvedValue(information);
+ const metadata={productEntity:{id:42,materialsUsed:null,handmadeDetails:null}} as SeoMetadata;
+ render(<ProductPage product={product} seoMetadata={metadata} onAddToCart={vi.fn()} onToggleWishlist={vi.fn()} wishlist={[]} onProductClick={vi.fn()} onNavigate={vi.fn()}/>);
+ await screen.findByRole('button',{name:'Handmade Details'});
+ for(const [key,label] of informationFields){
+   const disclosure=screen.getByRole('button',{name:label});
+   if(disclosure.getAttribute('aria-expanded')!=='true')fireEvent.click(disclosure);
+   expect(disclosure).toHaveAttribute('aria-expanded','true');
+   expect(screen.getByText(information[key])).toBeVisible();
+ }
+ expect(getProductInformation).toHaveBeenCalledWith(product.slug,expect.any(AbortSignal));
+ expect(document.querySelector('plain')).toBeNull();
+});
+
+it('does not invent specifications when the product API returns null or deliberately cleared fields',async()=>{
+ vi.mocked(getProductInformation).mockResolvedValue({handmadeDetails:null,materialsUsed:'',sizeDimensions:null,processingTime:'',careInstructions:null,shippingDelivery:''});
+ render(<ProductPage product={product} onAddToCart={vi.fn()} onToggleWishlist={vi.fn()} wishlist={[]} onProductClick={vi.fn()} onNavigate={vi.fn()}/>);
+ await waitFor(()=>expect(screen.queryByText('Loading product information…')).not.toBeInTheDocument());
+ for(const [,label] of informationFields)expect(screen.queryByRole('button',{name:label})).not.toBeInTheDocument();
+ expect(screen.getByRole('heading',{name:product.name})).toBeVisible();
 });

@@ -167,6 +167,46 @@ Category cards also render backend-provided URLs verbatim. A URL stored in Postg
 | --- | --- | --- |
 | `flowers` | `/images/hero/flower-bouquet.png` | `https://images.sulocraft.com/categories/flowers.png` |
 | `pooja-items` | `/images/hero/festive-gifting.png` | `https://images.sulocraft.com/categories/pooja-items.png` |
-| `amigurumi` | `/images/hero/amigurumi.png` | `https://images.sulocraft.com/categories/amigurumi.png` |
-
 Local seed/development records may use the frontend origin for these assets. Production records must use the corresponding public R2 URLs after the objects are uploaded and verified with an HTTP `200` response.
+
+---
+
+## Storefront Discovery & Ranked Sections API (Task 7.6)
+
+`GET /api/v1/storefront/discovery?context=checkout|basket&limit=16&cursor=<opaque>`
+
+Returns ranked catalogue sections for discovery feeds in checkout and basket drawers, with active cart exclusion, cross-section/cross-page deduplication, and opaque cursor pagination.
+
+### Query Parameters
+- `context`: `checkout` | `basket` (default: `checkout`). Enforces `^(checkout|basket)$`; other values return `422`.
+- `limit`: Integer between `1` and `16` (default: `16`). Values `> 16` or `< 1` return `422`.
+- `cursor`: Opaque pagination string bounded to `<= 512` characters. Encodes previously seen product IDs. Invalid, oversized, or mismatched-context cursors return `422`.
+
+### Response Schema
+
+```ts
+interface DiscoveryResponse {
+  sections: DiscoverySectionOut[];
+  nextCursor: string | null;
+}
+
+interface DiscoverySectionOut {
+  id: string;
+  title: string;
+  strategy: 'related' | 'newest' | 'featured' | 'trending' | 'popular';
+  products: ProductListItem[];
+}
+```
+
+### Ranking Strategies
+- `related`: Matches categories/tags of products currently in the user's active cart. Omitted when the basket is empty.
+- `popular`: Resolved from `bestsellers` collection, `Bestseller` / `Popular` badges, and real sales volume from `OrderItem`.
+- `newest`: Resolved from `new-arrivals` collection, `New` badge, and `created_at desc`.
+- `featured`: Resolved from curated collection badges and high ratings.
+- `trending`: Resolved from verified reviews count (`reviews_count >= 1`) and review ratings.
+
+### Constraints & Invariants
+- Max 5 sections, max 8 products per section, max 16 total products per page.
+- Excludes products currently in the user's active basket (inferred from `guest_cart_token` cookie or auth session).
+- Terminal pages return `nextCursor: null`. Calling with an exhausted cursor returns `{"sections": [], "nextCursor": null}`.
+- Zero side effects: no orders created, no cart modifications, no personal history leakage.

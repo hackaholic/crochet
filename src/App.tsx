@@ -165,6 +165,8 @@ export default function App() {
         )}
         {page === 'cart' && (
           <CartPage
+            onAddToCart={addCartItem}
+            onProductClick={handleProductClick}
             items={cart}
             onUpdateQty={updateCartQty}
             onRemove={removeFromCart}
@@ -185,6 +187,8 @@ export default function App() {
         )}
         {page === 'checkout' && (
           <CheckoutPage
+            onAddToCart={addCartItem}
+            onProductClick={handleProductClick}
             items={cart}
             onComplete={() => { void refreshCart(); }}
             couponCode={couponCode}
@@ -220,6 +224,7 @@ export default function App() {
         onWishlist={toggleWishlist}
         onCheckout={handleCheckout}
         onProductClick={handleProductClick}
+        onAddToCart={addCartItem}
       />}
 
       {/* Search Overlay */}

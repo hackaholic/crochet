@@ -77,3 +77,10 @@ Codex1.15 Active: dashboard status navigation plus selected-period server filter
 Codex1.16 In Progress: preserve source order ID and connect activity references to existing detail navigation; no Gemini dependency.
 
 Codex1.16 Completed: exact evidence in task-039; no push/deploy.
+
+## Top bar dynamic order search — 1.18
+2026-10-20: [Task 1.18](tasks/task-045-topbar-dynamic-order-search.md) Completed.
+- Backend: Extended `list_admin_orders` in `backend/app/api/v1/admin.py` to match numeric `Order.id` when digits are provided, alongside `order_number`, `customer_email`, `customer_phone`, and `customer_name`. Verified RBAC and SQL injection security.
+- Frontend: Implemented real-time debounced order search with quick-access dropdown in `AdminTopBar.tsx`, request sequence race protection, outside-click & Escape dismissal, one-click order preview modal, Enter navigation to `/admin` Orders view, and cross-view search state synchronization in `AdminApp.tsx` and `OrdersPage.tsx`.
+- Tests: Backend tests passed in `test_1_18_admin_orders_dynamic_search` (SQLite + PostgreSQL test runner). Frontend unit/integration tests passed in `AdminTopBar.test.tsx` (6/6) and `AdminApp.test.tsx`. Full admin suite (138/138 tests) and TypeScript typecheck passed cleanly.
+- Local verification: Docker services rebuilt; verified live at `http://localhost:8000/health` and `http://localhost:8080/admin`. No deployment performed.

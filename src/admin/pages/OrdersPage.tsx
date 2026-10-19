@@ -49,6 +49,10 @@ export default function OrdersPage({ onSelectOrder, initialSearch = '', initialS
   const [error,setError] = useState(false);
   const [attempt,setAttempt] = useState(0);
 
+  useEffect(() => {
+    setSearch(initialSearch);
+  }, [initialSearch]);
+
   useEffect(() => { setPage(1); }, [statusFilter, search, sort]);
   useEffect(() => {
     let active = true;

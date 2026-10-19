@@ -1294,13 +1294,34 @@ def list_admin_orders(
         query = query.filter(Order.items.any(OrderItem.sku.ilike(f"%{sku.strip()}%")))
 
     if q:
-        search_fmt = f"%{q.strip()}%"
-        query = query.filter(
-            (Order.order_number.ilike(search_fmt))
-            | (Order.customer_name.ilike(search_fmt))
-            | (Order.customer_phone.ilike(search_fmt))
-            | (Order.customer_email.ilike(search_fmt))
-        )
+        q_clean = q.strip()
+        search_fmt = f"%{q_clean}%"
+        search_conditions = [
+            Order.order_number.ilike(search_fmt),
+            Order.customer_name.ilike(search_fmt),
+            Order.customer_phone.ilike(search_fmt),
+            Order.customer_email.ilike(search_fmt),
+        ]
+        # Also match phone number when query or DB phone contains formatting (+91, spaces, dashes)
+        digits_only = re.sub(r"\D", "", q_clean)
+        if digits_only and len(digits_only) >= 3:
+            sanitized_db_phone = func.replace(
+                func.replace(func.replace(Order.customer_phone, " ", ""), "-", ""), "+", ""
+            )
+            search_conditions.append(sanitized_db_phone.ilike(f"%{digits_only}%"))
+            if len(digits_only) == 12 and digits_only.startswith("91"):
+                search_conditions.append(sanitized_db_phone.ilike(f"%{digits_only[2:]}%"))
+
+        # Match Order.id ONLY if q_clean is pure digits AND within valid 32-bit signed integer range [1, 2147483647]
+        # Prevents PostgreSQL psycopg.errors.NumericValueOutOfRange when admins search 10-digit phone numbers (e.g. 9999900991)
+        if q_clean.isdigit():
+            try:
+                order_id_val = int(q_clean)
+                if 1 <= order_id_val <= 2_147_483_647:
+                    search_conditions.append(Order.id == order_id_val)
+            except (ValueError, OverflowError):
+                pass
+        query = query.filter(sa.or_(*search_conditions))
 
     # Sorting
     if sort_by == "created_at_asc":
@@ -1346,7 +1367,14 @@ def get_admin_order(
         )
     )
     if order_number_or_id.isdigit():
-        order = query.filter((Order.id == int(order_number_or_id)) | (Order.order_number == order_number_or_id)).first()
+        try:
+            num_id = int(order_number_or_id)
+            if 1 <= num_id <= 2_147_483_647:
+                order = query.filter((Order.id == num_id) | (Order.order_number == order_number_or_id)).first()
+            else:
+                order = query.filter(Order.order_number == order_number_or_id).first()
+        except (ValueError, OverflowError):
+            order = query.filter(Order.order_number == order_number_or_id).first()
     else:
         order = query.filter(Order.order_number == order_number_or_id).first()
 
@@ -1372,7 +1400,14 @@ def update_order_status(
         )
     )
     if order_number_or_id.isdigit():
-        order = query.filter((Order.id == int(order_number_or_id)) | (Order.order_number == order_number_or_id)).first()
+        try:
+            num_id = int(order_number_or_id)
+            if 1 <= num_id <= 2_147_483_647:
+                order = query.filter((Order.id == num_id) | (Order.order_number == order_number_or_id)).first()
+            else:
+                order = query.filter(Order.order_number == order_number_or_id).first()
+        except (ValueError, OverflowError):
+            order = query.filter(Order.order_number == order_number_or_id).first()
     else:
         order = query.filter(Order.order_number == order_number_or_id).first()
 
@@ -2842,14 +2877,32 @@ def admin_global_search(
     results: list[AdminSearchResultItem] = []
 
     # 1. Orders
+    order_conditions = [
+        Order.order_number.ilike(term),
+        Order.customer_name.ilike(term),
+        Order.customer_email.ilike(term),
+        Order.customer_phone.ilike(term),
+    ]
+    digits_only = re.sub(r"\D", "", q.strip())
+    if digits_only and len(digits_only) >= 3:
+        sanitized_db_phone = func.replace(
+            func.replace(func.replace(Order.customer_phone, " ", ""), "-", ""), "+", ""
+        )
+        order_conditions.append(sanitized_db_phone.ilike(f"%{digits_only}%"))
+        if len(digits_only) == 12 and digits_only.startswith("91"):
+            order_conditions.append(sanitized_db_phone.ilike(f"%{digits_only[2:]}%"))
+
+    if q.strip().isdigit():
+        try:
+            val = int(q.strip())
+            if 1 <= val <= 2_147_483_647:
+                order_conditions.append(Order.id == val)
+        except (ValueError, OverflowError):
+            pass
+
     orders = (
         db.query(Order)
-        .filter(
-            (Order.order_number.ilike(term))
-            | (Order.customer_name.ilike(term))
-            | (Order.customer_email.ilike(term))
-            | (Order.customer_phone.ilike(term))
-        )
+        .filter(sa.or_(*order_conditions))
         .limit(20)
         .all()
     )

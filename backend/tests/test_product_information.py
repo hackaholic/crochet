@@ -242,9 +242,9 @@ def test_accept_legitimate_unicode_and_newlines():
     assert res.json()["handmadeDetails"] == multiline_text
 
 
-def test_explicit_blank_override_and_clear_do_not_reapply_defaults():
+def test_blank_storage_uses_public_defaults_without_rewriting_product():
     cookies = _login_admin()
-    client.put('/api/v1/admin/storefront/product-defaults', json={'materialsUsed': 'Default yarn'}, cookies=cookies)
+    client.put('/api/v1/admin/storefront/product-defaults', json={'materialsUsed': 'Default yarn', 'handmadeDetails': 'Default handmade'}, cookies=cookies)
     created = client.post('/api/v1/admin/products', json={'name': 'Blank information fixture', 'primaryImage': 'products/test.jpg', 'materialsUsed': '', 'handmadeDetails': 'Original'}, cookies=cookies)
     assert created.status_code == 201
     product_id = created.json()['id']
@@ -255,7 +255,11 @@ def test_explicit_blank_override_and_clear_do_not_reapply_defaults():
     assert updated.json()['materialsUsed'] == ''
     detail = client.get(f'/api/v1/products/{product_id}')
     assert detail.status_code == 200
-    assert detail.json()['handmadeDetails'] == ''
+    assert detail.json()['handmadeDetails'] == 'Default handmade'
+    assert detail.json()['materialsUsed'] == 'Default yarn'
+    with SessionLocal() as db:
+        saved = db.get(Product, product_id)
+        assert saved.handmade_details == '' and saved.materials_used == ''
 
 
 def test_acceptance_all_six_fields_roundtrip_and_defaults_do_not_rewrite_products():
@@ -301,3 +305,44 @@ def test_text_edit_preserves_unchanged_gallery_identity_and_alt_text():
         product = db.get(Product, pid)
         assert [(image.id,image.url) for image in product.images] == original
         assert all(image.alt_text == 'Persisted accessible image description' for image in product.images)
+
+
+def test_public_information_defaults_match_seo_and_never_rewrite_saved_fields():
+    """19.4: real API/DB regression, not only mocked accordion fixtures."""
+    from app.services.product_information import INFORMATION_FIELDS
+    aliases = ['handmadeDetails', 'materialsUsed', 'sizeDimensions', 'processingTime', 'careInstructions', 'shippingDelivery']
+    with SessionLocal() as db:
+        seed_catalogue(db)
+        product = db.query(Product).filter(Product.status == 'ACTIVE').first()
+        assert product is not None
+        defaults = db.query(ProductInformationDefaults).order_by(ProductInformationDefaults.id.asc()).first()
+        if defaults is None:
+            defaults = ProductInformationDefaults(id=1)
+            db.add(defaults)
+        for field in INFORMATION_FIELDS:
+            setattr(defaults, field, f'Configured {field}')
+            setattr(product, field, None)
+        product.handmade_details = ''
+        product.processing_time = '   '
+        product.materials_used = 'Product-specific yarn'
+        db.commit()
+        pid, slug = product.id, product.slug
+    detail = client.get(f'/api/v1/products/{slug}')
+    metadata = client.get('/api/v1/seo/resolve', params={'path': f'/products/{slug}'})
+    assert detail.status_code == metadata.status_code == 200
+    for key, field in zip(aliases, INFORMATION_FIELDS):
+        expected = 'Product-specific yarn' if field == 'materials_used' else f'Configured {field}'
+        assert detail.json()[key] == expected
+        assert metadata.json()['productEntity'][key] == expected
+    with SessionLocal() as db:
+        saved = db.get(Product, pid)
+        assert saved.handmade_details == ''
+        assert saved.size_dimensions is None
+        assert saved.processing_time == '   '
+        assert saved.materials_used == 'Product-specific yarn'
+
+
+def test_resolver_never_invents_content_without_product_or_default_values():
+    from types import SimpleNamespace
+    from app.services.product_information import resolve_product_information
+    assert all(value is None for value in resolve_product_information(SimpleNamespace(), None).values())

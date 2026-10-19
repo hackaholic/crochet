@@ -1,7 +1,7 @@
 # Work 023 coordination
 
 **Current Owner:** Codex
-**Status:** Returned (initial UI); waiting backend pickup and browser matrix
+**Status:** Returned (23.6); existing backend handoff retained
 **Active Task:** None
 **Next Action:** Gemini [23.3](tasks/task-003-recommendation-api.md) is pickup ready. Codex owns subsequent adapter integration and remaining23.4 browser coverage.
 
@@ -10,3 +10,7 @@
 
 ## Gemini handoff
 Read `../GEMINI_WORKFLOW_PROMPT.md`, then this work context and exact [23.3 contract](tasks/task-003-recommendation-api.md). Do not interrupt active Work007 payments without reassignment.23.3 does not block the initial existing-catalogue discovery. Avoid editing Codex auth/cart changes concurrently; coordinate before touching cart.py. No new assets or setup required.
+
+23.5 returned/completed2026-10-20: direct recommendation Add to Basket actions implemented;10tests/typecheck passed, Docker rebuilt, actual empty/filled guest cart API additions verified locally. [Exact return](tasks/task-005-recommendation-add-to-basket.md). No Gemini dependency or push.
+
+23.6 returned: basket reuses catalogue ProductCard; touch/keyboard access, async cart handling and shared image interactions verified locally. Exact evidence in task-006. No backend changes needed.

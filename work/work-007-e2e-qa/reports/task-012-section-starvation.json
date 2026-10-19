@@ -1,0 +1,41 @@
+{
+  "pages": [
+    [
+      {
+        "id": "popular",
+        "strategy": "popular",
+        "count": 8
+      },
+      {
+        "id": "new-arrivals",
+        "strategy": "newest",
+        "count": 8
+      }
+    ],
+    [
+      {
+        "id": "popular",
+        "strategy": "popular",
+        "count": 1
+      },
+      {
+        "id": "new-arrivals",
+        "strategy": "newest",
+        "count": 7
+      }
+    ]
+  ],
+  "eligibleFeaturedIds": [
+    4,
+    5,
+    19,
+    20,
+    22,
+    23,
+    24
+  ],
+  "observedStrategies": [
+    "newest",
+    "popular"
+  ]
+}

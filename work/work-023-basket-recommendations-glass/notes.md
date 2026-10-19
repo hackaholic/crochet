@@ -8,3 +8,11 @@
 -Work007 guest Potli Bag/note survived local mock email sign-in and reached checkout intact. This is a test-only local basket, not a real order.
 -Self-review: fixed caught extra prop wiring and test text assertion before passing run. No new dependency or backend mutation. Glass progressive enhancement reviewed, not a claim of Apple's platform-native material.
 -Next: Gemini23.3 can add basket-aware ranking; Codex will migrate adapter after exact return.23.4 remains blocked only on unavailable native browser/device matrix. No push.
+
+2026-10-20 /23.5: Added separate product-details and Add to Basket actions on recommendation cards. Uses existing async server cart callback, keeps drawer open, blocks duplicate pending clicks and handles errors safely.10targeted tests/typecheck passed; Docker rebuilt; actual local empty→1item→2item cart acceptance gave subtotal2098for1299+799, with added products excluded from suggestions.44pxbuttons/no mobile overflow. Self-review/security Pass, API/backend unchanged; no push. Screenshot and exact return in23.5contract.
+
+2026-10-20 — 23.6 completed: replaced bespoke recommendation cards with ProductCard; reused hover zoom/Quick Add, visible touch and focus actions. Typecheck/8 tests/SAST passed; frontend rebuilt and localhost/LAN mobile verified. AGENTS.md now explicitly requires per-feature test and security evidence. Nothing pushed.
+
+2026-10-20 — Work007/7.5 extracted shared discovery into ProductRecommendations.tsx for checkout and basket; BasketRecommendations.tsx preserves existing imports. Basket regression tests pass. No status change or new backend task.
+
+2026-10-20 — Work007/7.9 enables extended paged feed in drawer and full basket using shared renderer; initial newest compatibility remains honest. Ranked backend sections are handed to Gemini in Work007/7.6, final integration 7.10. Existing 23.3 is not silently closed or duplicated; reuse shared ranking service when implemented.

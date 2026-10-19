@@ -185,3 +185,29 @@ Settings1.10 scope audit completed;1.10.1 Gemini pickup-ready.1.10.2 frontend im
 - Automated test suite: `backend/tests/test_storage.py` verified (5/5 tests passing for 1.7.12-TC01 to TC04 and Cache-Control headers). `backend/tests/test_admin_product_media.py` (2/2) and regression suites `test_admin.py` (7/7) and `test_occasions_admin.py` (15/15) all pass cleanly.
 - Live Docker verification: Rebuilt and restarted `docker-api-1`. Verified live `/health` (200), nonexistent image keys returning 404, seeded images returning 200, and authenticated admin upload returning live URL with exact matching binary bytes.
 - Task 1.7.6 unblocked and returned to Codex for real browser upload/save/reopen verification. No push/deployment.
+
+2026-10-20 — Task 1.18 Completed (Gemini + Codex):
+- User requirement: Dynamic search in admin dashboard top bar when an order number, numeric order ID, email, or phone is typed or pasted.
+- Backend implementation:
+  - Extended `list_admin_orders` in `backend/app/api/v1/admin.py` to support numeric `Order.id == int(q.strip())` when digits are supplied, matching internal primary keys directly, alongside case-insensitive `Order.order_number`, `Order.customer_email`, `Order.customer_phone`, and `Order.customer_name`.
+  - Added backend integration test `test_1_18_admin_orders_dynamic_search` in `backend/tests/test_admin_dashboard.py` verifying exact/partial order numbers, numeric ID, email, phone, customer name, whitespace trimming, and unauthorized RBAC rejection (401/403). Test passed 100%.
+- Frontend implementation:
+  - `src/admin/layout/AdminTopBar.tsx`: Debounced dynamic order search calling `api.getOrders({ search, pageSize: 6 })` on 250ms delay, request sequence counter preventing out-of-order stale responses, outside-click and Escape key listeners, clear button, and quick-results dropdown rendering status badge, order number, customer name, contact info, date, and formatted INR total. Added one-click preview via `onSelectOrder` and Enter key / "View all" navigation via `onNavigateToOrders`.
+  - `src/admin/layout/AdminLayout.tsx`: Passed `onSelectOrder`, `onNavigateToOrders`, and `initialSearch` to `AdminTopBar`.
+  - `src/admin/AdminApp.tsx`: Wired `navigateToOrdersWithSearch` and `setSelectedOrder` to `AdminLayout`, showing `OrderPreview` dialog directly on result click and switching tabs to Orders on Enter.
+  - `src/admin/pages/OrdersPage.tsx`: Added `useEffect` to synchronize search query state when navigating from the top bar search input.
+- Testing & Verification:
+  - Added unit/integration test suite `src/admin/layout/AdminTopBar.test.tsx` (7/7 passing: debounced search, phone/email search, click selection, Enter navigation, empty results state, request race condition prevention, 10-digit phone query).
+  - Updated `src/admin/AdminApp.test.tsx` (all passing).
+  - Full admin Vitest suite (`npx vitest run src/admin`): 139/139 tests passing across 35 test files.
+  - TypeScript typecheck (`npx tsc --noEmit`): 0 errors.
+  - Live Docker verification: Rebuilt and restarted `docker-api-1` and `docker-frontend-1`. Health check `http://localhost:8000/health` (HTTP 200 OK) and admin dashboard `http://localhost:8080/admin` (HTTP 200 OK) verified.
+- 2026-10-20 Post-Delivery Fix (10-Digit Phone Search & Integer Range Boundary):
+  - Issue: Searching a 10-digit phone number like `9999900991` succeeded when typing up to 9 digits (`999990099`), but failed with "No matching orders found" upon typing the 10th digit.
+  - Root Cause: In PostgreSQL, `Order.id` is a 32-bit signed `INTEGER` (`max = 2,147,483,647`). When the query string had 9 digits, `999990099 <= 2,147,483,647`, so `Order.id == 999990099` was valid in SQL and `Order.customer_phone.ilike` matched. When the 10th digit was entered (`9999900991`), `9999900991 > 2,147,483,647`, causing PostgreSQL to raise `psycopg.errors.NumericValueOutOfRange: integer out of range`. This 500 error caused the UI to show an empty result state.
+  - Fix:
+    1. In `list_admin_orders`, `admin_global_search`, and `get_admin_order` / `update_order_status`, bounded `Order.id == int(q)` check strictly to the 32-bit signed range `1 <= int(q) <= 2_147_483_647`.
+    2. Added phone digit normalization using `func.replace(func.replace(func.replace(Order.customer_phone, ' ', ''), '-', ''), '+', '')` to match formatted phones (`+91`, spaces, dashes) against raw and formatted inputs.
+    3. Added test coverage in `test_admin_dashboard.py` (`test_1_18_admin_orders_dynamic_search` covering 9-digit, 10-digit, formatted phone with `+91`, dashed phone, and 15-digit overflow safety) and `AdminTopBar.test.tsx` (1.18-TC07).
+    4. Verified live against `docker-api-1` on order `QA-W018-GUEST` (`phone='9999900991'`): returned HTTP 200 with 1 match for both `999990099` and `9999900991`, as well as `+919999900991` and `99999-00991`.
+- Status: Completed. No push or deployment performed.

@@ -42,6 +42,13 @@ export default function AdminApp({ onExitAdmin, onLogout }: Props) {
     setPreview({type:'order',id});
   }, []);
 
+  const navigateToOrdersWithSearch = useCallback((q: string) => {
+    setGlobalSearch(q);
+    setOrderFilter(undefined);
+    setPage('orders');
+    setOrderView(v => v + 1);
+  }, []);
+
   return (
     <AdminLayout
       currentPage={page}
@@ -50,6 +57,9 @@ export default function AdminApp({ onExitAdmin, onLogout }: Props) {
       onSearch={setGlobalSearch}
       datePreset={datePreset}
       onDateChange={setDatePreset}
+      onSelectOrder={selectOrder}
+      onNavigateToOrders={navigateToOrdersWithSearch}
+      initialSearch={globalSearch}
     >
       {page === 'dashboard' && (
         <DashboardPage

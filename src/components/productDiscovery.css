@@ -1,0 +1,7 @@
+.discovery-section + .discovery-section { margin-top: var(--checkout-space, 1.25rem); }
+.discovery-pagination { text-align: center; padding-block: 1rem; font-size: .875rem; color: #79593e; }
+.discovery-more { min-height: 44px; margin-top: .5rem; padding: .65rem 1.4rem; border: 1px solid #b58b66; border-radius: 2rem; background: #fffaf3; color: #5c3d2e; font-weight: 600; }
+.discovery-more:hover { background: #f3e5d3; }
+
+.discovery-section .product-card { min-width: 0; }
+.discovery-section .storefront-product-price { flex-wrap: wrap; gap: .25rem; }

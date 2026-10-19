@@ -7,11 +7,6 @@
 - [ ] 1.7.6 Codex: [Catalogue final local acceptance](tasks/task-018-catalogue-local-acceptance.md) — unblocked by 1.7.12 for real browser upload/save/reopen verification.
 - [ ] 1.17 Codex: Audit API support and define scoped integration for private internal notes and real shipment creation; UI controls explicitly disabled until implemented.
 - [ ] 1.6.1 Codex: Firefox rendering verification — Pending; Firefox is not available through current enabled browser tools.
-
-
-
-
-
 - [ ] 1.12 Codex (delivery owner; user provides final acceptance): Prepare the local review and obtain user acceptance. The user reviews the locally verified admin experience and decides whether any additional sections or visual changes are required; only then consider a dev push/deploy.
 
 
@@ -19,6 +14,7 @@
 
 
 ## Completed
+- [x] 1.18 Gemini + Codex: [Top bar dynamic order search](tasks/task-045-topbar-dynamic-order-search.md) — Completed. Dynamic debounced search across order number, numeric order ID, customer email, customer phone, and customer name with interactive quick-results dropdown, one-click order preview dialog, Enter key navigation to filtered Orders page, and cross-view search synchronization. Backend and frontend tests (TC01–TC08) and local Docker verification passed.
 - [x] 1.7.12 Gemini: [Upload persistence](tasks/task-044-upload-persistence.md) — durable LocalStorageProvider, honest 404s on missing keys, 5/5 storage and 2/2 media tests passing.
 - [x] 1.6 Codex: [Local admin verification](tasks/task-043-local-admin-verification.md) — desktop/mobile audit done; findings recorded in1.7.12 and1.17; Firefox follow-up1.6.1 remains Pending.
 - [x] 1.7.11 Gemini: [Seeded catalogue ID sequences](tasks/task-041-seeded-catalogue-sequences.md) — durable PostgreSQL sequence alignment via align_postgres_sequences in seed_catalogue, 4/4 tests pass in test_seeded_sequences.py.

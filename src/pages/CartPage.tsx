@@ -1,3 +1,5 @@
+import './checkout.css';
+import ProductRecommendations from '../components/ProductRecommendations';
 import PersonalizationNote from '../components/PersonalizationNote';
 import { useState } from 'react';
 import { PlusIcon, MinusIcon, TrashIcon, HeartIcon, ArrowRightIcon } from '../components/Icons';
@@ -13,10 +15,17 @@ interface CartPageProps {
   onWishlist: (product: Product) => void;
   onCheckout: () => void;
   onNavigate: (page: 'home' | 'shop' | 'product' | 'cart' | 'wishlist' | 'checkout' | 'about') => void;
+  onAddToCart: (product: Product) => Promise<void>;
+  onProductClick: (product: Product) => void;
   onCouponChange: (code: string | null) => void;
 }
 
-export default function CartPage({ items, onUpdateQty, onRemove, onWishlist, onCheckout, onNavigate, onCouponChange }: CartPageProps) {
+export default function CartPage({ items, onUpdateQty, onRemove, onWishlist, onCheckout, onNavigate, onCouponChange, onAddToCart, onProductClick }: CartPageProps) {
+  const [addingItem, setAddingItem] = useState(false);
+  const addRecommendation = async (product: Product) => {
+    setAddingItem(true);
+    try { await onAddToCart(product); } finally { setAddingItem(false); }
+  };
   const [couponInput, setCouponInput] = useState('');
   const [coupon, setCoupon] = useState<CouponApplication | null>(null);
   const [couponMessage, setCouponMessage] = useState('');
@@ -28,8 +37,8 @@ export default function CartPage({ items, onUpdateQty, onRemove, onWishlist, onC
   const clearCoupon = async () => { setCouponBusy(true); try { await removeCoupon(); } finally { setCoupon(null); setCouponInput(''); onCouponChange(null); setCouponMessage('Coupon removed.'); setCouponBusy(false); } };
 
   return (
-    <div className="min-h-screen bg-[#FAF7F2] pt-28">
-      <div className="max-w-6xl mx-auto px-4 py-10">
+    <div className="checkout-page">
+      <div className="checkout-container">
         <h1 className="text-4xl font-medium text-[#2C1810] mb-2" style={{ fontFamily: 'var(--font-serif)' }}>Your Basket</h1>
         <p className="text-[#8B6B4A] mb-10">{items.length} item{items.length !== 1 ? 's' : ''}</p>
 
@@ -130,6 +139,7 @@ export default function CartPage({ items, onUpdateQty, onRemove, onWishlist, onC
                 </div>
 
                 <button
+                  disabled={addingItem}
                   onClick={onCheckout}
                   className="w-full py-3.5 bg-[#C4622D] text-white rounded-full font-semibold hover:bg-[#D4795A] transition-colors flex items-center justify-center gap-2"
                 >
@@ -149,6 +159,9 @@ export default function CartPage({ items, onUpdateQty, onRemove, onWishlist, onC
             </div>
           </div>
         )}
+        <ProductRecommendations extended open layout="checkout" context="basket" openProductInNewTab
+          excludedIds={items.map(item => item.product.id)}
+          onAddToCart={addRecommendation} onProductClick={onProductClick} />
       </div>
     </div>
   );

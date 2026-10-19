@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import BasketRecommendations from './BasketRecommendations';
 import { getBasketDiscovery } from '../lib/api/basketRecommendations';
@@ -8,21 +8,63 @@ afterEach(() => { cleanup(); vi.resetAllMocks(); });
 it('requests only when open, excludes current basket and opens the selected API product', async () => {
   vi.mocked(getBasketDiscovery).mockResolvedValue([rose, { ...rose, id: 2, name: '<Tulip>' }]);
   const onProductClick = vi.fn();
-  const { rerender } = render(<BasketRecommendations open={false} excludedIds={[]} onProductClick={onProductClick} />);
+  const { rerender } = render(<BasketRecommendations onAddToCart={vi.fn().mockResolvedValue(undefined)} open={false} excludedIds={[]} onProductClick={onProductClick} />);
   expect(getBasketDiscovery).not.toHaveBeenCalled();
-  rerender(<BasketRecommendations open excludedIds={[1]} onProductClick={onProductClick} />);
+  rerender(<BasketRecommendations onAddToCart={vi.fn().mockResolvedValue(undefined)} open excludedIds={[1]} onProductClick={onProductClick} />);
   expect(await screen.findByRole('heading', { name: 'You may also like' })).toBeVisible();
   expect(screen.queryByText('Rose')).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: /<Tulip>/ }));
+  fireEvent.click(screen.getByRole('link', { name: '<Tulip>' }));
   expect(onProductClick).toHaveBeenCalledWith(expect.objectContaining({ id: 2 }));
   expect(document.querySelector('Tulip')).toBeNull();
+  expect(screen.getByTestId('product-card')).toHaveClass('product-card');
+  expect(screen.getByTestId('product-image-frame')).toHaveClass('aspect-[3/4]');
+  expect(screen.getByRole('img')).toHaveClass('group-hover:scale-105');
+  expect(screen.getByRole('button', {name:'Add <Tulip> to basket'})).toHaveTextContent('Quick Add');
+  expect(screen.queryByRole('button', {name:'Toggle wishlist'})).not.toBeInTheDocument();
 });
 it('omits empty or failed suggestions and aborts work on close', async () => {
   vi.mocked(getBasketDiscovery).mockRejectedValue(new Error('offline'));
-  const { rerender } = render(<BasketRecommendations open excludedIds={[]} onProductClick={vi.fn()} />);
+  const { rerender } = render(<BasketRecommendations onAddToCart={vi.fn().mockResolvedValue(undefined)} open excludedIds={[]} onProductClick={vi.fn()} />);
   await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument());
   expect(screen.queryByRole('heading')).not.toBeInTheDocument();
   const signal = vi.mocked(getBasketDiscovery).mock.calls[0][0];
-  rerender(<BasketRecommendations open={false} excludedIds={[]} onProductClick={vi.fn()} />);
+  rerender(<BasketRecommendations onAddToCart={vi.fn().mockResolvedValue(undefined)} open={false} excludedIds={[]} onProductClick={vi.fn()} />);
   expect(signal?.aborted).toBe(true);
+});
+
+it('adds directly once, blocks duplicate submissions and removes added items when server cart updates', async () => {
+  vi.mocked(getBasketDiscovery).mockResolvedValue([rose]);
+  let finish = () => {};
+  const pending = new Promise<void>(resolve => { finish = resolve; });
+  const onAddToCart = vi.fn(() => pending);
+  const onProductClick = vi.fn();
+  const { rerender } = render(<BasketRecommendations open excludedIds={[]} onProductClick={onProductClick} onAddToCart={onAddToCart} />);
+  const add = await screen.findByRole('button', {name:'Add Rose to basket'});
+  fireEvent.click(add);
+  fireEvent.click(add);
+  expect(onAddToCart).toHaveBeenCalledExactlyOnceWith(rose);
+  expect(add).toBeDisabled();
+  expect(add).toHaveAttribute('aria-busy', 'true');
+  expect(onProductClick).not.toHaveBeenCalled();
+  await act(async () => finish());
+  expect(add).toBeEnabled();
+  expect(screen.getByRole('status')).toHaveTextContent('Rose added to your basket.');
+  rerender(<BasketRecommendations open excludedIds={[1]} onProductClick={onProductClick} onAddToCart={onAddToCart} />);
+  expect(screen.queryByRole('button', {name:'Add Rose to basket'})).not.toBeInTheDocument();
+});
+
+it('shows a safe cart failure and permits retry without navigating away', async () => {
+  vi.mocked(getBasketDiscovery).mockResolvedValue([rose]);
+  const onAddToCart = vi.fn().mockRejectedValueOnce(new Error('private backend detail')).mockResolvedValueOnce(undefined);
+  const onProductClick = vi.fn();
+  render(<BasketRecommendations open excludedIds={[]} onProductClick={onProductClick} onAddToCart={onAddToCart} />);
+  const add = await screen.findByRole('button', {name:'Add Rose to basket'});
+  fireEvent.click(add);
+  expect(await screen.findByRole('alert')).toHaveTextContent('Could not add this item. Please try again.');
+  expect(screen.queryByText('private backend detail')).not.toBeInTheDocument();
+  expect(add).toBeEnabled();
+  fireEvent.click(add);
+  await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Rose added to your basket.'));
+  expect(onProductClick).not.toHaveBeenCalled();
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 });

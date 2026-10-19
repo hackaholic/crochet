@@ -20,10 +20,11 @@ interface CartDrawerProps {
   onRemove: (id: number) => void;
   onWishlist: (product: Product) => void;
   onCheckout: () => void;
+  onAddToCart: (product: Product) => Promise<void>;
   onProductClick?: (product: Product) => void;
 }
 
-export default function CartDrawer({ open, onClose, items, onUpdateQty, onRemove, onWishlist, onCheckout, onProductClick }: CartDrawerProps) {
+export default function CartDrawer({ open, onClose, items, onUpdateQty, onRemove, onWishlist, onCheckout, onProductClick, onAddToCart }: CartDrawerProps) {
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const element = dialog.current;
@@ -134,7 +135,7 @@ export default function CartDrawer({ open, onClose, items, onUpdateQty, onRemove
               </div>
             </div>
           ))}
-          {onProductClick && <BasketRecommendations open={open} excludedIds={items.map(item => item.product.id)} onProductClick={product => { onClose(); onProductClick(product); }} />}
+          {onProductClick && <BasketRecommendations extended onAddToCart={onAddToCart} open={open} excludedIds={items.map(item => item.product.id)} onProductClick={product => { onClose(); onProductClick(product); }} />}
         </div>
 
         {/* Footer */}

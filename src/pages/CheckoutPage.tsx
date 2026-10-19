@@ -1,3 +1,6 @@
+import './checkout.css';
+import ProductRecommendations from '../components/ProductRecommendations';
+import type { Product } from '../data/products';
 import PersonalizationNote from '../components/PersonalizationNote';
 import { guestTrackingPath } from '../lib/routes';
 import { useState } from 'react';
@@ -11,6 +14,8 @@ interface CheckoutPageProps {
   onComplete: () => void;
   onNavigate: (page: 'home' | 'shop' | 'product' | 'cart' | 'wishlist' | 'checkout' | 'about') => void;
   couponCode: string | null;
+  onAddToCart: (product: Product) => Promise<void>;
+  onProductClick: (product: Product) => void;
 }
 
 type Step = 'contact' | 'delivery' | 'payment' | 'review';
@@ -29,7 +34,12 @@ const paymentMethods = [
   { id: 'cod', label: 'Cash on Delivery', icon: '💵', desc: 'Pay when delivered' },
 ];
 
-export default function CheckoutPage({ items, onComplete, onNavigate, couponCode }: CheckoutPageProps) {
+export default function CheckoutPage({ items, onComplete, onNavigate, couponCode, onAddToCart, onProductClick }: CheckoutPageProps) {
+  const [addingItem, setAddingItem] = useState(false);
+  const addRecommendation = async (product: Product) => {
+    setAddingItem(true);
+    try { await onAddToCart(product); } finally { setAddingItem(false); }
+  };
   const [step, setStep] = useState<Step>('contact');
   const [selectedPayment, setSelectedPayment] = useState('upi');
   const [completedOrder, setCompletedOrder] = useState<OrderOut>();
@@ -45,6 +55,7 @@ export default function CheckoutPage({ items, onComplete, onNavigate, couponCode
   const stepIndex = steps.findIndex(s => s.id === step);
 
   const next = async () => {
+    if (addingItem || submitting) return;
     const idx = stepIndex;
     if (idx < steps.length - 1) setStep(steps[idx + 1].id);
     else {
@@ -98,45 +109,58 @@ export default function CheckoutPage({ items, onComplete, onNavigate, couponCode
     );
   }
 
+  if (!items.length) return (
+    <div className="checkout-page"><div className="checkout-container">
+      <section className="checkout-panel text-center">
+        <h1 className="text-2xl font-medium" style={{fontFamily: 'var(--font-serif)'}}>Your basket is empty</h1>
+        <button className="checkout-browse" onClick={() => onNavigate('shop')}>Browse the collection</button>
+      </section>
+    </div></div>
+  );
+
   return (
-    <div className="min-h-screen bg-[#FAF7F2] pt-28">
-      <div className="max-w-5xl mx-auto px-4 py-10">
-        <h1 className="text-3xl font-medium text-[#2C1810] mb-8" style={{ fontFamily: 'var(--font-serif)' }}>Checkout</h1>
+    <div className="checkout-page">
+      <div className="checkout-container">
+        <header className="checkout-heading">
+          <h1 style={{ fontFamily: 'var(--font-serif)' }}>Checkout</h1>
+          <button onClick={() => onNavigate('cart')} className="checkout-back">← Back to basket</button>
+        </header>
 
         {/* Step indicators */}
-        <div className="flex items-center mb-10">
+        <nav aria-label="Checkout progress" className="checkout-progress">
           {steps.map(({ id, label }, i) => (
-            <div key={id} className="flex items-center flex-1">
+            <div key={id} aria-current={id === step ? 'step' : undefined} className="checkout-step flex items-center flex-1">
               <div className="flex items-center gap-2 shrink-0">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${i < stepIndex ? 'bg-[#8FAF8C] text-white' : i === stepIndex ? 'bg-[#C4622D] text-white' : 'bg-[#EDE4D0] text-[#8B6B4A]'}`}>
                   {i < stepIndex ? <CheckIcon size={14} /> : i + 1}
                 </div>
-                <span className={`text-sm font-medium hidden md:block ${i === stepIndex ? 'text-[#C4622D]' : 'text-[#8B6B4A]'}`}>{label}</span>
+                <span className={`checkout-step-label text-sm font-medium ${i === stepIndex ? 'text-[#C4622D]' : 'text-[#8B6B4A]'}`}>{label}</span>
               </div>
               {i < steps.length - 1 && (
                 <div className={`flex-1 h-0.5 mx-3 ${i < stepIndex ? 'bg-[#8FAF8C]' : 'bg-[#EDE4D0]'}`} />
               )}
             </div>
           ))}
-        </div>
+        </nav>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="checkout-grid">
           {/* Form */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl p-7 border border-[#EDE4D0]" style={{ boxShadow: '0 2px 8px rgba(44,24,16,0.04)' }}>
+          <div className="min-w-0">
+            <div className="checkout-panel">
               {step === 'contact' && (
                 <div>
                   <h2 className="text-xl font-semibold text-[#2C1810] mb-6" style={{ fontFamily: 'var(--font-serif)' }}>Contact Information</h2>
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     {[
                       { label: 'First Name', placeholder: 'Priya', col: 1, name: 'firstName' },
                       { label: 'Last Name', placeholder: 'Sharma', col: 1, name: 'lastName' },
                       { label: 'Email', placeholder: 'priya@example.com', col: 2, type: 'email', name: 'email' },
-                      { label: 'Phone Number', placeholder: '+91 98765 43210', col: 1, type: 'tel', name: 'phone' },
+                      { label: 'Phone Number', placeholder: '+91 98765 43210', col: 2, type: 'tel', name: 'phone' },
                     ].map(({ label, placeholder, col, type = 'text', name }) => (
-                      <div key={label} className={col === 2 ? 'md:col-span-2' : ''}>
-                        <label className="block text-sm font-medium text-[#2C1810] mb-1.5">{label}{['First Name', 'Email', 'Phone Number'].includes(label) ? ' *' : ''}</label>
+                      <div key={label} className={col === 2 ? 'col-span-2 md:col-span-1' : ''}>
+                        <label htmlFor={`checkout-${name}`} className="block text-sm font-medium text-[#2C1810] mb-1.5">{label}{['First Name', 'Email', 'Phone Number'].includes(label) ? ' *' : ''}</label>
                         <input
+                          id={`checkout-${name}`}
                           type={type}
                           required={['First Name', 'Email', 'Phone Number'].includes(label)}
                           placeholder={placeholder}
@@ -162,8 +186,9 @@ export default function CheckoutPage({ items, onComplete, onNavigate, couponCode
                       { label: 'Landmark (optional)', placeholder: 'Near XYZ', col: 1, name: 'landmark' },
                     ].map(({ label, placeholder, col, name }) => (
                       <div key={label} className={col === 2 ? 'md:col-span-2' : ''}>
-                        <label className="block text-sm font-medium text-[#2C1810] mb-1.5">{label}</label>
+                        <label htmlFor={`checkout-${name}`} className="block text-sm font-medium text-[#2C1810] mb-1.5">{label}</label>
                         <input
+                          id={`checkout-${name}`}
                           type="text"
                           placeholder={placeholder}
                           {...input(name as keyof typeof form)}
@@ -281,8 +306,8 @@ export default function CheckoutPage({ items, onComplete, onNavigate, couponCode
                 )}
                 <button
                   onClick={next}
-                  disabled={submitting}
-                  className="flex-1 py-3.5 bg-[#C4622D] text-white rounded-full font-semibold hover:bg-[#D4795A] transition-colors flex items-center justify-center gap-2"
+                  disabled={submitting || addingItem}
+                  className="disabled:opacity-60 disabled:cursor-wait flex-1 py-3.5 bg-[#C4622D] text-white rounded-full font-semibold hover:bg-[#D4795A] transition-colors flex items-center justify-center gap-2"
                 >
                   {submitting ? 'Placing your order…' : step === 'review' ? '✓ Place Order' : `Continue to ${steps[stepIndex + 1]?.label}`}
                   {step !== 'review' && <ArrowRightIcon size={16} />}
@@ -293,9 +318,9 @@ export default function CheckoutPage({ items, onComplete, onNavigate, couponCode
           </div>
 
           {/* Mini order summary */}
-          <div className="hidden lg:block">
-            <div className="bg-white rounded-2xl p-6 border border-[#EDE4D0] sticky top-28">
-              <h3 className="text-base font-semibold text-[#2C1810] mb-4" style={{ fontFamily: 'var(--font-serif)' }}>Order Summary</h3>
+          <aside className="checkout-summary" aria-label="Order summary">
+            <div className="checkout-panel">
+              <h2 className="checkout-summary-title" style={{ fontFamily: 'var(--font-serif)' }}>Order Summary <span>{items.reduce((count, item) => count + item.quantity, 0)} items</span></h2>
               <div className="space-y-3 mb-5">
                 {items.map(({ product, quantity, personalization }) => (
                   <div key={product.id} className="flex items-center gap-3">
@@ -317,8 +342,11 @@ export default function CheckoutPage({ items, onComplete, onNavigate, couponCode
                 <div className="flex justify-between font-bold text-[#2C1810] pt-2 border-t border-[#EDE4D0]"><span>Total</span><span>₹{total}</span></div>
               </div>
             </div>
-          </div>
+          </aside>
         </div>
+        <ProductRecommendations extended open={!submitting} layout="checkout" openProductInNewTab
+          excludedIds={items.map(item => item.product.id)}
+          onAddToCart={addRecommendation} onProductClick={onProductClick} />
       </div>
     </div>
   );

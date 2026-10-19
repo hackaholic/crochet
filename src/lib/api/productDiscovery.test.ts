@@ -1,0 +1,26 @@
+import { afterEach, expect, it, vi } from 'vitest';
+import { getProductDiscovery } from './productDiscovery';
+const product={id:1,name:'Rose',slug:'rose',price:400,currency:'INR',inStock:true,image:'/rose.webp'};
+const signal=()=>new AbortController().signal;
+afterEach(()=>vi.unstubAllGlobals());
+it('uses credentialed bounded discovery and rejects unsafe/ineligible products',async()=>{
+ const fetch=vi.fn().mockResolvedValue({ok:true,json:async()=>({sections:[{id:'featured',title:'Featured',strategy:'featured',products:[product,{...product,id:2,image:'javascript:alert(1)'},{...product,id:3,inStock:false}]}],nextCursor:'page:2'})});vi.stubGlobal('fetch',fetch);
+ const page=await getProductDiscovery('checkout',null,signal());
+ expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/storefront/discovery?context=checkout&limit=16'),expect.objectContaining({credentials:'include'}));
+ expect(page.sections[0].products.map(p=>p.id)).toEqual([1]);expect(page.nextCursor).toBe('page:2');
+});
+it('falls back only for a missing API, advances newest pages, and stops at exhaustion',async()=>{
+ const fetch=vi.fn().mockResolvedValueOnce({ok:false,status:404}).mockResolvedValueOnce({ok:true,json:async()=>Array.from({length:8},(_,i)=>({...product,id:i+1}))}).mockResolvedValueOnce({ok:true,json:async()=>[]});vi.stubGlobal('fetch',fetch);
+ const page=await getProductDiscovery('basket',null,signal());
+ expect(page.sections.map(s=>s.title)).toEqual(['You may also like','New arrivals']);expect(page.nextCursor).toBe('catalogue:8');
+ expect((await getProductDiscovery('basket',page.nextCursor,signal())).nextCursor).toBeNull();
+ expect(fetch.mock.calls[2][0]).toContain('sort=newest&limit=8&offset=8');
+});
+it('fails closed on API errors, malformed/oversized pages and invalid cursors without catalogue fallback',async()=>{
+ const fetch=vi.fn().mockResolvedValueOnce({ok:false,status:403}).mockResolvedValueOnce({ok:true,json:async()=>({sections:[],nextCursor:'x'.repeat(513)})}).mockResolvedValueOnce({ok:true,json:async()=>({sections:Array(6).fill({}),nextCursor:null})});vi.stubGlobal('fetch',fetch);
+ await expect(getProductDiscovery('checkout',null,signal())).rejects.toThrow('unavailable');
+ await expect(getProductDiscovery('checkout',null,signal())).rejects.toThrow('Invalid');
+ await expect(getProductDiscovery('checkout',null,signal())).rejects.toThrow('Invalid');
+ await expect(getProductDiscovery('checkout','catalogue:-1',signal())).rejects.toThrow('Invalid');
+ expect(fetch).toHaveBeenCalledTimes(3);
+});

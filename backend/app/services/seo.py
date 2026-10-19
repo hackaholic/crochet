@@ -8,6 +8,7 @@ from xml.sax.saxutils import escape as xml_escape
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app.services.product_information import resolve_product_information
 from app.core.images import build_image_url
 from app.services.media import build_media_metadata, get_image_dimensions, get_media_manifest_hash
 from app.models.catalogue import (
@@ -729,11 +730,12 @@ class SeoService:
                 aggregate_rating = SeoService.get_products_aggregate_ratings(db, [product.id]).get(product.id)
 
                 # Truthful FAQs using Work 019 fields or fallback to defaults
-                defaults = db.query(ProductInformationDefaults).first()
-                care_text = product.care_instructions or (defaults.care_instructions if defaults else None)
-                materials_text = product.materials_used or (defaults.materials_used if defaults else None)
-                shipping_text = product.shipping_delivery or (defaults.shipping_delivery if defaults else None)
-                handmade_text = product.handmade_details or (defaults.handmade_details if defaults else None)
+                defaults = db.query(ProductInformationDefaults).order_by(ProductInformationDefaults.id.asc()).first()
+                information = resolve_product_information(product, defaults)
+                care_text = information["care_instructions"]
+                materials_text = information["materials_used"]
+                shipping_text = information["shipping_delivery"]
+                handmade_text = information["handmade_details"]
 
                 faqs = []
                 if care_text:
@@ -763,12 +765,12 @@ class SeoService:
                     media=media_items,
                     variants=variant_models,
                     aggregateRating=aggregate_rating,
-                    handmadeDetails=product.handmade_details,
-                    materialsUsed=product.materials_used,
-                    sizeDimensions=product.size_dimensions,
-                    careInstructions=product.care_instructions,
-                    shippingDelivery=product.shipping_delivery,
-                    processingTime=product.processing_time,
+                    handmadeDetails=information["handmade_details"],
+                    materialsUsed=information["materials_used"],
+                    sizeDimensions=information["size_dimensions"],
+                    careInstructions=information["care_instructions"],
+                    shippingDelivery=information["shipping_delivery"],
+                    processingTime=information["processing_time"],
                 )
 
                 return SeoMetadataOut(

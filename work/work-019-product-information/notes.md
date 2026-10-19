@@ -6,3 +6,5 @@
 2026-10-11 — 19.2 completed: six-field editor/defaults and persisted public accordions; 13 frontend +10 isolated backend tests/typecheck, real local save/reopen/storefront and mobile verified. Blank-clear validator gap repaired with regression. See task-002 return. 19.3 remains Pending.
 
 2026-10-11 — 19.3 complete: 12 isolated backend cases +1 migration test; real all-six-field admin/storefront roundtrip and restored originals. Unchanged-gallery metadata bug fixed. Owner neutral timing/delivery defaults applied. Work019 complete; no push. See task-003 for exact evidence and existing seed-restart identity observation.
+
+2026-10-20 — 19.4 Completed. Owner clarified missing specs use DB defaults. Shared public resolver fixes API/SEO inconsistency without overwriting stored values. Initial24/24 empty, after24/24 allsix public fields.14 backend/11 frontend tests+SAST passed; API rebuilt, localhost desktop/mobile verified. Initial frontend exit137 rerun passed. Exact evidence task-004. No push.

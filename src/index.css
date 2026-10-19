@@ -109,9 +109,19 @@ body {
 }
 
 /* Product card hover */
-.product-card:hover .quick-add-btn {
+.product-card:hover .quick-add-btn,
+.product-card:focus-within .quick-add-btn {
   opacity: 1;
   transform: translateY(0);
+}
+
+/* Shared discovery/catalogue actions remain available without a hover pointer. */
+@media (hover: none), (pointer: coarse), (max-width: 639px) {
+  .product-card .quick-add-btn { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .product-card img, .product-card .quick-add-btn { transition: none; }
+  .product-card:hover img { transform: none; }
 }
 
 /* Transition defaults */

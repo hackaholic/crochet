@@ -417,6 +417,124 @@ def test_admin_orders_extended_filters_and_sorting():
     assert totals == sorted(totals, reverse=True)
 
 
+def test_1_18_admin_orders_dynamic_search():
+    """Task 1.18: Dynamic order search by order number, numeric ID, email, phone, name and security checks."""
+    admin_cookies = _login_admin("9999900000")
+    customer_cookies = _login_customer("9999988111")
+    now = datetime.now(timezone.utc)
+    suffix = int(now.timestamp())
+
+    test_ord_num = f"SLC-DYN-TEST-{suffix}"
+    test_email = f"search_target_{suffix}@example.com"
+    test_phone = f"98765{suffix % 100000:05d}"
+    test_name = f"Special Customer {suffix}"
+
+    with SessionLocal() as db:
+        order = _create_test_order(
+            db,
+            order_number=test_ord_num,
+            customer_name=test_name,
+            total_amount=3200,
+            subtotal=3000,
+            shipping_fee=200,
+            sku=f"SKU-DYN-{suffix}",
+            country="IN",
+        )
+        order.customer_email = test_email
+        order.customer_phone = test_phone
+        db.commit()
+        db.refresh(order)
+        order_id = order.id
+
+    # 1. Search by exact Order Number
+    res_num = client.get(f"/api/v1/admin/orders?q={test_ord_num}", cookies=admin_cookies)
+    assert res_num.status_code == 200
+    items = res_num.json()["items"]
+    assert any(o["orderNumber"] == test_ord_num for o in items)
+
+    # 2. Search by partial Order Number
+    res_part = client.get(f"/api/v1/admin/orders?q=DYN-TEST-{suffix}", cookies=admin_cookies)
+    assert res_part.status_code == 200
+    assert any(o["orderNumber"] == test_ord_num for o in res_part.json()["items"])
+
+    # 3. Search by numeric Order ID
+    res_id = client.get(f"/api/v1/admin/orders?q={order_id}", cookies=admin_cookies)
+    assert res_id.status_code == 200
+    assert any(o["id"] == order_id for o in res_id.json()["items"])
+
+    # 4. Search by customer email
+    res_email = client.get(f"/api/v1/admin/orders?q={test_email}", cookies=admin_cookies)
+    assert res_email.status_code == 200
+    assert any(o["orderNumber"] == test_ord_num for o in res_email.json()["items"])
+
+    # 5. Search by customer phone
+    res_phone = client.get(f"/api/v1/admin/orders?q={test_phone}", cookies=admin_cookies)
+    assert res_phone.status_code == 200
+    assert any(o["orderNumber"] == test_ord_num for o in res_phone.json()["items"])
+
+    # 6. Search by customer name
+    res_name = client.get(f"/api/v1/admin/orders?q={test_name}", cookies=admin_cookies)
+    assert res_name.status_code == 200
+    assert any(o["orderNumber"] == test_ord_num for o in res_name.json()["items"])
+
+    # 7. Non-existent query returns empty list
+    res_empty = client.get(f"/api/v1/admin/orders?q=NONEXISTENT_QUERY_{suffix}_XYZ", cookies=admin_cookies)
+    assert res_empty.status_code == 200
+    assert len(res_empty.json()["items"]) == 0
+
+    # 8. 10-digit phone number (e.g. 9999900991 > 2,147,483,647 32-bit int limit)
+    # Verifies both 9-digit prefix and full 10-digit query succeed without integer out of range error
+    order_10digit_phone = "9999900991"
+    with SessionLocal() as db:
+        order_ph = _create_test_order(
+            db,
+            order_number=f"ORD-PH10-{suffix}",
+            customer_name="Ten Digit Phone Customer",
+            total_amount=1500,
+            subtotal=1400,
+            shipping_fee=100,
+            sku=f"SKU-PH10-{suffix}",
+            country="IN",
+        )
+        order_ph.customer_phone = order_10digit_phone
+        db.commit()
+
+    # 9-digit partial phone search
+    res_ph9 = client.get("/api/v1/admin/orders?q=999990099", cookies=admin_cookies)
+    assert res_ph9.status_code == 200
+    assert any(o["orderNumber"] == f"ORD-PH10-{suffix}" for o in res_ph9.json()["items"])
+
+    # Full 10-digit phone search (specifically guards against NumericValueOutOfRange)
+    res_ph10 = client.get(f"/api/v1/admin/orders?q={order_10digit_phone}", cookies=admin_cookies)
+    assert res_ph10.status_code == 200
+    assert any(o["orderNumber"] == f"ORD-PH10-{suffix}" for o in res_ph10.json()["items"])
+
+    # Formatted phone search (+91 prefix, spaces, dashes)
+    res_ph_fmt1 = client.get(f"/api/v1/admin/orders?q=%2B91{order_10digit_phone}", cookies=admin_cookies)
+    assert res_ph_fmt1.status_code == 200
+    assert any(o["orderNumber"] == f"ORD-PH10-{suffix}" for o in res_ph_fmt1.json()["items"])
+
+    res_ph_fmt2 = client.get("/api/v1/admin/orders?q=99999-00991", cookies=admin_cookies)
+    assert res_ph_fmt2.status_code == 200
+    assert any(o["orderNumber"] == f"ORD-PH10-{suffix}" for o in res_ph_fmt2.json()["items"])
+
+    # Very large numeric string (e.g. 15 digits) does not trigger integer overflow
+    res_overflow = client.get("/api/v1/admin/orders?q=987654321098765", cookies=admin_cookies)
+    assert res_overflow.status_code == 200
+
+    # Order lookup by 10-digit numeric string returns 404 instead of 500 integer overflow
+    res_ord_lookup = client.get(f"/api/v1/admin/orders/{order_10digit_phone}", cookies=admin_cookies)
+    assert res_ord_lookup.status_code == 404
+
+    # 9. Security: Unauthenticated request denied (401 or 403)
+    res_unauth = client.get(f"/api/v1/admin/orders?q={test_ord_num}")
+    assert res_unauth.status_code in (401, 403)
+
+    # 10. Security: Non-admin customer denied (403)
+    res_forbidden = client.get(f"/api/v1/admin/orders?q={test_ord_num}", cookies=customer_cookies)
+    assert res_forbidden.status_code == 403
+
+
 def test_admin_dashboard_attention_queue():
     """Verify detection of actionable items: unshipped orders, pending returns, low stock."""
     admin_cookies = _login_admin("9999900000")

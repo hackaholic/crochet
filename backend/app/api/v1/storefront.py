@@ -1,14 +1,18 @@
 """Public storefront API conforming to docs/api-storefront.md."""
 
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Cookie, Depends, Header, Query
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
+from app.api.v1.auth import get_optional_current_user
 from app.api.v1.catalogue import _to_product_list_item, _to_product_list_items
 from app.db.session import get_db
 from app.models.catalogue import Category, Collection, Occasion, Product, Review, Tag
 from app.models.storefront import BrandSettings, HomepageCampaign, HomepageSection
+from app.models.user import User
+from app.schemas.discovery import DiscoveryResponse
+from app.services.discovery import get_cart_product_ids, get_discovery_feed
 from app.schemas.storefront import (
     BrandSettingsOut,
     CategoryGridSectionOut,
@@ -333,3 +337,39 @@ def get_storefront_content(db: Session = Depends(get_db)) -> StorefrontResponse:
         brand=brand_out,
         hero_campaigns=hero_campaigns,
     )
+
+
+@router.get("/discovery", response_model=DiscoveryResponse)
+def get_storefront_discovery(
+    context: str = Query(
+        default="checkout",
+        pattern="^(checkout|basket)$",
+        description="Discovery context (checkout or basket)",
+    ),
+    limit: int = Query(
+        default=16,
+        ge=1,
+        le=16,
+        description="Total products limit per page across all sections",
+    ),
+    cursor: str | None = Query(
+        default=None,
+        max_length=512,
+        description="Opaque pagination cursor",
+    ),
+    guest_cart_token: str | None = Cookie(default=None),
+    x_cart_token: str | None = Header(default=None),
+    user: User | None = Depends(get_optional_current_user),
+    db: Session = Depends(get_db),
+) -> DiscoveryResponse:
+    """Return ranked catalogue discovery sections with basket exclusion and opaque cursor pagination."""
+    guest_token = guest_cart_token or x_cart_token
+    cart_pids = get_cart_product_ids(db, user=user, guest_token=guest_token)
+    sections, next_cursor = get_discovery_feed(
+        db,
+        context=context,
+        limit=limit,
+        cursor=cursor,
+        cart_product_ids=cart_pids,
+    )
+    return DiscoveryResponse(sections=sections, nextCursor=next_cursor)

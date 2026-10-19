@@ -15,6 +15,7 @@ from app.models.catalogue import (
     Product,
     ProductCollection,
     ProductImage,
+    ProductInformationDefaults,
     ProductVariant,
     Review,
     Tag,
@@ -26,6 +27,7 @@ from app.models.order import (
     OrderStatus,
     PaymentStatus,
 )
+from app.services.product_information import resolve_product_information
 from app.models.search import SearchEvent
 from app.models.user import User
 from app.schemas.catalogue import (
@@ -1049,6 +1051,9 @@ def get_product_detail(
 
     aggregate_rating = SeoService.get_products_aggregate_ratings(db, [product.id]).get(product.id)
 
+    information = resolve_product_information(
+        product, db.query(ProductInformationDefaults).order_by(ProductInformationDefaults.id.asc()).first()
+    )
     return ProductDetail(
         id=product.id,
         name=product.name,
@@ -1081,12 +1086,7 @@ def get_product_detail(
         customizable=product.customizable,
         attributes=product.metadata_json or {},
         customer_reviews=customer_reviews,
-        handmade_details=product.handmade_details,
-        materials_used=product.materials_used,
-        size_dimensions=product.size_dimensions,
-        processing_time=product.processing_time,
-        care_instructions=product.care_instructions,
-        shipping_delivery=product.shipping_delivery,
+        **information,
     )
 
 

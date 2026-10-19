@@ -8,8 +8,12 @@ import type { Product } from '../data/products';
 interface ProductCardProps {
   product: Product;
   onAddToCart: (product: Product) => void;
-  onToggleWishlist: (product: Product) => void;
-  isWishlisted: boolean;
+  onToggleWishlist?: (product: Product) => void;
+  isWishlisted?: boolean;
+  addPending?: boolean;
+  addDisabled?: boolean;
+  addLabel?: string;
+  openProductInNewTab?: boolean;
   onProductClick: (product: Product) => void;
 }
 
@@ -21,12 +25,14 @@ const badgeColor: Record<string, string> = {
   Customizable: 'bg-[#F2C4CE] text-[#C4622D]',
 };
 
-export default function ProductCard({ product, onAddToCart, onToggleWishlist, isWishlisted, onProductClick }: ProductCardProps) {
+export default function ProductCard({ product, onAddToCart, onToggleWishlist, isWishlisted, onProductClick, addPending, addDisabled, addLabel, openProductInNewTab = false }: ProductCardProps) {
   const verified = product.aggregateRating?.provenance === 'VERIFIED_REVIEWS' && product.aggregateRating.reviewCount > 0 ? product.aggregateRating : undefined;
   const [adding, setAdding] = useState(false);
 
   const handleAdd = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (addDisabled || addPending) return;
+    if (addPending !== undefined) { onAddToCart(product); return; }
     setAdding(true);
     onAddToCart(product);
     setTimeout(() => setAdding(false), 800);
@@ -34,7 +40,7 @@ export default function ProductCard({ product, onAddToCart, onToggleWishlist, is
 
   const handleWishlist = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onToggleWishlist(product);
+    onToggleWishlist?.(product);
   };
 
   return (
@@ -62,20 +68,24 @@ export default function ProductCard({ product, onAddToCart, onToggleWishlist, is
           </span>
         )}
         {/* Wishlist */}
-        <button
+        {onToggleWishlist && <button
           className="absolute z-20 top-3 right-3 w-9 h-9 rounded-full bg-white flex items-center justify-center shadow-sm transition-all duration-200 hover:scale-110"
           onClick={handleWishlist}
           aria-label="Toggle wishlist"
         >
           <HeartIcon size={16} filled={isWishlisted} className={isWishlisted ? 'text-[#C4622D]' : 'text-[#8B6B4A]'} />
-        </button>
+        </button>}
         {/* Quick add — slides up on hover */}
         <div className="quick-add-btn z-20 absolute bottom-0 left-0 right-0 opacity-0 translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
           <button
-            className={`w-full py-2.5 text-sm font-semibold transition-colors ${adding ? 'bg-[#8FAF8C] text-white' : 'bg-[#2C1810] text-white hover:bg-[#C4622D]'}`}
+            className={`min-h-11 w-full py-2.5 text-sm font-semibold transition-colors ${adding ? 'bg-[#8FAF8C] text-white' : 'bg-[#2C1810] text-white hover:bg-[#C4622D]'}`}
+            type="button"
+            disabled={addDisabled || addPending}
+            aria-busy={addPending}
+            aria-label={addLabel}
             onClick={handleAdd}
           >
-            {adding ? '✓ Added!' : 'Quick Add'}
+            {addPending ? 'Adding…' : adding ? '✓ Added!' : 'Quick Add'}
           </button>
         </div>
       </div>
@@ -83,7 +93,7 @@ export default function ProductCard({ product, onAddToCart, onToggleWishlist, is
       <div className="storefront-product-info flex flex-1 flex-col p-4">
         <p className="text-xs text-[#8B6B4A] font-medium mb-1">{product.category}</p>
         <h3 className="storefront-product-title mb-2 min-h-10 line-clamp-2 text-sm font-semibold leading-snug text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>
-          <DestinationLink href={productPath(product)} onNavigate={() => onProductClick(product)} className="after:absolute after:inset-0 after:z-10 after:rounded-2xl focus-visible:outline-2 focus-visible:outline-[#C4622D]">{product.name}</DestinationLink>
+          <DestinationLink target={openProductInNewTab ? '_blank' : undefined} rel={openProductInNewTab ? 'noopener noreferrer' : undefined} href={productPath(product)} onNavigate={() => onProductClick(product)} className="after:absolute after:inset-0 after:z-10 after:rounded-2xl focus-visible:outline-2 focus-visible:outline-[#C4622D]">{product.name}</DestinationLink>
         </h3>
         {verified && <div className="storefront-product-rating flex items-center gap-1.5 mb-3">
           <div className="flex">

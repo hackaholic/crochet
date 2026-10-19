@@ -7,6 +7,7 @@
 Provide six editable product-information fields in admin product creation/editing: Handmade Details, Materials Used, Size & Dimensions, Processing Time, Care Instructions, Shipping & Delivery. New products begin with backend-managed defaults, which admins can override. Storefront accordions show persisted product values.
 
 ## Current state
+19.4 restored missing public specifications using saved product text first, backend defaults otherwise; API/SEO align and all24 local products verified. Saved product records unchanged. DEC019-6 supersedes prior empty-field display behavior.
 19.1–19.3 completed. Six-field editing/defaults/public accordions and local acceptance verified. Owner requested neutral timing/delivery wording, applied without overwriting custom defaults or product descriptions. No push/deployment.
 
 ## Scope and architecture
