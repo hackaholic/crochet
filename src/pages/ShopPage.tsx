@@ -1,4 +1,7 @@
 import './catalogueLayout.css';
+import PriceRangeFilter from '../components/PriceRangeFilter';
+import { cataloguePriceBounds } from '../config/catalogue';
+import type { PriceBounds } from '../config/catalogue';
 import CatalogueIntro from '../components/CatalogueIntro';
 import SeoBreadcrumbs from '../components/SeoBreadcrumbs';
 import type { SeoMetadata } from '../lib/api/seo';
@@ -8,7 +11,7 @@ import ProductCard from '../components/ProductCard';
 import { FilterIcon, XIcon, ChevronDownIcon } from '../components/Icons';
 import type { Product } from '../data/products';
 import { useCatalogue } from '../components/CatalogueProvider';
-import { buildCategoryFilterOptions, buildCollectionFilterOptions, buildPriceFilterOptions, productMatchesCategory, productMatchesOccasion, sortShopProducts } from '../lib/shopFilters';
+import { buildCategoryFilterOptions, buildCollectionFilterOptions, productMatchesCategory, productMatchesOccasion, sortShopProducts } from '../lib/shopFilters';
 
 interface ShopPageProps {
   seoMetadata?: SeoMetadata;
@@ -19,12 +22,6 @@ interface ShopPageProps {
   onProductClick: (product: Product) => void;
 }
 
-const priceRanges = [
-  { label: 'Under ₹299', min: 0, max: 299 },
-  { label: '₹300 – ₹599', min: 300, max: 599 },
-  { label: '₹600 – ₹999', min: 600, max: 999 },
-  { label: 'Above ₹999', min: 1000, max: Infinity },
-];
 const sortOptions = ['Featured', 'Newest', 'Price: Low to High', 'Price: High to Low', 'Best Selling'];
 
 function useSafeLocation() {
@@ -57,21 +54,24 @@ function FilterSection({ title, children, defaultOpen = true }: { title: string;
 export default function ShopPage({ seoMetadata, heading, onAddToCart, onToggleWishlist, wishlist, onProductClick }: ShopPageProps) {
   const location = useSafeLocation();
   const { products, categories, collections } = useCatalogue();
-  const categoryFilters = useMemo(() => buildCategoryFilterOptions(categories, products), [categories, products]);
-  const collectionFilters = useMemo(() => buildCollectionFilterOptions(collections, products), [collections, products]);
-  const priceFilters = useMemo(() => buildPriceFilterOptions(priceRanges, products), [products]);
+  const routeCategorySlug = location.pathname.replace(/\/+$/, '').match(/^\/categories\/([^/]+)$/)?.[1];
+  const allCategoryFilters = useMemo(() => buildCategoryFilterOptions(categories, products), [categories, products]);
+  const routeCategory = allCategoryFilters.find(option => option.category.slug === routeCategorySlug);
+  const scopedProducts = useMemo(() => routeCategorySlug
+    ? products.filter(product => routeCategory ? productMatchesCategory(product, routeCategory) : false)
+    : products, [products, routeCategorySlug, routeCategory]);
+  const categoryFilters = useMemo(() => buildCategoryFilterOptions(categories, scopedProducts), [categories, scopedProducts]);
+  const visibleCategoryFilters = routeCategorySlug
+    ? categoryFilters.filter(option => option.category.slug !== routeCategorySlug && routeCategory?.matchingSlugs.includes(option.category.slug))
+    : categoryFilters;
+  const collectionFilters = useMemo(() => buildCollectionFilterOptions(collections, scopedProducts), [collections, scopedProducts]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(() => {
-    const params = new URLSearchParams(location.search);
-    const category = params.get('category');
+    if (routeCategorySlug) return [];
+    const category = new URLSearchParams(location.search).get('category');
     if (category) return [category];
-    const path = location.pathname.replace(/\/+$/, '');
-    if (path.startsWith('/categories/')) {
-      const slug = path.replace(/^\/categories\//, '');
-      if (slug) return [slug];
-    }
     return [];
   });
-  const [selectedPriceRange, setSelectedPriceRange] = useState<number | null>(null);
+  const [selectedPriceRange, setSelectedPriceRange] = useState<PriceBounds | null>(null);
   const [selectedOccasions, setSelectedOccasions] = useState<string[]>(() => {
     const params = new URLSearchParams(location.search);
     const collection = params.get('occasion') ?? params.get('collection');
@@ -86,7 +86,11 @@ export default function ShopPage({ seoMetadata, heading, onAddToCart, onToggleWi
   const [customizableOnly, setCustomizableOnly] = useState(false);
   const [sortBy, setSortBy] = useState('Featured');
   const [filterOpen, setFilterOpen] = useState(false);
-  const [view, setView] = useState<'grid' | 'list'>('grid');
+
+  const listingParams = new URLSearchParams(location.search);
+  const priceContext = JSON.stringify([location.pathname.replace(/\/+$/, ''),
+    listingParams.get('category'), listingParams.get('collection'), listingParams.get('occasion')]);
+  useEffect(() => { setSelectedPriceRange(null); }, [priceContext]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -95,40 +99,30 @@ export default function ShopPage({ seoMetadata, heading, onAddToCart, onToggleWi
     const occasion = params.get('occasion');
     const cleanPath = location.pathname.replace(/\/+$/, '');
 
-    if (category) {
-      setSelectedCategories([category]);
-    } else if (cleanPath.startsWith('/categories/')) {
-      const slug = cleanPath.replace(/^\/categories\//, '');
-      if (slug) setSelectedCategories([slug]);
-    } else if (cleanPath === '/shop') {
-      if (!category) {
-        setSelectedCategories([]);
-      }
-    }
+    // The route category is fixed scope; query parameters cannot override it.
+    setSelectedCategories(routeCategorySlug ? [] : category ? [category] : []);
 
     if (occasion || collection) {
       setSelectedOccasions([occasion ?? collection!]);
     } else if (cleanPath.startsWith('/collections/')) {
       const slug = cleanPath.replace(/^\/collections\//, '');
       if (slug) setSelectedOccasions([slug]);
-    } else if (cleanPath === '/shop') {
-      if (!collection && !occasion) {
-        setSelectedOccasions([]);
-      }
+    } else {
+      setSelectedOccasions([]);
     }
-  }, [location.pathname, location.search]);
+  }, [location.pathname, location.search, routeCategorySlug]);
 
   const toggleCategory = (cat: string) =>
     setSelectedCategories(prev => prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]);
 
-  const filtered = sortShopProducts(products.filter(p => {
+  const filtered = sortShopProducts(scopedProducts.filter(p => {
     if (selectedCategories.length > 0 && !selectedCategories.some(slug => {
       const option = categoryFilters.find(item => item.category.slug === slug);
       return option ? productMatchesCategory(p, option) : false;
     })) return false;
     if (selectedOccasions.length > 0 && !selectedOccasions.some(slug => productMatchesOccasion(p, slug))) return false;
     if (selectedPriceRange !== null) {
-      const r = priceRanges[selectedPriceRange];
+      const r = selectedPriceRange;
       if (p.price < r.min || p.price > r.max) return false;
     }
     if (customizableOnly && !p.customizable) return false;
@@ -144,13 +138,16 @@ export default function ShopPage({ seoMetadata, heading, onAddToCart, onToggleWi
 
   const activeFilters = selectedCategories.length + (selectedPriceRange !== null ? 1 : 0) + selectedOccasions.length + (customizableOnly ? 1 : 0);
   const categoryName = (slug: string) => categoryFilters.find(option => option.category.slug === slug)?.category.name ?? slug;
-  const customizableCount = products.filter(product => product.customizable).length;
+  const listingTitle = routeCategorySlug ? (routeCategory?.category.name ?? heading ?? 'Products')
+    : selectedCategories.length > 1 ? 'Filtered Products'
+      : selectedCategories.length === 1 ? categoryName(selectedCategories[0]) : heading || 'All Products';
+  const customizableCount = scopedProducts.filter(product => product.customizable).length;
 
   const renderFilterPanel = () => (
     <div className="space-y-0">
-      <FilterSection title="Category">
+      {visibleCategoryFilters.length > 0 && <FilterSection title="Category">
         <div className="space-y-2">
-          {categoryFilters.map(({ category, productCount }) => (
+          {visibleCategoryFilters.map(({ category, productCount }) => (
             <button key={category.slug} type="button" aria-label={`${category.name}, ${productCount} products`} aria-pressed={selectedCategories.includes(category.slug)} onClick={() => toggleCategory(category.slug)} className="group flex w-full items-center gap-3 text-left">
               <span
                 className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors ${selectedCategories.includes(category.slug) ? 'border-[#C4622D] bg-[#C4622D]' : 'border-[#D4C5B5] group-hover:border-[#C4622D]'}`}
@@ -166,22 +163,12 @@ export default function ShopPage({ seoMetadata, heading, onAddToCart, onToggleWi
             </button>
           ))}
         </div>
-      </FilterSection>
+      </FilterSection>}
 
       <FilterSection title="Price">
-        <div className="space-y-2">
-          {priceFilters.map(({ range, index, productCount }) => (
-            <button key={range.label} type="button" aria-label={`${range.label}, ${productCount} products`} aria-pressed={selectedPriceRange === index} onClick={() => setSelectedPriceRange(selectedPriceRange === index ? null : index)} className="group flex w-full items-center gap-3 text-left">
-              <span
-                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${selectedPriceRange === index ? 'border-[#C4622D] bg-[#C4622D]' : 'border-[#D4C5B5] group-hover:border-[#C4622D]'}`}
-              >
-                {selectedPriceRange === index && <span className="h-2 w-2 rounded-full bg-white" />}
-              </span>
-              <span className="text-sm text-[#5C3D2E]">{range.label}</span>
-              <span className="ml-auto text-xs text-[#8B6B4A]">{productCount}</span>
-            </button>
-          ))}
-        </div>
+        <PriceRangeFilter bounds={cataloguePriceBounds} value={selectedPriceRange ?? cataloguePriceBounds}
+          active={selectedPriceRange !== null} onReset={() => setSelectedPriceRange(null)}
+          onChange={range => setSelectedPriceRange(range.min === cataloguePriceBounds.min && range.max === cataloguePriceBounds.max ? null : range)} />
       </FilterSection>
 
       <FilterSection title="Occasion" defaultOpen={false}>
@@ -225,6 +212,11 @@ export default function ShopPage({ seoMetadata, heading, onAddToCart, onToggleWi
     <div className="catalogue-page min-h-screen bg-[#FAF7F2]">
       <div className="catalogue-navigation storefront-shell">
         <SeoBreadcrumbs metadata={seoMetadata} categories={categories} />
+        <div className="catalogue-summary">
+          <h1 className="catalogue-heading">{listingTitle}</h1>
+          <span aria-hidden="true">·</span>
+          <p>{filtered.length} creations</p>
+        </div>
         {/* Sort */}
         <div className="catalogue-sort">
           <label htmlFor="shop-sort" className="catalogue-sort-label">Sort by:</label>
@@ -239,49 +231,18 @@ export default function ShopPage({ seoMetadata, heading, onAddToCart, onToggleWi
             {sortOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
           </select>
         </div>
+        <div className="catalogue-controls items-center">
+          {/* Mobile filter button */}
+          <button
+            onClick={() => setFilterOpen(true)}
+            className="lg:hidden flex items-center gap-2 px-2 py-1 border border-[#EDE4D0] rounded-full text-xs font-medium text-[#5C3D2E] hover:border-[#C4622D] transition-colors"
+          >
+            <FilterIcon size={16} />
+            Filters {activeFilters > 0 && <span className="bg-[#C4622D] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{activeFilters}</span>}
+          </button>
+        </div>
       </div>
       <div className="catalogue-body storefront-shell pb-10 sm:pb-12">
-        {/* Top bar */}
-        <div className="catalogue-toolbar flex flex-wrap items-center justify-between">
-          <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
-            <h1 className="catalogue-heading font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>
-              {heading || 'All Products'}
-            </h1>
-            <p className="text-sm text-[#8B6B4A]">{filtered.length} handmade creations</p>
-          </div>
-
-          <div className="catalogue-controls ml-auto flex items-center gap-3">
-            {/* Mobile filter button */}
-            <button
-              onClick={() => setFilterOpen(true)}
-              className="lg:hidden flex items-center gap-2 px-2 py-1 border border-[#EDE4D0] rounded-full text-xs font-medium text-[#5C3D2E] hover:border-[#C4622D] transition-colors"
-            >
-              <FilterIcon size={16} />
-              Filters {activeFilters > 0 && <span className="bg-[#C4622D] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{activeFilters}</span>}
-            </button>
-          </div>
-        </div>
-
-        {/* Active filter chips */}
-        {activeFilters > 0 && (
-          <div className="catalogue-chips flex flex-wrap gap-2">
-            {selectedCategories.map(cat => (
-              <span key={cat} className="flex items-center gap-1.5 px-3 py-1 bg-[#F2C4CE] text-[#C4622D] rounded-full text-xs font-medium">
-                {categoryName(cat)}
-                <button aria-label={`Remove ${categoryName(cat)} filter`} onClick={() => toggleCategory(cat)}><XIcon size={12} /></button>
-              </span>
-            ))}
-            {selectedOccasions.map(slug => (
-              <span key={slug} className="flex items-center gap-1.5 px-3 py-1 bg-[#F2C4CE] text-[#C4622D] rounded-full text-xs font-medium">
-                {collections.find(collection => collection.slug === slug)?.name ?? slug.replace(/[-_]+/g, ' ').replace(/\b\w/g, letter => letter.toUpperCase())}
-                <button aria-label={`Remove ${slug} filter`} onClick={() => setSelectedOccasions(previous => previous.filter(value => value !== slug))}><XIcon size={12} /></button>
-              </span>
-            ))}
-            {selectedPriceRange !== null && <span className="rounded-full bg-[#F2C4CE] px-3 py-1 text-xs font-medium text-[#C4622D]">{priceFilters.find(item => item.index === selectedPriceRange)?.range.label}</span>}
-            {customizableOnly && <span className="rounded-full bg-[#F2C4CE] px-3 py-1 text-xs font-medium text-[#C4622D]">Customizable</span>}
-          </div>
-        )}
-
         <div className="flex gap-8">
           {/* Desktop sidebar */}
           <aside className="hidden lg:block w-60 shrink-0">

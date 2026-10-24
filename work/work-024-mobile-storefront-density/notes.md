@@ -21,3 +21,11 @@ Completion: self-review/security disposition Pass for CSS/template-only scope; n
 2026-10-20 —24.6 complete locally: sort/breadcrumb both12px,32px strip below menu;390px Baby first product209px (another41px saved).11tests/typecheck, Docker rebuild, responsive/sort acceptance recorded. No push.
 
 2026-10-24 — Local container recovery (Codex, Completed): database/API/frontend found exited255. Existing stack started using root .env, preserving database volume; compose completed and API /health returned ok. User requested no additional browser checks for routine restarts; further checks stopped. No application code/deployment changes.
+
+2026-10-24 —24.8 locally complete: unified bar, no filter chips, category root retained across clear/query; shop multi-category title verified.18tests/typecheck and Docker/browser acceptance passed. Existing changes pushed fa49f78 first; new task implementation awaits review/push. No Gemini dependency.
+
+2026-10-24 —24.9 local completion: price slider0–100000 via validated env config, Min/Max and Reset, native control reuse/no package dependency.31 unique tests passed plus typecheck; local Docker/mobile/keyboard acceptance recorded in task-008. No backend work/push.
+
+2026-10-24 —24.10 complete locally: BabyMax1200+sort retained; Amigurumi navigation resets0–100000/9cards.26tests/typecheck, Docker rebuild/browser evidence in task-009. No push.
+
+2026-10-24 — Owner authorized commit/push of locally verified24.8–24.10: unified catalogue header/scoped filters, configurable price range and navigation reset; test/security/browser evidence retained in exact task returns. Deployment acceptance remains separate from Git push.

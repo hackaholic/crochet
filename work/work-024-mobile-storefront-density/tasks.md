@@ -1,12 +1,16 @@
 # Work 024 tasks
 
 ## In Progress
-- [ ] 24.7 Codex — [Labelled content-width sorting](tasks/task-006-labelled-content-width-sort.md).
+None.
 
 ## Pending
 None.
 
 ## Completed
+- [x] 24.10 Codex — [Reset price on navigation](tasks/task-009-reset-price-on-navigation.md):26tests/typecheck and actual Baby→Amigurumi acceptance.
+- [x] 24.9 Codex — [Price range slider](tasks/task-008-price-range-slider.md):31 unique tests/typecheck, Docker rebuild, native keyboard/mobile acceptance.
+- [x] 24.8 Codex — [Unified catalogue bar](tasks/task-007-unified-catalogue-bar.md):18tests/typecheck, scoped filters and local responsive acceptance.
+- [x] 24.7 Codex — [Labelled content-width sorting](tasks/task-006-labelled-content-width-sort.md).
 - [x] 24.6 Codex — [Inline catalogue sorting](tasks/task-005-inline-catalogue-sort.md):11tests/typecheck, Docker rebuild and responsive browser sorting verification.
 - [x] 24.5 Codex — [Compact catalogue headers](tasks/task-004-compact-catalogue-header.md):10tests/typecheck, Docker rebuild, local responsive layout and filter verification.
 - [x] 24.4 Codex — [Tighter responsive homepage gaps](tasks/task-003-compact-responsive-homepage-gaps.md): mobile/tablet/desktop shared tokens,19 tests and local geometry/screenshot acceptance.

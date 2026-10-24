@@ -1,0 +1,56 @@
+{
+  "geometry": [
+    {
+      "fields": [
+        {
+          "right": 146,
+          "value": "0",
+          "width": 126
+        },
+        {
+          "right": 280,
+          "value": "100000",
+          "width": 126
+        }
+      ],
+      "pageWidth": 310,
+      "sliders": 4,
+      "width": 320
+    },
+    {
+      "fields": [
+        {
+          "right": 151,
+          "value": "0",
+          "width": 131
+        },
+        {
+          "right": 290,
+          "value": "100000",
+          "width": 131
+        }
+      ],
+      "pageWidth": 380,
+      "sliders": 4,
+      "width": 390
+    },
+    {
+      "fields": [
+        {
+          "right": 151,
+          "value": "0",
+          "width": 131
+        },
+        {
+          "right": 290,
+          "value": "100000",
+          "width": 131
+        }
+      ],
+      "pageWidth": 420,
+      "sliders": 4,
+      "width": 430
+    }
+  ],
+  "interaction": "Desktop Max2000 gives17 products; native max-slider Home→0/0results, End→100000/24results. Mobile Max1200→7 results, Reset price restores24. Field/slider synchronized."
+}

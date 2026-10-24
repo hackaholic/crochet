@@ -32,6 +32,6 @@
 
 - **Work 023 — Basket recommendations and glass presentation** · In Progress · [work folder](work-023-basket-recommendations-glass/)
 
-- **Work 024 — Compact mobile storefront spacing** · In Progress · [work folder](work-024-mobile-storefront-density/)
+- **Work 024 — Compact mobile storefront spacing** · Completed · [work folder](work-024-mobile-storefront-density/)
 
 - **Work 025 — API and images on LAN development URLs** · Completed (local) · [work folder](work-025-lan-image-loading/)

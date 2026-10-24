@@ -1,0 +1,49 @@
+{
+  "geometry": [
+    {
+      "barCenter": 155,
+      "barHeight": 76,
+      "chips": 0,
+      "firstProductTop": 181,
+      "loadedImages": 5,
+      "pageWidth": 310,
+      "title": "Baby",
+      "titleCenter": 155,
+      "width": 320
+    },
+    {
+      "barCenter": 190,
+      "barHeight": 76,
+      "chips": 0,
+      "firstProductTop": 181,
+      "loadedImages": 5,
+      "pageWidth": 380,
+      "title": "Baby",
+      "titleCenter": 190,
+      "width": 390
+    },
+    {
+      "barCenter": 210,
+      "barHeight": 76,
+      "chips": 0,
+      "firstProductTop": 165,
+      "loadedImages": 5,
+      "pageWidth": 420,
+      "title": "Baby",
+      "titleCenter": 210,
+      "width": 430
+    },
+    {
+      "barCenter": 635,
+      "barHeight": 40,
+      "chips": 0,
+      "firstProductTop": 149,
+      "loadedImages": 5,
+      "pageWidth": 1270,
+      "title": "Baby",
+      "titleCenter": 635,
+      "width": 1280
+    }
+  ],
+  "interaction": "Baby subfilter Blankets→1 product, clear→5 Baby products; breadcrumb Shop navigation→All Products; Flowers→Flowers6, plus Baby→Filtered Products11; clear restores All Products"
+}

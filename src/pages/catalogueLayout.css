@@ -4,14 +4,15 @@
   padding-top: var(--storefront-header-height, 7rem);
 }
 .catalogue-navigation {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  gap: var(--catalogue-gap);
+  gap: .25rem var(--catalogue-gap);
   min-height: 2.25rem;
   padding-block: .375rem;
 }
 .catalogue-navigation > nav[aria-label="Breadcrumb"] {
-  flex: 1;
+  grid-column: 1;
   min-width: 0;
   width: auto;
   padding-inline: 0;
@@ -19,12 +20,18 @@
   font-size: .75rem;
 }
 .catalogue-body { padding-top: .25rem; }
-.catalogue-toolbar { gap: var(--catalogue-gap); margin-bottom: var(--catalogue-gap); }
-.catalogue-heading { font-size: 1.375rem; line-height: 1.25; }
-.catalogue-toolbar > div > p { font-size: .75rem; }
-.catalogue-controls { gap: var(--catalogue-gap); }
+.catalogue-summary {
+  grid-column: 2; display: flex; justify-content: center; align-items: baseline;
+  flex-wrap: wrap; gap: .25rem; min-width: 0; font-size: .75rem;
+  color: #5C3D2E; text-align: center;
+}
+.catalogue-heading { font-size: .8125rem; line-height: 1.25rem; font-weight: 700; }
+.catalogue-summary p { margin: 0; }
+.catalogue-controls { display: none; }
 .catalogue-controls button { min-height: 2rem; }
 .catalogue-sort {
+  grid-column: 3;
+  justify-self: end;
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -87,10 +94,11 @@
   border-color: #C4622D;
   box-shadow: 0 0 0 1px #C4622D;
 }
-.catalogue-chips { margin-bottom: var(--catalogue-gap); }
 .catalogue-sidebar { top: calc(var(--storefront-header-height, 7rem) + var(--catalogue-gap)); }
 .catalogue-description { margin-top: .75rem; margin-bottom: 0; }
-@media (min-width: 768px) {
-  .catalogue-body { padding-top: .5rem; }
-  .catalogue-heading { font-size: 1.75rem; }
+@media (max-width: 1023px) {
+  .catalogue-navigation { grid-template-columns: minmax(0, 1fr) auto; }
+  .catalogue-sort { grid-column: 2; grid-row: 1; }
+  .catalogue-summary { grid-column: 1 / -1; grid-row: 2; padding-inline: 5rem; min-height: 2rem; align-items: center; }
+  .catalogue-controls { display: flex; grid-column: 2; grid-row: 2; justify-self: end; }
 }

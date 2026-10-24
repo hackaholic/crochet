@@ -1,7 +1,7 @@
 # Work 024 coordination
 
 **Current Owner:** Codex
-**Status:** Returned / Completed (24.6 included)
+**Status:** Returned / Completed (24.10 included)
 **Active Task:** None
 **Next Action:** Owner can review compact mobile layout atlocalhost:8080. No push requested yet. Native Firefox/device checks remain an explicit coverage limitation.
 
@@ -22,3 +22,15 @@
 24.6 Returned/Completed — compact native sort beside breadcrumb, shared12px text/32px strip, filter inline with heading.11tests/typecheck, Docker rebuild and local320–1280px/sorting checks passed. See task-005 return. No Gemini dependency; no push.
 
 24.7 Active — Codex: visible sort prefix and selected-text-sized chevron control, task-006. No Gemini dependency.
+
+24.8 Active — Codex: unified compact header, remove chips and enforce category route scope; exact task-007 contract. No Gemini dependency. Existing changes pushed fa49f78 before implementation; new changes local only.
+
+24.8 Returned/Completed — Codex: unified centered summary, removed chips, scoped category filtering.18tests/typecheck and local Docker/browser acceptance complete; return in task-007. No Gemini dependency; new work remains local for review.
+
+24.9 Active — Codex: reusable native price range inputs replacing brackets. Task-008 contract; no Gemini/backend dependency.
+
+24.9 Returned/Completed — Codex: reusable native range/number inputs, config bounds and Reset price.31 unique tests/typecheck, Docker rebuild/local mobile and keyboard verification complete; task-008 return. No Gemini dependency; no push/deployment.
+
+24.10 Active — Codex: reset price on listing context navigation; task-009, no Gemini dependency.
+
+24.10 Returned/Completed — price resets on listing context navigation, sort retains price;26tests/typecheck, Docker rebuild and actual Baby→Amigurumi verified. Task-009 return; no Gemini dependency/push.
