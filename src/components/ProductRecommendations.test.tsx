@@ -45,3 +45,12 @@ it('fills the first compatibility row after cart exclusions instead of leaving a
  expect(within(screen.getByRole('region',{name:'new-arrivals'})).getAllByTestId('product-card')).toHaveLength(1);
  expect(screen.getAllByTestId('product-card')).toHaveLength(5);
 });
+
+it('keeps a cart-aware lead intact when later pages use newest compatibility pagination', async () => {
+ vi.mocked(getProductDiscovery).mockResolvedValueOnce({compatibility:false,sections:[{...row('basket-suggestions',[2]),title:'You may also like'},{...row('new-arrivals',[3]),title:'New arrivals'}],nextCursor:'catalogue:8'}).mockResolvedValueOnce({compatibility:true,sections:[{...row('new-arrivals',[4]),title:'New arrivals'}],nextCursor:null});
+ render(<ProductRecommendations {...props()}/>);
+ fireEvent.click(await screen.findByRole('button',{name:'Load more products'}));
+ await screen.findByText('Product 4');
+ expect(within(screen.getByRole('region',{name:'You may also like'})).getAllByTestId('product-card')).toHaveLength(1);
+ expect(within(screen.getByRole('region',{name:'New arrivals'})).getAllByTestId('product-card')).toHaveLength(2);
+});

@@ -10,3 +10,5 @@
 2026-10-20 — 19.4 Completed. Owner clarified missing specs use DB defaults. Shared public resolver fixes API/SEO inconsistency without overwriting stored values. Initial24/24 empty, after24/24 allsix public fields.14 backend/11 frontend tests+SAST passed; API rebuilt, localhost desktop/mobile verified. Initial frontend exit137 rerun passed. Exact evidence task-004. No push.
 
 2026-10-24 —19.5 read-only diagnosis: local6fields/dev6null; VPS resolver absent/default-row6populated. Preprod backend deployment stale; recent frontend pushes do not match backend workflow path filters. No mutation/test repetition;19.6 deployment acceptance pending.
+
+2026-10-24 — 19.6 Completed: Verified live preprod API (`https://api-dev.sulocraft.com/api/v1/products/3`) returns all 6 populated fields and live preprod storefront (`https://dev.sulocraft.com/products/heart-bear`) renders and expands all 6 product-information disclosures matching the API content (`reports/task-006-preprod-acceptance.json`, `reports/preprod-heart-bear-information.jpg`). Work 019 complete.

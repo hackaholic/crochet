@@ -68,6 +68,7 @@ def test_claimed_customer_cart_cannot_be_merged_by_another_identity(attack):
         assert response.json()['items'] == []
     else:
         stranger.cookies.set('guest_cart_token', old_guest_token)
+        assert stranger.get('/api/v1/cart').json()['items'] == []
         login(stranger, 'merge-other@example.com')
         stranger.cookies.delete('guest_cart_token')
         assert stranger.get('/api/v1/cart').json()['items'] == []
@@ -86,6 +87,9 @@ def test_guest_quantity_rejection_and_other_cart_item_mutation_have_no_side_effe
     stranger = TestClient(app)
     response = stranger.patch(f"/api/v1/cart/items/{before['items'][0]['id']}", json={'quantity': 2})
     assert response.status_code == 404
+    assert stranger.delete(f"/api/v1/cart/items/{before['items'][0]['id']}").status_code == 404
+    invalid = owner.post('/api/v1/cart/items', json={'product_variant_id': 2147483647, 'quantity': 1})
+    assert invalid.status_code == 404
     assert owner.get('/api/v1/cart').json()['items'] == before['items']
 
 
@@ -94,9 +98,14 @@ def test_logout_retires_claimed_cart_cookie_without_destroying_customer_cart():
     add(customer, 'Saved customer basket', 2)
     login(customer, 'merge-logout@example.com')
     saved = customer.get('/api/v1/cart').json()
+    revoked_token = customer.cookies['session_token']
     assert customer.post('/api/v1/auth/logout').status_code == 200
     assert customer.get('/api/v1/auth/me').status_code == 401
     assert 'guest_cart_token' not in customer.cookies
+    replay = TestClient(app)
+    replay.cookies.set('session_token', revoked_token)
+    assert replay.get('/api/v1/auth/me').status_code == 401
+    assert replay.get('/api/v1/cart').json()['items'] == []
     add(customer, 'New anonymous basket', 1)
     assert customer.get('/api/v1/cart').json()['itemCount'] == 1
     returning = TestClient(app)

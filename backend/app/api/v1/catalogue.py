@@ -324,7 +324,7 @@ def get_category_products(
     response: Response,
     sort: str = Query(default="featured"),
     limit: int = Query(default=50, ge=1, le=100),
-    offset: int = Query(default=0, ge=0),
+    offset: int = Query(default=0, ge=0, le=10_000_000),
     db: Session = Depends(get_db),
 ) -> list[ProductListItem]:
     """Retrieve all products under a category (including subcategories) deduplicated."""
@@ -463,7 +463,7 @@ def get_collection_products(
     response: Response,
     sort: str = Query(default="featured"),
     limit: int = Query(default=50, ge=1, le=100),
-    offset: int = Query(default=0, ge=0),
+    offset: int = Query(default=0, ge=0, le=10_000_000),
     db: Session = Depends(get_db),
 ) -> list[ProductListItem]:
     """Retrieve all active products in a collection ordered by assignment display_order."""
@@ -520,14 +520,14 @@ def list_products(
     occasion: str | None = Query(default=None, description="Alias for occasion/tag filtering"),
     color: str | None = Query(default=None, description="Filter by color attribute in variants"),
     customizable: bool | None = Query(default=None, description="Filter customizable products"),
-    min_price: int | None = Query(default=None, ge=0, description="Minimum price in INR"),
-    max_price: int | None = Query(default=None, ge=0, description="Maximum price in INR"),
-    search: str | None = Query(default=None, description="Search keyword in name or description"),
-    badge: str | None = Query(default=None, description="Filter by badge (e.g. Bestseller, New, Limited)"),
-    sort: str = Query(default="featured", description="Sorting: featured, price_asc, price_desc, rating, newest, best_selling"),
-    page: int = Query(default=1, ge=1, description="Page number (1-indexed)"),
+    min_price: int | None = Query(default=None, ge=0, le=100_000_000, description="Minimum price in INR"),
+    max_price: int | None = Query(default=None, ge=0, le=100_000_000, description="Maximum price in INR"),
+    search: str | None = Query(default=None, max_length=256, description="Search keyword in name or description"),
+    badge: str | None = Query(default=None, max_length=64, description="Filter by badge (e.g. Bestseller, New, Limited)"),
+    sort: str = Query(default="featured", max_length=64, description="Sorting: featured, price_asc, price_desc, rating, newest, best_selling"),
+    page: int = Query(default=1, ge=1, le=100_000, description="Page number (1-indexed)"),
     limit: int = Query(default=50, ge=1, le=100, description="Items per page"),
-    offset: int | None = Query(default=None, ge=0, description="Manual offset; overrides page if provided"),
+    offset: int | None = Query(default=None, ge=0, le=10_000_000, description="Manual offset; overrides page if provided"),
     db: Session = Depends(get_db),
 ) -> list[ProductListItem]:
     """Search and filter the product catalogue with pagination and sorting."""
@@ -672,7 +672,7 @@ def list_products(
 def search_products(
     q: str = Query(..., min_length=1, description="Search keyword"),
     limit: int = Query(default=20, ge=1, le=50),
-    offset: int = Query(default=0, ge=0),
+    offset: int = Query(default=0, ge=0, le=10_000_000),
     db: Session = Depends(get_db),
 ) -> list[ProductListItem]:
     """Search products across name, description, tags, and category names."""

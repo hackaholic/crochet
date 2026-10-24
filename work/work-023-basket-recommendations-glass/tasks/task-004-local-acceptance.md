@@ -1,7 +1,7 @@
 # Task 23.4 — Local basket acceptance
 
 **Owner:** Codex
-**Status:** Blocked
+**Status:** Completed
 **Work item:** Work 023
 
 ## Objective and context
@@ -14,9 +14,9 @@ Verify glass and discovery at mobile/desktop, empty/filled, keyboard/Escape/focu
 ## Dependencies and relevant files
 - Depends on: 23.1, 23.2
 - Dependency context: See README and decisions; reuse existing catalogue assets/API and cart authorization.
-- Blocked by: Native Chrome/Firefox/mobile-device engine access
-- Blocker reason: Only the in-app browser is connected; viewport emulation is not a separate mobile engine
-- Next action: Run remaining engine checks when connected; local in-app acceptance is recorded below.
+- Blocked by: None
+- Blocker reason: None; owner supplied remaining browser acceptance
+- Next action: None; accepted by owner.
 - Inspect/edit: Affected frontend tests, docker/compose.yaml, work-local notes/contracts
 
 ## Test cases (defined before implementation)
@@ -26,13 +26,13 @@ Verify glass and discovery at mobile/desktop, empty/filled, keyboard/Escape/focu
 | 23.4-TC02 | failure/security | Unsafe content remains escaped; denied/unavailable data cannot expose private cart data; no secrets or raw HTML | Targeted negative tests and self-review | Not run |
 
 ## Security validation
-UI uses React escaping and existing same-origin product navigation. API work must retain object authorization, validated bounded parameters, safe errors, parameterized queries and zero side effects. Disposition: Pending verification.
+UI uses React escaping and existing same-origin product navigation. API work must retain object authorization, validated bounded parameters, safe errors, parameterized queries and zero side effects. Disposition: Pass for local scope; native-engine acceptance remains blocked.
 
 ## Acceptance checks
-- [ ] Scope observable in local application.
-- [ ] Relevant tests and negative cases pass; evidence recorded.
-- [ ] Security disposition and accurately labelled self/peer review recorded.
-- [ ] Update tasks, notes and work-local coordination with exact return/blockers.
+- [x] Scope observable in local application.
+- [x] Relevant tests and negative cases pass; evidence recorded.
+- [x] Security disposition and accurately labelled self/peer review recorded.
+- [x] Update tasks, notes and work-local coordination with exact return/blockers.
 
 ## Pickup checklist
 - [ ] Read work index, README, tasks, decisions, coordination and exact contract; Gemini reads reusable workflow prompt first.
@@ -48,3 +48,9 @@ Record changed files, test command/results, exact API contract if changed, outst
 - Screenshot: [mobile basket](../reports/basket-mobile.jpg).
 - Not run: native Firefox/native Chrome/mobile Safari/device, OS reduced-transparency rendering. CSS fallbacks reviewed; do not report them as separate engine runs.
 - Existing totals/coupon limitations are preserved and recorded as Work007 follow-ups.
+
+## Updated local acceptance — 2026-10-24
+23.7 adds returned cart API;31unique frontend tests/typecheck and current local guest API/filled drawer/add-remove/pagination/320–1280px/focus checks passed. Evidence in task-007 return. Original empty/filled acceptance retained, not repeated by deleting customer basket. Current connected inventory: in-app browser/MCP Apps only. Native Chrome/Firefox/physical phone and OS reduced-transparency checks remain unrun; Blocked status retained. No backend/provider changes.
+
+## Owner acceptance — 2026-10-24
+Owner explicitly instructed: “mark23.4 done I verified on browsers.” Remaining browser acceptance is owner-provided; Codex did not run those engines and no exact browser/device versions were supplied. Existing local automated/security/in-app evidence retained. Owner accepts this task as completed; previous unavailable-engine notes are historical, not active blockers. No additional checks or code changes performed for this status update.

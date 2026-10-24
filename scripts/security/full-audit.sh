@@ -77,10 +77,13 @@ else
     execute_step "Business Logic Tests" pytest "${REPO_ROOT}/backend/tests/test_security_business_logic.py" -q
 fi
 
-# 7. DAST
+# 7. Schemathesis OpenAPI Property & Fuzz Testing
+execute_step "API Fuzzing & Contracts (Schemathesis)" "${SCRIPT_DIR}/scan-api-schemathesis.sh"
+
+# 8. DAST
 execute_step "DAST (OWASP ZAP Baseline)" "${SCRIPT_DIR}/scan-dast.sh"
 
-# 8. TLS
+# 9. TLS
 execute_step "TLS Transport & Ciphers" "${SCRIPT_DIR}/scan-tls.sh"
 
 # Build Console Summary and Markdown Report
@@ -102,6 +105,7 @@ cat <<EOF > "${SUMMARY_MD}"
 | Container & Infrastructure (Trivy) | $(grep -q "^Container & Infrastructure (Trivy)|PASS" <<< "$(printf '%s\n' "${RESULTS[@]}")" && echo "✅ PASS" || echo "❌ FAIL") | [container-report.json](container-report.json) |
 | Authorization Tests (IDOR / RBAC) | $(grep -q "^Authorization Tests (IDOR / RBAC)|PASS" <<< "$(printf '%s\n' "${RESULTS[@]}")" && echo "✅ PASS" || echo "❌ FAIL") | Pytest suite: test_security_authorization.py |
 | Business Logic Tests | $(grep -q "^Business Logic Tests|PASS" <<< "$(printf '%s\n' "${RESULTS[@]}")" && echo "✅ PASS" || echo "❌ FAIL") | Pytest suite: test_security_business_logic.py |
+| API Fuzzing & Contracts (Schemathesis) | $(grep -q "^API Fuzzing & Contracts (Schemathesis)|PASS" <<< "$(printf '%s\n' "${RESULTS[@]}")" && echo "✅ PASS" || echo "❌ FAIL") | [schemathesis-report.json](schemathesis-report.json) |
 | DAST (OWASP ZAP Baseline) | $(grep -q "^DAST (OWASP ZAP Baseline)|PASS" <<< "$(printf '%s\n' "${RESULTS[@]}")" && echo "✅ PASS" || echo "❌ FAIL") | [dast-report.json](dast-report.json) / [dast-report.html](dast-report.html) |
 | TLS Transport & Ciphers | $(grep -q "^TLS Transport & Ciphers|PASS" <<< "$(printf '%s\n' "${RESULTS[@]}")" && echo "✅ PASS" || echo "❌ FAIL") | [tls-report.json](tls-report.json) |
 

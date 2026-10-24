@@ -47,3 +47,9 @@ Codex7.10 Returned/Completed after Gemini7.6.1: balanced sections, live deduplic
 7.11 Active — Codex: authenticated contact prefill via existing profile API; task-014 contract. No Gemini dependency or deployment.
 
 7.11 Returned/Completed — Codex: signed-in contact prefill using existing profile endpoint, draft preservation and identity isolation.11tests/typecheck, Docker rebuild and local profile comparison/mobile acceptance passed. Task-014 return; no Gemini dependency/push.
+
+## Active pickup — 2026-10-24
+Codex owns 7.1 local cart/login/logout acceptance. Existing personalization plumbing, merge ownership filter and logout cookie retirement are already present; verify rather than reimplement. No Gemini dependency currently. Payment integration deferred by owner until gateway selection; do not start 7.2.2.
+
+## 7.1 acceptance return — 2026-10-24
+Codex: Blocked on browser connection only. Docker merge/purchase/security regressions and five ProductPage tests/typecheck passed; existing fixes reused, additional security assertions added. No Gemini dependency. Exact evidence and next action in task-001; no push/deploy.

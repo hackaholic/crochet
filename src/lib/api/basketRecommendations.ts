@@ -3,12 +3,32 @@ import { isSafeMediaUrl } from '../media/image';
 import { apiUrl } from './client';
 import type { Product } from '../../data/products';
 
-/** Bounded database discovery, not a claim of customer-specific personalization. */
+export interface CartRecommendations {
+  strategy: 'newest' | 'featured' | 'related' | 'personalized';
+  products: Product[];
+}
+const cartStrategies = new Set(['newest', 'featured', 'related', 'personalized']);
+
+/** Cookie identifies the basket/customer; never send a user ID from the client. */
+export async function getCartRecommendations(signal?: AbortSignal): Promise<CartRecommendations | null> {
+  const response = await fetch(apiUrl('/cart/recommendations?limit=4'), { signal, credentials: 'include' });
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error('Basket discovery unavailable');
+  const value: unknown = await response.json();
+  if (!value || typeof value !== 'object') throw new Error('Invalid basket discovery response');
+  const { strategy, products } = value as Record<string, unknown>;
+  if (typeof strategy !== 'string' || !cartStrategies.has(strategy) || !Array.isArray(products) || products.length > 4) throw new Error('Invalid basket discovery response');
+  return { strategy: strategy as CartRecommendations['strategy'], products: discoveryProducts(products, 4) };
+}
+
+/** Older servers alone may use bounded newest discovery, never fake personalization. */
 export async function getBasketDiscovery(signal?: AbortSignal): Promise<Product[]> {
+  const cart = await getCartRecommendations(signal);
+  if (cart !== null) return cart.products;
   const response = await fetch(apiUrl('/products?sort=newest&limit=8'), { signal });
   if (!response.ok) throw new Error('Basket discovery unavailable');
   const payload: unknown = await response.json();
-  if (!Array.isArray(payload)) throw new Error('Invalid basket discovery response');
+  if (!Array.isArray(payload) || payload.length > 8) throw new Error('Invalid basket discovery response');
   return discoveryProducts(payload, 8);
 }
 

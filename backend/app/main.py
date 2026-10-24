@@ -140,7 +140,7 @@ def health_check() -> dict[str, str]:
     return {"status": "ok", "service": "sulocraft-api"}
 
 
-@app.api_route("/static/images/{image_path:path}", methods=["GET", "HEAD"], tags=["system"])
+@app.api_route("/static/images/{image_path:path}", methods=["GET", "HEAD"], tags=["system"], include_in_schema=False)
 def get_mock_static_image(image_path: str):
     """Serve local static assets or redirect to high-res photography during development."""
     from pathlib import Path

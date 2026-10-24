@@ -13,3 +13,5 @@ The assigned agent updates the exact contract, tasks.md, notes.md, and this file
 13.15 Active — Codex: Vite/undici dependency audit blocker; task-015 contract, no Gemini dependency.
 
 13.15 Returned/Completed — Codex: patched Vite8.3.5/undici8.12.3; unchanged high-severity audit passes,26tests/typecheck/full build and local9image smoke passed. Task-015 return/evidence. CI/deployment pending push, no Gemini dependency.
+
+13.12 Returned/Completed — Gemini: Schemathesis OpenAPI Property-Based Contract & Fuzz Testing; task-012 contract. In-process test suite (`backend/tests/test_api_schemathesis.py`) and standalone CLI runner (`scripts/security/scan-api-schemathesis.sh`) implemented and integrated into `scripts/security/full-audit.sh` and `.github/workflows/security.yml`. Discovered and patched integer overflow vulnerabilities on `GET /api/v1/products` and `POST /api/v1/payments/verify`. 654 live test cases and 123 isolated container tests passing.

@@ -1,7 +1,7 @@
 # Work 019 — Editable product information and defaults
 
 **Owner:** Codex
-**Status:** In Progress (19.5 diagnosis complete;19.6 backend deployment pending)
+**Status:** Completed (19.1–19.6 verified locally and on preprod)
 
 ## Objective
 Provide six editable product-information fields in admin product creation/editing: Handmade Details, Materials Used, Size & Dimensions, Processing Time, Care Instructions, Shipping & Delivery. New products begin with backend-managed defaults, which admins can override. Storefront accordions show persisted product values.

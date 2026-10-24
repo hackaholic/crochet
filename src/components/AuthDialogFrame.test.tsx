@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import AuthDialogFrame, { AuthDialogHeader, AuthLoading } from './AuthDialogFrame';
+vi.mock('../lib/api/storefront', () => ({ getStorefrontContent: vi.fn().mockResolvedValue({brand:{logoUrl:'/static/images/brand/logo.png'}}) }));
 afterEach(cleanup);
 describe('stable centered authentication shell', () => {
   it('uses the same frame/header/body for lazy loading and the live form', () => {
@@ -35,4 +36,16 @@ describe('stable centered authentication shell', () => {
     expect(first).toHaveFocus();
     unmount(); expect(trigger).toHaveFocus(); trigger.remove();
   });
+});
+
+it('keeps the official logo readable and equally sized across loading, sign-in and sent states', async () => {
+  const close = vi.fn();
+  const { rerender } = render(<AuthLoading onClose={close} />);
+  const logo = await screen.findByRole('img', {name:'Sulocraft logo'});
+  expect(logo).toHaveAttribute('width', '200');
+  expect(logo).toHaveAttribute('height', '80');
+  for (const sent of [false, true]) {
+    rerender(<AuthDialogFrame onClose={close}><AuthDialogHeader onClose={close} sent={sent} /></AuthDialogFrame>);
+    expect(await screen.findByRole('img', {name:'Sulocraft logo'})).toHaveStyle({width:'200px', height:'80px'});
+  }
 });

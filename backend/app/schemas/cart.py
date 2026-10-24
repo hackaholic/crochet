@@ -13,11 +13,15 @@ class CartItemAdd(BaseModel):
 
     product_variant_id: int | None = Field(
         default=None,
+        ge=1,
+        le=2_147_483_647,
         alias="productVariantId",
         description="ID of specific variant to add. If omitted, product_id or sku must be provided.",
     )
     product_id: int | None = Field(
         default=None,
+        ge=1,
+        le=2_147_483_647,
         alias="productId",
         description="ID of product (will auto-resolve to primary variant if product_variant_id is omitted).",
     )

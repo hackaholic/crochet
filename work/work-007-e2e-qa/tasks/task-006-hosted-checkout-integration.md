@@ -8,10 +8,10 @@ Consume Gemini's real provider intent/callback contract, open trusted hosted che
 
 ## Dependencies and relevant files
 - Depends on: 7.2.1
-- Dependency context: Current provider is a placeholder; await typed/public-key/error/cancel return. Early fail-closed nonmock guard is safe independently.
-- Blocked by: 7.2.1
-- Blocker reason: Real provider backend contract needed.
-- Next action: Read task-005 return, define deterministic hosted callback/cancel/error tests before implementation.
+- Dependency context: 7.2.1 backend contract returned; owner is still deciding the payment gateway. Do not start integration until that decision.
+- Blocked by: Owner gateway selection
+- Blocker reason: Owner explicitly deferred payment integration on 2026-10-24.
+- Next action: Wait for owner gateway selection; then confirm provider contract and acceptance tests.
 - Inspect/edit: src/lib/api/payments.ts; reusable gateway component/helper; CheckoutPage/tests.
 
 ## Acceptance/security tests

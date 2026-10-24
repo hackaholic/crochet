@@ -7,9 +7,8 @@ None.
 ## Pending
 
 
-- [ ] 7.1 Codex: [Guest/login merge regression](tasks/task-001-guest-merge-regression.md) — remaining acceptance retained; ready to resume.
 
-- [ ] 7.2.2 Codex: [Hosted checkout integration](tasks/task-006-hosted-checkout-integration.md) — unblocked by 7.2.1 typed return.
+- [ ] 7.2.2 Codex: [Hosted checkout integration](tasks/task-006-hosted-checkout-integration.md) — deferred by owner until payment gateway is selected (backend contract returned).
 - [ ] 7.2 Gemini + Codex: Multi-provider payment flow testing (Mock & Razorpay) per [task-002-payment-reconciliation.md](tasks/task-002-payment-reconciliation.md).
 - [ ] 7.3 Codex: Mobile viewport rendering matrix verification per [task-003-mobile-rendering-matrix.md](tasks/task-003-mobile-rendering-matrix.md).
 - [ ] 7.4 Owner + Codex + Gemini: Pre-launch quality sign-off per [task-004-prelaunch-signoff.md](tasks/task-004-prelaunch-signoff.md).
@@ -33,4 +32,4 @@ None.
 - [x] Vitest and Testing Library configured for frontend component tests.
 
 ## Blocked
-*(None)*
+- [ ] 7.1 Codex: [Guest/login merge regression](tasks/task-001-guest-merge-regression.md) — Docker backend/frontend/security checks pass; final localhost browser acceptance blocked by disconnected browser plugin.

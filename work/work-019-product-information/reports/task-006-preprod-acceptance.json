@@ -1,0 +1,73 @@
+{
+  "url": "https://dev.sulocraft.com/products/heart-bear",
+  "productId": 3,
+  "slug": "heart-bear",
+  "heading": "Heart Bear",
+  "apiStatus": 200,
+  "apiPopulatedCount": 6,
+  "apiPopulated": {
+    "handmadeDetails": true,
+    "materialsUsed": true,
+    "sizeDimensions": true,
+    "processingTime": true,
+    "careInstructions": true,
+    "shippingDelivery": true
+  },
+  "disclosuresCount": 6,
+  "disclosures": [
+    {
+      "key": "handmadeDetails",
+      "label": "Handmade Details",
+      "found": true,
+      "expanded": true,
+      "visible": true,
+      "textLength": 158,
+      "textMatchesApi": true
+    },
+    {
+      "key": "materialsUsed",
+      "label": "Materials Used",
+      "found": true,
+      "expanded": true,
+      "visible": true,
+      "textLength": 65,
+      "textMatchesApi": true
+    },
+    {
+      "key": "sizeDimensions",
+      "label": "Size & Dimensions",
+      "found": true,
+      "expanded": true,
+      "visible": true,
+      "textLength": 70,
+      "textMatchesApi": true
+    },
+    {
+      "key": "processingTime",
+      "label": "Processing Time",
+      "found": true,
+      "expanded": true,
+      "visible": true,
+      "textLength": 44,
+      "textMatchesApi": true
+    },
+    {
+      "key": "careInstructions",
+      "label": "Care Instructions",
+      "found": true,
+      "expanded": true,
+      "visible": true,
+      "textLength": 113,
+      "textMatchesApi": true
+    },
+    {
+      "key": "shippingDelivery",
+      "label": "Shipping & Delivery",
+      "found": true,
+      "expanded": true,
+      "visible": true,
+      "textLength": 72,
+      "textMatchesApi": true
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 import { apiUrl } from './client';
-import { discoveryProducts } from './basketRecommendations';
+import { discoveryProducts, getCartRecommendations } from './basketRecommendations';
 import type { Product } from '../../data/products';
 
 export interface DiscoverySection { id: string; title: string; strategy: string; products: Product[]; }
@@ -8,8 +8,23 @@ export type DiscoveryContext = 'checkout' | 'basket';
 const strategies = new Set(['related', 'newest', 'featured', 'trending', 'popular']);
 const validCursor = (value: unknown): value is string => typeof value === 'string' && value.length > 0 && value.length <= 512 && !/[\u0000-\u001f]/.test(value);
 
-/** Missing new API falls back only to honest, bounded newest-catalogue pages. */
+/** Cart-aware lead is loaded once; later ranked pages retain their server cursor. */
 export async function getProductDiscovery(context: DiscoveryContext, cursor: string | null, signal: AbortSignal): Promise<DiscoveryPage> {
+  if (context !== 'basket' || cursor !== null) return getRankedDiscovery(context, cursor, signal);
+  const cart = await getCartRecommendations(signal);
+  const page = await getRankedDiscovery(context, cursor, signal);
+  if (!cart?.products.length) return page;
+  const seen = new Set(cart.products.map(product => product.id));
+  const sections = page.sections.map(section => ({ ...section, products: section.products.filter(product => {
+    if (seen.has(product.id)) return false;
+    seen.add(product.id); return true;
+  }) }));
+  const remaining = page.compatibility ? [{ id: 'new-arrivals', title: 'New arrivals', strategy: 'newest', products: sections.flatMap(section => section.products) }] : sections;
+  return { ...page, sections: [{ id: 'basket-suggestions', title: 'You may also like', strategy: cart.strategy, products: cart.products }, ...remaining], compatibility: false };
+}
+
+/** Missing new API falls back only to honest, bounded newest-catalogue pages. */
+async function getRankedDiscovery(context: DiscoveryContext, cursor: string | null, signal: AbortSignal): Promise<DiscoveryPage> {
   if (cursor !== null && !validCursor(cursor)) throw new Error('Invalid discovery cursor');
   if (!cursor?.startsWith('catalogue:')) {
     const params = new URLSearchParams({context, limit:'16'});

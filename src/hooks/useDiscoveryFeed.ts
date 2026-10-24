@@ -23,7 +23,7 @@ export function useDiscoveryFeed(open: boolean, context: DiscoveryContext) {
     try {
       const page=await getProductDiscovery(context,cursor.current,request.signal);
       if (!active.current || request.signal.aborted || controller.current !== request) return;
-      setCompatibility(page.compatibility === true);
+      if (pages.current === 0) setCompatibility(page.compatibility === true);
       setSections(previous=>{
         const result=previous.map(s=>({...s,products:[...s.products]}));
         const seen=new Set(result.flatMap(s=>s.products.map(p=>p.id)));

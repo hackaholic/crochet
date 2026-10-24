@@ -4,9 +4,10 @@
 None.
 
 ## Pending
-- [ ] 19.6 Codex — Deploy backend containing19.4 through existing preprod automation; verify resolved public information and all6 visible accordions. Diagnosis/repair context in task-005 return.
+None.
 
 ## Completed
+- [x] 19.6 Codex — [Preprod backend acceptance](tasks/task-006-preprod-backend-acceptance.md): public preprod API + 6/6 storefront disclosures verified on `dev.sulocraft.com/products/heart-bear`.
 - [x] 19.5 Codex — [Preprod missing information diagnosis](tasks/task-005-preprod-missing-information.md): stale backend confirmed; all DB defaults present.
 - [x] 19.4 Codex — [Missing storefront information regression](tasks/task-004-missing-storefront-information.md): product-first/default-second API+SEO resolver, 25 tests and 24-product local audit passed.
 - [x] 19.1 Gemini — [Persistence/defaults API](tasks/task-001-product-information-api.md).

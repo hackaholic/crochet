@@ -1,0 +1,543 @@
+{
+  "schemathesis_version": "4.32.4",
+  "command": "st run http://localhost:8000/openapi.json --max-examples 5 --phases examples,fuzzing --checks not_a_server_error --report json --report-json-path /home/anu/git/crochet/work/work-013-security-audit/reports/schemathesis-report.json --no-color",
+  "seed": 88206490633394728562115624455754810902,
+  "started_at": "2026-10-24T11:17:04.952013+00:00",
+  "running_time": 26.621406917998684,
+  "stop_reason": "completed",
+  "complete": true,
+  "exit_code": 0,
+  "operations": {
+    "total": 142,
+    "selected": 142,
+    "tested": 142,
+    "errored": 0,
+    "skipped": 0,
+    "skip_reasons": []
+  },
+  "phases": {
+    "examples": {
+      "status": "skip",
+      "skip_reason": null
+    },
+    "coverage": {
+      "status": "skip",
+      "skip_reason": "disabled"
+    },
+    "fuzzing": {
+      "status": "success",
+      "skip_reason": null
+    },
+    "stateful": {
+      "status": "skip",
+      "skip_reason": "disabled"
+    }
+  },
+  "test_cases": {
+    "generated": 654,
+    "with_failures": 0,
+    "unique_failures": 0,
+    "without_checks": 0,
+    "errored": 0
+  },
+  "failures": [],
+  "errors": [],
+  "baseline": null,
+  "filtered": 0,
+  "warnings": {
+    "missing_auth": [
+      "DELETE /api/v1/addresses/{address_id}",
+      "DELETE /api/v1/admin/categories/{category_id}",
+      "DELETE /api/v1/admin/collections/{collection_id}",
+      "DELETE /api/v1/admin/coupons/{id}",
+      "DELETE /api/v1/admin/finance/expenses/{expense_id}",
+      "DELETE /api/v1/admin/occasions/{occasion_id}",
+      "DELETE /api/v1/admin/products/{product_id}",
+      "DELETE /api/v1/admin/reviews/{id}",
+      "DELETE /api/v1/admin/storefront/campaigns/{campaign_id}",
+      "DELETE /api/v1/admin/storefront/sections/{section_id}",
+      "DELETE /api/v1/admin/variants/{variant_id}",
+      "DELETE /api/v1/wishlist",
+      "DELETE /api/v1/wishlist/items/{product_id_or_slug}",
+      "GET /api/v1/account/overview",
+      "GET /api/v1/account/profile",
+      "GET /api/v1/addresses",
+      "GET /api/v1/admin/analytics",
+      "GET /api/v1/admin/categories",
+      "GET /api/v1/admin/collections",
+      "GET /api/v1/admin/collections/{collection_id}",
+      "GET /api/v1/admin/coupons",
+      "GET /api/v1/admin/coupons/{id}",
+      "GET /api/v1/admin/customers",
+      "GET /api/v1/admin/customers/{customer_id}",
+      "GET /api/v1/admin/customers/{customer_id}/orders",
+      "GET /api/v1/admin/dashboard/attention",
+      "GET /api/v1/admin/dashboard/sales",
+      "GET /api/v1/admin/dashboard/summary",
+      "GET /api/v1/admin/finance/categories",
+      "GET /api/v1/admin/finance/destinations",
+      "GET /api/v1/admin/finance/expenses",
+      "GET /api/v1/admin/finance/sales",
+      "GET /api/v1/admin/finance/summary",
+      "GET /api/v1/admin/finance/top-products",
+      "GET /api/v1/admin/finance/trends",
+      "GET /api/v1/admin/occasions",
+      "GET /api/v1/admin/occasions/{occasion_id}",
+      "GET /api/v1/admin/orders",
+      "GET /api/v1/admin/orders/{order_number_or_id}",
+      "GET /api/v1/admin/products",
+      "GET /api/v1/admin/products/{product_id}",
+      "GET /api/v1/admin/returns",
+      "GET /api/v1/admin/returns/{return_id_or_number}",
+      "GET /api/v1/admin/reviews",
+      "GET /api/v1/admin/search",
+      "GET /api/v1/admin/storefront/brand",
+      "GET /api/v1/admin/storefront/campaigns",
+      "GET /api/v1/admin/storefront/product-defaults",
+      "GET /api/v1/admin/storefront/sections",
+      "GET /api/v1/admin/storefront/sections/{section_id}",
+      "GET /api/v1/admin/tags",
+      "GET /api/v1/auth/me",
+      "GET /api/v1/orders",
+      "GET /api/v1/wishlist",
+      "PATCH /api/v1/admin/categories/{category_id}",
+      "PATCH /api/v1/admin/occasions/{occasion_id}",
+      "PATCH /api/v1/admin/orders/{order_id}/items/{item_id}/cost",
+      "PATCH /api/v1/admin/orders/{order_number_or_id}/status",
+      "PATCH /api/v1/admin/products/{product_id}",
+      "PATCH /api/v1/admin/returns/{return_id_or_number}/status",
+      "PATCH /api/v1/admin/variants/{variant_id}",
+      "POST /api/v1/addresses",
+      "POST /api/v1/addresses/{address_id}/default",
+      "POST /api/v1/admin/coupons",
+      "POST /api/v1/admin/customers/send-welcome",
+      "POST /api/v1/admin/finance/expenses",
+      "POST /api/v1/admin/maintenance/search-events/prune",
+      "POST /api/v1/admin/occasions",
+      "POST /api/v1/admin/products/{product_id}/variants",
+      "POST /api/v1/admin/returns/{return_id_or_number}/refund",
+      "POST /api/v1/orders/{order_id_or_number}/cancel",
+      "POST /api/v1/products/{slug_or_id}/reviews",
+      "PUT /api/v1/admin/occasions/{occasion_id}"
+    ],
+    "base_url_mismatch": [],
+    "missing_test_data": [
+      "DELETE /api/v1/cart/items/{item_id}",
+      "GET /api/v1/orders/{order_id_or_number}",
+      "GET /api/v1/orders/{order_id_or_number}/tracking",
+      "GET /api/v1/payments/{payment_id}",
+      "GET /api/v1/products/{slug_or_id}",
+      "PATCH /api/v1/cart/items/{item_id}",
+      "POST /api/v1/cart/items",
+      "POST /api/v1/payments/intent",
+      "POST /api/v1/payments/verify"
+    ],
+    "validation_mismatch": [
+      "POST /api/v1/auth/email/start",
+      "POST /api/v1/cart/apply-coupon",
+      "POST /api/v1/orders",
+      "POST /api/v1/payments/intent",
+      "POST /api/v1/payments/webhook/{provider}"
+    ],
+    "missing_deserializer": [],
+    "unused_openapi_auth": [],
+    "unsupported_regex": [],
+    "method_not_allowed": [],
+    "constants_extraction": [],
+    "unmatched_filter": [],
+    "unresolvable_reference": [],
+    "low_valid_rate": [],
+    "rate_limited": [],
+    "dictionary_mismatch": []
+  },
+  "valid_rates": {
+    "POST /api/v1/auth/email/start": {
+      "fuzzing": {
+        "accepted": 0,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 3
+      }
+    },
+    "POST /api/v1/auth/google": {
+      "fuzzing": {
+        "accepted": 2,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "POST /api/v1/auth/logout": {
+      "fuzzing": {
+        "accepted": 5,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "POST /api/v1/cart/apply-coupon": {
+      "fuzzing": {
+        "accepted": 0,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 3
+      }
+    },
+    "POST /api/v1/cart/merge": {
+      "fuzzing": {
+        "accepted": 3,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "POST /api/v1/orders/tracking/request-link": {
+      "fuzzing": {
+        "accepted": 3,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 1
+      }
+    },
+    "POST /api/v1/payments/webhook/{provider}": {
+      "fuzzing": {
+        "accepted": 0,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 5
+      }
+    },
+    "POST /api/v1/products/search/events": {
+      "fuzzing": {
+        "accepted": 2,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /": {
+      "fuzzing": {
+        "accepted": 1,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /api/v1/cart": {
+      "fuzzing": {
+        "accepted": 5,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /api/v1/cart/recommendations": {
+      "fuzzing": {
+        "accepted": 2,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /api/v1/categories": {
+      "fuzzing": {
+        "accepted": 3,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /api/v1/collections": {
+      "fuzzing": {
+        "accepted": 1,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /api/v1/occasions": {
+      "fuzzing": {
+        "accepted": 1,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /api/v1/orders/{order_id_or_number}": {
+      "fuzzing": {
+        "accepted": 0,
+        "unreachable": 4,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /api/v1/orders/{order_id_or_number}/tracking": {
+      "fuzzing": {
+        "accepted": 0,
+        "unreachable": 3,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /api/v1/products": {
+      "fuzzing": {
+        "accepted": 3,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /api/v1/products/search": {
+      "fuzzing": {
+        "accepted": 2,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /api/v1/products/search/suggestions": {
+      "fuzzing": {
+        "accepted": 4,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /api/v1/products/{slug_or_id}": {
+      "fuzzing": {
+        "accepted": 0,
+        "unreachable": 5,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /api/v1/reviews": {
+      "fuzzing": {
+        "accepted": 1,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /api/v1/seo/merchant-feed": {
+      "fuzzing": {
+        "accepted": 1,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /api/v1/seo/merchant-feed.xml": {
+      "fuzzing": {
+        "accepted": 1,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /api/v1/seo/resolve": {
+      "fuzzing": {
+        "accepted": 1,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /api/v1/seo/robots.txt": {
+      "fuzzing": {
+        "accepted": 1,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /api/v1/seo/routes": {
+      "fuzzing": {
+        "accepted": 1,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /api/v1/seo/sitemap.xml": {
+      "fuzzing": {
+        "accepted": 1,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /api/v1/seo/snapshot": {
+      "fuzzing": {
+        "accepted": 3,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /api/v1/storefront": {
+      "fuzzing": {
+        "accepted": 1,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /api/v1/storefront/discovery": {
+      "fuzzing": {
+        "accepted": 3,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /api/v1/storefront/home": {
+      "fuzzing": {
+        "accepted": 1,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /health": {
+      "fuzzing": {
+        "accepted": 1,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /robots.txt": {
+      "fuzzing": {
+        "accepted": 1,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /sitemap.xml": {
+      "fuzzing": {
+        "accepted": 1,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "DELETE /api/v1/cart": {
+      "fuzzing": {
+        "accepted": 5,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "DELETE /api/v1/cart/coupon": {
+      "fuzzing": {
+        "accepted": 1,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "POST /api/v1/auth/facebook": {
+      "fuzzing": {
+        "accepted": 4,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "POST /api/v1/cart/items": {
+      "fuzzing": {
+        "accepted": 0,
+        "unreachable": 4,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "POST /api/v1/orders": {
+      "fuzzing": {
+        "accepted": 0,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 4
+      }
+    },
+    "POST /api/v1/payments/intent": {
+      "fuzzing": {
+        "accepted": 0,
+        "unreachable": 1,
+        "conflicts": 0,
+        "rejected": 2
+      }
+    },
+    "POST /api/v1/payments/verify": {
+      "fuzzing": {
+        "accepted": 0,
+        "unreachable": 3,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /api/v1/categories/{slug}": {
+      "fuzzing": {
+        "accepted": 5,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /api/v1/categories/{slug}/products": {
+      "fuzzing": {
+        "accepted": 2,
+        "unreachable": 1,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /api/v1/collections/{slug}": {
+      "fuzzing": {
+        "accepted": 5,
+        "unreachable": 0,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /api/v1/collections/{slug}/products": {
+      "fuzzing": {
+        "accepted": 2,
+        "unreachable": 1,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "GET /api/v1/payments/{payment_id}": {
+      "fuzzing": {
+        "accepted": 0,
+        "unreachable": 3,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "PATCH /api/v1/cart/items/{item_id}": {
+      "fuzzing": {
+        "accepted": 0,
+        "unreachable": 4,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    },
+    "DELETE /api/v1/cart/items/{item_id}": {
+      "fuzzing": {
+        "accepted": 0,
+        "unreachable": 2,
+        "conflicts": 0,
+        "rejected": 0
+      }
+    }
+  },
+  "auth": {
+    "reauth_count": 0,
+    "reauth_broke": false
+  }
+}

@@ -27,7 +27,7 @@ export default function AuthDialogFrame({ children, onClose }: { children: React
 export function AuthDialogHeader({ onClose, sent = false }: { onClose: () => void; sent?: boolean }) {
   return <div className="auth-dialog-header bg-[#FAF7F2] px-7 pb-6 pt-7 text-center">
     <button type="button" data-auth-close onClick={onClose} className="absolute right-5 top-5 rounded-full p-1.5 text-[#8B6B4A] hover:bg-[#F5EDE0]" aria-label="Close sign in"><XIcon size={20} /></button>
-    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm"><YarnLogo size={32} /></div>
+    <div className="mx-auto flex items-center justify-center"><YarnLogo size={80} /></div>
     <h2 id="sign-in-title" className="mt-4 text-3xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>{sent ? 'Check your email' : 'Welcome to Sulocraft'}</h2>
     <p className="mt-2 text-sm leading-6 text-[#8B6B4A]">{sent ? 'Use the secure link we sent to continue.' : 'Sign in to save your favourites, addresses, and orders.'}</p>
   </div>;

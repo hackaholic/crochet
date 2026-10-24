@@ -1,0 +1,54 @@
+{
+  "before": {
+    "cartItems": [
+      "Handcrafted Crochet Potli Bag",
+      "Handcrafted Deity Poshak (Pooja Dress)",
+      "Octopus Amigurumi Duo Set"
+    ],
+    "loadedImages": 7,
+    "recommendations": 16,
+    "uniqueRecommendations": 16
+  },
+  "afterPagination": {
+    "loadedImages": 18,
+    "loading": false,
+    "recommendations": 21,
+    "uniqueRecommendations": 21
+  },
+  "geometry": [
+    {
+      "drawerClientWidth": 319,
+      "drawerScrollWidth": 319,
+      "drawerWidth": 320,
+      "pageWidth": 320,
+      "productCards": 21,
+      "width": 320
+    },
+    {
+      "drawerClientWidth": 389,
+      "drawerScrollWidth": 389,
+      "drawerWidth": 390,
+      "pageWidth": 390,
+      "productCards": 21,
+      "width": 390
+    },
+    {
+      "drawerClientWidth": 429,
+      "drawerScrollWidth": 429,
+      "drawerWidth": 430,
+      "pageWidth": 430,
+      "productCards": 21,
+      "width": 430
+    },
+    {
+      "drawerClientWidth": 447,
+      "drawerScrollWidth": 447,
+      "drawerWidth": 448,
+      "pageWidth": 1280,
+      "productCards": 21,
+      "width": 1280
+    }
+  ],
+  "addRemove": "Couple Bunny Set added via API then removed; original3 basket items restored; checkout retained",
+  "engines": "Only in-app browser connected; no native Chrome/Firefox/phone"
+}

@@ -13,3 +13,6 @@
 
 ## Completed (dimension correction)
 - [x] 21.7 Codex — Restore pre-logo Git dimensions: 38px logo; original padding and controls unchanged. Rebuilt Docker; four tests/typecheck pass. Browser measurements: desktop menu73px, mobile75px (controls now determine height), no overflow. No push.
+
+## Blocked (visual acceptance only)
+- [ ] 21.8 Codex — Login logo enlarged to 200×80; 10 focused tests and typecheck pass, local Docker rebuilt/restarted. Browser plugin has no connected browser; desktop/mobile visual acceptance pending. No Gemini dependency or push.

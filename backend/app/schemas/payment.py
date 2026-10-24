@@ -12,7 +12,7 @@ class PaymentIntentCreate(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    order_id: int | None = Field(default=None, alias="orderId", description="Database ID of the order")
+    order_id: int | None = Field(default=None, ge=1, le=2_147_483_647, alias="orderId", description="Database ID of the order")
     order_number: str | None = Field(default=None, alias="orderNumber", description="Readable order number (e.g. CB-20260930-XXXX)")
     provider: str | None = Field(default=None, description="Payment provider: 'razorpay' or 'mock'")
 
@@ -39,7 +39,7 @@ class PaymentVerifyRequest(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    payment_id: int = Field(..., alias="paymentId")
+    payment_id: int = Field(..., ge=1, le=2_147_483_647, alias="paymentId")
     provider_payment_id: str = Field(..., alias="providerPaymentId", description="Gateway payment ID (e.g. pay_XXXX)")
     provider_order_id: str | None = Field(default=None, alias="providerOrderId", description="Gateway order ID")
     provider_signature: str | None = Field(default=None, alias="providerSignature", description="HMAC verification signature")

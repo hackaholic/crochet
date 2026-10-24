@@ -22,3 +22,5 @@ Codex active on [19.4 missing specifications](tasks/task-004-missing-storefront-
 19.5 Active — Codex: preprod Heart Bear missing all six fields; browser API null versus local resolved defaults. Exact task-005 contract; read-only diagnosis, no deployment/DB changes.
 
 19.5 Returned/Completed — Codex: VPS backend lacks19.4 resolver; all DB defaults exist. Exact task-005 return/evidence.19.6 pending backend preprod deployment/acceptance via existing automation; no frontend/DB change or Gemini code dependency.
+
+19.6 Returned/Completed — Codex: preprod backend (`https://api-dev.sulocraft.com/api/v1/products/3`) and storefront (`https://dev.sulocraft.com/products/heart-bear`) verified with 6/6 populated fields and interactive disclosures (`reports/task-006-preprod-acceptance.json`, `reports/preprod-heart-bear-information.jpg`). Work 019 Completed; no active handoffs or blockers.

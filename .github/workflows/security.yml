@@ -162,6 +162,7 @@ jobs:
             tests/test_security_authorization.py \
             tests/test_security_business_logic.py \
             tests/test_config_secrets.py \
+            tests/test_api_schemathesis.py \
             -v
 
   security-gate:

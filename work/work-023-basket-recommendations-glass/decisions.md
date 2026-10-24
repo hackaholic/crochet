@@ -9,3 +9,5 @@
 - Context: both guest and customer baskets need suggestions; customer signals are not yet contracted.
 - Approach: bounded API newest-product discovery now; exclude current basket/duplicates/unavailable products. Backend task23.3 handles ranking/authorized customer signals later.
 - Consequence: no hardcoded catalogue, fake personalized labels or full-catalogue downloads. Empty/error results omit suggestions without blocking basket actions.
+
+DEC-023-003 — Cart-aware API supplies a neutral lead on the initial basket discovery page; retain ranked sections/cursor and deduplicate across sources/pages. One bounded call per endpoint initially, ranked endpoint only thereafter.404 alone permits legacy compatibility; never hide403/errors with catalogue fallback. Preserve initial compatibility mode across pages so fallback paging cannot overwrite cart lead. No provider/checkout redesign.

@@ -1,14 +1,13 @@
 # Work 013 tasks
 
-## In Progress
+## Completed
+- [x] 13.12 Gemini: Schemathesis OpenAPI Property-Based Contract & Fuzz Testing per [task-012-schemathesis-api-fuzzing.md](tasks/task-012-schemathesis-api-fuzzing.md).
+  - [x] 13.12.1 Add `schemathesis>=3.38` to `backend/pyproject.toml` dev dependencies.
+  - [x] 13.12.2 Implement in-process ASGI pytest suite in `backend/tests/test_api_schemathesis.py` checking schema conformance, boundary values, and auth bypass detection.
+  - [x] 13.12.3 Implement standalone CLI runner script `scripts/security/scan-api-schemathesis.sh` targeting `/openapi.json` with JSON report output.
+  - [x] 13.12.4 Integrate into master release gate `scripts/security/full-audit.sh` and `.github/workflows/security.yml`.
 
 ## Pending
-
-- [ ] 13.12 Gemini: Schemathesis OpenAPI Property-Based Contract & Fuzz Testing per [task-012-schemathesis-api-fuzzing.md](tasks/task-012-schemathesis-api-fuzzing.md).
-  - [ ] 13.12.1 Add `schemathesis>=3.38` to `backend/pyproject.toml` dev dependencies.
-  - [ ] 13.12.2 Implement in-process ASGI pytest suite in `backend/tests/test_api_schemathesis.py` checking schema conformance, boundary values, and auth bypass detection.
-  - [ ] 13.12.3 Implement standalone CLI runner script `scripts/security/scan-api-schemathesis.sh` targeting `/openapi.json` with JSON report output.
-  - [ ] 13.12.4 Integrate into master release gate `scripts/security/full-audit.sh` and `.github/workflows/security.yml`.
 - [ ] 13.13 Gemini: OWASP ZAP DAST Preprod Pipeline Integration & Authenticated Profiling per [task-013-zap-dast-preprod-pipeline.md](tasks/task-013-zap-dast-preprod-pipeline.md).
   - [ ] 13.13.1 Authenticated session profile support in `scripts/security/scan-dast.sh`.
   - [ ] 13.13.2 Automated post-deploy gating in `.github/workflows/deploy-dev-backend.yml`.
