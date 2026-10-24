@@ -9,3 +9,7 @@ Task 13.11 (frontend source-map-js advisory & local audit test verification) is 
 ## Return protocol
 
 The assigned agent updates the exact contract, tasks.md, notes.md, and this file before returning the task. The global registry at docs/handoffs.md points here; it does not duplicate this work's status.
+
+13.15 Active — Codex: Vite/undici dependency audit blocker; task-015 contract, no Gemini dependency.
+
+13.15 Returned/Completed — Codex: patched Vite8.3.5/undici8.12.3; unchanged high-severity audit passes,26tests/typecheck/full build and local9image smoke passed. Task-015 return/evidence. CI/deployment pending push, no Gemini dependency.

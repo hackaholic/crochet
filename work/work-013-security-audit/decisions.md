@@ -35,3 +35,5 @@
 **Decision:** OWASP ZAP dynamic analysis must strictly target preprod/development environments (`https://dev.sulocraft.com` or local Docker). Aggressive vulnerability fuzzing must never target live production.
 
 **Reason:** Protects production uptime and customer transaction states while ensuring automated header, cookie flag, and injection assessments run continuously in preprod.
+
+DEC-013-015 — Keep the high/critical dependency gate unchanged. Raise Vite to the patched8.3 line and constrain undici8 to>=8.12.2 through pnpm overrides; generate lockfile with project pnpm10.11.1. Fix advisories rather than suppressing platform-specific findings.

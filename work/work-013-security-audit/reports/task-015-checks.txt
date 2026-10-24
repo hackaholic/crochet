@@ -1,0 +1,118 @@
+Audit/typecheck/test evidence (build section omitted from initial invocation):
+2 vulnerabilities found
+Severity: 2 moderate
+
+> sulocraft@1.0.0 typecheck /app
+> tsc --noEmit
+
+
+ RUN  v5.0.2 /app
+
+ ✓ src/pages/ShopPage.test.tsx (14 tests) 2015ms
+   ✓ ShopPage filters (14)
+     ✓ renders the backend-provided category heading without changing the layout 345ms
+     ✓ shows only populated options, supports parent categories, and preserves expanded panels 477ms
+     ✓ lets a phone user deselect categories in the drawer without active chips 335ms
+ ✓ src/components/PriceRangeFilter.test.tsx (4 tests) 763ms
+   ✓ native price range filter (4)
+     ✓ synchronizes both sliders and precise numeric fields, then resets 568ms
+ ✓ src/config/catalogue.test.ts (8 tests) 8ms
+
+ Test Files  3 passed (3)
+      Tests  26 passed (26)
+   Start at  05:39:08
+   Duration  7.89s (environment 41%, tests 38%, setup 10%, transform 7%, import 3%)
+
+Environment  jsdom was created 3 times · 3.01s total, 41% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+
+
+Final full build with complete local verification configuration:
+
+> sulocraft@1.0.0 build:dev /app
+> node scripts/build-frontend.mjs preprod
+
+[sulocraft] Building frontend in preprod mode
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - `__dirname` (vite.config.ts:12:25). Use `import.meta.dirname` instead
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+vite v8.3.5 building client environment for preprod...
+transforming...
+✓ 229 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                          1.65 kB │ gzip:   0.62 kB
+dist/.vite/manifest.json                 2.07 kB │ gzip:   0.45 kB
+dist/assets/AdminPage-MIA4vmeC.css       1.85 kB │ gzip:   0.55 kB
+dist/assets/index-BcLYfCG_.css          94.04 kB │ gzip:  17.14 kB
+dist/assets/orders-Cb5wUura.js           1.66 kB │ gzip:   0.69 kB
+dist/assets/AuthModal-Cr9TZes9.js        5.18 kB │ gzip:   1.99 kB
+dist/assets/client-0jQcBjhR.js           8.52 kB │ gzip:   3.25 kB
+dist/assets/SearchOverlay-HBsvFRfO.js   10.10 kB │ gzip:   3.20 kB
+dist/assets/CheckoutPage-5e-KghzZ.js    16.46 kB │ gzip:   4.56 kB
+dist/assets/AccountPage-CVyW_mef.js     17.59 kB │ gzip:   5.64 kB
+dist/assets/AdminPage-KWwx-gBA.js      136.11 kB │ gzip:  33.06 kB
+dist/assets/index-CiRkURnc.js          380.78 kB │ gzip: 113.39 kB
+
+✓ built in 3.99s
+[PLUGIN_TIMINGS] JavaScript callbacks ran for 3.8s of this 4.0s build (95%).
+The slowest callbacks, timed inside each callback (the wait before a callback starts is excluded, the time it awaits is included):
+  - plugin vite:prepare-out-dir renderStart (76%, 3.0s, 1 call)
+Additional callback time came from the callbacks below and from callbacks under 1s.
+1 callback is listed without a time. Its calls overlapped, so the time inside one call includes work from other calls. To find its cost, profile the build with `node --cpu-prof`:
+  - plugin @tailwindcss/vite:generate:build transform (9 calls)
+See https://rolldown.rs/reference/InputOptions.checks#bundlertimings for more details.
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - `__dirname` (vite.config.ts:12:25). Use `import.meta.dirname` instead
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+vite v8.3.5 building ssr environment for preprod...
+transforming...
+✓ 139 modules transformed.
+rendering chunks...
+computing gzip size...
+.seo-render/.vite/manifest.json                 1.85 kB │ gzip:  0.41 kB
+.seo-render/assets/orders-D427c1vJ.js           2.79 kB │ gzip:  0.96 kB
+.seo-render/assets/AuthModal-CWkWLcAa.js        7.44 kB │ gzip:  2.37 kB
+.seo-render/assets/SearchOverlay-wIe5BlXw.js   16.74 kB │ gzip:  4.23 kB
+.seo-render/assets/CheckoutPage-Cl6TfHQu.js    26.41 kB │ gzip:  5.74 kB
+.seo-render/assets/AccountPage-D9_GpmC5.js     28.47 kB │ gzip:  7.23 kB
+.seo-render/assets/AdminPage-DU1wBmu4.js      220.17 kB │ gzip: 44.67 kB
+.seo-render/entry-server.js                   249.84 kB │ gzip: 57.02 kB
+
+✓ built in 3.33s
+[PLUGIN_TIMINGS] JavaScript callbacks ran for 3.3s of this 3.3s build (98%).
+The slowest callbacks, timed inside each callback (the wait before a callback starts is excluded, the time it awaits is included):
+  - plugin vite:prepare-out-dir renderStart (95%, 3.2s, 1 call)
+Additional callback time came from callbacks under 1s.
+See https://rolldown.rs/reference/InputOptions.checks#bundlertimings for more details.
+
+[sulocraft] Rendered 96 API-backed public pages
+{
+  "files": [
+    {
+      "file": "assets/index-CiRkURnc.js",
+      "bytes": 380786,
+      "gzip": 112437
+    },
+    {
+      "file": "assets/client-0jQcBjhR.js",
+      "bytes": 8522,
+      "gzip": 3254
+    },
+    {
+      "file": "assets/index-BcLYfCG_.css",
+      "bytes": 94047,
+      "gzip": 16979
+    }
+  ],
+  "jsGzip": 115691,
+  "cssGzip": 16979,
+  "limits": {
+    "jsGzip": 120000,
+    "cssGzip": 20000
+  },
+  "passed": true
+}

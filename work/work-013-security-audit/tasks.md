@@ -24,6 +24,7 @@
   - [ ] 13.9.4 Security Audit Verification
 
 ## Completed
+- [x] 13.15 Codex — [Patch Vite/undici advisories](tasks/task-015-vite-undici-advisories.md): audit gate/typecheck/26tests/full build/local smoke pass.
 
 - [x] 13.11 Gemini: Patch frontend source-map-js high advisory & add local audit test verification per [task-011-source-map-js-advisory.md](tasks/task-011-source-map-js-advisory.md). CI run: [38064775352](https://github.com/hackaholic/crochet/actions/runs/38064775352).
 - [x] 13.10 Codex: Patched frontend dependency advisories; pnpm 10.11.1 audit is clean and [Automated Security Release Gate run 37214436868](https://github.com/hackaholic/crochet/actions/runs/37214436868) passed all jobs.
