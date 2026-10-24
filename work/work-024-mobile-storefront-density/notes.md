@@ -19,3 +19,5 @@ Completion: self-review/security disposition Pass for CSS/template-only scope; n
 2026-10-20 —24.5 completed locally:390px category product start398→250px, shop302→218px; product frames retained.10tests/typecheck and Docker rebuild passed, responsive320–1280 and real filter/sort/remove checks recorded in task-004. No Gemini requirement, push or deployment.
 
 2026-10-20 —24.6 complete locally: sort/breadcrumb both12px,32px strip below menu;390px Baby first product209px (another41px saved).11tests/typecheck, Docker rebuild, responsive/sort acceptance recorded. No push.
+
+2026-10-24 — Local container recovery (Codex, Completed): database/API/frontend found exited255. Existing stack started using root .env, preserving database volume; compose completed and API /health returned ok. User requested no additional browser checks for routine restarts; further checks stopped. No application code/deployment changes.
