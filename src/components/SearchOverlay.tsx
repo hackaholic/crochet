@@ -1,3 +1,4 @@
+import SearchDialogFrame from './SearchDialogFrame';
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { SearchIcon, XIcon } from './Icons';
 import { useSearchBatches } from '../hooks/useSearchBatches';
@@ -65,8 +66,8 @@ export default function SearchOverlay({ open, onClose, onProductClick }: SearchO
   useEffect(() => {
     if (!open) return;
     const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    inputRef.current?.focus();
-    return () => previouslyFocused?.focus();
+    inputRef.current?.focus({ preventScroll: true });
+    return () => { if (previouslyFocused?.isConnected) previouslyFocused.focus({ preventScroll: true }); };
   }, [open]);
 
   const close = () => {
@@ -116,17 +117,8 @@ export default function SearchOverlay({ open, onClose, onProductClick }: SearchO
   if (!open) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-80 flex flex-col"
-      style={{ zIndex: 80 }}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Search products"
-      onKeyDown={handleDialogKeyDown}
-    >
-      <button type="button" tabIndex={-1} aria-label="Close search" className="absolute inset-0 h-full w-full cursor-default bg-black/50 backdrop-blur-sm" onClick={close} />
-      <div ref={dialogRef} className="relative mx-auto mt-8 w-[calc(100%-1.5rem)] max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl sm:mt-20 sm:w-full">
-        <div className="flex items-center gap-3 border-b border-[#EDE4D0] px-4 py-4 sm:px-6">
+    <SearchDialogFrame onClose={close} dialogRef={dialogRef} onKeyDown={handleDialogKeyDown}>
+        <div className="search-dialog-header flex items-center gap-3 border-b border-[#EDE4D0] px-4 py-4 sm:px-6">
           <SearchIcon size={22} className="shrink-0 text-[#8B6B4A]" />
           <input
             ref={inputRef}
@@ -148,7 +140,7 @@ export default function SearchOverlay({ open, onClose, onProductClick }: SearchO
           </button>
         </div>
 
-        <div ref={panelRef} aria-label="Search result panel" onScroll={event => { const panel = event.currentTarget; if (panel.scrollHeight - panel.scrollTop - panel.clientHeight <= 80) loadMore(); }} className="max-h-[min(70vh,32rem)] overflow-y-auto px-4 py-5 sm:px-6" aria-live="polite" aria-busy={loading || loadingMore || suggestionsLoading}>
+        <div ref={panelRef} aria-label="Search result panel" onScroll={event => { const panel = event.currentTarget; if (panel.scrollHeight - panel.scrollTop - panel.clientHeight <= 80) loadMore(); }} className="search-dialog-results px-4 py-5 sm:px-6" aria-live="polite" aria-busy={loading || loadingMore || suggestionsLoading}>
           {normalizedQuery.length === 0 ? (suggestionsLoading ? (
             <p role="status" className="py-8 text-center text-sm text-[#806F61]">Finding what customers are exploring…</p>
           ) : suggestionsError ? (
@@ -237,7 +229,6 @@ export default function SearchOverlay({ open, onClose, onProductClick }: SearchO
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </SearchDialogFrame>
   );
 }

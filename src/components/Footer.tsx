@@ -36,6 +36,10 @@ const FacebookIcon = () => (
 
 export default function Footer({ onNavigate }: FooterProps) {
   const navigate = useNavigate();
+  const navigateToTop = (href: string) => {
+    void navigate(href);
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  };
   const { categories, collections } = useCatalogue();
   const initial = usePublicBootstrap();
   const [brand, setBrand] = useState(initial?.home.brand);
@@ -97,7 +101,7 @@ export default function Footer({ onNavigate }: FooterProps) {
             <ul className="space-y-2.5">
               {shopLinks.map(({label, href}) => (
                 <li key={href}>
-                  <DestinationLink href={href} onNavigate={() => navigate(href)} className="text-white/60 hover:text-white text-sm transition-colors">
+                  <DestinationLink href={href} onNavigate={() => navigateToTop(href)} className="text-white/60 hover:text-white text-sm transition-colors">
                     {label}
                   </DestinationLink>
                 </li>
@@ -109,7 +113,7 @@ export default function Footer({ onNavigate }: FooterProps) {
             <ul className="space-y-2.5">
               {categories.filter(c => c.isActive !== false).slice(0, 5).map(category => (
                 <li key={category.id}>
-                  <DestinationLink href={`/categories/${encodeURIComponent(category.slug)}`} onNavigate={() => navigate(`/categories/${encodeURIComponent(category.slug)}`)} className="text-white/60 hover:text-white text-sm transition-colors">
+                  <DestinationLink href={`/categories/${encodeURIComponent(category.slug)}`} onNavigate={() => navigateToTop(`/categories/${encodeURIComponent(category.slug)}`)} className="text-white/60 hover:text-white text-sm transition-colors">
                     {category.name}
                   </DestinationLink>
                 </li>

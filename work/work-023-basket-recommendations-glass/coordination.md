@@ -1,9 +1,9 @@
 # Work 023 coordination
 
 **Current Owner:** Codex
-**Status:** Returned (23.6); existing backend handoff retained
+**Status:** Returned (23.3)
 **Active Task:** None
-**Next Action:** Gemini [23.3](tasks/task-003-recommendation-api.md) is pickup ready. Codex owns subsequent adapter integration and remaining23.4 browser coverage.
+**Next Action:** Codex to migrate frontend basket adapter (`src/lib/api/basketRecommendations.ts`) to consume `GET /api/v1/cart/recommendations`.
 
 ## Completed return
 23.1 glass shell and23.2 API newest-product discovery verified locally; tests/typecheck/SAST pass, Docker rebuilt, mobile/desktop in-app checked. Full native engine matrix remains explicitly unverified in23.4.

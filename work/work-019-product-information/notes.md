@@ -8,3 +8,5 @@
 2026-10-11 — 19.3 complete: 12 isolated backend cases +1 migration test; real all-six-field admin/storefront roundtrip and restored originals. Unchanged-gallery metadata bug fixed. Owner neutral timing/delivery defaults applied. Work019 complete; no push. See task-003 for exact evidence and existing seed-restart identity observation.
 
 2026-10-20 — 19.4 Completed. Owner clarified missing specs use DB defaults. Shared public resolver fixes API/SEO inconsistency without overwriting stored values. Initial24/24 empty, after24/24 allsix public fields.14 backend/11 frontend tests+SAST passed; API rebuilt, localhost desktop/mobile verified. Initial frontend exit137 rerun passed. Exact evidence task-004. No push.
+
+2026-10-24 —19.5 read-only diagnosis: local6fields/dev6null; VPS resolver absent/default-row6populated. Preprod backend deployment stale; recent frontend pushes do not match backend workflow path filters. No mutation/test repetition;19.6 deployment acceptance pending.

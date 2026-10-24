@@ -14,6 +14,8 @@ from app.schemas.cart import (
     CartItemUpdate,
     CartMergeRequest,
     CartOut,
+    CartRecommendationStrategy,
+    CartRecommendationsOut,
 )
 from app.schemas.catalogue import (
     CategoryOut,
@@ -41,6 +43,8 @@ __all__ = [
     "CartItemUpdate",
     "CartMergeRequest",
     "CartOut",
+    "CartRecommendationStrategy",
+    "CartRecommendationsOut",
     "CategoryOut",
     "EmailStartRequest",
     "EmailStartResponse",

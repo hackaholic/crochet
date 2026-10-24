@@ -1,5 +1,6 @@
+import AuthDialogFrame, { AuthDialogHeader } from './AuthDialogFrame';
 import { useEffect, useState } from 'react';
-import { FacebookIcon, GoogleIcon, XIcon, YarnLogo } from './Icons';
+import { FacebookIcon, GoogleIcon } from './Icons';
 import { authApi, type User } from '../lib/api/auth';
 
 type GoogleIdentityApi = {
@@ -126,16 +127,9 @@ export default function AuthModal({ open, onClose, onSignedIn, initialError = ''
   };
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="sign-in-title">
-      <button className="absolute inset-0 bg-[#2C1810]/55 backdrop-blur-sm" onClick={onClose} aria-label="Close sign in" />
-      <section className="relative w-full max-w-md overflow-hidden rounded-[2rem] bg-white shadow-2xl">
-        <div className="bg-[#FAF7F2] px-7 pb-6 pt-7 text-center">
-          <button onClick={onClose} className="absolute right-5 top-5 rounded-full p-1.5 text-[#8B6B4A] hover:bg-[#F5EDE0]" aria-label="Close sign in"><XIcon size={20} /></button>
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm"><YarnLogo size={32} /></div>
-          <h2 id="sign-in-title" className="mt-4 text-3xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>{sentEmail ? 'Check your email' : 'Welcome to Sulocraft'}</h2>
-          <p className="mt-2 text-sm leading-6 text-[#8B6B4A]">{sentEmail ? 'Use the secure link we sent to continue.' : 'Sign in to save your favourites, addresses, and orders.'}</p>
-        </div>
-        <div className="px-7 py-6">
+    <AuthDialogFrame onClose={onClose}>
+      <AuthDialogHeader onClose={onClose} sent={Boolean(sentEmail)} />
+        <div className="auth-dialog-body px-7 py-6">
           {!sentEmail ? (
             <>
               <div className="flex flex-col gap-2.5">
@@ -158,7 +152,6 @@ export default function AuthModal({ open, onClose, onSignedIn, initialError = ''
           {error && <p className="mt-4 text-sm text-[#B54A2A]" role="alert">{error}</p>}
           <p className="mt-6 text-center text-xs leading-5 text-[#8B6B4A]">By continuing, you agree to our Terms of Use and Privacy Policy.</p>
         </div>
-      </section>
-    </div>
+    </AuthDialogFrame>
   );
 }

@@ -18,3 +18,5 @@ DEC-024-006 — Category routes are fixed catalogue context; only descendant cat
 DEC-024-007 — Replace price brackets with a reusable native dual-range control and precise Min/Max inputs. No slider dependency exists, so retain browser keyboard/pointer mechanics rather than adding a library. Validated public VITE_CATALOGUE_PRICE_MIN/MAX defaults0/100000; full/reset range means no price restriction. Whole rupee, finite/safe integer edits only; clamp crossed/out-of-range values. Checkout/backend remains price authority.
 
 DEC-024-008 — Price is scoped to current listing path/category/collection/occasion identity. Navigation resets it to configured full range; same-listing sorting/drawer/checkbox interactions retain it. No new cross-page persistence.
+
+DEC-024-009 — Login stays viewport-centered. Eagerly share its responsive frame/header between lazy-loading and live forms; fixed bounded footprint with internal body scrolling prevents center/size jumps across loading/error/sent states. Keep search top aligned and do not alter auth APIs or user sessions during visual QA.

@@ -16,6 +16,8 @@ None.
 
 ## Completed
 
+- [x] 7.11 Codex — [Checkout contact prefill](tasks/task-014-checkout-contact-prefill.md):11tests/typecheck, local authenticated profile/checkout and mobile acceptance.
+
 - [x] 7.10 Codex: [Ranked discovery integrated acceptance](tasks/task-012-ranked-discovery-local-acceptance.md) — actual ranked API, five sections/all steps and mobile paging verified.
 
 - [x] 7.6.1 Gemini: [Discovery allocation/ranking follow-up](tasks/task-013-discovery-section-allocation.md) — Completed. Deterministic round-robin allocation eliminates strategy starvation; surfaces all eligible groups (Popular, New, Featured, Trending, Related); strict ranking provenance (eligible sales only for Popular, genuine Review records for Trending, zero broad fake backfill for New); tenant isolation and 0 DB mutations. 9/9 tests passing in isolated test container; live Docker verified.

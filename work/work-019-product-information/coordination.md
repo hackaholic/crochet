@@ -18,3 +18,7 @@ Codex19.2 Returned: UI + targeted blank-clear repair verified locally. 19.3 read
 Codex active on [19.4 missing specifications](tasks/task-004-missing-storefront-information.md). First verify actual API data vs rendering; no hardcoded defaults or changes to explicit blank behavior. Gemini 7.6 remains independent.
 
 19.4 Returned/Completed2026-10-20: backend defaults resolve missing public values, product/SEO consistency verified.14 backend +11 frontend tests, SAST and24-product API/browser audit pass. Exact return task-004. No new Gemini dependency, no push.
+
+19.5 Active — Codex: preprod Heart Bear missing all six fields; browser API null versus local resolved defaults. Exact task-005 contract; read-only diagnosis, no deployment/DB changes.
+
+19.5 Returned/Completed — Codex: VPS backend lacks19.4 resolver; all DB defaults exist. Exact task-005 return/evidence.19.6 pending backend preprod deployment/acceptance via existing automation; no frontend/DB change or Gemini code dependency.

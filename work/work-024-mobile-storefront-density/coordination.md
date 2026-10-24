@@ -1,7 +1,7 @@
 # Work 024 coordination
 
 **Current Owner:** Codex
-**Status:** Returned / Completed (24.10 included)
+**Status:** Returned / Completed (24.12 included)
 **Active Task:** None
 **Next Action:** Owner can review compact mobile layout atlocalhost:8080. No push requested yet. Native Firefox/device checks remain an explicit coverage limitation.
 
@@ -34,3 +34,11 @@
 24.10 Active — Codex: reset price on listing context navigation; task-009, no Gemini dependency.
 
 24.10 Returned/Completed — price resets on listing context navigation, sort retains price;26tests/typecheck, Docker rebuild and actual Baby→Amigurumi verified. Task-009 return; no Gemini dependency/push.
+
+24.11 Active — Codex: Footer Shop/Collections navigation resets top through shared callback; task-010. No Gemini dependency.
+
+24.11 Returned/Completed — shared footer top-navigation callback.8tests/typecheck, Docker rebuild, actual4footer links scroll0 including same-page Shop. Task-010 return; no Gemini dependency/push.
+
+24.12 Active — Codex: stable centered login fallback/live frame; task-011. Search remains top anchored. No Gemini dependency.
+
+24.12 Returned/Completed — Codex: eager shared centered login frame/header, stable body and keyboard focus behavior.9tests/typecheck, Docker rebuild and actual centered responsive geometry passed. Task-011 return; no Gemini dependency/push.

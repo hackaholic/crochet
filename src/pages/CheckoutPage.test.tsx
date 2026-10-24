@@ -3,9 +3,11 @@ import { afterEach, expect, it, vi } from 'vitest';
 import CheckoutPage from './CheckoutPage';
 import { getProductDiscovery } from '../lib/api/productDiscovery';
 import { createOrder } from '../lib/api/orders';
+import { accountProfileApi } from '../lib/api/account';
 import { createPaymentIntent } from '../lib/api/payments';
 vi.mock('../lib/api/productDiscovery', () => ({ getProductDiscovery: vi.fn() }));
 vi.mock('../lib/api/orders', () => ({ createOrder: vi.fn() }));
+vi.mock('../lib/api/account', () => ({ accountProfileApi: { overview: vi.fn() } }));
 vi.mock('../lib/api/payments', () => ({ createPaymentIntent: vi.fn(), verifyMockPayment: vi.fn() }));
 const rose = {id:1, name:'Crochet Rose Bouquet', slug:'rose', image:'/rose.webp', price:1299, category:'Flowers', rating:0, reviews:0};
 const bunny = {...rose,id:2,name:'<Bunny>',slug:'bunny',price:799};
@@ -86,4 +88,20 @@ it('keeps API discovery across Contact, Delivery, Payment and Review and makes t
   expect(getProductDiscovery).toHaveBeenCalledTimes(1);
   fireEvent.click(screen.getByRole('button',{name:'← Back to basket'}));
   expect(p.onNavigate).toHaveBeenCalledWith('cart');expect(createOrder).not.toHaveBeenCalled();
+});
+
+it('renders the signed-in customer contact, retaining manual edits during basket updates', async () => {
+  vi.mocked(accountProfileApi.overview).mockRejectedValue(new Error('offline'));
+  const customer = { id: 5, name: 'Demo Customer', email: 'demo.customer@example.com', phone: '+919876543210', role: 'CUSTOMER', identities: ['email'] };
+  const p = props(); const { rerender } = render(<CheckoutPage {...p} customer={customer} />);
+  expect(screen.getByLabelText('First Name *')).toHaveValue('Demo');
+  expect(screen.getByLabelText('Last Name')).toHaveValue('Customer');
+  expect(screen.getByLabelText('Email *')).toHaveValue(customer.email);
+  expect(screen.getByLabelText('Phone Number *')).toHaveValue(customer.phone);
+  fireEvent.change(screen.getByLabelText('First Name *'), { target: { value: 'Delivery Recipient' } });
+  rerender(<CheckoutPage {...p} customer={customer} items={[{ product: rose, quantity: 2 }]} />);
+  expect(screen.getByLabelText('First Name *')).toHaveValue('Delivery Recipient');
+  await act(async () => {});
+  expect(createOrder).not.toHaveBeenCalled();
+  expect(createPaymentIntent).not.toHaveBeenCalled();
 });

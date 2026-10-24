@@ -2,7 +2,7 @@
 
 import secrets
 from datetime import datetime, timedelta, timezone
-from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Response, status
+from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session, joinedload
 
 from app.api.v1.auth import get_optional_current_user
@@ -18,8 +18,10 @@ from app.schemas.cart import (
     CartItemUpdate,
     CartMergeRequest,
     CartOut,
+    CartRecommendationsOut,
 )
 from app.schemas.promotion import CouponApplyRequest, CouponApplyResponse
+from app.services.discovery import get_cart_recommendations
 
 router = APIRouter(prefix="/cart", tags=["cart"])
 
@@ -170,6 +172,27 @@ def get_cart(
     """Retrieve current shopping cart. Returns empty cart representation if no cart exists."""
     cart, active_token = _get_or_create_cart(response, db, token, user=current_user, create_if_missing=False)
     return _build_cart_response(cart, active_token)
+
+
+@router.get("/recommendations", response_model=CartRecommendationsOut)
+def get_recommendations(
+    limit: int = Query(default=4, ge=1, le=8, description="Number of recommendations to return (1-8)"),
+    token: str | None = Depends(_get_cart_token),
+    current_user: User | None = Depends(get_optional_current_user),
+    db: Session = Depends(get_db),
+) -> CartRecommendationsOut:
+    """Return basket-aware recommendations conforming to Task 23.3.
+
+    Infers cart and user strictly from cookie or header boundaries; excludes current
+    basket items, inactive products, and out-of-stock products.
+    """
+    strategy, products = get_cart_recommendations(
+        db=db,
+        user=current_user,
+        guest_token=token,
+        limit=limit,
+    )
+    return CartRecommendationsOut(strategy=strategy, products=products)
 
 
 @router.post("/items", response_model=CartOut, status_code=status.HTTP_201_CREATED)

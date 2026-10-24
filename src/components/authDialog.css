@@ -1,0 +1,12 @@
+.auth-dialog-layer {
+  position: fixed; inset: 0; z-index: 90;
+  display: grid; place-items: center; padding: 1rem;
+}
+.auth-dialog-frame {
+  position: relative; display: flex; flex-direction: column;
+  width: 100%; max-width: 28rem;
+  height: min(42rem, calc(100dvh - 2rem));
+  min-height: 0; overflow: hidden;
+}
+.auth-dialog-header { flex-shrink: 0; }
+.auth-dialog-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }

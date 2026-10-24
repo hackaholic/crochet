@@ -1,3 +1,5 @@
+import { AuthLoading } from './components/AuthDialogFrame';
+import { SearchLoading } from './components/SearchDialogFrame';
 import { isPrivatePath } from './lib/seo/urlPolicy.mjs';
 import { usePublicBootstrap } from './lib/seo/bootstrap';
 import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
@@ -187,6 +189,7 @@ export default function App() {
         )}
         {page === 'checkout' && (
           <CheckoutPage
+            customer={user}
             onAddToCart={addCartItem}
             onProductClick={handleProductClick}
             items={cart}
@@ -228,16 +231,12 @@ export default function App() {
       />}
 
       {/* Search Overlay */}
-      {page !== 'admin' && searchOpen && <Suspense fallback={<OverlayLoading />}><SearchOverlay
+      {page !== 'admin' && searchOpen && <Suspense fallback={<SearchLoading onClose={() => setSearchOpen(false)} />}><SearchOverlay
         open={searchOpen}
         onClose={() => setSearchOpen(false)}
         onProductClick={handleProductClick}
       /></Suspense>}
-      {authOpen && <Suspense fallback={<OverlayLoading />}><AuthModal open={authOpen} initialError={authError} onClose={() => { setAuthOpen(false); setAuthError(''); }} onSignedIn={signedInUser => { setUser(signedInUser); setAuthError(''); void refreshCart(); void refreshWishlist(); }} /></Suspense>}
+      {authOpen && <Suspense fallback={<AuthLoading onClose={() => setAuthOpen(false)} />}><AuthModal open={authOpen} initialError={authError} onClose={() => { setAuthOpen(false); setAuthError(''); }} onSignedIn={signedInUser => { setUser(signedInUser); setAuthError(''); void refreshCart(); void refreshWishlist(); }} /></Suspense>}
     </div>
   );
-}
-
-function OverlayLoading() {
-  return <div className="fixed inset-0 z-[100] grid place-items-center bg-black/40" role="status" aria-live="polite"><div className="rounded-2xl bg-[#FAF7F2] p-6"><LoadingState label="Loading…" /></div></div>;
 }

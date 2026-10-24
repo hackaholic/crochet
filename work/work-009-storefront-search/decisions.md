@@ -9,3 +9,5 @@
 
 
 - **DEC-009-007 — Batched scrolling.** Preserve public array responses, add offset with deterministic ordering, load six results per batch and stop on short/empty batches. No automatic retry storms or telemetry per page. Offset pagination assumes stable catalogue ordering during a session; concurrent catalogue/ranking changes may shift page membership, so the UI deduplicates ids.
+
+DEC-009-014 — Eagerly share the search dialog frame and CSS between lazy fallback and live overlay. Stable responsive height/top position, internal result scrolling, no geometry animation; focus uses preventScroll. Leave auth fallback untouched.

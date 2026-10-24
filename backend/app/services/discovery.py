@@ -493,3 +493,134 @@ def get_discovery_feed(
 
     return sections, next_cursor
 
+
+def _resolve_personalized_products(
+    db: Session,
+    user: User | None,
+    excluded_ids: set[int],
+    limit: int,
+) -> list[Product]:
+    """Resolve personalized recommendations for authenticated users based on real past orders."""
+    if not user or limit <= 0:
+        return []
+
+    excluded_order_statuses = [
+        OrderStatus.CANCELLED.value,
+        OrderStatus.REFUNDED.value,
+        "CANCELLED",
+        "REFUNDED",
+    ]
+    excluded_payments = [
+        PaymentStatus.FAILED.value,
+        PaymentStatus.REFUNDED.value,
+        "FAILED",
+        "REFUNDED",
+    ]
+    eligible_paid_statuses = [
+        PaymentStatus.PAID.value,
+        "PAID",
+        "PARTIALLY_REFUNDED",
+    ]
+
+    past_ordered_items = (
+        db.query(OrderItem.product_id)
+        .join(Order, Order.id == OrderItem.order_id)
+        .filter(
+            Order.user_id == user.id,
+            OrderItem.product_id.isnot(None),
+            Order.status.not_in(excluded_order_statuses),
+            Order.payment_status.not_in(excluded_payments),
+            or_(
+                Order.payment_method == PaymentMethod.COD.value,
+                Order.payment_status.in_(eligible_paid_statuses),
+            ),
+        )
+        .all()
+    )
+    past_product_ids = {pid for pid, in past_ordered_items if pid}
+    if not past_product_ids:
+        return []
+
+    past_products = db.query(Product).filter(Product.id.in_(list(past_product_ids))).all()
+    target_category_ids = {cat.id for p in past_products for cat in p.categories}
+    target_tag_ids = {t.id for p in past_products for t in p.tags}
+
+    if not target_category_ids and not target_tag_ids:
+        return []
+
+    conditions = []
+    if target_category_ids:
+        conditions.append(Product.categories.any(Category.id.in_(list(target_category_ids))))
+    if target_tag_ids:
+        conditions.append(Product.tags.any(Tag.id.in_(list(target_tag_ids))))
+
+    all_excluded = set(excluded_ids) | past_product_ids
+    query = (
+        _base_candidate_query(db, all_excluded)
+        .filter(or_(*conditions))
+        .order_by(Product.rating.desc(), Product.reviews_count.desc(), Product.id.desc())
+        .limit(limit)
+    )
+    return query.all()
+
+
+def get_cart_recommendations(
+    db: Session,
+    user: User | None = None,
+    guest_token: str | None = None,
+    limit: int = 4,
+) -> tuple[str, list[Any]]:
+    """Assemble basket-aware recommendations conforming to Task 23.3.
+
+    Returns (strategy, products) where strategy is one of:
+    - 'personalized': authenticated user with matching past purchase signals
+    - 'related': cart contains items with matching categories or tags
+    - 'featured': curated items / high rating fallback
+    - 'newest': newest arrivals fallback
+
+    Basket items, inactive products, and out-of-stock items are strictly excluded.
+    """
+    effective_limit = max(1, min(limit, 8))
+    cart_ids = get_cart_product_ids(db, user=user, guest_token=guest_token)
+    excluded_ids = set(cart_ids)
+
+    # 1. Try personalized strategy if authenticated user has past purchase signals
+    candidates: list[Product] = []
+    strategy = "newest"
+
+    if user:
+        candidates = _resolve_personalized_products(db, user, excluded_ids, effective_limit)
+        if candidates:
+            strategy = "personalized"
+
+    # 2. Try related strategy if cart has items
+    if not candidates and cart_ids:
+        candidates = _resolve_related_products(db, cart_ids, excluded_ids, effective_limit)
+        if candidates:
+            strategy = "related"
+
+    # 3. Truthful fallback to featured
+    if not candidates:
+        candidates = _resolve_featured_products(db, excluded_ids, effective_limit)
+        if candidates:
+            strategy = "featured"
+
+    # 4. Truthful fallback to newest
+    if not candidates:
+        candidates = _resolve_newest_products(db, excluded_ids, effective_limit)
+        if candidates:
+            strategy = "newest"
+
+    # 5. Fallback to active catalogue ordered by creation date if specific badge/collection query returned empty
+    if not candidates:
+        candidates = (
+            _base_candidate_query(db, excluded_ids)
+            .order_by(Product.created_at.desc(), Product.id.desc())
+            .limit(effective_limit)
+            .all()
+        )
+        strategy = "newest"
+
+    from app.api.v1.catalogue import _to_product_list_items
+    list_items = _to_product_list_items(candidates, db)
+    return strategy, list_items

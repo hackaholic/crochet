@@ -1,3 +1,5 @@
+import { useCheckoutForm } from '../hooks/useCheckoutForm';
+import type { User } from '../lib/api/auth';
 import './checkout.css';
 import ProductRecommendations from '../components/ProductRecommendations';
 import type { Product } from '../data/products';
@@ -10,6 +12,7 @@ import { createOrder, type OrderOut } from '../lib/api/orders';
 import { createPaymentIntent, verifyMockPayment } from '../lib/api/payments';
 
 interface CheckoutPageProps {
+  customer?: User | null;
   items: CartItem[];
   onComplete: () => void;
   onNavigate: (page: 'home' | 'shop' | 'product' | 'cart' | 'wishlist' | 'checkout' | 'about') => void;
@@ -34,7 +37,7 @@ const paymentMethods = [
   { id: 'cod', label: 'Cash on Delivery', icon: '💵', desc: 'Pay when delivered' },
 ];
 
-export default function CheckoutPage({ items, onComplete, onNavigate, couponCode, onAddToCart, onProductClick }: CheckoutPageProps) {
+export default function CheckoutPage({ customer, items, onComplete, onNavigate, couponCode, onAddToCart, onProductClick }: CheckoutPageProps) {
   const [addingItem, setAddingItem] = useState(false);
   const addRecommendation = async (product: Product) => {
     setAddingItem(true);
@@ -46,7 +49,7 @@ export default function CheckoutPage({ items, onComplete, onNavigate, couponCode
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', line1: '', line2: '', city: '', state: '', postalCode: '', landmark: '' });
+  const { form, input } = useCheckoutForm(customer);
 
   const subtotal = items.reduce((s, i) => s + i.product.price * i.quantity, 0);
   const shipping = subtotal >= 999 ? 0 : 79;
@@ -77,7 +80,7 @@ export default function CheckoutPage({ items, onComplete, onNavigate, couponCode
     }
   };
 
-  const input = (name: keyof typeof form) => ({ value: form[name], onChange: (event: React.ChangeEvent<HTMLInputElement>) => setForm(current => ({ ...current, [name]: event.target.value })) });
+
 
   if (orderPlaced) {
     return (
@@ -152,9 +155,9 @@ export default function CheckoutPage({ items, onComplete, onNavigate, couponCode
                   <h2 className="text-xl font-semibold text-[#2C1810] mb-6" style={{ fontFamily: 'var(--font-serif)' }}>Contact Information</h2>
                   <div className="grid grid-cols-2 gap-4">
                     {[
-                      { label: 'First Name', placeholder: 'Priya', col: 1, name: 'firstName' },
-                      { label: 'Last Name', placeholder: 'Sharma', col: 1, name: 'lastName' },
-                      { label: 'Email', placeholder: 'priya@example.com', col: 2, type: 'email', name: 'email' },
+                      { label: 'First Name', placeholder: 'First name', col: 1, name: 'firstName' },
+                      { label: 'Last Name', placeholder: 'Last name', col: 1, name: 'lastName' },
+                      { label: 'Email', placeholder: 'you@example.com', col: 2, type: 'email', name: 'email' },
                       { label: 'Phone Number', placeholder: '+91 98765 43210', col: 2, type: 'tel', name: 'phone' },
                     ].map(({ label, placeholder, col, type = 'text', name }) => (
                       <div key={label} className={col === 2 ? 'col-span-2 md:col-span-1' : ''}>

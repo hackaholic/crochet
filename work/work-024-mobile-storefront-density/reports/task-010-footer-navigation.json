@@ -1,0 +1,46 @@
+[
+  {
+    "label": "All Products",
+    "before": {
+      "path": "/shop",
+      "scrollY": 3013
+    },
+    "after": {
+      "path": "/shop",
+      "scrollY": 0
+    }
+  },
+  {
+    "label": "Gifts",
+    "before": {
+      "path": "/shop",
+      "scrollY": 3013
+    },
+    "after": {
+      "path": "/collections/gifts",
+      "scrollY": 0
+    }
+  },
+  {
+    "label": "Birthday Gifts",
+    "before": {
+      "path": "/collections/gifts",
+      "scrollY": 3053
+    },
+    "after": {
+      "path": "/collections/birthday-gifts",
+      "scrollY": 0
+    }
+  },
+  {
+    "label": "Custom Orders",
+    "before": {
+      "path": "/collections/birthday-gifts",
+      "scrollY": 1730
+    },
+    "after": {
+      "path": "/contact?subject=custom-order",
+      "scrollY": 0
+    }
+  }
+]

@@ -1,7 +1,9 @@
 """Pydantic schemas for Cart and Cart Items conforming to Sections 6, 7, and 18 of Specification."""
 
-from typing import Any
+from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field
+
+from app.schemas.catalogue import ProductListItem
 
 
 class CartItemAdd(BaseModel):
@@ -83,3 +85,13 @@ class CartMergeRequest(BaseModel):
     """Request to merge an anonymous guest cart into the active cart."""
 
     guest_token: str = Field(..., description="Guest cart token to merge from.")
+
+
+CartRecommendationStrategy = Literal["newest", "featured", "related", "personalized"]
+
+
+class CartRecommendationsOut(BaseModel):
+    """Response schema for basket-aware recommendations conforming to Task 23.3."""
+
+    strategy: CartRecommendationStrategy
+    products: list[ProductListItem]

@@ -24,3 +24,7 @@ User assigned Gemini 9.11 while Codex began implementation; existing API draft i
 9.12 returned complete:25 frontend tests/typecheck and local pagination rendering passed.9.13 blocked only on unavailable dedicated Chrome/Firefox surfaces; in-app desktop/mobile and API pagination passed. Owner Codex; no Gemini dependency or push.
 
 Closure2026-10-13: user verified9.13 and requested closure. Work009 complete; no active handoff/blocker. Historical evidence retained. No push/deployment.
+
+9.14 Active — Codex: shared stable frame fixes centered lazy-loading fallback→top dialog jump and content-height shifts. Exact task-014 contract; no Gemini/backend dependency.
+
+9.14 Returned/Completed — Codex: shared top-anchored loading/live shell and stable result area.15tests/typecheck and local Docker/browser acceptance pass, task-014 return. No Gemini dependency or push.

@@ -1,0 +1,16 @@
+{
+  "profileMatches": {
+    "firstNameMatches": true,
+    "lastNameMatches": true,
+    "emailMatches": true,
+    "phoneMatches": true
+  },
+  "mobile": {
+    "emailPopulated": true,
+    "firstNamePopulated": true,
+    "pageWidth": 380,
+    "width": 390
+  },
+  "realOrdersCreated": 0,
+  "profileChanged": false
+}

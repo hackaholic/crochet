@@ -35,3 +35,5 @@ Existing search returns at most six UI results; backend has limit only and no of
 2026-10-13 Codex:9.12 complete;25 frontend tests/typecheck,25 discovery regressions and SAST gate pass. Rebuilt API/frontend; actual DB15 crochet results load6/6/3 with no duplicate ids; UI scroll6→12→15, end and keyboard product navigation verified desktop/mobile.9.13 only remaining acceptance is dedicated Chrome/Firefox browsers not exposed by CUA inventory. No push. See exact9.13 contract for evidence.
 
 2026-10-13: User confirmed9.13 verification and requested closure. Marked9.13 and Work009 Completed. User verification is distinguished from Codex automated/in-app evidence. No further code changes/tests or push/deployment.
+
+2026-10-24 —9.14 fixed lazy centered fallback→top dialog jump and content-height resizing. Shared eager shell;15tests/typecheck, Docker rebuild, desktop/mobile/short viewport acceptance recorded. Nothing pushed.

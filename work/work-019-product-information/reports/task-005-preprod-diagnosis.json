@@ -1,0 +1,12 @@
+{
+  "product": "heart-bear",
+  "productId": 3,
+  "localResolvedFields": 6,
+  "preprodApiNullFields": 6,
+  "vpsContainer": "sulocraft-preprod-api-1",
+  "vpsResolverPresent": false,
+  "vpsDefaultsRowPresent": true,
+  "vpsPopulatedDefaultFields": 6,
+  "finding": "Running preprod backend predates Work19.4 resolver; database defaults already present.",
+  "mutationPerformed": false
+}

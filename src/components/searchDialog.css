@@ -1,0 +1,15 @@
+.search-dialog-layer {
+  --search-dialog-top: 2rem;
+  position: fixed; inset: 0; z-index: 80;
+  display: flex; justify-content: center; align-items: flex-start;
+  padding-top: var(--search-dialog-top);
+}
+.search-dialog-frame {
+  position: relative; display: flex; flex-direction: column;
+  width: calc(100% - 1.5rem); max-width: 42rem;
+  height: min(36rem, calc(100dvh - var(--search-dialog-top) - 1rem));
+  overflow: hidden;
+}
+.search-dialog-header { flex-shrink: 0; }
+.search-dialog-results { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scroll-behavior: auto; }
+@media (min-width: 640px) { .search-dialog-layer { --search-dialog-top: 5rem; } }

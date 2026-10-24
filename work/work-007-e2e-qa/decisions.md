@@ -21,3 +21,5 @@
 - Context: owner wants New arrivals/Featured/Trending/Popular below checkout and basket, full page width, same template in all steps.
 - Decision: one bounded, abortable discovery adapter/feed; server controls section titles/order/rankings. Auto paging plus explicit retry/load-more, deduplication, shared request budgets and canonical cart adds. Missing endpoint alone uses honest newest compatibility; never disguise forbidden/error responses as success.
 - Consequence: 7.6 belongs to Gemini, integrated named-section acceptance is 7.10. Full-width container retains narrow mobile gutters and does not resize navigation.
+
+DEC-007-5 — Checkout contact uses existing authenticated user immediately and fresh canonical account profile for untouched fields. Preserve manual edits including clearing; guest no profile fetch; identity changes clear prior PII and stale/mismatched responses cannot hydrate. Do not auto-select saved addresses or change account identity from checkout.

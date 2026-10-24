@@ -7,6 +7,8 @@ None.
 None.
 
 ## Completed
+- [x] 24.12 Codex — [Stable centered login](tasks/task-011-stable-auth-dialog.md):9tests/typecheck, Docker rebuild and centered desktop/mobile/short viewport acceptance.
+- [x] 24.11 Codex — [Footer navigation to top](tasks/task-010-footer-navigation-top.md):8tests/typecheck, Docker rebuild and all4 Shop footer links verified.
 - [x] 24.10 Codex — [Reset price on navigation](tasks/task-009-reset-price-on-navigation.md):26tests/typecheck and actual Baby→Amigurumi acceptance.
 - [x] 24.9 Codex — [Price range slider](tasks/task-008-price-range-slider.md):31 unique tests/typecheck, Docker rebuild, native keyboard/mobile acceptance.
 - [x] 24.8 Codex — [Unified catalogue bar](tasks/task-007-unified-catalogue-bar.md):18tests/typecheck, scoped filters and local responsive acceptance.

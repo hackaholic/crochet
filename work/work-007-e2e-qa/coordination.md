@@ -43,3 +43,7 @@ Gemini is assigned pickup-ready [7.6](tasks/task-008-discovery-ranking-api.md); 
 
 ## Final discovery acceptance — 2026-10-20
 Codex7.10 Returned/Completed after Gemini7.6.1: balanced sections, live deduplicated pages, actual checkout/mobile/all-step rendering accepted. Exact task-012 return. Owner authorizes combined dev commit/push; production promotion not requested.
+
+7.11 Active — Codex: authenticated contact prefill via existing profile API; task-014 contract. No Gemini dependency or deployment.
+
+7.11 Returned/Completed — Codex: signed-in contact prefill using existing profile endpoint, draft preservation and identity isolation.11tests/typecheck, Docker rebuild and local profile comparison/mobile acceptance passed. Task-014 return; no Gemini dependency/push.

@@ -7,6 +7,7 @@ None.
 None.
 
 ## Completed
+- [x] 9.14 Codex — [Stable search popup](tasks/task-014-stable-search-dialog.md):15tests/typecheck, Docker rebuild and desktop/mobile geometry acceptance.
 - [x] 9.13 Codex: [Local paginated search acceptance](tasks/task-013-pagination-verification.md) — automated/local checks passed; remaining browser verification confirmed by user2026-10-13.
 - [x] 9.11 Gemini: [Paginated search API](tasks/task-011-paginated-search-api.md) —16 isolated PostgreSQL tests passed.
 - [x] 9.12 Codex: [Scroll to load search batches](tasks/task-012-search-scroll-pagination.md) —25 focused frontend tests/typecheck pass; pagination, cancellation, retry and keyboard coverage.

@@ -1,0 +1,38 @@
+[
+  {
+    "bodyScrollable": false,
+    "centerX": 635,
+    "centerY": 360,
+    "frameHeight": 672,
+    "frameWidth": 448,
+    "pageWidth": 1270,
+    "viewportCenterX": 635,
+    "viewportCenterY": 360,
+    "viewportHeight": 720,
+    "width": 1280
+  },
+  {
+    "bodyScrollable": true,
+    "centerX": 190,
+    "centerY": 422,
+    "frameHeight": 672,
+    "frameWidth": 348,
+    "pageWidth": 380,
+    "viewportCenterX": 190,
+    "viewportCenterY": 422,
+    "viewportHeight": 844,
+    "width": 390
+  },
+  {
+    "bodyScrollable": true,
+    "centerX": 155,
+    "centerY": 190,
+    "frameHeight": 348,
+    "frameWidth": 278,
+    "pageWidth": 310,
+    "viewportCenterX": 155,
+    "viewportCenterY": 190,
+    "viewportHeight": 380,
+    "width": 320
+  }
+]

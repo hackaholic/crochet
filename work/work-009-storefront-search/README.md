@@ -4,7 +4,7 @@
 
 **Work owner:** Codex
 
-**Current state:** Completed. Batched scrolling9.11–9.13 and prior search delivery accepted. Automated/local checks pass; user confirmed final browser verification2026-10-13. This extension has not been pushed/deployed.
+**Current state:** Completed (9.14 stable popup locally verified; awaiting owner review/push). Previous tasks completed. Batched scrolling9.11–9.13 and prior search delivery accepted. Automated/local checks pass; user confirmed final browser verification2026-10-13. This extension has not been pushed/deployed.
 
 **Previous delivery:** Search typeahead, backend discovery, telemetry protections, 30-day search-event retention, and desktop-width visual acceptance are complete. Local and preprod APIs return HTTP 200; the preprod empty-search overlay renders neutral guidance when the API has no trend data.
 

@@ -29,3 +29,7 @@ Completion: self-review/security disposition Pass for CSS/template-only scope; n
 2026-10-24 —24.10 complete locally: BabyMax1200+sort retained; Amigurumi navigation resets0–100000/9cards.26tests/typecheck, Docker rebuild/browser evidence in task-009. No push.
 
 2026-10-24 — Owner authorized commit/push of locally verified24.8–24.10: unified catalogue header/scoped filters, configurable price range and navigation reset; test/security/browser evidence retained in exact task returns. Deployment acceptance remains separate from Git push.
+
+2026-10-24 —24.11 complete locally: Shop/Collections footer navigation resets top; actual Shop/Gifts/Birthday/Custom Orders allscroll0.8tests/typecheck and Docker/browser acceptance passed. No push.
+
+2026-10-24 —24.12 complete locally: login loading/form use one centered frame, no point-to-popup resize;9tests/typecheck and desktop/mobile/short geometry accepted. No real auth requests/session changes. See task-011. Nothing pushed.

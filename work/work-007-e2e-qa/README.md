@@ -8,7 +8,7 @@
 
 **Status:** In Progress
 
-**Current state:**7.1 local guest/login/cart/checkout regression in progress. Existing tests/assets/services reused. Mock-provider local QA only; real OAuth/provider/browser or owner approval gaps are recorded rather than assumed complete.
+**Current state:**7.11 signed-in checkout contact prefill locally complete;7.1 guest/login/cart acceptance remains pending. Existing tests/assets/services reused. Mock-provider local QA only; real OAuth/provider/browser or owner approval gaps are recorded rather than assumed complete.
 
 **Dependencies:** `docs/testing-plan.md`; live local Docker stack.
 

@@ -1,0 +1,39 @@
+[
+  {
+    "dialogWidth": 672,
+    "height": 576,
+    "state": "empty",
+    "top": 80,
+    "width": 1280
+  },
+  {
+    "dialogWidth": 672,
+    "height": 576,
+    "state": "results",
+    "top": 80,
+    "width": 1280
+  },
+  {
+    "dialogWidth": 356,
+    "height": 576,
+    "pageWidth": 380,
+    "state": "mobile-results",
+    "top": 32,
+    "width": 390
+  },
+  {
+    "dialogWidth": 356,
+    "height": 576,
+    "state": "mobile-no-results",
+    "top": 32,
+    "width": 390
+  },
+  {
+    "bottom": 364,
+    "height": 332,
+    "state": "short-mobile-viewport",
+    "top": 32,
+    "viewportHeight": 380,
+    "width": 320
+  }
+]
