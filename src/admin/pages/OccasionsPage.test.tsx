@@ -17,14 +17,17 @@ const occasions: AdminOccasion[] = [
 describe('OccasionsPage', () => {
   afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
-  it('keeps backend-marked evergreen occasions always visible and locks their toggle', async () => {
+  it('lets admin hide a year-round occasion without a frontend always-on override', async () => {
     vi.mocked(api.getAdminOccasions).mockResolvedValue(occasions);
     render(<OccasionsPage />);
 
+    vi.mocked(api.updateAdminOccasion).mockResolvedValue({...occasions[0], isEnabled:false});
     const toggle = await screen.findByRole('checkbox', { name: 'Show Birthday on storefront' });
     expect(toggle).toBeChecked();
-    expect(toggle).toBeDisabled();
-    expect(screen.getByText('Always on')).toBeInTheDocument();
+    expect(toggle).toBeEnabled();
+    fireEvent.click(toggle);
+    await waitFor(() => expect(api.updateAdminOccasion).toHaveBeenCalledWith('birthday', {isEnabled:false}));
+    await waitFor(() => expect(screen.getByRole('checkbox', {name:'Show Birthday on storefront'})).not.toBeChecked());
   });
 
   it('lets admin enable a seasonal occasion through the API', async () => {
@@ -44,22 +47,32 @@ describe('OccasionsPage', () => {
     vi.mocked(api.updateAdminOccasion).mockResolvedValue({ ...occasions[1], startsAt: '2026-10-10T00:00:00+05:30', endsAt: null });
     render(<OccasionsPage />);
 
-    const start = await screen.findByLabelText('Starts (India time)');
-    const end = screen.getByLabelText('Ends (India time)');
+    const start = (await screen.findAllByLabelText('Starts (India time)'))[1];
+    const end = screen.getAllByLabelText('Ends (India time)')[1];
     fireEvent.change(start, { target: { value: '2026-10-10' } });
     fireEvent.change(end, { target: { value: '' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save schedule' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Save schedule' })[1]);
 
     await waitFor(() => expect(api.updateAdminOccasion).toHaveBeenCalledWith('seasonal-1', {
       startsAt: '2026-10-10T00:00:00+05:30', endsAt: null,
     }));
   });
 
-  it('fails closed when backend evergreen metadata is missing', async () => {
+  it('keeps the server state and reports a rejected visibility update', async () => {
+    vi.mocked(api.getAdminOccasions).mockResolvedValue([occasions[0]]);
+    vi.mocked(api.updateAdminOccasion).mockRejectedValue(new Error('Forbidden'));
+    render(<OccasionsPage />);
+    fireEvent.click(await screen.findByRole('checkbox', {name:'Show Birthday on storefront'}));
+    expect(await screen.findByRole('alert')).toHaveTextContent('The change was not saved');
+    expect(screen.getByRole('checkbox', {name:'Show Birthday on storefront'})).toBeChecked();
+    expect(api.getAdminOccasions).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not require legacy evergreen metadata for server-controlled visibility', async () => {
     vi.mocked(api.getAdminOccasions).mockResolvedValue([{ ...occasions[0], isEvergreen: null }]);
     render(<OccasionsPage />);
 
-    expect(await screen.findByText(/backend has not identified evergreen status yet/i)).toBeInTheDocument();
-    expect(screen.getByRole('checkbox', { name: 'Show Birthday on storefront' })).toBeDisabled();
+    expect(await screen.findByRole('checkbox', { name: 'Show Birthday on storefront' })).toBeEnabled();
+    expect(screen.getByLabelText('Starts (India time)')).toBeEnabled();
   });
 });

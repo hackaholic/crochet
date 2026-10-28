@@ -538,3 +538,24 @@ def test_all_thirteen_occasion_images_accessible_and_valid():
                 assert "location" in res.headers, f"Redirect for {occ.id} missing location header"
 
 
+
+
+@pytest.mark.parametrize('authenticated', [False, True])
+def test_non_admin_cannot_change_occasion_visibility(authenticated):
+    """Anonymous and customer actors cannot change public visibility or read admin records."""
+    outsider = TestClient(app)
+    if authenticated:
+        login = outsider.post('/api/v1/auth/google', json={
+            'credential': 'mock_occasion_customer', 'email': 'occasion-customer@example.com',
+            'name': 'Occasion Customer', 'sub': 'occasion-customer',
+        })
+        assert login.status_code == 200
+        assert login.json()['user']['role'] == 'CUSTOMER'
+    with SessionLocal() as db:
+        before = db.get(Occasion, 'birthday').is_enabled
+    expected = 403 if authenticated else 401
+    assert outsider.get('/api/v1/admin/occasions').status_code == expected
+    response = outsider.patch('/api/v1/admin/occasions/birthday', json={'isEnabled': not before})
+    assert response.status_code == expected
+    with SessionLocal() as db:
+        assert db.get(Occasion, 'birthday').is_enabled == before

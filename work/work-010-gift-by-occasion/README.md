@@ -2,7 +2,7 @@
 
 **Objective:** Make the homepage's Gift by Occasion section a database-driven, seasonal discovery feature that the owner can configure from admin, with each active occasion showing relevant products and its own clear artwork.
 
-**Current state:** Gemini reports the Task 10.18 backend migration, database/seed image-key repair, admin toggle behavior, and backend tests complete. Codex is rebuilding and verifying the integrated local Docker app; owner review remains before any release. The ten additional occasion artworks are already in R2, so no copy or upload step remains.
+**Current state:** Local API/image/filter acceptance, 17 backend/7 frontend tests, TypeScript, and headed Playwright desktop/mobile visual checks pass. Owner approved pushing the verified changes to `dev` on 2026-10-29. Post-push CI/preprod verification remains; no VPS deployment performed. Existing R2 artwork reused; no Gemini implementation pending.
 
 **Scope:** Occasion records and admin controls; enable/disable and optional seasonal schedules; unique image assignment; mapping existing products to multiple occasions; homepage section resolution/order; shop filtering; migration/seed safety; tests and local Docker/browser verification.
 

@@ -2,11 +2,11 @@
 
 ## In Progress
 
-- [ ] 10.18.6 — Codex: rebuild the local Docker API/database/frontend and verify the real occasion response, five default cards, distinct image rendering, and desktop/mobile layout. Record results in the Task 10.18 contract and notes.
+None.
 
 ## Pending
 
-- [ ] 10.18.7 — Owner reviews the locally verified result; only then approve any release.
+None.
 
 ## Completed
 
@@ -17,7 +17,9 @@
 - [x] 10.18.4a — Upload ten approved existing Sulocraft images to R2 and verify every public URL returns an image.
 - [x] 10.18.4b — Gemini reports DB/seed/migration references updated to the verified R2 keys; no duplicate image copies or re-uploads are needed.
 - [x] 10.18.5 — Add/revise frontend/backend regression coverage for default visibility, admin toggles, ordering, image keys, and failed-image fallback.
+- [x] 10.18.6 — Codex: local Docker/API/image/filter checks, backend/frontend tests and TypeScript, plus headed desktop/mobile Playwright rendering verified. See task-018 return. No push/deploy.
+- [x] 10.18.7 — Owner reviewed the local verification and authorized pushing to `dev`; post-push CI/preprod checks remain outside this task.
 
 ## Blocked
 
-None. Integrated local verification is in progress; do not release before it and owner review.
+None.

@@ -10,3 +10,6 @@ This file is the work-local coordination entry point. The work folder is the sou
 ## Return protocol
 
 The assigned agent updates the exact contract, tasks.md, notes.md, and this file before returning the task. The global registry at docs/handoffs.md points here; it does not duplicate this work's status.
+
+## Current return — 2026-10-25
+Codex10.18.6: Returned complete. Fixed stale frontend admin lock, added negative auth tests;17 backend/7 frontend tests and typecheck pass; API/image/filter checks pass; headed Playwright verified desktop and mobile occasion grids. Owner reviewed and authorized push to `dev` on 2026-10-29. No Gemini dependency. Exact task-018 return/report is current source of truth. Post-push CI/preprod verification remains; no deployment performed.
