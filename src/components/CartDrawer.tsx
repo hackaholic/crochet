@@ -4,6 +4,7 @@ import BasketRecommendations from './BasketRecommendations';
 import PersonalizationNote from './PersonalizationNote';
 import { XIcon, PlusIcon, MinusIcon, TrashIcon, HeartIcon } from './Icons';
 import type { Product } from '../data/products';
+import { calculateShippingFee } from '../lib/commerce/shipping';
 
 export interface CartItem {
   lineItemId?: number;
@@ -36,7 +37,7 @@ export default function CartDrawer({ open, onClose, items, onUpdateQty, onRemove
     return () => { element.close(); document.body.style.overflow = previousOverflow; };
   }, [open]);
   const subtotal = items.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
-  const shipping = subtotal >= 999 ? 0 : 79;
+  const shipping = calculateShippingFee(subtotal);
   const total = subtotal + shipping;
 
   return (

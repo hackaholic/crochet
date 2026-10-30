@@ -11,6 +11,7 @@ import type { CartItem } from '../components/CartDrawer';
 import { createOrder, type OrderOut } from '../lib/api/orders';
 import { createPaymentIntent, verifyCashfreePayment, verifyMockPayment, type PaymentVerification } from '../lib/api/payments';
 import { openCashfreeCheckout } from '../lib/payment/cashfreeCheckout';
+import { calculateShippingFee } from '../lib/commerce/shipping';
 
 interface CheckoutPageProps {
   customer?: User | null;
@@ -97,7 +98,7 @@ export default function CheckoutPage({ customer, items, wishlist = [], onToggleW
   }, [paymentReturnAttempt]);
 
   const subtotal = items.reduce((s, i) => s + i.product.price * i.quantity, 0);
-  const shipping = subtotal >= 999 ? 0 : 79;
+  const shipping = calculateShippingFee(subtotal);
   const total = subtotal + shipping;
 
   const stepIndex = steps.findIndex(s => s.id === step);

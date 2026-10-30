@@ -22,7 +22,7 @@ Read Work 007 `README.md`, `tasks.md`, `decisions.md`, `coordination.md`, and th
 - Dependency context: Backend runtime wiring and local acceptance must return complete. Owner sandbox credentials are configured; never include values in the contract.
 - Blocked by: None
 - Blocker reason: None
-- Next action: Push the locally verified revision to `dev`, confirm the deployment workflow and deployed sandbox mode, then run the Cashfree browser scenarios.
+- Next action: Fix the discovered shipping-total mismatch locally, pass checkout regressions, deploy the fix to preprod, then resume Cashfree browser scenarios.
 - Inspect/edit: `https://dev.sulocraft.com`, `https://api-dev.sulocraft.com`, Cashfree Sandbox webhook settings, payment/order state and demo customer history.
 
 ## Test cases
@@ -34,6 +34,7 @@ Read Work 007 `README.md`, `tasks.md`, `decisions.md`, `coordination.md`, and th
 | 7.2.4.3-TC03 | Webhook signature/replay safety | Security | Deliver event twice, invalid-signature and out-of-order events | One transition only; invalid/replayed events rejected or ignored | `backend/tests/test_payments.py::test_7_2_4_3_tc03_webhook_signature_replay_and_out_of_order_safety` | PASS (invalid signature -> `400`; duplicate replay -> idempotent `200`; late `PAYMENT_FAILED_WEBHOOK` after `PAID` ignored, order stays `CONFIRMED`/`PAID`) |
 | 7.2.4.3-TC04 | Order/customer/amount binding | Security | Verify with mismatched order, customer, amount or currency | No mismatched/foreign order becomes paid; safe error | `backend/tests/test_payments.py::test_7_2_4_3_tc04_order_customer_amount_currency_binding` | PASS (wrong user -> `404` anti-enumeration; foreign `providerOrderId` -> `400`; mismatched currency `USD` or underpaid amount -> `400`; order stays unpaid) |
 | 7.2.4.3-TC05 | No secret disclosure or real charge | Security | Review API response, browser network and redacted logs | Secrets stay backend-only; payment uses Sandbox | Redacted live Cashfree Sandbox smoke check + `test_7_2_4_1_tc04_credentials_stay_backend_only` | PASS (`env=sandbox`, `key_id_is_none=True`, `has_session=True`, zero secret values in payload/logs) |
+| 7.2.4.3-TC06 | Displayed total matches server-authoritative payment amount | Regression | Add a ₹799 item and reach review/payment | Cart, checkout review, order API and Cashfree all show ₹898 (₹99 shipping); threshold orders use free shipping consistently | `src/lib/commerce/shipping.test.ts`, `src/pages/CheckoutPage.test.tsx`, local browser, dev browser | PASS locally after shared calculation update (₹898 shown); preprod still on previous revision and must be redeployed/rechecked |
 
 ## Security validation
 
@@ -45,12 +46,13 @@ Read Work 007 `README.md`, `tasks.md`, `decisions.md`, `coordination.md`, and th
   - `(cd backend && bash scripts/run_isolated_tests.sh tests/test_payments.py tests/test_purchase_regression.py)` -> `28 passed in 24.1s` (`22/22` in `test_payments.py`, `6/6` in `test_purchase_regression.py`)
   - Redacted live Cashfree Sandbox API smoke check via SOPS-decrypted `secrets/encrypted/backend.enc.env` -> `SANDBOX_SMOKE_OK provider=cashfree env=sandbox has_session=True has_order_id=True key_id_is_none=True unpaid_verify_false=True state=PENDING`
   - `bash scripts/security/scan-sast.sh` -> `PASS: Zero blocking High/Critical SAST findings detected`
-- Disposition: In Progress (backend security and live Sandbox API smoke checks passed; dev browser checkout remains)
-- Findings/blockers: Preprod browser checkout and final deployment verification remain. Read-only shell requests to dev endpoints returned HTTP `403`; confirm behavior in the browser after deployment.
+- Disposition: In Progress (backend security, live Sandbox API smoke checks, local shipping parity, and local Docker/browser verification passed; preprod browser checkout remains)
+- Findings/blockers: Preprod browser exposed a customer-visible total mismatch: cart/checkout show ₹79 standard shipping while `backend/app/api/v1/orders.py` calculates ₹99. The resulting order and Cashfree Sandbox page both show ₹898 for a ₹799 item, but checkout review said ₹878. Do not authorize payment until the displayed total is corrected and deployment is verified. Browser checkout remains incomplete.
 
 ## Acceptance checks
 
 - [x] Local phase passes before deploy; the complete Docker test/security gate passed on the current working tree, with local API/storefront healthy after rebuild.
+- [ ] Displayed totals match backend and Cashfree before any test authorization.
 - [ ] Sandbox success, failure, cancel, pending and retry outcomes are recorded.
 - [ ] Webhook signature, replay, order-binding and amount/currency checks pass.
 - [ ] Demo customer sees one correct order and truthful payment timeline.

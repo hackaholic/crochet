@@ -7,6 +7,7 @@ import { applyCoupon, removeCoupon, type CouponApplication } from '../lib/api/pr
 import type { CartItem } from '../components/CartDrawer';
 import type { Product } from '../data/products';
 import { EmptyState } from '../components/StorefrontState';
+import { calculateShippingFee } from '../lib/commerce/shipping';
 
 interface CartPageProps {
   items: CartItem[];
@@ -32,7 +33,7 @@ export default function CartPage({ items, wishlist = [], onUpdateQty, onRemove, 
   const [couponMessage, setCouponMessage] = useState('');
   const [couponBusy, setCouponBusy] = useState(false);
   const subtotal = items.reduce((s, i) => s + i.product.price * i.quantity, 0);
-  const shipping = subtotal >= 999 ? 0 : 79;
+  const shipping = calculateShippingFee(subtotal);
   const total = subtotal + shipping;
   const apply = async () => { if (!couponInput.trim()) return; setCouponBusy(true); setCouponMessage(''); try { const result = await applyCoupon(couponInput.trim().toUpperCase()); setCoupon(result); setCouponInput(result.code); onCouponChange(result.code); setCouponMessage(result.message); } catch { setCoupon(null); onCouponChange(null); setCouponMessage('That code could not be applied to this basket.'); } finally { setCouponBusy(false); } };
   const clearCoupon = async () => { setCouponBusy(true); try { await removeCoupon(); } finally { setCoupon(null); setCouponInput(''); onCouponChange(null); setCouponMessage('Coupon removed.'); setCouponBusy(false); } };

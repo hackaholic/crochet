@@ -16,6 +16,15 @@ const bunny = {...rose,id:2,name:'<Bunny>',slug:'bunny',price:799};
 const props = () => ({ items:[{product:rose,quantity:1}], wishlist:[2], onToggleWishlist:vi.fn(), couponCode:null, onComplete:vi.fn(), onNavigate:vi.fn(), onProductClick:vi.fn(), onAddToCart:vi.fn().mockResolvedValue(undefined) });
 afterEach(() => { cleanup(); vi.resetAllMocks(); window.history.replaceState(null, '', '/checkout'); });
 
+it('shows the backend-authoritative shipping amount before creating a payment intent', () => {
+  render(<CheckoutPage {...props()} items={[{product:bunny,quantity:1}]}/>);
+  const summary = within(screen.getByRole('complementary', { name: 'Order summary' }));
+  expect(summary.getByText('Shipping').parentElement).toHaveTextContent('₹99');
+  expect(summary.getByText('Total').parentElement).toHaveTextContent('₹898');
+  expect(createOrder).not.toHaveBeenCalled();
+  expect(createPaymentIntent).not.toHaveBeenCalled();
+});
+
 const completeCheckoutForm = (cashOnDelivery = false) => {
   for (const [label, value] of [['First Name *','QA'],['Email *','demo.customer@example.com'],['Phone Number *','9876543210']] as const) fireEvent.change(screen.getByLabelText(label), {target:{value}});
   fireEvent.click(screen.getByRole('button',{name:'Continue to Delivery'}));
