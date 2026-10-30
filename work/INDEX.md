@@ -36,4 +36,4 @@
 
 - **Work 025 — API and images on LAN development URLs** · Completed (local) · [work folder](work-025-lan-image-loading/)
 
-- **Work 026 — Runtime configuration parity across local, preprod and prod** · Completed locally; no deployment · [work folder](work-026-runtime-config-parity/)
+- **Work 026 — Runtime configuration parity across local, preprod and prod** · In Progress · [work folder](work-026-runtime-config-parity/)

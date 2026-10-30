@@ -34,3 +34,10 @@
 - Added a direct-environment vs file-backed `config_value()` parity test using a temporary dummy value. Updated `docs/secrets.md` with the single logical setting contract, local `.env` source, and isolated preprod/prod SOPS path behavior.
 - Verification: focused backend suite -> 48 passed, 3 skipped; environment isolation suite -> 1 passed, 2 skipped; local `docker-compose --env-file .env -f docker/compose.yaml ps` showed API and DB healthy and frontend running; `/health`, `/api/v1/auth/config`, and storefront returned HTTP 200. Endpoint omitted the Google ID because none is configured in local runtime and did not expose a client secret. SAST had zero blocking high/critical findings.
 - Security disposition: pass. Local provider sign-in and any VPS/preprod deployment remain outside verified scope. No push/deployment.
+
+## Task 26.5 — 2026-10-31
+
+- Fixed the active `backend/scripts/deploy_vps.sh` path: the remote pre-deploy backup and release bootstrap/Compose blocks export `GOOGLE_CLIENT_ID_FILE` and `GOOGLE_CLIENT_SECRET_FILE` under the selected `${runtime_secrets_dir}/backend/` directory. The legacy preprod backup fallback resets both to `/run/sulocraft/backend/...` to match its existing secret root.
+- Added focused regression tests for both remote blocks and the legacy fallback in `backend/tests/test_vault_deploy.py`.
+- Verification: `bash -n backend/scripts/deploy_vps.sh` -> pass; `./scripts/test.sh backend tests/test_vault_deploy.py -k google_oauth` -> 2 passed, 10 deselected; `bash scripts/security/scan-sast.sh` -> pass, zero blocking High/Critical findings (34 findings total: 33 warnings, 1 suppressed exception); `git diff --check` -> pass.
+- Security disposition: pass locally. Only file paths are exported; no secret values were added or printed. No VPS connection, push, or deployment performed. Preprod verification remains with project owner after review and deployment.

@@ -394,3 +394,26 @@ def test_deploy_backup_uses_mounted_postgres_secrets_and_fails_closed():
     assert 'backup_tmp="${backup_file}.tmp.$$"' in content
     assert 'test -s "${backup_tmp}"' in content
     assert "Pre-deploy database backup failed; refusing to deploy." in content
+
+
+def test_deploy_remote_backup_exports_google_oauth_secret_file_paths():
+    """The remote backup Compose interpolation receives target-scoped OAuth secret paths."""
+    content = DEPLOY_SCRIPT.read_text(encoding="utf-8")
+    backup_block = content.split("<<'REMOTE_BACKUP'\n", 1)[1].split("\nREMOTE_BACKUP", 1)[0]
+
+    assert 'export GOOGLE_CLIENT_ID_FILE="${runtime_secrets_dir}/backend/google_client_id"' in backup_block
+    assert 'export GOOGLE_CLIENT_SECRET_FILE="${runtime_secrets_dir}/backend/google_client_secret"' in backup_block
+
+    legacy_fallback = backup_block.split("# Before PREPROD's first isolated promotion", 1)[1]
+    legacy_fallback = legacy_fallback.split("legacy_compose_cmd=", 1)[0]
+    assert "export GOOGLE_CLIENT_ID_FILE=/run/sulocraft/backend/google_client_id" in legacy_fallback
+    assert "export GOOGLE_CLIENT_SECRET_FILE=/run/sulocraft/backend/google_client_secret" in legacy_fallback
+
+
+def test_deploy_remote_compose_exports_google_oauth_secret_file_paths():
+    """The release bootstrap/Compose invocation receives target-scoped OAuth secret paths."""
+    content = DEPLOY_SCRIPT.read_text(encoding="utf-8")
+    compose_block = content.split("<<'REMOTE'\n", 1)[1].split("\nREMOTE", 1)[0]
+
+    assert 'export GOOGLE_CLIENT_ID_FILE="${runtime_secrets_dir}/backend/google_client_id"' in compose_block
+    assert 'export GOOGLE_CLIENT_SECRET_FILE="${runtime_secrets_dir}/backend/google_client_secret"' in compose_block

@@ -74,6 +74,8 @@ export POSTGRES_DB_FILE="${runtime_secrets_dir}/postgres/postgres_db"
 export POSTGRES_USER_FILE="${runtime_secrets_dir}/postgres/postgres_user"
 export POSTGRES_PASSWORD_FILE="${runtime_secrets_dir}/postgres/postgres_password"
 export DATABASE_URL_FILE="${runtime_secrets_dir}/backend/database_url"
+export GOOGLE_CLIENT_ID_FILE="${runtime_secrets_dir}/backend/google_client_id"
+export GOOGLE_CLIENT_SECRET_FILE="${runtime_secrets_dir}/backend/google_client_secret"
 export CASHFREE_APP_ID_FILE="${runtime_secrets_dir}/backend/cashfree_app_id"
 export CASHFREE_SECRET_KEY_FILE="${runtime_secrets_dir}/backend/cashfree_secret_key"
 current_release="$(readlink -f "${deploy_root}/current" 2>/dev/null || true)"
@@ -92,6 +94,8 @@ if [[ -n "${current_release}" && -f "${current_release}/backend/docker-compose.y
     export POSTGRES_USER_FILE=/run/sulocraft/postgres/postgres_user
     export POSTGRES_PASSWORD_FILE=/run/sulocraft/postgres/postgres_password
     export DATABASE_URL_FILE=/run/sulocraft/backend/database_url
+    export GOOGLE_CLIENT_ID_FILE=/run/sulocraft/backend/google_client_id
+    export GOOGLE_CLIENT_SECRET_FILE=/run/sulocraft/backend/google_client_secret
     legacy_compose_cmd=(docker compose -p sulocraft -f "${current_release}/backend/docker-compose.yml")
     if [[ -f "${deploy_root}/shared/.env" ]]; then
       legacy_compose_cmd+=(--env-file "${deploy_root}/shared/.env")
@@ -128,6 +132,8 @@ export POSTGRES_DB_FILE="${runtime_secrets_dir}/postgres/postgres_db"
 export POSTGRES_USER_FILE="${runtime_secrets_dir}/postgres/postgres_user"
 export POSTGRES_PASSWORD_FILE="${runtime_secrets_dir}/postgres/postgres_password"
 export DATABASE_URL_FILE="${runtime_secrets_dir}/backend/database_url"
+export GOOGLE_CLIENT_ID_FILE="${runtime_secrets_dir}/backend/google_client_id"
+export GOOGLE_CLIENT_SECRET_FILE="${runtime_secrets_dir}/backend/google_client_secret"
 export CASHFREE_APP_ID_FILE="${runtime_secrets_dir}/backend/cashfree_app_id"
 export CASHFREE_SECRET_KEY_FILE="${runtime_secrets_dir}/backend/cashfree_secret_key"
 
