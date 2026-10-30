@@ -110,6 +110,7 @@ paths:
         required: false
         schema:
           type: integer
+          maximum: 10000000
           minimum: 0
           default: 0
           title: Offset
@@ -211,6 +212,7 @@ paths:
         required: false
         schema:
           type: integer
+          maximum: 10000000
           minimum: 0
           default: 0
           title: Offset
@@ -305,6 +307,7 @@ paths:
         schema:
           anyOf:
           - type: integer
+            maximum: 100000000
             minimum: 0
           - type: 'null'
           description: Minimum price in INR
@@ -316,6 +319,7 @@ paths:
         schema:
           anyOf:
           - type: integer
+            maximum: 100000000
             minimum: 0
           - type: 'null'
           description: Maximum price in INR
@@ -327,6 +331,7 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 256
           - type: 'null'
           description: Search keyword in name or description
           title: Search
@@ -337,6 +342,7 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 64
           - type: 'null'
           description: Filter by badge (e.g. Bestseller, New, Limited)
           title: Badge
@@ -346,6 +352,7 @@ paths:
         required: false
         schema:
           type: string
+          maxLength: 64
           description: 'Sorting: featured, price_asc, price_desc, rating, newest,
             best_selling'
           default: featured
@@ -356,6 +363,7 @@ paths:
         required: false
         schema:
           type: integer
+          maximum: 100000
           minimum: 1
           description: Page number (1-indexed)
           default: 1
@@ -378,6 +386,7 @@ paths:
         schema:
           anyOf:
           - type: integer
+            maximum: 10000000
             minimum: 0
           - type: 'null'
           description: Manual offset; overrides page if provided
@@ -425,6 +434,15 @@ paths:
           minimum: 1
           default: 20
           title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 10000000
+          minimum: 0
+          default: 0
+          title: Offset
       responses:
         '200':
           description: Successful Response
@@ -435,6 +453,92 @@ paths:
                 items:
                   $ref: '#/components/schemas/ProductListItem'
                 title: Response Search Products Api V1 Products Search Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/products/search/events:
+    post:
+      tags:
+      - catalogue
+      summary: Record Search Event
+      description: 'Record a search query for aggregate anonymous trends (non-blocking).
+
+
+        Rate-limited per client IP and bounded at schema level.
+
+        Normalizes queries, strips sensitive PII (emails, phones, long strings),
+
+        and persists aggregate frequency counts without storing IP addresses,
+
+        user IDs, or browser session tokens. Triggers opportunistic background
+
+        retention pruning when scheduled.'
+      operationId: record_search_event_api_v1_products_search_events_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchEventCreate'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchEventResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/products/search/suggestions:
+    get:
+      tags:
+      - catalogue
+      summary: Get Search Suggestions
+      description: "Retrieve backend-driven empty-state search discovery suggestions.\n\
+        \n- Trending keywords: Aggregated from SearchEvent in rolling 30 days,\n \
+        \ gated by minimum 3 occurrences to protect single-user privacy,\n  ordered\
+        \ by frequency descending.\n- Trending products: Ranked strictly by non-cancelled,\
+        \ non-refunded,\n  non-failed Order line-item volume in rolling 30 days, filtered\
+        \ for\n  active, in-stock products with valid media and categories.\n- Zero\
+        \ data fallback: Returns empty lists; never fabricates fake trends."
+      operationId: get_search_suggestions_api_v1_products_search_suggestions_get
+      parameters:
+      - name: keyword_limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 10
+          minimum: 1
+          description: Max trending keywords to return
+          default: 6
+          title: Keyword Limit
+        description: Max trending keywords to return
+      - name: product_limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 8
+          minimum: 1
+          description: Max trending products to return
+          default: 4
+          title: Product Limit
+        description: Max trending products to return
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchSuggestionsResponse'
         '422':
           description: Validation Error
           content:
@@ -473,7 +577,7 @@ paths:
       tags:
       - catalogue
       summary: Get Occasions
-      description: Retrieve curated gift occasions that are enabled and in season.
+      description: Retrieve curated gift occasions in admin display order (DEC-010-010).
       operationId: get_occasions_api_v1_occasions_get
       responses:
         '200':
@@ -692,6 +796,83 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CartOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/cart/recommendations:
+    get:
+      tags:
+      - cart
+      summary: Get Recommendations
+      description: 'Return basket-aware recommendations conforming to Task 23.3.
+
+
+        Infers cart and user strictly from cookie or header boundaries; excludes current
+
+        basket items, inactive products, and out-of-stock products.'
+      operationId: get_recommendations_api_v1_cart_recommendations_get
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 8
+          minimum: 1
+          description: Number of recommendations to return (1-8)
+          default: 4
+          title: Limit
+        description: Number of recommendations to return (1-8)
+      - name: x-cart-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Cart-Token
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: guest_cart_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Guest Cart Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartRecommendationsOut'
         '422':
           description: Validation Error
           content:
@@ -1714,7 +1895,12 @@ paths:
       description: 'Retrieve full details of an order.
 
 
-        Conforms to Section 22 security: verifies customer authorization.'
+        Conforms to Section 22 security: verifies customer authorization.
+
+        For registered user orders, strictly verifies user ownership.
+
+        For guest orders, strictly verifies a valid, unexpired, order-scoped guest
+        token.'
       operationId: get_order_detail_api_v1_orders__order_id_or_number__get
       parameters:
       - name: order_id_or_number
@@ -1723,6 +1909,24 @@ paths:
         schema:
           type: string
           title: Order Id Or Number
+      - name: token
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Order-scoped guest access token
+          title: Token
+        description: Order-scoped guest access token
+      - name: X-Guest-Order-Token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Guest-Order-Token
       - name: authorization
         in: header
         required: false
@@ -1765,7 +1969,12 @@ paths:
       tags:
       - orders
       summary: Get Order Tracking
-      description: Retrieve order tracking status and chronological timeline history.
+      description: 'Retrieve order tracking status and chronological timeline history.
+
+
+        For registered user orders, requires authenticated user ownership.
+
+        For guest orders, requires a valid, unexpired, order-scoped guest token.'
       operationId: get_order_tracking_api_v1_orders__order_id_or_number__tracking_get
       parameters:
       - name: order_id_or_number
@@ -1774,6 +1983,24 @@ paths:
         schema:
           type: string
           title: Order Id Or Number
+      - name: token
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Order-scoped guest access token
+          title: Token
+        description: Order-scoped guest access token
+      - name: X-Guest-Order-Token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Guest-Order-Token
       - name: authorization
         in: header
         required: false
@@ -1805,6 +2032,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/OrderTrackingOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/orders/tracking/request-link:
+    post:
+      tags:
+      - orders
+      summary: Request Guest Tracking Link
+      description: 'Request a secure expiring order tracking link sent to the checkout
+        email.
+
+
+        Always returns generic 202 Accepted to prevent order and contact enumeration.'
+      operationId: request_guest_tracking_link_api_v1_orders_tracking_request_link_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuestTrackingLinkRequest'
+        required: true
+      responses:
+        '202':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuestTrackingLinkResponse'
         '422':
           description: Validation Error
           content:
@@ -1919,7 +2176,7 @@ paths:
       tags:
       - payments
       summary: Verify Payment
-      description: 'Verify payment completion callback from client gateway popup.
+      description: 'Verify payment completion callback or redirect from client gateway.
 
 
         On success, transitions Payment status to SUCCESS, Order payment_status to
@@ -1985,6 +2242,22 @@ paths:
         schema:
           type: string
           title: Provider
+      - name: x-webhook-signature
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Webhook-Signature
+      - name: x-webhook-timestamp
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Webhook-Timestamp
       - name: x-razorpay-signature
         in: header
         required: false
@@ -2114,7 +2387,11 @@ paths:
       tags:
       - account
       summary: Update Customer Profile
-      description: Update customer profile information.
+      description: "Update customer profile information.\n\nConforms to DEC018-2 and\
+        \ DEC018-3:\n- Delivery contact phone is editable; normalized and checked\
+        \ for conflicts.\n- Login email is an authentication identifier: changing\
+        \ it through unverified PATCH\n  is prohibited; same-email no-op is allowed.\n\
+        - Name is normalized and Unicode-safe."
       operationId: update_customer_profile_api_v1_account_profile_patch
       parameters:
       - name: authorization
@@ -2598,6 +2875,62 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+    put:
+      tags:
+      - admin
+      summary: Update Product
+      description: Update product fields, taxonomy associations, and images.
+      operationId: update_product_api_v1_admin_products__product_id__put
+      parameters:
+      - name: product_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Product Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminProductUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminProductOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
     patch:
       tags:
       - admin
@@ -2880,7 +3213,7 @@ paths:
       tags:
       - admin
       summary: Adjust Variant Inventory
-      description: Adjust variant inventory level by absolute amount or delta.
+      description: Adjust variant inventory level by absolute amount or delta atomically.
       operationId: adjust_variant_inventory_api_v1_admin_variants__variant_id__inventory_patch
       parameters:
       - name: variant_id
@@ -3456,6 +3789,104 @@ paths:
                 additionalProperties: true
                 title: Response Assign Collection Products Api V1 Admin Collections  Collection
                   Id  Products Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/tags:
+    get:
+      tags:
+      - admin
+      summary: Get Admin Tags
+      description: List all available tags ordered by name/id for admin product management.
+      operationId: get_admin_tags_api_v1_admin_tags_get
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminTagOut'
+                title: Response Get Admin Tags Api V1 Admin Tags Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - admin
+      summary: Create Admin Tag
+      description: Create a new tag or return existing tag if duplicate (case-insensitive).
+      operationId: create_admin_tag_api_v1_admin_tags_post
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminTagCreate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminTagOut'
         '422':
           description: Validation Error
           content:
@@ -4138,6 +4569,569 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AdminFinanceSeriesOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/finance/categories:
+    get:
+      tags:
+      - admin
+      summary: Get Admin Finance Categories
+      description: 'Category sales breakdown per single-accounting contract DEC001-14.
+
+
+        Every order item is attributed to exactly one category:
+
+        1. Primary category of product (`is_primary=True`)
+
+        2. Fallback to lowest category_id assigned to product
+
+        3. ''Uncategorized'' bucket if no category or deleted/missing product'
+      operationId: get_admin_finance_categories_api_v1_admin_finance_categories_get
+      parameters:
+      - name: from
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Start date (YYYY-MM-DD)
+          title: From
+        description: Start date (YYYY-MM-DD)
+      - name: to
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: End date (YYYY-MM-DD)
+          title: To
+        description: End date (YYYY-MM-DD)
+      - name: sortBy
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: ^(sales|units|orders|name)$
+          default: sales
+          title: Sortby
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          default: 50
+          title: Limit
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCategorySalesOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/finance/destinations:
+    get:
+      tags:
+      - admin
+      summary: Get Admin Finance Destinations
+      description: 'Geographic sales breakdown derived strictly from immutable shipping
+        snapshots.
+
+
+        Does not infer identity, geolocate, or modify records.'
+      operationId: get_admin_finance_destinations_api_v1_admin_finance_destinations_get
+      parameters:
+      - name: from
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Start date (YYYY-MM-DD)
+          title: From
+        description: Start date (YYYY-MM-DD)
+      - name: to
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: End date (YYYY-MM-DD)
+          title: To
+        description: End date (YYYY-MM-DD)
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminDestinationSalesOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/finance/top-products:
+    get:
+      tags:
+      - admin
+      summary: Get Admin Finance Top Products
+      description: Top-selling products and variants filtered strictly by selected
+        period and eligible orders.
+      operationId: get_admin_finance_top_products_api_v1_admin_finance_top_products_get
+      parameters:
+      - name: from
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Start date (YYYY-MM-DD)
+          title: From
+        description: Start date (YYYY-MM-DD)
+      - name: to
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: End date (YYYY-MM-DD)
+          title: To
+        description: End date (YYYY-MM-DD)
+      - name: metric
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: ^(revenue|units)$
+          default: revenue
+          title: Metric
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 10
+          title: Limit
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminTopProductsOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/finance/trends:
+    get:
+      tags:
+      - admin
+      summary: Get Admin Finance Trends
+      description: Finance trends comparing current period with equal-length previous
+        period.
+      operationId: get_admin_finance_trends_api_v1_admin_finance_trends_get
+      parameters:
+      - name: from
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Start date (YYYY-MM-DD)
+          title: From
+        description: Start date (YYYY-MM-DD)
+      - name: to
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: End date (YYYY-MM-DD)
+          title: To
+        description: End date (YYYY-MM-DD)
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminFinanceTrendsOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/finance/expenses:
+    get:
+      tags:
+      - admin
+      summary: List Admin Expenses
+      description: List recorded operating expenses with optional category and date
+        filters.
+      operationId: list_admin_expenses_api_v1_admin_finance_expenses_get
+      parameters:
+      - name: category
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Optional category filter
+          title: Category
+        description: Optional category filter
+      - name: from
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Start date (YYYY-MM-DD)
+          title: From
+        description: Start date (YYYY-MM-DD)
+      - name: to
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: End date (YYYY-MM-DD)
+          title: To
+        description: End date (YYYY-MM-DD)
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Page
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          default: 50
+          title: Pagesize
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminExpenseListOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - admin
+      summary: Create Admin Expense
+      description: Record an operating, payment gateway, shipping, or fulfillment
+        expense.
+      operationId: create_admin_expense_api_v1_admin_finance_expenses_post
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminExpenseCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminExpenseOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/finance/expenses/{expense_id}:
+    delete:
+      tags:
+      - admin
+      summary: Delete Admin Expense
+      description: Delete a recorded expense by ID.
+      operationId: delete_admin_expense_api_v1_admin_finance_expenses__expense_id__delete
+      parameters:
+      - name: expense_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Expense Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/orders/{order_id}/items/{item_id}/cost:
+    patch:
+      tags:
+      - admin
+      summary: Update Order Item Cost
+      description: Record or backfill unit cost for an order item, updating total_cost.
+      operationId: update_order_item_cost_api_v1_admin_orders__order_id__items__item_id__cost_patch
+      parameters:
+      - name: order_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Order Id
+      - name: item_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Item Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminOrderItemCostUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOrderDetailOut'
         '422':
           description: Validation Error
           content:
@@ -5001,7 +5995,7 @@ paths:
       tags:
       - admin
       summary: Get Admin Brand Settings
-      description: Retrieve storewide brand settings.
+      description: Retrieve storewide brand settings (read-only, no write side effects).
       operationId: get_admin_brand_settings_api_v1_admin_storefront_brand_get
       parameters:
       - name: authorization
@@ -5045,7 +6039,10 @@ paths:
       tags:
       - admin
       summary: Update Admin Brand Settings
-      description: Update storewide brand settings.
+      description: 'Update storewide brand settings.
+
+
+        Fields set explicitly (including None) are updated; omitted fields are preserved.'
       operationId: update_admin_brand_settings_api_v1_admin_storefront_brand_put
       parameters:
       - name: authorization
@@ -5085,6 +6082,104 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BrandSettingsOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/storefront/product-defaults:
+    get:
+      tags:
+      - admin
+      summary: Get Admin Product Defaults
+      description: Retrieve storewide configurable product information defaults.
+      operationId: get_admin_product_defaults_api_v1_admin_storefront_product_defaults_get
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminProductInfoDefaultsOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    put:
+      tags:
+      - admin
+      summary: Update Admin Product Defaults
+      description: 'Update storewide configurable product information defaults.
+
+
+        Explicit fields (including None/null) are updated; omitted fields are preserved.'
+      operationId: update_admin_product_defaults_api_v1_admin_storefront_product_defaults_put
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminProductInfoDefaultsUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminProductInfoDefaultsOut'
         '422':
           description: Validation Error
           content:
@@ -5942,6 +7037,265 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/customers:
+    get:
+      tags:
+      - admin
+      summary: List Customers
+      description: List customers with search and pagination.
+      operationId: list_customers_api_v1_admin_customers_get
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 200
+          - type: 'null'
+          description: Search by name, email, or phone
+          title: Q
+        description: Search by name, email, or phone
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          description: Page number
+          default: 1
+          title: Page
+        description: Page number
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          description: Items per page
+          default: 20
+          title: Pagesize
+        description: Items per page
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCustomerListOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/customers/{customer_id}:
+    get:
+      tags:
+      - admin
+      summary: Get Customer
+      description: Retrieve detailed customer profile including saved addresses.
+      operationId: get_customer_api_v1_admin_customers__customer_id__get
+      parameters:
+      - name: customer_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Customer Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCustomerDetailOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/customers/{customer_id}/orders:
+    get:
+      tags:
+      - admin
+      summary: Get Customer Orders
+      description: Retrieve order history strictly linked to a customer.
+      operationId: get_customer_orders_api_v1_admin_customers__customer_id__orders_get
+      parameters:
+      - name: customer_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Customer Id
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          description: Page number
+          default: 1
+          title: Page
+        description: Page number
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          description: Items per page
+          default: 20
+          title: Pagesize
+        description: Items per page
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOrderListOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/maintenance/search-events/prune:
+    post:
+      tags:
+      - admin
+      summary: Prune Admin Search Events
+      description: Manually purge expired search telemetry events older than retention_days.
+      operationId: prune_admin_search_events_api_v1_admin_maintenance_search_events_prune_post
+      parameters:
+      - name: retention_days
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 365
+          minimum: 1
+          description: Retention window in days
+          default: 30
+          title: Retention Days
+        description: Retention window in days
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Prune Admin Search Events Api V1 Admin Maintenance
+                  Search Events Prune Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/storefront/home:
     get:
       tags:
@@ -5972,6 +7326,100 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StorefrontResponse'
+  /api/v1/storefront/discovery:
+    get:
+      tags:
+      - storefront
+      summary: Get Storefront Discovery
+      description: Return ranked catalogue discovery sections with basket exclusion
+        and opaque cursor pagination.
+      operationId: get_storefront_discovery_api_v1_storefront_discovery_get
+      parameters:
+      - name: context
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: ^(checkout|basket|wishlist)$
+          description: Discovery context (checkout, basket, or wishlist)
+          default: checkout
+          title: Context
+        description: Discovery context (checkout, basket, or wishlist)
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 16
+          minimum: 1
+          description: Total products limit per page across all sections
+          default: 16
+          title: Limit
+        description: Total products limit per page across all sections
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 512
+          - type: 'null'
+          description: Opaque pagination cursor
+          title: Cursor
+        description: Opaque pagination cursor
+      - name: x-cart-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Cart-Token
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: x-session-token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Session-Token
+      - name: guest_cart_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Guest Cart Token
+      - name: session_token
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiscoveryResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/seo/resolve:
     get:
       tags:
@@ -5997,6 +7445,64 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SeoMetadataOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/seo/routes:
+    get:
+      tags:
+      - seo
+      summary: Get Public Routes
+      description: Get complete database-driven inventory of all eligible public indexable
+        routes across the storefront.
+      operationId: get_public_routes_api_v1_seo_routes_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeoRouteInventoryOut'
+  /api/v1/seo/snapshot:
+    get:
+      tags:
+      - seo
+      summary: Get Content Snapshot
+      description: Get paginated build snapshot containing fully resolved metadata
+        and structured data for static pre-rendering.
+      operationId: get_content_snapshot_api_v1_seo_snapshot_get
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          description: Page number for snapshot pagination
+          default: 1
+          title: Page
+        description: Page number for snapshot pagination
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          description: Items per page
+          default: 50
+          title: Limit
+        description: Items per page
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeoSnapshotResponse'
         '422':
           description: Validation Error
           content:
@@ -6031,6 +7537,35 @@ paths:
           content:
             application/json:
               schema: {}
+  /api/v1/seo/merchant-feed.xml:
+    get:
+      tags:
+      - seo
+      summary: Get Merchant Feed Xml
+      description: 'Generate dynamic Google Merchant Center XML product feed (RSS
+        2.0 with g: namespace).'
+      operationId: get_merchant_feed_xml_api_v1_seo_merchant_feed_xml_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/v1/seo/merchant-feed:
+    get:
+      tags:
+      - seo
+      summary: Get Merchant Feed Json
+      description: Get structured JSON product feed for programmatic inspection and
+        audit.
+      operationId: get_merchant_feed_json_api_v1_seo_merchant_feed_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MerchantFeedResponse'
   /:
     get:
       tags:
@@ -6065,59 +7600,6 @@ paths:
                   type: string
                 type: object
                 title: Response Health Check Health Get
-  /static/images/{image_path}:
-    get:
-      tags:
-      - system
-      summary: Get Mock Static Image
-      description: Serve local static assets or redirect to high-res photography during
-        development.
-      operationId: get_mock_static_image_static_images__image_path__get
-      parameters:
-      - name: image_path
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Image Path
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-    head:
-      tags:
-      - system
-      summary: Get Mock Static Image
-      description: Serve local static assets or redirect to high-res photography during
-        development.
-      operationId: get_mock_static_image_static_images__image_path__get
-      parameters:
-      - name: image_path
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Image Path
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
   /sitemap.xml:
     get:
       tags:
@@ -6176,19 +7658,16 @@ components:
         name:
           type: string
           maxLength: 100
-          minLength: 2
           title: Name
           description: Recipient full name
         phone:
           type: string
           maxLength: 20
-          minLength: 10
           title: Phone
           description: 10-digit contact mobile number
         line1:
           type: string
           maxLength: 255
-          minLength: 3
           title: Line1
           description: House/Flat number, building name, street
         line2:
@@ -6208,19 +7687,15 @@ components:
         city:
           type: string
           maxLength: 100
-          minLength: 2
           title: City
           description: City/District
         state:
           type: string
           maxLength: 100
-          minLength: 2
           title: State
           description: State/Province
         postalCode:
           type: string
-          maxLength: 10
-          minLength: 6
           title: Postalcode
           description: 6-digit Indian PIN code
         country:
@@ -6308,22 +7783,16 @@ components:
         name:
           anyOf:
           - type: string
-            maxLength: 100
-            minLength: 2
           - type: 'null'
           title: Name
         phone:
           anyOf:
           - type: string
-            maxLength: 20
-            minLength: 10
           - type: 'null'
           title: Phone
         line1:
           anyOf:
           - type: string
-            maxLength: 255
-            minLength: 3
           - type: 'null'
           title: Line1
         line2:
@@ -6349,8 +7818,6 @@ components:
         postalCode:
           anyOf:
           - type: string
-            maxLength: 10
-            minLength: 6
           - type: 'null'
           title: Postalcode
         country:
@@ -6654,6 +8121,76 @@ components:
       - slug
       title: AdminCategoryOut
       description: Category representation for administration.
+    AdminCategorySalesItemOut:
+      properties:
+        categoryId:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Categoryid
+        categoryName:
+          type: string
+          title: Categoryname
+        categorySlug:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Categoryslug
+        orderCount:
+          type: integer
+          title: Ordercount
+        unitsSold:
+          type: integer
+          title: Unitssold
+        grossSales:
+          type: integer
+          title: Grosssales
+        grossSalesPaise:
+          type: integer
+          title: Grosssalespaise
+        salesSharePct:
+          type: number
+          title: Salessharepct
+      type: object
+      required:
+      - categoryName
+      - orderCount
+      - unitsSold
+      - grossSales
+      - grossSalesPaise
+      - salesSharePct
+      title: AdminCategorySalesItemOut
+      description: Category sales breakdown item.
+    AdminCategorySalesOut:
+      properties:
+        effectiveRange:
+          additionalProperties:
+            type: string
+          type: object
+          title: Effectiverange
+        totalGrossSales:
+          type: integer
+          title: Totalgrosssales
+        totalGrossSalesPaise:
+          type: integer
+          title: Totalgrosssalespaise
+        totalUnitsSold:
+          type: integer
+          title: Totalunitssold
+        categories:
+          items:
+            $ref: '#/components/schemas/AdminCategorySalesItemOut'
+          type: array
+          title: Categories
+      type: object
+      required:
+      - effectiveRange
+      - totalGrossSales
+      - totalGrossSalesPaise
+      - totalUnitsSold
+      - categories
+      title: AdminCategorySalesOut
+      description: Category sales breakdown response.
     AdminCategoryUpdate:
       properties:
         name:
@@ -6937,6 +8474,45 @@ components:
       type: object
       title: AdminCollectionUpdate
       description: Payload to update an existing collection.
+    AdminCountrySalesItemOut:
+      properties:
+        countryCode:
+          type: string
+          title: Countrycode
+        countryName:
+          type: string
+          title: Countryname
+        orderCount:
+          type: integer
+          title: Ordercount
+        unitsSold:
+          type: integer
+          title: Unitssold
+        grossSales:
+          type: integer
+          title: Grosssales
+        grossSalesPaise:
+          type: integer
+          title: Grosssalespaise
+        salesSharePct:
+          type: number
+          title: Salessharepct
+        regions:
+          items:
+            $ref: '#/components/schemas/AdminIndianRegionSalesItemOut'
+          type: array
+          title: Regions
+      type: object
+      required:
+      - countryCode
+      - countryName
+      - orderCount
+      - unitsSold
+      - grossSales
+      - grossSalesPaise
+      - salesSharePct
+      title: AdminCountrySalesItemOut
+      description: Country sales breakdown item.
     AdminCouponCreate:
       properties:
         code:
@@ -7104,6 +8680,177 @@ components:
       type: object
       title: AdminCouponUpdate
       description: Payload to update an existing coupon.
+    AdminCustomerAddressOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        phone:
+          type: string
+          title: Phone
+        line1:
+          type: string
+          title: Line1
+        line2:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Line2
+        landmark:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Landmark
+        city:
+          type: string
+          title: City
+        state:
+          type: string
+          title: State
+        postalCode:
+          type: string
+          title: Postalcode
+        country:
+          type: string
+          title: Country
+          default: IN
+        isDefault:
+          type: boolean
+          title: Isdefault
+          default: false
+      type: object
+      required:
+      - id
+      - name
+      - phone
+      - line1
+      - city
+      - state
+      - postalCode
+      title: AdminCustomerAddressOut
+      description: Saved customer address representation.
+    AdminCustomerDetailOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+        email:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Email
+        phone:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Phone
+        status:
+          type: string
+          title: Status
+        createdAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Createdat
+        lastLoginAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Lastloginat
+        orderCount:
+          type: integer
+          title: Ordercount
+          default: 0
+        addresses:
+          items:
+            $ref: '#/components/schemas/AdminCustomerAddressOut'
+          type: array
+          title: Addresses
+      type: object
+      required:
+      - id
+      - status
+      title: AdminCustomerDetailOut
+      description: Detailed customer profile including saved addresses.
+    AdminCustomerListOut:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/AdminCustomerOut'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+        page:
+          type: integer
+          title: Page
+        pageSize:
+          type: integer
+          title: Pagesize
+      type: object
+      required:
+      - items
+      - total
+      - page
+      - pageSize
+      title: AdminCustomerListOut
+      description: Paginated list of customers for administration.
+    AdminCustomerOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+        email:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Email
+        phone:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Phone
+        status:
+          type: string
+          title: Status
+        createdAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Createdat
+        lastLoginAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Lastloginat
+        orderCount:
+          type: integer
+          title: Ordercount
+          default: 0
+      type: object
+      required:
+      - id
+      - status
+      title: AdminCustomerOut
+      description: Admin representation of a customer profile in listings.
     AdminDashboardComparison:
       properties:
         previousTotalSales:
@@ -7196,6 +8943,159 @@ components:
       - attentionCount
       title: AdminDashboardSummaryOut
       description: Comprehensive dashboard summary metrics for admin.
+    AdminDestinationSalesOut:
+      properties:
+        effectiveRange:
+          additionalProperties:
+            type: string
+          type: object
+          title: Effectiverange
+        totalGrossSales:
+          type: integer
+          title: Totalgrosssales
+        totalGrossSalesPaise:
+          type: integer
+          title: Totalgrosssalespaise
+        totalOrders:
+          type: integer
+          title: Totalorders
+        countries:
+          items:
+            $ref: '#/components/schemas/AdminCountrySalesItemOut'
+          type: array
+          title: Countries
+      type: object
+      required:
+      - effectiveRange
+      - totalGrossSales
+      - totalGrossSalesPaise
+      - totalOrders
+      - countries
+      title: AdminDestinationSalesOut
+      description: Geographic sales breakdown response.
+    AdminExpenseCreate:
+      properties:
+        category:
+          type: string
+          title: Category
+          description: GATEWAY_FEE, FULFILMENT, PACKAGING, MARKETING, OPERATING, OTHER
+        amount:
+          type: integer
+          minimum: 0.0
+          title: Amount
+          description: Expense amount in INR rupees
+        expenseDate:
+          type: string
+          title: Expensedate
+          description: Expense date YYYY-MM-DD or ISO timestamp
+        orderId:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Orderid
+        description:
+          anyOf:
+          - type: string
+            maxLength: 255
+          - type: 'null'
+          title: Description
+        notes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Notes
+      type: object
+      required:
+      - category
+      - amount
+      - expenseDate
+      title: AdminExpenseCreate
+      description: Payload to record an expense.
+    AdminExpenseListOut:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/AdminExpenseOut'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+        page:
+          type: integer
+          title: Page
+        pageSize:
+          type: integer
+          title: Pagesize
+        totalAmount:
+          type: integer
+          title: Totalamount
+        totalAmountPaise:
+          type: integer
+          title: Totalamountpaise
+      type: object
+      required:
+      - items
+      - total
+      - page
+      - pageSize
+      - totalAmount
+      - totalAmountPaise
+      title: AdminExpenseListOut
+      description: Paginated list of expenses.
+    AdminExpenseOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        category:
+          type: string
+          title: Category
+        amount:
+          type: integer
+          title: Amount
+        amountPaise:
+          type: integer
+          title: Amountpaise
+        currency:
+          type: string
+          title: Currency
+          default: INR
+        orderId:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Orderid
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        notes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Notes
+        expenseDate:
+          type: string
+          title: Expensedate
+        createdAt:
+          type: string
+          title: Createdat
+        updatedAt:
+          type: string
+          title: Updatedat
+      type: object
+      required:
+      - id
+      - category
+      - amount
+      - amountPaise
+      - expenseDate
+      - createdAt
+      - updatedAt
+      title: AdminExpenseOut
+      description: Recorded expense representation.
     AdminFinanceSalesBucket:
       properties:
         date:
@@ -7324,6 +9224,76 @@ components:
         refundCount:
           type: integer
           title: Refundcount
+        cogs:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Cogs
+        cogsPaise:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Cogspaise
+        grossProfit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Grossprofit
+        grossProfitPaise:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Grossprofitpaise
+        grossMarginPct:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Grossmarginpct
+        operatingExpenses:
+          type: integer
+          title: Operatingexpenses
+          default: 0
+        operatingExpensesPaise:
+          type: integer
+          title: Operatingexpensespaise
+          default: 0
+        expenseBreakdown:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Expensebreakdown
+        netProfit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Netprofit
+        netProfitPaise:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Netprofitpaise
+        netMarginPct:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Netmarginpct
+        profitAvailable:
+          type: boolean
+          title: Profitavailable
+          default: false
+        costCoveragePct:
+          type: number
+          title: Costcoveragepct
+          default: 0.0
+        unavailabilityReason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Unavailabilityreason
+        paymentOverview:
+          anyOf:
+          - $ref: '#/components/schemas/AdminPaymentOverviewOut'
+          - type: 'null'
       type: object
       required:
       - effectiveRange
@@ -7345,6 +9315,42 @@ components:
       - refundCount
       title: AdminFinanceSummaryOut
       description: Detailed financial breakdown and reconciliation.
+    AdminFinanceTrendsOut:
+      properties:
+        effectiveRange:
+          additionalProperties:
+            type: string
+          type: object
+          title: Effectiverange
+        previousRange:
+          additionalProperties:
+            type: string
+          type: object
+          title: Previousrange
+        grossSales:
+          $ref: '#/components/schemas/AdminPeriodComparisonMetric'
+        netRevenue:
+          $ref: '#/components/schemas/AdminPeriodComparisonMetric'
+        orders:
+          $ref: '#/components/schemas/AdminPeriodComparisonCount'
+        averageOrderValue:
+          $ref: '#/components/schemas/AdminPeriodComparisonMetric'
+        refunds:
+          $ref: '#/components/schemas/AdminPeriodComparisonMetric'
+        operationalIndicators:
+          $ref: '#/components/schemas/AdminOperationalIndicatorsOut'
+      type: object
+      required:
+      - effectiveRange
+      - previousRange
+      - grossSales
+      - netRevenue
+      - orders
+      - averageOrderValue
+      - refunds
+      - operationalIndicators
+      title: AdminFinanceTrendsOut
+      description: Finance trends with prior period comparison and operational indicators.
     AdminGlobalSearchOut:
       properties:
         query:
@@ -7397,6 +9403,15 @@ components:
         imageAlt:
           type: string
           title: Imagealt
+        mobileImageUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Mobileimageurl
+        mobileImagePosition:
+          anyOf:
+          - $ref: '#/components/schemas/CampaignImagePosition'
+          - type: 'null'
         destination:
           anyOf:
           - type: string
@@ -7457,6 +9472,45 @@ components:
         imageAlt:
           type: string
           title: Imagealt
+        mobileImageUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Mobileimageurl
+        mobileImagePosition:
+          anyOf:
+          - $ref: '#/components/schemas/CampaignImagePosition'
+          - type: 'null'
+        imageWidth:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Imagewidth
+        imageHeight:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Imageheight
+        imageType:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imagetype
+        mobileImageWidth:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Mobileimagewidth
+        mobileImageHeight:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Mobileimageheight
+        mobileImageType:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Mobileimagetype
         destination:
           anyOf:
           - type: string
@@ -7478,6 +9532,14 @@ components:
             format: date-time
           - type: 'null'
           title: Endsat
+        imageMetadata:
+          anyOf:
+          - $ref: '#/components/schemas/MediaMetadataOut'
+          - type: 'null'
+        mobileImageMetadata:
+          anyOf:
+          - $ref: '#/components/schemas/MediaMetadataOut'
+          - type: 'null'
         isActive:
           type: boolean
           title: Isactive
@@ -7536,6 +9598,15 @@ components:
           - type: string
           - type: 'null'
           title: Imagealt
+        mobileImageUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Mobileimageurl
+        mobileImagePosition:
+          anyOf:
+          - $ref: '#/components/schemas/CampaignImagePosition'
+          - type: 'null'
         destination:
           anyOf:
           - type: string
@@ -7840,6 +9911,36 @@ components:
       type: object
       title: AdminHomepageSectionUpdate
       description: Admin payload to update an existing homepage section.
+    AdminIndianRegionSalesItemOut:
+      properties:
+        state:
+          type: string
+          title: State
+        orderCount:
+          type: integer
+          title: Ordercount
+        unitsSold:
+          type: integer
+          title: Unitssold
+        grossSales:
+          type: integer
+          title: Grosssales
+        grossSalesPaise:
+          type: integer
+          title: Grosssalespaise
+        salesSharePct:
+          type: number
+          title: Salessharepct
+      type: object
+      required:
+      - state
+      - orderCount
+      - unitsSold
+      - grossSales
+      - grossSalesPaise
+      - salesSharePct
+      title: AdminIndianRegionSalesItemOut
+      description: Indian state sales breakdown item.
     AdminInventoryAdjustRequest:
       properties:
         stockQuantity:
@@ -8000,6 +10101,10 @@ components:
           type: boolean
           title: Isenabled
           default: true
+        isEvergreen:
+          type: boolean
+          title: Isevergreen
+          default: false
         startsAt:
           anyOf:
           - type: string
@@ -8098,6 +10203,38 @@ components:
       type: object
       title: AdminOccasionUpdateIn
       description: Payload to update a curated gift occasion.
+    AdminOperationalIndicatorsOut:
+      properties:
+        pendingPaymentCount:
+          type: integer
+          title: Pendingpaymentcount
+        pendingPaymentTotal:
+          type: integer
+          title: Pendingpaymenttotal
+        pendingPaymentTotalPaise:
+          type: integer
+          title: Pendingpaymenttotalpaise
+        cancelledCount:
+          type: integer
+          title: Cancelledcount
+        refundedCount:
+          type: integer
+          title: Refundedcount
+        fulfillmentStates:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Fulfillmentstates
+      type: object
+      required:
+      - pendingPaymentCount
+      - pendingPaymentTotal
+      - pendingPaymentTotalPaise
+      - cancelledCount
+      - refundedCount
+      - fulfillmentStates
+      title: AdminOperationalIndicatorsOut
+      description: Operational indicators tracked alongside finance.
     AdminOrderDetailOut:
       properties:
         id:
@@ -8106,6 +10243,11 @@ components:
         orderNumber:
           type: string
           title: Ordernumber
+        customerId:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Customerid
         customerName:
           type: string
           title: Customername
@@ -8228,6 +10370,18 @@ components:
       - updatedAt
       title: AdminOrderDetailOut
       description: Full order view for admin operations.
+    AdminOrderItemCostUpdate:
+      properties:
+        unitCost:
+          type: integer
+          minimum: 0.0
+          title: Unitcost
+          description: Cost of goods per unit in INR rupees
+      type: object
+      required:
+      - unitCost
+      title: AdminOrderItemCostUpdate
+      description: Payload to record or backfill cost for an order item.
     AdminOrderItemOut:
       properties:
         id:
@@ -8268,6 +10422,26 @@ components:
         unitPricePaise:
           type: integer
           title: Unitpricepaise
+        unitCost:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Unitcost
+        unitCostPaise:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Unitcostpaise
+        totalCost:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Totalcost
+        totalCostPaise:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Totalcostpaise
         quantity:
           type: integer
           title: Quantity
@@ -8346,6 +10520,85 @@ components:
       - status
       title: AdminOrderStatusUpdate
       description: Payload to transition order lifecycle status.
+    AdminPaymentOverviewOut:
+      properties:
+        paid:
+          $ref: '#/components/schemas/AdminPaymentStatusBucket'
+        pending:
+          $ref: '#/components/schemas/AdminPaymentStatusBucket'
+        refunded:
+          $ref: '#/components/schemas/AdminPaymentStatusBucket'
+      type: object
+      required:
+      - paid
+      - pending
+      - refunded
+      title: AdminPaymentOverviewOut
+      description: Payment status overview matching visual design reference.
+    AdminPaymentStatusBucket:
+      properties:
+        count:
+          type: integer
+          title: Count
+        amount:
+          type: integer
+          title: Amount
+        amountPaise:
+          type: integer
+          title: Amountpaise
+      type: object
+      required:
+      - count
+      - amount
+      - amountPaise
+      title: AdminPaymentStatusBucket
+      description: Payment status count and volume.
+    AdminPeriodComparisonCount:
+      properties:
+        current:
+          type: integer
+          title: Current
+        previous:
+          type: integer
+          title: Previous
+        growthPct:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Growthpct
+      type: object
+      required:
+      - current
+      - previous
+      title: AdminPeriodComparisonCount
+      description: Count comparison between current and previous period.
+    AdminPeriodComparisonMetric:
+      properties:
+        current:
+          type: integer
+          title: Current
+        currentPaise:
+          type: integer
+          title: Currentpaise
+        previous:
+          type: integer
+          title: Previous
+        previousPaise:
+          type: integer
+          title: Previouspaise
+        growthPct:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Growthpct
+      type: object
+      required:
+      - current
+      - currentPaise
+      - previous
+      - previousPaise
+      title: AdminPeriodComparisonMetric
+      description: Metric comparison between current and previous period.
     AdminProductCreate:
       properties:
         name:
@@ -8419,12 +10672,119 @@ components:
           additionalProperties: true
           type: object
           title: Metadata
+        handmadeDetails:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Handmadedetails
+        materialsUsed:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Materialsused
+        sizeDimensions:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Sizedimensions
+        processingTime:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Processingtime
+        careInstructions:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Careinstructions
+        shippingDelivery:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Shippingdelivery
       type: object
       required:
       - name
       - primaryImage
       title: AdminProductCreate
       description: Payload to create a new product.
+    AdminProductInfoDefaultsOut:
+      properties:
+        handmadeDetails:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Handmadedetails
+        materialsUsed:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Materialsused
+        sizeDimensions:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Sizedimensions
+        processingTime:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Processingtime
+        careInstructions:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Careinstructions
+        shippingDelivery:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Shippingdelivery
+        updatedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Updatedat
+      type: object
+      title: AdminProductInfoDefaultsOut
+      description: Configurable storewide default copy for new products.
+    AdminProductInfoDefaultsUpdate:
+      properties:
+        handmadeDetails:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Handmadedetails
+        materialsUsed:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Materialsused
+        sizeDimensions:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Sizedimensions
+        processingTime:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Processingtime
+        careInstructions:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Careinstructions
+        shippingDelivery:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Shippingdelivery
+      additionalProperties: false
+      type: object
+      title: AdminProductInfoDefaultsUpdate
+      description: Payload to update storewide product information defaults.
     AdminProductListOut:
       properties:
         items:
@@ -8550,6 +10910,36 @@ components:
           type: integer
           title: Minpricepaise
           default: 0
+        handmadeDetails:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Handmadedetails
+        materialsUsed:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Materialsused
+        sizeDimensions:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Sizedimensions
+        processingTime:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Processingtime
+        careInstructions:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Careinstructions
+        shippingDelivery:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Shippingdelivery
         createdAt:
           anyOf:
           - type: string
@@ -8562,6 +10952,16 @@ components:
             format: date-time
           - type: 'null'
           title: Updatedat
+        primaryImageUrl:
+          type: string
+          title: Primaryimageurl
+          readOnly: true
+        galleryImageUrls:
+          items:
+            type: string
+          type: array
+          title: Galleryimageurls
+          readOnly: true
       type: object
       required:
       - id
@@ -8573,6 +10973,8 @@ components:
       - customizable
       - rating
       - reviewsCount
+      - primaryImageUrl
+      - galleryImageUrls
       title: AdminProductOut
       description: Comprehensive product representation for administration.
     AdminProductUpdate:
@@ -8661,6 +11063,36 @@ components:
             type: object
           - type: 'null'
           title: Metadata
+        handmadeDetails:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Handmadedetails
+        materialsUsed:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Materialsused
+        sizeDimensions:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Sizedimensions
+        processingTime:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Processingtime
+        careInstructions:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Careinstructions
+        shippingDelivery:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Shippingdelivery
       type: object
       title: AdminProductUpdate
       description: Payload to update an existing product.
@@ -8708,6 +11140,11 @@ components:
         orderNumber:
           type: string
           title: Ordernumber
+        customerId:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Customerid
         customerName:
           type: string
           title: Customername
@@ -9048,6 +11485,55 @@ components:
       - email
       title: AdminSendWelcomeRequest
       description: Payload to dispatch a welcome email with optional custom note.
+    AdminTagCreate:
+      properties:
+        name:
+          type: string
+          maxLength: 50
+          minLength: 1
+          title: Name
+          description: Tag name
+      type: object
+      required:
+      - name
+      title: AdminTagCreate
+      description: Payload to create or get an existing tag.
+    AdminTagOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+      type: object
+      required:
+      - id
+      - name
+      title: AdminTagOut
+      description: Admin representation of a tag.
+    AdminTopProductsOut:
+      properties:
+        effectiveRange:
+          additionalProperties:
+            type: string
+          type: object
+          title: Effectiverange
+        rankingMetric:
+          type: string
+          title: Rankingmetric
+        items:
+          items:
+            $ref: '#/components/schemas/AdminTopSellingProductItemOut'
+          type: array
+          title: Items
+      type: object
+      required:
+      - effectiveRange
+      - rankingMetric
+      - items
+      title: AdminTopProductsOut
+      description: Top selling products response.
     AdminTopSellingProduct:
       properties:
         productId:
@@ -9074,6 +11560,52 @@ components:
       - totalRevenuePaise
       title: AdminTopSellingProduct
       description: Product sales analytics item.
+    AdminTopSellingProductItemOut:
+      properties:
+        productId:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Productid
+        productName:
+          type: string
+          title: Productname
+        sku:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Sku
+        variantName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Variantname
+        imageUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imageurl
+        unitsSold:
+          type: integer
+          title: Unitssold
+        distinctOrders:
+          type: integer
+          title: Distinctorders
+        productRevenue:
+          type: integer
+          title: Productrevenue
+        productRevenuePaise:
+          type: integer
+          title: Productrevenuepaise
+      type: object
+      required:
+      - productName
+      - unitsSold
+      - distinctOrders
+      - productRevenue
+      - productRevenuePaise
+      title: AdminTopSellingProductItemOut
+      description: Top selling product item with variant details.
     AdminVariantCreate:
       properties:
         sku:
@@ -9284,6 +11816,11 @@ components:
       title: Body_upload_product_image_api_v1_admin_images_upload_post
     BrandSettingsOut:
       properties:
+        logoUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Logourl
         name:
           type: string
           title: Name
@@ -9292,6 +11829,11 @@ components:
           type: string
           title: Ownername
           default: Anupama Sharma
+        supportEmail:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Supportemail
         instagramUrl:
           anyOf:
           - type: string
@@ -9307,6 +11849,11 @@ components:
       description: Public brand profile representation.
     BrandSettingsUpdate:
       properties:
+        logoUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Logourl
         name:
           anyOf:
           - type: string
@@ -9327,14 +11874,34 @@ components:
           - type: string
           - type: 'null'
           title: Whatsappurl
+      additionalProperties: false
       type: object
       title: BrandSettingsUpdate
       description: Payload to update storewide brand settings.
+    CampaignImagePosition:
+      properties:
+        x:
+          type: number
+          maximum: 100.0
+          minimum: 0.0
+          title: X
+          default: 50.0
+        y:
+          type: number
+          maximum: 100.0
+          minimum: 0.0
+          title: Y
+          default: 50.0
+      type: object
+      title: CampaignImagePosition
+      description: Subject focal point coordinates (percentage between 0 and 100).
     CartItemAdd:
       properties:
         productVariantId:
           anyOf:
           - type: integer
+            maximum: 2147483647.0
+            minimum: 1.0
           - type: 'null'
           title: Productvariantid
           description: ID of specific variant to add. If omitted, product_id or sku
@@ -9342,6 +11909,8 @@ components:
         productId:
           anyOf:
           - type: integer
+            maximum: 2147483647.0
+            minimum: 1.0
           - type: 'null'
           title: Productid
           description: ID of product (will auto-resolve to primary variant if product_variant_id
@@ -9517,6 +12086,28 @@ components:
       type: object
       title: CartOut
       description: Complete shopping cart representation.
+    CartRecommendationsOut:
+      properties:
+        strategy:
+          type: string
+          enum:
+          - newest
+          - featured
+          - related
+          - personalized
+          title: Strategy
+        products:
+          items:
+            $ref: '#/components/schemas/ProductListItem'
+          type: array
+          title: Products
+      type: object
+      required:
+      - strategy
+      - products
+      title: CartRecommendationsOut
+      description: Response schema for basket-aware recommendations conforming to
+        Task 23.3.
     CategoryGridSectionOut:
       properties:
         id:
@@ -9750,6 +12341,54 @@ components:
       - subtotalAfterDiscountPaise
       title: CouponApplyResponse
       description: Result of applying a promotional coupon to cart.
+    DiscoveryResponse:
+      properties:
+        sections:
+          items:
+            $ref: '#/components/schemas/DiscoverySectionOut'
+          type: array
+          title: Sections
+        nextCursor:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Nextcursor
+      type: object
+      required:
+      - sections
+      title: DiscoveryResponse
+      description: Storefront discovery response containing ranked sections and pagination
+        cursor.
+    DiscoverySectionOut:
+      properties:
+        id:
+          type: string
+          title: Id
+        title:
+          type: string
+          title: Title
+        strategy:
+          type: string
+          enum:
+          - related
+          - newest
+          - featured
+          - trending
+          - popular
+          title: Strategy
+        products:
+          items:
+            $ref: '#/components/schemas/ProductListItem'
+          type: array
+          title: Products
+      type: object
+      required:
+      - id
+      - title
+      - strategy
+      - products
+      title: DiscoverySectionOut
+      description: A ranked storefront discovery section with associated products.
     EmailStartRequest:
       properties:
         email:
@@ -9834,6 +12473,43 @@ components:
       - credential
       title: GoogleAuthRequest
       description: Payload for One-Click Google Authentication.
+    GuestTrackingLinkRequest:
+      properties:
+        orderNumber:
+          type: string
+          maxLength: 50
+          minLength: 1
+          title: Ordernumber
+          description: Order number (e.g. SLC-...)
+        email:
+          type: string
+          maxLength: 255
+          minLength: 3
+          title: Email
+          description: Email address used during checkout
+      type: object
+      required:
+      - orderNumber
+      - email
+      title: GuestTrackingLinkRequest
+      description: Request payload to issue a secure guest order tracking magic link.
+    GuestTrackingLinkResponse:
+      properties:
+        message:
+          type: string
+          title: Message
+          description: Status message indicating processing status
+        devTrackingLink:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Devtrackinglink
+          description: Included only in development/testing environments
+      type: object
+      required:
+      - message
+      title: GuestTrackingLinkResponse
+      description: Generic non-enumerating response for tracking link request.
     HTTPValidationError:
       properties:
         detail:
@@ -9870,6 +12546,45 @@ components:
         imageAlt:
           type: string
           title: Imagealt
+        mobileImageUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Mobileimageurl
+        mobileImagePosition:
+          anyOf:
+          - $ref: '#/components/schemas/CampaignImagePosition'
+          - type: 'null'
+        imageWidth:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Imagewidth
+        imageHeight:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Imageheight
+        imageType:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imagetype
+        mobileImageWidth:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Mobileimagewidth
+        mobileImageHeight:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Mobileimageheight
+        mobileImageType:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Mobileimagetype
         destination:
           anyOf:
           - type: string
@@ -9891,6 +12606,14 @@ components:
             format: date-time
           - type: 'null'
           title: Endsat
+        imageMetadata:
+          anyOf:
+          - $ref: '#/components/schemas/MediaMetadataOut'
+          - type: 'null'
+        mobileImageMetadata:
+          anyOf:
+          - $ref: '#/components/schemas/MediaMetadataOut'
+          - type: 'null'
       type: object
       required:
       - id
@@ -9931,6 +12654,10 @@ components:
           type: string
           title: Imagealt
           default: ''
+        imageMetadata:
+          anyOf:
+          - $ref: '#/components/schemas/MediaMetadataOut'
+          - type: 'null'
         imagePosition:
           type: string
           enum:
@@ -9956,6 +12683,256 @@ components:
       - description
       title: ImageTextSectionOut
       description: Controlled artisanal story/craft editorial section template.
+    MediaMetadataOut:
+      properties:
+        url:
+          type: string
+          title: Url
+        key:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Key
+        altText:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Alttext
+        width:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Width
+        height:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Height
+        contentType:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Contenttype
+        variants:
+          items:
+            $ref: '#/components/schemas/MediaVariantOut'
+          type: array
+          title: Variants
+      type: object
+      required:
+      - url
+      title: MediaMetadataOut
+      description: Rich media metadata carrying intrinsic dimensions, alt text, MIME
+        type, and variants.
+    MediaVariantOut:
+      properties:
+        url:
+          type: string
+          title: Url
+        key:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Key
+        width:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Width
+        height:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Height
+        contentType:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Contenttype
+        descriptor:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Descriptor
+      type: object
+      required:
+      - url
+      title: MediaVariantOut
+      description: Derivative or responsive media variant (e.g. mobile vs desktop,
+        alternate formats).
+    MerchantFeedItemOut:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable unique product or variant identifier (e.g. SKU)
+        title:
+          type: string
+          title: Title
+          description: Item title, max 150 chars
+        description:
+          type: string
+          title: Description
+          description: Plain text item description, max 5000 chars
+        link:
+          type: string
+          title: Link
+          description: Direct URL to product landing page on storefront
+        imageLink:
+          type: string
+          title: Imagelink
+          description: Public URL of primary product image
+        additionalImageLinks:
+          items:
+            type: string
+          type: array
+          title: Additionalimagelinks
+          description: Up to 10 additional product image URLs
+        availability:
+          type: string
+          enum:
+          - in_stock
+          - out_of_stock
+          - preorder
+          - backorder
+          title: Availability
+          description: Current inventory availability
+          default: in_stock
+        price:
+          type: string
+          title: Price
+          description: Price with ISO 4217 currency code (e.g. '2599.00 INR')
+        salePrice:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Saleprice
+          description: Sale price with currency if active discount exists
+        brand:
+          type: string
+          title: Brand
+          description: Brand name
+          default: Sulocraft
+        condition:
+          type: string
+          enum:
+          - new
+          - refurbished
+          - used
+          title: Condition
+          description: Item condition; handcrafted goods are new
+          default: new
+        itemGroupId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Itemgroupid
+          description: Parent product slug or ID to group variants
+        identifierExists:
+          type: string
+          enum:
+          - 'yes'
+          - 'no'
+          title: Identifierexists
+          description: Must be 'no' for custom/handcrafted goods without GTIN or MPN
+          default: 'no'
+        productType:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Producttype
+          description: Product categorization / category breadcrumb string
+        googleProductCategory:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Googleproductcategory
+          description: Standard Google product category string or numeric ID if mapped
+        shippingWeight:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Shippingweight
+          description: Weight string with unit (e.g. '350 g')
+        customLabel0:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Customlabel0
+          description: Merchandising badge (e.g. 'Bestseller', 'Handmade')
+        customLabel1:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Customlabel1
+          description: Primary collection or occasion name
+      type: object
+      required:
+      - id
+      - title
+      - description
+      - link
+      - imageLink
+      - price
+      title: MerchantFeedItemOut
+      description: Single sellable product or variant item formatted for Google Merchant
+        Center.
+    MerchantFeedResponse:
+      properties:
+        feedVersion:
+          type: string
+          title: Feedversion
+          description: Feed schema version
+          default: '1.0'
+        title:
+          type: string
+          title: Title
+          description: Channel title
+          default: Sulocraft Product Feed
+        link:
+          type: string
+          title: Link
+          description: Storefront base URL
+        description:
+          type: string
+          title: Description
+          description: Channel description
+          default: Sulocraft Handcrafted Crochet Creations Product Feed
+        generatedAt:
+          type: string
+          title: Generatedat
+          description: ISO 8601 generation timestamp
+        totalItems:
+          type: integer
+          title: Totalitems
+          description: Total count of variant items in feed
+        eligibleProductsCount:
+          type: integer
+          title: Eligibleproductscount
+          description: Total count of unique active products in feed
+        items:
+          items:
+            $ref: '#/components/schemas/MerchantFeedItemOut'
+          type: array
+          title: Items
+          description: Feed items
+        policyDisclaimer:
+          type: string
+          title: Policydisclaimer
+          description: Policy declaration for missing identifiers and account-level
+            settings
+          default: Sulocraft creations are artisanal handcrafted goods without manufacturer
+            GTIN/MPN; identifier_exists is set to 'no' in compliance with Google specifications.
+            Storewide shipping and return policies are configured at the Merchant
+            Center account level.
+      type: object
+      required:
+      - link
+      - generatedAt
+      - totalItems
+      - eligibleProductsCount
+      title: MerchantFeedResponse
+      description: API envelope response for inspectable JSON merchant feed.
     OccasionGridSectionOut:
       properties:
         id:
@@ -10049,6 +13026,10 @@ components:
           - type: string
           - type: 'null'
           title: Imageurl
+        imageMetadata:
+          anyOf:
+          - $ref: '#/components/schemas/MediaMetadataOut'
+          - type: 'null'
         displayOrder:
           type: integer
           title: Displayorder
@@ -10186,6 +13167,29 @@ components:
       - lineTotalPaise
       title: OrderItemOut
       description: Snapshotted line item of an order.
+    OrderMilestoneOut:
+      properties:
+        code:
+          type: string
+          title: Code
+        label:
+          type: string
+          title: Label
+        state:
+          type: string
+          title: State
+        timestamp:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Timestamp
+      type: object
+      required:
+      - code
+      - label
+      - state
+      title: OrderMilestoneOut
+      description: Lifecycle progress milestone for order tracking.
     OrderOut:
       properties:
         id:
@@ -10298,6 +13302,11 @@ components:
           - type: string
           - type: 'null'
           title: Estimateddelivery
+        guestTrackingToken:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Guesttrackingtoken
         createdAt:
           type: string
           title: Createdat
@@ -10347,6 +13356,29 @@ components:
       - timestamp
       title: OrderStatusHistoryOut
       description: Audit log entry for order status transition.
+    OrderTerminalStateOut:
+      properties:
+        code:
+          type: string
+          title: Code
+        label:
+          type: string
+          title: Label
+        explanation:
+          type: string
+          title: Explanation
+        timestamp:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Timestamp
+      type: object
+      required:
+      - code
+      - label
+      - explanation
+      title: OrderTerminalStateOut
+      description: Explanation for terminal non-delivered orders (cancelled / refunded).
     OrderTrackingOut:
       properties:
         orderNumber:
@@ -10379,6 +13411,16 @@ components:
           type: array
           title: Timeline
           default: []
+        milestones:
+          items:
+            $ref: '#/components/schemas/OrderMilestoneOut'
+          type: array
+          title: Milestones
+          default: []
+        terminalState:
+          anyOf:
+          - $ref: '#/components/schemas/OrderTerminalStateOut'
+          - type: 'null'
       type: object
       required:
       - orderNumber
@@ -10391,6 +13433,8 @@ components:
         orderId:
           anyOf:
           - type: integer
+            maximum: 2147483647.0
+            minimum: 1.0
           - type: 'null'
           title: Orderid
           description: Database ID of the order
@@ -10405,7 +13449,7 @@ components:
           - type: string
           - type: 'null'
           title: Provider
-          description: 'Payment provider: ''razorpay'' or ''mock'''
+          description: 'Payment provider: ''cashfree'', ''razorpay'', or ''mock'''
       type: object
       title: PaymentIntentCreate
       description: Request to initiate payment for an existing order.
@@ -10428,6 +13472,22 @@ components:
           - type: string
           - type: 'null'
           title: Providerorderid
+        paymentSessionId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Paymentsessionid
+        environment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Environment
+          description: Gateway environment mode ('sandbox' or 'production')
+        returnUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Returnurl
         amount:
           type: integer
           title: Amount
@@ -10465,6 +13525,11 @@ components:
         orderId:
           type: integer
           title: Orderid
+        orderNumber:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ordernumber
         provider:
           type: string
           title: Provider
@@ -10518,11 +13583,15 @@ components:
       properties:
         paymentId:
           type: integer
+          maximum: 2147483647.0
+          minimum: 1.0
           title: Paymentid
         providerPaymentId:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Providerpaymentid
-          description: Gateway payment ID (e.g. pay_XXXX)
+          description: Gateway payment ID (optional for Cashfree server-verified orders)
         providerOrderId:
           anyOf:
           - type: string
@@ -10544,9 +13613,9 @@ components:
       type: object
       required:
       - paymentId
-      - providerPaymentId
       title: PaymentVerifyRequest
-      description: Client verification callback payload after gateway popup completion.
+      description: Client verification callback payload after gateway popup or redirect
+        completion.
     PaymentWebhookResult:
       properties:
         status:
@@ -10716,6 +13785,10 @@ components:
           type: integer
           title: Reviewcount
           default: 0
+        aggregateRating:
+          anyOf:
+          - $ref: '#/components/schemas/SeoAggregateRating'
+          - type: 'null'
         inStock:
           type: boolean
           title: Instock
@@ -10746,6 +13819,40 @@ components:
             $ref: '#/components/schemas/ReviewOut'
           type: array
           title: Customerreviews
+        handmadeDetails:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Handmadedetails
+        materialsUsed:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Materialsused
+        sizeDimensions:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Sizedimensions
+        processingTime:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Processingtime
+        careInstructions:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Careinstructions
+        shippingDelivery:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Shippingdelivery
+        primaryImageMetadata:
+          anyOf:
+          - $ref: '#/components/schemas/MediaMetadataOut'
+          - type: 'null'
       type: object
       required:
       - id
@@ -10780,6 +13887,26 @@ components:
           - type: integer
           - type: 'null'
           title: Variant Id
+        width:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Width
+        height:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Height
+        contentType:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Contenttype
+        variants:
+          items:
+            $ref: '#/components/schemas/MediaVariantOut'
+          type: array
+          title: Variants
       type: object
       required:
       - id
@@ -10831,6 +13958,10 @@ components:
           type: integer
           title: Reviewcount
           default: 0
+        aggregateRating:
+          anyOf:
+          - $ref: '#/components/schemas/SeoAggregateRating'
+          - type: 'null'
         image:
           type: string
           title: Image
@@ -10892,6 +14023,10 @@ components:
           type: string
           title: Inventorystatus
           default: IN_STOCK
+        primaryImageMetadata:
+          anyOf:
+          - $ref: '#/components/schemas/MediaMetadataOut'
+          - type: 'null'
       type: object
       required:
       - id
@@ -10952,7 +14087,6 @@ components:
           anyOf:
           - type: string
             maxLength: 100
-            minLength: 2
           - type: 'null'
           title: Name
         email:
@@ -10961,6 +14095,12 @@ components:
             maxLength: 255
           - type: 'null'
           title: Email
+        phone:
+          anyOf:
+          - type: string
+            maxLength: 20
+          - type: 'null'
+          title: Phone
       type: object
       title: ProfileUpdate
       description: Payload to update customer profile fields.
@@ -10999,6 +14139,10 @@ components:
           - type: string
           - type: 'null'
           title: Imagealt
+        imageMetadata:
+          anyOf:
+          - $ref: '#/components/schemas/MediaMetadataOut'
+          - type: 'null'
         ctaText:
           anyOf:
           - type: string
@@ -11169,6 +14313,118 @@ components:
       - text
       title: ReviewSummary
       description: Summarized customer testimonial for homepage review section.
+    SearchEventCreate:
+      properties:
+        query:
+          type: string
+          maxLength: 120
+          title: Query
+          description: Debounced search query string (max 120 characters)
+      type: object
+      required:
+      - query
+      title: SearchEventCreate
+      description: Telemetry payload for recording a debounced search query.
+    SearchEventResponse:
+      properties:
+        status:
+          type: string
+          title: Status
+          default: recorded
+      type: object
+      title: SearchEventResponse
+      description: Acknowledgment response for recorded search telemetry.
+    SearchSuggestionKeyword:
+      properties:
+        term:
+          type: string
+          title: Term
+      type: object
+      required:
+      - term
+      title: SearchSuggestionKeyword
+      description: Keyword item in trending search suggestions.
+    SearchSuggestionsResponse:
+      properties:
+        trending_keywords:
+          items:
+            $ref: '#/components/schemas/SearchSuggestionKeyword'
+          type: array
+          title: Trending Keywords
+        trending_products:
+          items:
+            $ref: '#/components/schemas/ProductListItem'
+          type: array
+          title: Trending Products
+      type: object
+      title: SearchSuggestionsResponse
+      description: Response schema for search discovery suggestions.
+    SeoAggregateRating:
+      properties:
+        ratingValue:
+          type: number
+          title: Ratingvalue
+        reviewCount:
+          type: integer
+          title: Reviewcount
+        bestRating:
+          type: number
+          title: Bestrating
+          default: 5.0
+        worstRating:
+          type: number
+          title: Worstrating
+          default: 1.0
+        provenance:
+          type: string
+          title: Provenance
+          default: VERIFIED_REVIEWS
+      type: object
+      required:
+      - ratingValue
+      - reviewCount
+      title: SeoAggregateRating
+      description: Aggregate rating derived from verified product reviews.
+    SeoBrandInfo:
+      properties:
+        name:
+          type: string
+          title: Name
+          default: Sulocraft
+        legalName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Legalname
+        logoUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Logourl
+        ownerName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ownername
+        instagramUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Instagramurl
+        whatsappUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Whatsappurl
+        sameAs:
+          items:
+            type: string
+          type: array
+          title: Sameas
+      type: object
+      title: SeoBrandInfo
+      description: Storewide brand configuration for Organization/WebSite structured
+        data.
     SeoBreadcrumb:
       properties:
         name:
@@ -11183,6 +14439,133 @@ components:
       - path
       title: SeoBreadcrumb
       description: Breadcrumb trail item for search engines and structured data.
+    SeoCategoryEntity:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        slug:
+          type: string
+          title: Slug
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        imageUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imageurl
+        imageAlt:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imagealt
+        imageWidth:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Imagewidth
+        imageHeight:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Imageheight
+        imageType:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imagetype
+        imageMetadata:
+          anyOf:
+          - $ref: '#/components/schemas/MediaMetadataOut'
+          - type: 'null'
+        parentId:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Parentid
+        parentName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Parentname
+        parentSlug:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Parentslug
+        productCount:
+          type: integer
+          title: Productcount
+          default: 0
+      type: object
+      required:
+      - id
+      - name
+      - slug
+      title: SeoCategoryEntity
+      description: Truthful category entity hierarchy and metadata.
+    SeoCollectionEntity:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        slug:
+          type: string
+          title: Slug
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        imageUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imageurl
+        imageAlt:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imagealt
+        imageWidth:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Imagewidth
+        imageHeight:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Imageheight
+        imageType:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imagetype
+        imageMetadata:
+          anyOf:
+          - $ref: '#/components/schemas/MediaMetadataOut'
+          - type: 'null'
+        collectionType:
+          type: string
+          title: Collectiontype
+          default: EVERGREEN
+      type: object
+      required:
+      - id
+      - name
+      - slug
+      title: SeoCollectionEntity
+      description: Truthful collection entity metadata.
     SeoFaqItem:
       properties:
         question:
@@ -11209,12 +14592,22 @@ components:
         canonicalPath:
           type: string
           title: Canonicalpath
+        canonicalUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Canonicalurl
         robots:
           type: string
           enum:
           - index,follow
           - noindex,nofollow
           title: Robots
+        h1:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: H1
         imageUrl:
           anyOf:
           - type: string
@@ -11225,6 +14618,25 @@ components:
           - type: string
           - type: 'null'
           title: Imagealt
+        imageWidth:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Imagewidth
+        imageHeight:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Imageheight
+        imageType:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imagetype
+        imageMetadata:
+          anyOf:
+          - $ref: '#/components/schemas/MediaMetadataOut'
+          - type: 'null'
         pageType:
           type: string
           enum:
@@ -11251,6 +14663,31 @@ components:
           anyOf:
           - $ref: '#/components/schemas/SeoReturnPolicy'
           - type: 'null'
+        brand:
+          anyOf:
+          - $ref: '#/components/schemas/SeoBrandInfo'
+          - type: 'null'
+        productEntity:
+          anyOf:
+          - $ref: '#/components/schemas/SeoProductEntity'
+          - type: 'null'
+        categoryEntity:
+          anyOf:
+          - $ref: '#/components/schemas/SeoCategoryEntity'
+          - type: 'null'
+        collectionEntity:
+          anyOf:
+          - $ref: '#/components/schemas/SeoCollectionEntity'
+          - type: 'null'
+        httpStatus:
+          type: integer
+          title: Httpstatus
+          default: 200
+        redirectTo:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Redirectto
       type: object
       required:
       - title
@@ -11260,6 +14697,169 @@ components:
       - pageType
       title: SeoMetadataOut
       description: Structured SEO metadata response for page head rendering.
+    SeoPageSnapshotItem:
+      properties:
+        path:
+          type: string
+          title: Path
+        metadata:
+          $ref: '#/components/schemas/SeoMetadataOut'
+      type: object
+      required:
+      - path
+      - metadata
+      title: SeoPageSnapshotItem
+      description: A pre-rendered route entry containing full truthful metadata and
+        structured data.
+    SeoProductEntity:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        slug:
+          type: string
+          title: Slug
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        sku:
+          type: string
+          title: Sku
+        price:
+          type: number
+          title: Price
+        pricePaise:
+          type: integer
+          title: Pricepaise
+        currency:
+          type: string
+          title: Currency
+          default: INR
+        inStock:
+          type: boolean
+          title: Instock
+        inventoryStatus:
+          type: string
+          title: Inventorystatus
+        brand:
+          type: string
+          title: Brand
+          default: Sulocraft
+        primaryCategoryName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Primarycategoryname
+        categoryNames:
+          items:
+            type: string
+          type: array
+          title: Categorynames
+        imageUrls:
+          items:
+            type: string
+          type: array
+          title: Imageurls
+        media:
+          items:
+            $ref: '#/components/schemas/MediaMetadataOut'
+          type: array
+          title: Media
+        variants:
+          items:
+            $ref: '#/components/schemas/SeoProductVariant'
+          type: array
+          title: Variants
+        aggregateRating:
+          anyOf:
+          - $ref: '#/components/schemas/SeoAggregateRating'
+          - type: 'null'
+        handmadeDetails:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Handmadedetails
+        materialsUsed:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Materialsused
+        sizeDimensions:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Sizedimensions
+        careInstructions:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Careinstructions
+        shippingDelivery:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Shippingdelivery
+        processingTime:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Processingtime
+      type: object
+      required:
+      - id
+      - name
+      - slug
+      - sku
+      - price
+      - pricePaise
+      - inStock
+      - inventoryStatus
+      title: SeoProductEntity
+      description: Truthful database-derived product entity for Product/Offer schema
+        parity.
+    SeoProductVariant:
+      properties:
+        id:
+          type: integer
+          title: Id
+        sku:
+          type: string
+          title: Sku
+        name:
+          type: string
+          title: Name
+        price:
+          type: number
+          title: Price
+        pricePaise:
+          type: integer
+          title: Pricepaise
+        stockQuantity:
+          type: integer
+          title: Stockquantity
+        inStock:
+          type: boolean
+          title: Instock
+        attributes:
+          additionalProperties: true
+          type: object
+          title: Attributes
+      type: object
+      required:
+      - id
+      - sku
+      - name
+      - price
+      - pricePaise
+      - stockQuantity
+      - inStock
+      title: SeoProductVariant
+      description: Product variant details for structured offer parity.
     SeoReturnPolicy:
       properties:
         returnWindowDays:
@@ -11277,6 +14877,71 @@ components:
       type: object
       title: SeoReturnPolicy
       description: Merchant return policy details for rich snippets.
+    SeoRouteInventoryOut:
+      properties:
+        totalRoutes:
+          type: integer
+          title: Totalroutes
+        routes:
+          items:
+            $ref: '#/components/schemas/SeoRouteItem'
+          type: array
+          title: Routes
+        generatedAt:
+          type: string
+          format: date-time
+          title: Generatedat
+      type: object
+      required:
+      - totalRoutes
+      - routes
+      - generatedAt
+      title: SeoRouteInventoryOut
+      description: Complete inventory of all eligible public routes across the store.
+    SeoRouteItem:
+      properties:
+        path:
+          type: string
+          title: Path
+        canonicalUrl:
+          type: string
+          title: Canonicalurl
+        pageType:
+          type: string
+          enum:
+          - website
+          - product
+          - collection
+          - article
+          title: Pagetype
+        lastmod:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Lastmod
+        changefreq:
+          type: string
+          enum:
+          - always
+          - hourly
+          - daily
+          - weekly
+          - monthly
+          - yearly
+          - never
+          title: Changefreq
+          default: weekly
+        priority:
+          type: number
+          title: Priority
+          default: 0.8
+      type: object
+      required:
+      - path
+      - canonicalUrl
+      - pageType
+      title: SeoRouteItem
+      description: An individual indexable public storefront route item.
     SeoShippingInfo:
       properties:
         freeShippingThreshold:
@@ -11303,6 +14968,38 @@ components:
       title: SeoShippingInfo
       description: Shipping information for structured offers and merchant search
         details.
+    SeoSnapshotResponse:
+      properties:
+        page:
+          type: integer
+          title: Page
+        limit:
+          type: integer
+          title: Limit
+        totalCount:
+          type: integer
+          title: Totalcount
+        totalPages:
+          type: integer
+          title: Totalpages
+        items:
+          items:
+            $ref: '#/components/schemas/SeoPageSnapshotItem'
+          type: array
+          title: Items
+        versionHash:
+          type: string
+          title: Versionhash
+      type: object
+      required:
+      - page
+      - limit
+      - totalCount
+      - totalPages
+      - items
+      - versionHash
+      title: SeoSnapshotResponse
+      description: Paginated snapshot response of public routes and their full metadata.
     StorefrontHomeResponse:
       properties:
         brand:
@@ -11629,6 +15326,30 @@ components:
           type: string
           title: Imageurl
           default: ''
+        imageAlt:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imagealt
+        imageWidth:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Imagewidth
+        imageHeight:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Imageheight
+        imageType:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imagetype
+        imageMetadata:
+          anyOf:
+          - $ref: '#/components/schemas/MediaMetadataOut'
+          - type: 'null'
       type: object
       required:
       - id

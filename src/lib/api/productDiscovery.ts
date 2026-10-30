@@ -4,7 +4,7 @@ import type { Product } from '../../data/products';
 
 export interface DiscoverySection { id: string; title: string; strategy: string; products: Product[]; }
 export interface DiscoveryPage { sections: DiscoverySection[]; nextCursor: string | null; compatibility?: boolean; }
-export type DiscoveryContext = 'checkout' | 'basket';
+export type DiscoveryContext = 'checkout' | 'basket' | 'wishlist';
 const strategies = new Set(['related', 'newest', 'featured', 'trending', 'popular']);
 const validCursor = (value: unknown): value is string => typeof value === 'string' && value.length > 0 && value.length <= 512 && !/[\u0000-\u001f]/.test(value);
 

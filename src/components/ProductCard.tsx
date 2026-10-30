@@ -71,7 +71,8 @@ export default function ProductCard({ product, onAddToCart, onToggleWishlist, is
         {onToggleWishlist && <button
           className="absolute z-20 top-3 right-3 w-9 h-9 rounded-full bg-white flex items-center justify-center shadow-sm transition-all duration-200 hover:scale-110"
           onClick={handleWishlist}
-          aria-label="Toggle wishlist"
+          aria-label={`${isWishlisted ? 'Remove' : 'Save'} ${product.name} ${isWishlisted ? 'from' : 'to'} wishlist`}
+          aria-pressed={Boolean(isWishlisted)}
         >
           <HeartIcon size={16} filled={isWishlisted} className={isWishlisted ? 'text-[#C4622D]' : 'text-[#8B6B4A]'} />
         </button>}

@@ -26,9 +26,8 @@ services:
       R2_PRIVATE_BACKUP_BUCKET: ${R2_PRIVATE_BACKUP_BUCKET:-sulocraft-backups-${TARGET_ENV:-preprod}}
       R2_PUBLIC_BASE_URL: ${R2_PUBLIC_BASE_URL:-https://images.sulocraft.com}
       IMAGE_BASE_URL: ${IMAGE_BASE_URL:-https://images.sulocraft.com}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      GOOGLE_CLIENT_SECRET_FILE: ${GOOGLE_CLIENT_SECRET_FILE:-}
+      GOOGLE_CLIENT_ID_FILE: /run/secrets/google_client_id
+      GOOGLE_CLIENT_SECRET_FILE: /run/secrets/google_client_secret
       FACEBOOK_APP_ID: ${FACEBOOK_APP_ID:-}
       FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET:-}
       FACEBOOK_APP_SECRET_FILE: ${FACEBOOK_APP_SECRET_FILE:-}
@@ -67,8 +66,16 @@ services:
       RAZORPAY_KEY_SECRET_FILE: ${RAZORPAY_KEY_SECRET_FILE:-}
       RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-}
       RAZORPAY_WEBHOOK_SECRET_FILE: ${RAZORPAY_WEBHOOK_SECRET_FILE:-}
+      CASHFREE_ENVIRONMENT: ${CASHFREE_ENVIRONMENT:-}
+      CASHFREE_API_VERSION: ${CASHFREE_API_VERSION:-2023-08-01}
+      CASHFREE_APP_ID_FILE: /run/secrets/cashfree_app_id
+      CASHFREE_SECRET_KEY_FILE: /run/secrets/cashfree_secret_key
     secrets:
       - database_url
+      - google_client_id
+      - google_client_secret
+      - cashfree_app_id
+      - cashfree_secret_key
     depends_on:
       postgres:
         condition: service_healthy
@@ -142,6 +149,14 @@ secrets:
     file: ${POSTGRES_PASSWORD_FILE:?Set POSTGRES_PASSWORD_FILE to this target's database secret path}
   database_url:
     file: ${DATABASE_URL_FILE:?Set DATABASE_URL_FILE to this target's API database URL secret path}
+  google_client_id:
+    file: ${GOOGLE_CLIENT_ID_FILE:?Set GOOGLE_CLIENT_ID_FILE to this target's Google client ID secret path}
+  google_client_secret:
+    file: ${GOOGLE_CLIENT_SECRET_FILE:?Set GOOGLE_CLIENT_SECRET_FILE to this target's Google client secret path}
+  cashfree_app_id:
+    file: ${CASHFREE_APP_ID_FILE:?Set CASHFREE_APP_ID_FILE to this target's Cashfree App ID secret path}
+  cashfree_secret_key:
+    file: ${CASHFREE_SECRET_KEY_FILE:?Set CASHFREE_SECRET_KEY_FILE to this target's Cashfree Secret Key secret path}
 
 volumes:
   postgres_data:

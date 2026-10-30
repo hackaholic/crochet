@@ -47,14 +47,27 @@ Public/non-secret configuration such as `APP_ENV`, `FRONTEND_URL`, `IMAGE_BASE_U
 - The encrypted deploy script excludes plaintext env files from rsync. The live API was previously deployed from the saved plaintext preprod env as an owner-directed recovery; this does not count as encrypted-vault release verification.
 - The local decrypt helper and Compose overlay have built the API and frontend successfully; API health and the same-origin API proxy return HTTP 200. Full storefront visual verification remains pending because the available browser automation blocks `/api/v1` requests. Gemini's catalogue seed idempotency task is also active; see Work 003 Task 3.11.
 
+## Same application settings across environments
+
+The backend uses the same logical setting names in every environment. `config_value()` reads `<SETTING>_FILE` when the selected runtime provides it, and otherwise reads `<SETTING>` from the process environment. A configured but unreadable file fails closed rather than falling back to a stale value.
+
+| Environment | Source | Example for Google OAuth |
+| --- | --- | --- |
+| Local development | Ignored root `.env`, passed to local Compose | `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` on the API only |
+| Preprod | Selected preprod SOPS group rendered under `/run/sulocraft/preprod/backend/` | Deployment env points to the preprod files; VPS Compose mounts them only into the API |
+| Production | Selected prod SOPS group rendered under `/run/sulocraft/prod/backend/` | Deployment env points to the prod files; VPS Compose mounts them only into the API |
+
+Preprod and production use the same backend image and Compose contract. The target-specific paths come from the validated deployment YAML selection. Missing production configuration must fail closed; it must never select preprod paths. The frontend receives only public provider IDs at runtime from `/api/v1/auth/config`, never provider secrets or Vite build-time OAuth values.
+
 ## Local development and VPS setup
 
 1. Generate an age keypair for each authorized developer and a separate keypair directly on the VPS. Share only public recipient strings. The local developer key and VPS key are provisioned; their private contents remain undisclosed.
 2. Store developer private keys outside the repository with owner-only permissions. Store the VPS private key at `/etc/sulocraft/age/keys.txt`, root-owned with mode `0600`.
 3. `.sops.yaml` contains local and VPS public recipient rules. The three preprod groups are encrypted at `secrets/encrypted/{backend,postgres,backup}.enc.env` and verified decryptable by both authorized keys.
 4. Commit only `secrets/encrypted/*.enc.env` ciphertext and `.sops.yaml`; never add plaintext credentials, private keys, or generated runtime files.
-5. For local Docker, run `python3 scripts/decrypt_secrets.py --env preprod` (or `--env dev`) to decrypt backend and PostgreSQL groups into owner-only files. It points the API at the isolated local Compose database and writes only file paths (never values) to the generated Compose env. Start with `docker compose --env-file backend/.secrets/preprod/compose.env -f docker/compose.yaml -f docker/compose.preprod.yaml up --build`; remove local files with `python3 scripts/decrypt_secrets.py --clean --env preprod`.
-6. The VPS bootstrap/deploy scripts are implemented, but encrypted-vault deployment is not yet accepted. The last owner-directed recovery used the saved plaintext preprod env to restore the live API. Before claiming secure release, validate the SOPS bootstrap on the VPS, preserve rollback behavior, and verify health without transferring plaintext env files.
+5. For regular local development using the ignored root `.env`, run `docker-compose --env-file .env -f docker/compose.yaml up -d --build`. The API receives backend settings such as `GOOGLE_CLIENT_ID`; the frontend obtains public OAuth IDs at runtime from `/api/v1/auth/config`. Do not configure OAuth IDs as Vite variables.
+6. To exercise the file-backed SOPS path locally, run `python3 scripts/decrypt_secrets.py --env preprod` (or `--env dev`) to decrypt backend and PostgreSQL groups into owner-only files. It points the API at the isolated local Compose database and writes only file paths (never values) to the generated Compose env. Start with `docker-compose --env-file backend/.secrets/preprod/compose.env -f docker/compose.yaml -f docker/compose.preprod.yaml up --build`; remove local files with `python3 scripts/decrypt_secrets.py --clean --env preprod`.
+7. The VPS bootstrap/deploy scripts are implemented, but encrypted-vault deployment is not yet accepted. The last owner-directed recovery used the saved plaintext preprod env to restore the live API. Before claiming secure release, validate the SOPS bootstrap on the VPS, preserve rollback behavior, and verify health without transferring plaintext env files.
 
 Set `SOPS_AGE_KEY_FILE` when selecting a developer or VPS key. Never send private keys or decrypted env files over chat, paste them into commands, or print them in logs.
 

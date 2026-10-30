@@ -110,7 +110,7 @@ class RazorpayPaymentProvider(BasePaymentProvider):
         ).hexdigest()
         return hmac.compare_digest(generated_signature, str(razorpay_signature).strip())
 
-    def verify_webhook(self, payload: bytes, signature: str) -> bool:
+    def verify_webhook(self, payload: bytes, signature: str, timestamp: str | None = None) -> bool:
         """Verify Razorpay webhook signature with fail-closed semantics."""
         if not self.webhook_secret or not signature or not payload:
             return False

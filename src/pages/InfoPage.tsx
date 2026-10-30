@@ -1,3 +1,6 @@
+import { useEffect, useState } from 'react';
+import { getStorefrontContent } from '../lib/api/storefront';
+
 type InfoPageKind = 'contact' | 'shipping' | 'returns' | 'privacy' | 'terms' | 'notFound';
 
 interface InfoPageProps {
@@ -64,6 +67,17 @@ const pageContent: Record<Exclude<InfoPageKind, 'notFound'>, { eyebrow: string; 
 };
 
 export default function InfoPage({ kind, onNavigate }: InfoPageProps) {
+  const [supportEmail, setSupportEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (kind !== 'contact') return;
+    const controller = new AbortController();
+    getStorefrontContent(controller.signal)
+      .then(content => setSupportEmail(content.brand.supportEmail?.trim() || null))
+      .catch(() => setSupportEmail(null));
+    return () => controller.abort();
+  }, [kind]);
+
   if (kind === 'notFound') {
     return (
       <section className="min-h-[60vh] bg-[#FAF7F2] px-4 pt-36 pb-24 flex items-center justify-center">
@@ -93,6 +107,14 @@ export default function InfoPage({ kind, onNavigate }: InfoPageProps) {
             </article>
           ))}
         </div>
+        {kind === 'contact' && supportEmail && (
+          <article className="mt-4 rounded-2xl border border-[#EDE4D0] bg-white p-6 md:p-8">
+            <h2 className="text-xl text-[#2C1810] mb-3" style={{ fontFamily: 'var(--font-serif)' }}>Email support</h2>
+            <a className="text-sm font-medium text-[#C4622D] underline underline-offset-4 hover:text-[#8B3F1E]" href={`mailto:${supportEmail}`}>
+              {supportEmail}
+            </a>
+          </article>
+        )}
         <div className="mt-10 rounded-2xl bg-[#F5EDE0] p-6 text-center">
           <p className="text-sm text-[#5C3D2E] mb-4">Looking for something handmade just for you?</p>
           <button onClick={() => onNavigate('shop')} className="rounded-full border border-[#C4622D] px-6 py-2.5 text-sm font-semibold text-[#C4622D] transition-colors hover:bg-[#C4622D] hover:text-white">Explore the collection</button>

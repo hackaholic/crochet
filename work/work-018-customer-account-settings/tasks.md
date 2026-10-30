@@ -18,5 +18,10 @@
 ## Pending
 None.
 
+## In Progress
+None.
+
 ## Blocked
 - [ ] 18.6 Codex — [Integrated local acceptance](tasks/task-006-local-account-acceptance.md). Account/API desktop/mobile checks pass; Firefox surface unavailable and Work01717.5 guest emailed-link acceptance remains Pending. No Gemini backend blocker.
+- [ ] 18.12 — Clickable customer account summary cards — Codex. Cards link to matching account sections/routes with admin-style hover/focus. Active orders filters to the API-defined active statuses; focused tests/typecheck and Docker rebuild pass. Authenticated desktop/mobile browser review awaits a local demo-customer session.
+- [ ] 18.13 — Sign out after email and Google login — Codex. Backend logout tests (email, Google, anonymous), live local endpoint, and customer/admin UI tests pass. Actual reported runtime failure not reproduced; need exact page/environment and authenticated browser session. Local Google client ID is missing.

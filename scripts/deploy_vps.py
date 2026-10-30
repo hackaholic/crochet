@@ -63,6 +63,7 @@ def resolve_environment(target_env: str, config: dict, *, repo_root: Path = REPO
         "frontend_url",
         "public_api_url",
         "gateway_network_name",
+        "payment_provider",
     )
     missing = [name for name in required if not isinstance(selected.get(name), str) or not selected[name].strip()]
     if missing:
@@ -71,7 +72,26 @@ def resolve_environment(target_env: str, config: dict, *, repo_root: Path = REPO
         raise ReleaseError(f"Deployment root for '{target_env}' must be an absolute path")
     if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_.-]*", selected["gateway_network_name"]):
         raise ReleaseError(f"Invalid gateway network name for '{target_env}'")
+
+    payment_provider = selected["payment_provider"].strip().lower()
+    if payment_provider not in ("cashfree", "razorpay", "mock"):
+        raise ReleaseError(f"Unsupported payment_provider for '{target_env}': {payment_provider}")
+    if target_env == "prod" and payment_provider == "mock":
+        raise ReleaseError("Production deployment cannot use the 'mock' payment provider")
+
+    cashfree_env = str(selected.get("cashfree_environment") or "").strip().lower()
+    if payment_provider == "cashfree":
+        if not cashfree_env:
+            raise ReleaseError(f"Deployment config for '{target_env}' is missing: cashfree_environment")
+        if target_env == "preprod" and cashfree_env != "sandbox":
+            raise ReleaseError("Preprod Cashfree configuration must explicitly select 'sandbox'")
+        if target_env == "prod" and cashfree_env != "production":
+            raise ReleaseError("Production Cashfree configuration must explicitly select 'production' (never sandbox)")
+
     secrets_dir = (repo_root / selected["encrypted_secrets_dir"]).resolve()
+    preprod_default_secrets_dir = (repo_root / "secrets" / "encrypted").resolve()
+    if target_env == "prod" and secrets_dir == preprod_default_secrets_dir:
+        raise ReleaseError("Production deployment cannot use the preprod encrypted_secrets_dir ('secrets/encrypted')")
     if not secrets_dir.is_dir():
         raise ReleaseError(f"Encrypted secret group for '{target_env}' is missing: {selected['encrypted_secrets_dir']}")
     for group in ("backend.enc.env", "postgres.enc.env"):
@@ -79,6 +99,8 @@ def resolve_environment(target_env: str, config: dict, *, repo_root: Path = REPO
             raise ReleaseError(f"Required '{target_env}' encrypted secret group is missing: {selected['encrypted_secrets_dir']}/{group}")
     return {
         **selected,
+        "payment_provider": payment_provider,
+        "cashfree_environment": cashfree_env,
         "target_env": target_env,
         "compose_project": f"sulocraft-{target_env}",
         "runtime_secrets_dir": f"{str(config.get('runtime_secrets_root', '/run/sulocraft')).rstrip('/')}/{target_env}",
@@ -99,10 +121,16 @@ def render_runtime_environment(target: dict, *, image_ref: str, destination: Pat
         "PUBLIC_API_URL": target["public_api_url"],
         "GATEWAY_NETWORK_NAME": target.get("gateway_network_name", "sulocraft-gateway"),
         "API_GATEWAY_ALIAS": target.get("api_gateway_alias", f"api-{target['target_env']}"),
+        "PAYMENT_PROVIDER": target["payment_provider"],
+        "CASHFREE_ENVIRONMENT": target.get("cashfree_environment", ""),
         "POSTGRES_DB_FILE": f"{runtime_dir}/postgres/postgres_db",
         "POSTGRES_USER_FILE": f"{runtime_dir}/postgres/postgres_user",
         "POSTGRES_PASSWORD_FILE": f"{runtime_dir}/postgres/postgres_password",
         "DATABASE_URL_FILE": f"{runtime_dir}/backend/database_url",
+        "GOOGLE_CLIENT_ID_FILE": f"{runtime_dir}/backend/google_client_id",
+        "GOOGLE_CLIENT_SECRET_FILE": f"{runtime_dir}/backend/google_client_secret",
+        "CASHFREE_APP_ID_FILE": f"{runtime_dir}/backend/cashfree_app_id",
+        "CASHFREE_SECRET_KEY_FILE": f"{runtime_dir}/backend/cashfree_secret_key",
     }
     for name, value in values.items():
         if "\n" in str(value) or "\r" in str(value):

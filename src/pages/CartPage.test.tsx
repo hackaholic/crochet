@@ -46,9 +46,13 @@ describe('CartPage item details', () => {
 it('uses the shared dynamic feed in an empty basket and adds through the real cart callback',async()=>{
   const suggestion={...item.product,id:99,slug:'crochet-bunny',name:'Crochet Bunny'};
   vi.mocked(getProductDiscovery).mockResolvedValue({sections:[{id:'new-arrivals',title:'New arrivals',strategy:'newest',products:[suggestion]}],nextCursor:null});
-  const add=vi.fn().mockResolvedValue(undefined);const checkout=vi.fn();
-  render(<CartPage items={[]} onAddToCart={add} onProductClick={vi.fn()} onUpdateQty={vi.fn()} onRemove={vi.fn()} onWishlist={vi.fn()} onCheckout={checkout} onNavigate={vi.fn()} onCouponChange={vi.fn()}/>);
+  const add=vi.fn().mockResolvedValue(undefined);const checkout=vi.fn();const toggle=vi.fn();
+  render(<CartPage items={[]} wishlist={[99]} onAddToCart={add} onProductClick={vi.fn()} onUpdateQty={vi.fn()} onRemove={vi.fn()} onWishlist={toggle} onCheckout={checkout} onNavigate={vi.fn()} onCouponChange={vi.fn()}/>);
   expect(screen.getByRole('heading',{name:'Your basket is empty'})).toBeVisible();
+  const heart=await screen.findByRole('button',{name:'Remove Crochet Bunny from wishlist'});
+  expect(heart).toHaveAttribute('aria-pressed','true');
+  fireEvent.click(heart);
+  expect(toggle).toHaveBeenCalledWith(suggestion);
   fireEvent.click(await screen.findByRole('button',{name:'Add Crochet Bunny to basket'}));
   await waitFor(()=>expect(add).toHaveBeenCalledExactlyOnceWith(suggestion));
   expect(checkout).not.toHaveBeenCalled();

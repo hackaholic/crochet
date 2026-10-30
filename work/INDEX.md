@@ -30,8 +30,10 @@
 
 - **Work 022 — Warnings and deprecation cleanup** · Pending · [work folder](work-022-warning-deprecation-cleanup/)
 
-- **Work 023 — Basket recommendations and glass presentation** · Completed · [work folder](work-023-basket-recommendations-glass/)
+- **Work 023 — Basket and Wishlist product discovery** · In Progress · [work folder](work-023-basket-recommendations-glass/)
 
 - **Work 024 — Compact mobile storefront spacing** · Completed · [work folder](work-024-mobile-storefront-density/)
 
 - **Work 025 — API and images on LAN development URLs** · Completed (local) · [work folder](work-025-lan-image-loading/)
+
+- **Work 026 — Runtime configuration parity across local, preprod and prod** · Completed locally; no deployment · [work folder](work-026-runtime-config-parity/)

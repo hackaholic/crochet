@@ -11,3 +11,8 @@
 - Consequence: no hardcoded catalogue, fake personalized labels or full-catalogue downloads. Empty/error results omit suggestions without blocking basket actions.
 
 DEC-023-003 — Cart-aware API supplies a neutral lead on the initial basket discovery page; retain ranked sections/cursor and deduplicate across sources/pages. One bounded call per endpoint initially, ranked endpoint only thereafter.404 alone permits legacy compatibility; never hide403/errors with catalogue fallback. Preserve initial compatibility mode across pages so fallback paging cannot overwrite cart lead. No provider/checkout redesign.
+
+## DEC-023-004 — Wishlist reuses layered public discovery
+- Context: Wishlist currently displays saved items only, while Checkout displays multiple discovery layers.
+- Approach: Reuse the bounded, API-driven discovery feed with an explicit `wishlist` cursor context. Keep wishlist records private and filter already-saved product IDs in the client; discovery contains public catalogue content only.
+- Consequence: Shared product cards/ranking/pagination without duplicate frontend product data or sending private wishlist contents to a public recommendation endpoint.

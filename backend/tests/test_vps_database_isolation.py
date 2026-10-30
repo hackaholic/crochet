@@ -27,6 +27,10 @@ def render_environment(target: str, runtime_dir: str | None = None) -> dict:
         "POSTGRES_USER_FILE",
         "POSTGRES_PASSWORD_FILE",
         "DATABASE_URL_FILE",
+        "GOOGLE_CLIENT_ID_FILE",
+        "GOOGLE_CLIENT_SECRET_FILE",
+        "CASHFREE_APP_ID_FILE",
+        "CASHFREE_SECRET_KEY_FILE",
     ):
         environment.pop(name, None)
     environment.update(
@@ -37,6 +41,10 @@ def render_environment(target: str, runtime_dir: str | None = None) -> dict:
             "POSTGRES_USER_FILE": f"{secret_root}/postgres/postgres_user",
             "POSTGRES_PASSWORD_FILE": f"{secret_root}/postgres/postgres_password",
             "DATABASE_URL_FILE": f"{secret_root}/backend/database_url",
+            "GOOGLE_CLIENT_ID_FILE": f"{secret_root}/backend/google_client_id",
+            "GOOGLE_CLIENT_SECRET_FILE": f"{secret_root}/backend/google_client_secret",
+            "CASHFREE_APP_ID_FILE": f"{secret_root}/backend/cashfree_app_id",
+            "CASHFREE_SECRET_KEY_FILE": f"{secret_root}/backend/cashfree_secret_key",
         }
     )
     if runtime_dir:
@@ -67,15 +75,27 @@ def test_prod_and_preprod_database_storage_and_secret_paths_are_separate():
         postgres = config["services"]["postgres"]
         api = config["services"]["api"]
         assert postgres.get("ports", []) == []
-        assert [secret["source"] for secret in api["secrets"]] == ["database_url"]
+        assert sorted(secret["source"] for secret in api["secrets"]) == [
+            "cashfree_app_id",
+            "cashfree_secret_key",
+            "database_url",
+            "google_client_id",
+            "google_client_secret",
+        ]
         assert sorted(secret["source"] for secret in postgres["secrets"]) == [
             "postgres_db",
             "postgres_password",
             "postgres_user",
         ]
-        assert "database_url" not in {
-            secret["source"] for secret in postgres["secrets"]
-        }
+        assert {
+            "database_url",
+            "google_client_id",
+            "google_client_secret",
+            "cashfree_app_id",
+            "cashfree_secret_key",
+        }.isdisjoint(
+            {secret["source"] for secret in postgres["secrets"]}
+        )
 
     preprod_files = {name: item["file"] for name, item in preprod["secrets"].items()}
     prod_files = {name: item["file"] for name, item in prod["secrets"].items()}
@@ -97,5 +117,12 @@ def test_vps_deploy_selects_environment_specific_project_and_secret_root():
     assert 'RUNTIME_SECRETS_ROOT="${RUNTIME_SECRETS_ROOT:-/run/sulocraft}"' in deploy_script
     assert 'runtime_secrets_dir="${runtime_secrets_root%/}/${target_env}"' in deploy_script
     assert 'compose_cmd=(docker compose -p "sulocraft-${target_env}"' in deploy_script
-    for setting in ("POSTGRES_DB_FILE", "POSTGRES_USER_FILE", "POSTGRES_PASSWORD_FILE", "DATABASE_URL_FILE"):
+    for setting in (
+        "POSTGRES_DB_FILE",
+        "POSTGRES_USER_FILE",
+        "POSTGRES_PASSWORD_FILE",
+        "DATABASE_URL_FILE",
+        "CASHFREE_APP_ID_FILE",
+        "CASHFREE_SECRET_KEY_FILE",
+    ):
         assert f'export {setting}="${{runtime_secrets_dir}}/' in deploy_script

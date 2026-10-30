@@ -5,23 +5,27 @@ import ProductRecommendations from '../components/ProductRecommendations';
 import type { Product } from '../data/products';
 import PersonalizationNote from '../components/PersonalizationNote';
 import { guestTrackingPath } from '../lib/routes';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CheckIcon, ArrowRightIcon } from '../components/Icons';
 import type { CartItem } from '../components/CartDrawer';
 import { createOrder, type OrderOut } from '../lib/api/orders';
-import { createPaymentIntent, verifyMockPayment } from '../lib/api/payments';
+import { createPaymentIntent, verifyCashfreePayment, verifyMockPayment, type PaymentVerification } from '../lib/api/payments';
+import { openCashfreeCheckout } from '../lib/payment/cashfreeCheckout';
 
 interface CheckoutPageProps {
   customer?: User | null;
   items: CartItem[];
+  wishlist?: number[];
   onComplete: () => void;
   onNavigate: (page: 'home' | 'shop' | 'product' | 'cart' | 'wishlist' | 'checkout' | 'about') => void;
   couponCode: string | null;
   onAddToCart: (product: Product) => Promise<void>;
   onProductClick: (product: Product) => void;
+  onToggleWishlist?: (product: Product) => void;
 }
 
 type Step = 'contact' | 'delivery' | 'payment' | 'review';
+type PaymentReturnState = { status: 'verifying' } | { status: 'failed'; message: string } | { status: 'success'; payment: PaymentVerification };
 const steps: { id: Step; label: string }[] = [
   { id: 'contact', label: 'Contact' },
   { id: 'delivery', label: 'Delivery' },
@@ -37,7 +41,7 @@ const paymentMethods = [
   { id: 'cod', label: 'Cash on Delivery', icon: '💵', desc: 'Pay when delivered' },
 ];
 
-export default function CheckoutPage({ customer, items, onComplete, onNavigate, couponCode, onAddToCart, onProductClick }: CheckoutPageProps) {
+export default function CheckoutPage({ customer, items, wishlist = [], onToggleWishlist, onComplete, onNavigate, couponCode, onAddToCart, onProductClick }: CheckoutPageProps) {
   const [addingItem, setAddingItem] = useState(false);
   const addRecommendation = async (product: Product) => {
     setAddingItem(true);
@@ -46,10 +50,51 @@ export default function CheckoutPage({ customer, items, onComplete, onNavigate, 
   const [step, setStep] = useState<Step>('contact');
   const [selectedPayment, setSelectedPayment] = useState('upi');
   const [completedOrder, setCompletedOrder] = useState<OrderOut>();
+  const [completedProductIds, setCompletedProductIds] = useState<number[]>([]);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [paymentReturn, setPaymentReturn] = useState<PaymentReturnState>();
+  const [paymentReturnAttempt, setPaymentReturnAttempt] = useState(0);
+  const onCompleteRef = useRef(onComplete);
   const { form, input } = useCheckoutForm(customer);
+
+  useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paymentIdValue = params.get('paymentId');
+    const providerOrderId = params.get('cfOrderId');
+    if (!paymentIdValue && !providerOrderId) return;
+
+    const paymentId = Number(paymentIdValue);
+    const validPaymentIdText = paymentIdValue !== null && /^[1-9]\d{0,9}$/.test(paymentIdValue);
+    if (!validPaymentIdText || !Number.isSafeInteger(paymentId) || paymentId > 2_147_483_647 || !providerOrderId || providerOrderId.length > 128) {
+      setPaymentReturn({ status: 'failed', message: 'We could not verify this payment return. Please check your orders or contact support.' });
+      return;
+    }
+
+    let active = true;
+    setPaymentReturn({ status: 'verifying' });
+    verifyCashfreePayment(paymentId, providerOrderId).then(payment => {
+      const verified = payment.status.toUpperCase() === 'SUCCESS'
+        && payment.provider === 'cashfree'
+        && payment.id === paymentId
+        && payment.providerOrderId === providerOrderId;
+      if (!active) return;
+      if (!verified) {
+        setPaymentReturn({ status: 'failed', message: 'Cashfree has not confirmed this payment yet. You can safely try verification again.' });
+        return;
+      }
+      setPaymentReturn({ status: 'success', payment });
+      setCompletedProductIds(items.map(item => item.product.id));
+      onCompleteRef.current();
+      window.history.replaceState(null, '', `${window.location.pathname}${window.location.hash}`);
+    }).catch(() => {
+      if (active) setPaymentReturn({ status: 'failed', message: 'We could not confirm this payment yet. Please retry verification.' });
+    });
+    return () => { active = false; };
+  }, [paymentReturnAttempt]);
 
   const subtotal = items.reduce((s, i) => s + i.product.price * i.quantity, 0);
   const shipping = subtotal >= 999 ? 0 : 79;
@@ -72,9 +117,14 @@ export default function CheckoutPage({ customer, items, onComplete, onNavigate, 
         const order = await createOrder({ paymentMethod, customerEmail: form.email, couponCode: couponCode ?? undefined, shippingAddress: { name: `${form.firstName} ${form.lastName}`.trim(), phone: form.phone, line1: form.line1, line2: form.line2 || undefined, landmark: form.landmark || undefined, city: form.city, state: form.state, postalCode: form.postalCode } });
         if (paymentMethod !== 'COD') {
           const intent = await createPaymentIntent(order.orderNumber);
+          if (intent.provider === 'cashfree') {
+            await openCashfreeCheckout(intent);
+            return;
+          }
+          if (intent.provider !== 'mock') throw new Error('This payment provider is not available in this checkout.');
           await verifyMockPayment(intent, paymentMethod === 'UPI' ? 'UPI / Mock gateway' : `${paymentMethod} / Mock gateway`);
         }
-        setCompletedOrder(order); setOrderPlaced(true); onComplete();
+        setCompletedOrder(order); setCompletedProductIds(items.map(item => item.product.id)); setOrderPlaced(true); onComplete();
       } catch (requestError) { setError(requestError instanceof Error ? requestError.message : 'We could not place your order. Please try again.'); }
       finally { setSubmitting(false); }
     }
@@ -82,32 +132,49 @@ export default function CheckoutPage({ customer, items, onComplete, onNavigate, 
 
 
 
-  if (orderPlaced) {
+  if (paymentReturn?.status === 'verifying') {
+    return <div className="min-h-screen bg-[#FAF7F2] pt-28 flex items-center justify-center px-4"><div className="checkout-panel max-w-lg text-center" role="status" aria-live="polite"><h1 className="text-2xl font-medium text-[#2C1810]" style={{fontFamily:'var(--font-serif)'}}>Checking your payment</h1><p className="mt-3 text-sm text-[#8B6B4A]">We are confirming the status securely with Cashfree.</p></div></div>;
+  }
+
+  if (orderPlaced || paymentReturn?.status === 'success') {
     return (
-      <div className="min-h-screen bg-[#FAF7F2] pt-28 flex items-center justify-center px-4">
-        <div className="text-center max-w-md">
-          <div className="w-24 h-24 bg-[#EBF3EA] rounded-full flex items-center justify-center text-5xl mx-auto mb-6">
-            🎉
-          </div>
-          <h1 className="text-4xl font-medium text-[#2C1810] mb-4" style={{ fontFamily: 'var(--font-serif)' }}>
-            Order Placed!
-          </h1>
-          <p className="text-[#8B6B4A] mb-2">Thank you for your order. Our artisans are already working on your handmade creation.</p>
-          <p className="text-sm text-[#8B6B4A] mb-8">Order confirmation sent to your email. Expected delivery: 5–7 working days.</p>
-          <div className="bg-white rounded-2xl p-5 border border-[#EDE4D0] mb-8 text-left">
-            <p className="text-xs text-[#8B6B4A] font-semibold uppercase tracking-wider mb-3">What happens next?</p>
-            {['Order confirmed & artisan assigned', 'Handcrafted with care (3–5 days)', 'Quality checked & packaged beautifully', 'Dispatched & delivered to you'].map((s, i) => (
-              <div key={i} className="flex items-center gap-3 py-2">
-                <div className="w-6 h-6 rounded-full bg-[#EBF3EA] text-[#8FAF8C] flex items-center justify-center text-xs font-bold shrink-0">{i + 1}</div>
-                <span className="text-sm text-[#5C3D2E]">{s}</span>
+      <div className="checkout-page">
+        <main className="checkout-container">
+          <div className="w-full">
+            <section className="checkout-panel mb-6 w-full text-center" aria-labelledby="checkout-success-title">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#EBF3EA] text-3xl" aria-hidden="true">🎉</div>
+              <h1 id="checkout-success-title" className="mb-2 text-3xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>
+                {paymentReturn?.status === 'success' ? 'Payment Confirmed!' : 'Order Placed!'}
+              </h1>
+              <p className="text-sm text-[#8B6B4A]">Your order is confirmed. You can follow its progress from the order timeline.</p>
+              <div className="mt-5 grid gap-5 text-left md:grid-cols-[minmax(0,1fr)_minmax(15rem,.8fr)]">
+                <div className="rounded-xl border border-[#EDE4D0] bg-[#FFFCF8] p-4">
+                  <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-[#8B6B4A]">Order progress</h2>
+                  {['Order placed', 'Order confirmed', 'Preparation and quality check', 'Shipping updates', 'Delivered'].map((label, index) => (
+                    <div key={label} className="flex items-center gap-3 py-1.5">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#EBF3EA] text-xs font-bold text-[#526A48]">{index + 1}</span>
+                      <span className="text-sm text-[#5C3D2E]">{label}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-[#EDE4D0] bg-white p-4 text-center">
+                  {completedOrder && <>
+                    <p className="text-sm font-semibold text-[#2C1810]">Order {completedOrder.orderNumber}</p>
+                    {completedOrder.guestTrackingToken && <a className="underline text-[#C4622D]" href={guestTrackingPath(completedOrder.orderNumber, completedOrder.guestTrackingToken)}>Track your order</a>}
+                  </>}
+                  {paymentReturn?.status === 'success' && <p className="text-sm font-semibold text-[#2C1810]">{paymentReturn.payment.orderNumber ? `Order ${paymentReturn.payment.orderNumber}` : 'Your order payment has been verified.'}</p>}
+                  <button onClick={() => onNavigate('home')} className="min-h-11 rounded-full bg-[#C4622D] px-7 py-3 font-semibold text-white transition-colors hover:bg-[#D4795A]">
+                    Continue Shopping
+                  </button>
+                </div>
               </div>
-            ))}
+            </section>
+            <ProductRecommendations extended open layout="checkout" context="checkout"
+              excludedIds={[...new Set([...items.map(item => item.product.id), ...completedProductIds])]}
+              wishlistIds={wishlist} onToggleWishlist={onToggleWishlist}
+              onAddToCart={addRecommendation} onProductClick={onProductClick} />
           </div>
-          {completedOrder && <div className="mb-6"><p className="mb-3 text-sm">Order {completedOrder.orderNumber}</p>{completedOrder.guestTrackingToken && <a className="underline text-[#C4622D]" href={guestTrackingPath(completedOrder.orderNumber, completedOrder.guestTrackingToken)}>Track your order</a>}</div>}
-          <button onClick={() => onNavigate('home')} className="px-10 py-4 bg-[#C4622D] text-white rounded-full font-semibold hover:bg-[#D4795A] transition-colors">
-            Continue Shopping
-          </button>
-        </div>
+        </main>
       </div>
     );
   }
@@ -115,6 +182,7 @@ export default function CheckoutPage({ customer, items, onComplete, onNavigate, 
   if (!items.length) return (
     <div className="checkout-page"><div className="checkout-container">
       <section className="checkout-panel text-center">
+        {paymentReturn?.status === 'failed' && <div className="mb-5 text-sm text-[#9D3B28]" role="alert"><p>{paymentReturn.message}</p><button className="checkout-browse mt-3" onClick={() => setPaymentReturnAttempt(value => value + 1)}>Retry payment verification</button></div>}
         <h1 className="text-2xl font-medium" style={{fontFamily: 'var(--font-serif)'}}>Your basket is empty</h1>
         <button className="checkout-browse" onClick={() => onNavigate('shop')}>Browse the collection</button>
       </section>
@@ -124,6 +192,7 @@ export default function CheckoutPage({ customer, items, onComplete, onNavigate, 
   return (
     <div className="checkout-page">
       <div className="checkout-container">
+        {paymentReturn?.status === 'failed' && <section className="checkout-panel mb-4 text-sm text-[#9D3B28]" role="alert"><p>{paymentReturn.message}</p><button className="checkout-browse mt-3" onClick={() => setPaymentReturnAttempt(value => value + 1)}>Retry payment verification</button></section>}
         <header className="checkout-heading">
           <h1 style={{ fontFamily: 'var(--font-serif)' }}>Checkout</h1>
           <button onClick={() => onNavigate('cart')} className="checkout-back">← Back to basket</button>
@@ -349,6 +418,7 @@ export default function CheckoutPage({ customer, items, onComplete, onNavigate, 
         </div>
         <ProductRecommendations extended open={!submitting} layout="checkout" openProductInNewTab
           excludedIds={items.map(item => item.product.id)}
+          wishlistIds={wishlist} onToggleWishlist={onToggleWishlist}
           onAddToCart={addRecommendation} onProductClick={onProductClick} />
       </div>
     </div>

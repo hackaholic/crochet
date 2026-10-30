@@ -4,11 +4,16 @@ import AuthModal from './AuthModal';
 
 afterEach(() => {
   cleanup();
+  delete (window as Window & { google?: unknown }).google;
   vi.unstubAllGlobals();
 });
 
 describe('AuthModal', () => {
   it('offers global social and passwordless email sign-in in an accessible popup', () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ googleClientId: null, facebookAppId: null }),
+    }));
     render(<AuthModal open onClose={vi.fn()} onSignedIn={vi.fn()} />);
 
     expect(screen.getByRole('dialog', { name: /welcome to sulocraft/i })).toBeInTheDocument();
@@ -22,20 +27,23 @@ describe('AuthModal', () => {
     expect(screen.getByRole('button', { name: /continue with email/i })).toBeEnabled();
   });
 
-  it('does not silently replace real social login with mock identities when client IDs are blank', () => {
-    vi.stubEnv('VITE_GOOGLE_CLIENT_ID', '');
-    vi.stubEnv('VITE_FACEBOOK_APP_ID', '');
+  it('does not silently replace real social login with mock identities when runtime config is blank', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ googleClientId: null, facebookAppId: null }),
+    }));
     render(<AuthModal open onClose={vi.fn()} onSignedIn={vi.fn()} />);
 
+    await waitFor(() => expect(screen.getByRole('button', { name: /continue with google/i })).toBeEnabled());
     fireEvent.click(screen.getByRole('button', { name: /continue with google/i }));
-    expect(screen.getByText(/google sign-in is not configured/i)).toBeInTheDocument();
+    expect(screen.getByText(/google sign-in is currently unavailable/i)).toBeInTheDocument();
+    expect(screen.queryByText(/VITE_GOOGLE_CLIENT_ID/i)).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /continue with facebook/i }));
-    expect(screen.getByText(/facebook sign-in is not configured/i)).toBeInTheDocument();
+    expect(screen.getByText(/facebook sign-in is currently unavailable/i)).toBeInTheDocument();
   });
 
-  it('opens the Google account chooser popup via oauth2.initTokenClient when VITE_GOOGLE_CLIENT_ID is configured', async () => {
-    vi.stubEnv('VITE_GOOGLE_CLIENT_ID', 'test-google-client-id.apps.googleusercontent.com');
+  it('opens the Google account chooser using only the API runtime config', async () => {
     const requestAccessToken = vi.fn();
     const initTokenClient = vi.fn().mockImplementation(({ callback }) => ({
       requestAccessToken: (opts?: { prompt?: string }) => {
@@ -43,28 +51,32 @@ describe('AuthModal', () => {
         callback({ access_token: 'google-oauth-access-token' });
       },
     }));
-    vi.stubGlobal('google', {
+    const googleApi = {
       accounts: {
         oauth2: { initTokenClient },
       },
-    });
-    const fetchMock = vi.fn().mockResolvedValue({
+    };
+    vi.stubGlobal('google', googleApi);
+    Object.defineProperty(window, 'google', { configurable: true, value: googleApi });
+    const fetchMock = vi.fn().mockImplementation((_url, init?: RequestInit) => Promise.resolve({
       ok: true,
-      json: async () => ({
+      json: async () => init?.method === 'POST' ? ({
         user: { id: 7, email: 'googleuser@example.com', fullName: 'Google User', role: 'CUSTOMER', identities: ['google'] },
         cartMerged: false,
-      }),
-    });
+      }) : ({ googleClientId: 'api-client-id.apps.googleusercontent.com', facebookAppId: null }),
+    }));
     vi.stubGlobal('fetch', fetchMock);
     const onSignedIn = vi.fn();
     const onClose = vi.fn();
 
     render(<AuthModal open onClose={onClose} onSignedIn={onSignedIn} />);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(expect.stringMatching(/\/auth\/config$/), expect.any(Object)));
+    await waitFor(() => expect(screen.getByRole('button', { name: /continue with google/i })).toBeEnabled());
     fireEvent.click(screen.getByRole('button', { name: /continue with google/i }));
 
     expect(initTokenClient).toHaveBeenCalledWith(
       expect.objectContaining({
-        client_id: 'test-google-client-id.apps.googleusercontent.com',
+        client_id: 'api-client-id.apps.googleusercontent.com',
         scope: 'openid email profile',
       }),
     );
@@ -73,8 +85,7 @@ describe('AuthModal', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it('resolves googleClientId at runtime from /api/v1/auth/config when build-time env is empty', async () => {
-    vi.stubEnv('VITE_GOOGLE_CLIENT_ID', '');
+  it('waits for API runtime config before enabling social sign-in', async () => {
     const requestAccessToken = vi.fn();
     const initTokenClient = vi.fn().mockImplementation(() => ({
       requestAccessToken,
@@ -84,16 +95,22 @@ describe('AuthModal', () => {
         oauth2: { initTokenClient },
       },
     });
-    const fetchMock = vi.fn().mockResolvedValue({
+    let resolveConfig: ((value: { ok: boolean; json: () => Promise<{ googleClientId: string; facebookAppId: null }> }) => void) | undefined;
+    const fetchMock = vi.fn().mockReturnValue(new Promise((resolve) => {
+      resolveConfig = resolve;
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<AuthModal open onClose={vi.fn()} onSignedIn={vi.fn()} />);
+    const googleButton = screen.getByRole('button', { name: /continue with google/i });
+    expect(googleButton).toBeDisabled();
+    resolveConfig?.({
       ok: true,
       json: async () => ({
         googleClientId: 'sops-runtime-client-id.apps.googleusercontent.com',
         facebookAppId: null,
       }),
     });
-    vi.stubGlobal('fetch', fetchMock);
-
-    render(<AuthModal open onClose={vi.fn()} onSignedIn={vi.fn()} />);
 
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith(
@@ -101,7 +118,8 @@ describe('AuthModal', () => {
         expect.any(Object),
       ),
     );
-    fireEvent.click(screen.getByRole('button', { name: /continue with google/i }));
+    await waitFor(() => expect(googleButton).toBeEnabled());
+    fireEvent.click(googleButton);
 
     expect(initTokenClient).toHaveBeenCalledWith(
       expect.objectContaining({

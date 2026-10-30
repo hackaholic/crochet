@@ -217,6 +217,12 @@ REQUIRED_SECRETS=(
   "${RUNTIME_SECRETS_DIR}/postgres/postgres_password"
   "${RUNTIME_SECRETS_DIR}/backend/database_url"
 )
+if [[ "${PAYMENT_PROVIDER:-}" == "cashfree" ]]; then
+  REQUIRED_SECRETS+=(
+    "${RUNTIME_SECRETS_DIR}/backend/cashfree_app_id"
+    "${RUNTIME_SECRETS_DIR}/backend/cashfree_secret_key"
+  )
+fi
 
 for req in "${REQUIRED_SECRETS[@]}"; do
   if [[ ! -s "${req}" ]]; then

@@ -3,6 +3,7 @@ import { ArrowRightIcon } from '../components/Icons';
 import type { Product } from '../data/products';
 import { EmptyState } from '../components/StorefrontState';
 import { useCatalogue } from '../components/CatalogueProvider';
+import ProductRecommendations from '../components/ProductRecommendations';
 
 interface WishlistPageProps {
   wishlist: number[];
@@ -18,8 +19,8 @@ export default function WishlistPage({ wishlist, onAddToCart, onToggleWishlist, 
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] pt-28">
-      <div className="storefront-shell py-10">
-        <div className="flex items-end justify-between mb-10">
+      <div className={`storefront-shell pb-10 ${items.length === 0 ? 'pt-4' : 'pt-10'}`}>
+        <div className={`flex items-end justify-between ${items.length === 0 ? 'mb-3' : 'mb-10'}`}>
           <div>
             <h1 className="text-4xl font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>My Wishlist</h1>
             <p className="text-[#8B6B4A] mt-1">{items.length} saved item{items.length !== 1 ? 's' : ''}</p>
@@ -32,7 +33,7 @@ export default function WishlistPage({ wishlist, onAddToCart, onToggleWishlist, 
         </div>
 
         {items.length === 0 ? (
-          <EmptyState icon="🤍" title="Your wishlist is empty" description="Save items you love by clicking the heart icon on any product" action={{ label: 'Explore Collection', onClick: () => onNavigate('shop') }} />
+          <EmptyState compact icon="🤍" title="Your wishlist is empty" description="Save items you love by clicking the heart icon on any product" action={{ label: 'Explore Collection', onClick: () => onNavigate('shop') }} />
         ) : (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-5 xl:grid-cols-5">
             {items.map(product => (
@@ -58,6 +59,19 @@ export default function WishlistPage({ wishlist, onAddToCart, onToggleWishlist, 
             </button>
           </div>
         )}
+        <div className={items.length === 0 ? 'mt-5' : 'mt-12'}>
+          <ProductRecommendations
+            open
+            extended
+            context="wishlist"
+            layout="checkout"
+            excludedIds={wishlist}
+            wishlistIds={wishlist}
+            onToggleWishlist={onToggleWishlist}
+            onProductClick={onProductClick}
+            onAddToCart={async product => { onAddToCart(product); }}
+          />
+        </div>
       </div>
     </div>
   );

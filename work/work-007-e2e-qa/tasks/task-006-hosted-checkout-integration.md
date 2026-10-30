@@ -1,21 +1,27 @@
 # Task 7.2.2 — Hosted checkout frontend integration
 **Owner:** Codex
-**Status:** Blocked
+**Status:** Completed
 **Work item:** Work007
 
 ## Objective
-Consume Gemini's real provider intent/callback contract, open trusted hosted checkout for Razorpay, and retain explicit mock-only simulation for mock intents. No hardcoded secrets or real charges.
+Consume Gemini's Cashfree intent contract, open Cashfree hosted checkout using its payment session ID, and retain explicit mock-only simulation for mock intents. No hardcoded secrets or real charges.
 
 ## Dependencies and relevant files
-- Depends on: 7.2.1
-- Dependency context: 7.2.1 backend contract returned; owner is still deciding the payment gateway. Do not start integration until that decision.
-- Blocked by: Owner gateway selection
-- Blocker reason: Owner explicitly deferred payment integration on 2026-10-24.
-- Next action: Wait for owner gateway selection; then confirm provider contract and acceptance tests.
+- Depends on: 7.2.3
+- Dependency context: Owner selected Cashfree hosted web checkout. Gemini's backend task is ready; frontend starts once `paymentSessionId` and verification response contract are returned.
+- Blocked by: None
+- Blocker reason: None
+- Next action: Consume Gemini's returned API contract and implement Cashfree's SDK redirect.
 - Inspect/edit: src/lib/api/payments.ts; reusable gateway component/helper; CheckoutPage/tests.
 
 ## Acceptance/security tests
-Mock intent works; nonmock cannot call mock verification; returned amount/order/key used safely, valid callback posted, cancel/error never shows paid confirmation, script-load failure retry safe, no duplicate order on retry and no secrets in bundle. Test real provider transport at external boundary; actual test-mode browser action requires owner setup and no real money.
+- [x] Local Mock checkout remains explicit and completes using a real catalogue item.
+- [x] Cashfree uses the server-provided payment session and the API-selected `sandbox` / `production` environment; no frontend credentials.
+- [x] Return query values are treated as untrusted input; only a matching backend response with `provider=cashfree`, `status=SUCCESS`, the same payment ID, and provider order ID displays payment confirmation.
+- [x] Pending/error results keep the page unconfirmed and allow a retry; SDK errors are redacted.
+- [x] Focused tests, typecheck, production build, SAST, local Docker and browser checks recorded in [7.2.4.2](task-018-cashfree-local-acceptance.md).
+
+Actual Cashfree sandbox browser transaction remains in 7.2.4.3 and requires the configured preprod runtime; no live payment was performed.
 
 ## Handoff
-Update this contract and work-local tasks/notes/coordination, record local Docker/browser/security checks and honest provider/device limits. No push/deploy without user instruction.
+Frontend integration is returned to Work 007. Gemini owns preprod runtime wiring under 7.2.4.1; Cashfree Sandbox browser acceptance remains 7.2.4.3. No push/deploy performed.

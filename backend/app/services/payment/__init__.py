@@ -5,6 +5,7 @@ from app.services.payment.base import (
     PaymentGatewayError,
     PaymentGatewayConfigurationError,
 )
+from app.services.payment.cashfree import CashfreePaymentProvider
 from app.services.payment.factory import get_payment_provider
 from app.services.payment.mock import MockPaymentProvider
 from app.services.payment.razorpay import RazorpayPaymentProvider
@@ -13,6 +14,7 @@ __all__ = [
     "BasePaymentProvider",
     "PaymentGatewayError",
     "PaymentGatewayConfigurationError",
+    "CashfreePaymentProvider",
     "MockPaymentProvider",
     "RazorpayPaymentProvider",
     "get_payment_provider",

@@ -9,6 +9,7 @@ from app.db.seed import seed_catalogue
 from app.db.session import SessionLocal
 from app.main import app
 from app.core.images import LOCAL_IMAGE_ASSET_MAP
+from app.core.config import settings
 from app.models.storefront import BrandSettings, HomepageCampaign
 from app.models.user import User, UserIdentity
 
@@ -106,6 +107,20 @@ def test_get_public_storefront_returns_brand_and_seeded_campaigns():
     assert "imageAlt" in first
     assert first.get("mobileImageUrl") is None
     assert first.get("mobileImagePosition") is None
+
+
+def test_public_storefront_exposes_only_valid_configured_support_mailbox(monkeypatch):
+    monkeypatch.setattr(settings, "email_from_support", "Sulocraft Support <support@sulocraft.com>")
+    response = client.get("/api/v1/storefront/home")
+    assert response.status_code == 200
+    brand = response.json()["brand"]
+    assert brand["supportEmail"] == "support@sulocraft.com"
+    assert "Sulocraft Support" not in str(brand)
+
+    monkeypatch.setattr(settings, "email_from_support", "not a valid mailbox")
+    malformed = client.get("/api/v1/storefront")
+    assert malformed.status_code == 200
+    assert malformed.json()["brand"]["supportEmail"] is None
 
 
 def test_storefront_active_and_schedule_filtering():

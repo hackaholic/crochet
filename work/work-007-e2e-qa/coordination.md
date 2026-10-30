@@ -1,5 +1,11 @@
 # Work 007 coordination
 
+## Active pickup — 2026-10-30
+**Owner:** Codex
+**Status:** Returned — 7.2.5 Completed
+**Contract:** [task-016-cashfree-sops-secret-fields.md](tasks/task-016-cashfree-sops-secret-fields.md)
+Prepared the backend SOPS group and decrypt allowlist for Cashfree credentials. Owner enters credential values locally; do not transmit values in chat. 7.2.4 sandbox acceptance remains dependent on frontend 7.2.2 and owner-configured sandbox credentials.
+
 This file is the work-local coordination entry point. The work folder is the source of truth: read this file with README.md, tasks.md, decisions.md, and only the assigned task contract.
 
 ## Current handoffs
@@ -48,8 +54,45 @@ Codex7.10 Returned/Completed after Gemini7.6.1: balanced sections, live deduplic
 
 7.11 Returned/Completed — Codex: signed-in contact prefill using existing profile endpoint, draft preservation and identity isolation.11tests/typecheck, Docker rebuild and local profile comparison/mobile acceptance passed. Task-014 return; no Gemini dependency/push.
 
+## Cashfree integration handoff — 2026-10-30
+**Owner:** Codex (unblocked for frontend 7.2.2); Gemini 7.2.3 Completed / Returned.
+**Status:** 7.2.3 Returned / Completed by Gemini; owner Sandbox credentials configured; 7.2.2 completion reported but not present in current checkout; runtime wiring and frontend reconciliation remain.
+**Contract:** [7.2.3 Cashfree provider backend](tasks/task-015-cashfree-provider-api.md) (Completed) -> unblocks [7.2.2 Hosted checkout frontend](tasks/task-006-hosted-checkout-integration.md).
+- `POST /api/v1/payments/intent` returns `paymentSessionId`, `providerOrderId`, `environment` (`sandbox`|`production`), and `returnUrl` (`${FRONTEND_URL}/checkout?orderNumber=${orderNumber}&paymentId=${paymentId}&cfOrderId=${providerOrderId}`). Private secrets never cross the API boundary (`keyId: null`).
+- `POST /api/v1/payments/verify` accepts `{ "paymentId": ..., "providerOrderId": ... }` (`providerPaymentId` is optional for Cashfree) and queries Cashfree server-side (`GET /pg/orders/{id}` and `/payments`), confirming only when `order_status === "PAID"` with matching amount and currency.
+- 24/24 tests passing in isolated PostgreSQL container (`18/18` in `test_payments.py`, `6/6` in `test_purchase_regression.py`), SAST PASS (0 blocking High/Critical), live Docker API rebuilt and verified on port 8000. No push/deploy/live transaction performed.
+
 ## Active pickup — 2026-10-24
 Codex owns 7.1 local cart/login/logout acceptance. Existing personalization plumbing, merge ownership filter and logout cookie retirement are already present; verify rather than reimplement. No Gemini dependency currently. Payment integration deferred by owner until gateway selection; do not start 7.2.2.
 
 ## 7.1 acceptance return — 2026-10-24
 Codex: Blocked on browser connection only. Docker merge/purchase/security regressions and five ProductPage tests/typecheck passed; existing fixes reused, additional security assertions added. No Gemini dependency. Exact evidence and next action in task-001; no push/deploy.
+
+## Cashfree sandbox E2E handoff — 2026-10-30
+**Owner:** Gemini for 7.2.4.1; Codex owns 7.2.4.2; Codex + Gemini own 7.2.4.3–7.2.4.4.
+**Status:** 7.2.4.1 ready for Gemini pickup; later subtasks Pending.
+**Contract:** [backend preprod runtime wiring](tasks/task-017-cashfree-preprod-runtime-wiring.md).
+**Inputs verified:** owner populated sandbox credentials in `secrets/encrypted/backend.enc.env`; values remain undisclosed. Demo account: `demo.customer@example.com`.
+**Audit note:** 7.2.2 is reported complete by owner, but its contract remains Pending and this checkout contains no Cashfree SDK/session handling under `src`; reconcile before claiming frontend acceptance. Do not duplicate tests that have valid evidence.
+
+## Active pickup — 2026-10-30
+**Current Owner:** Codex
+**Status:** Active
+**Active Task:** [7.2.4.2 frontend and local checkout acceptance](tasks/task-018-cashfree-local-acceptance.md)
+**Next Action:** Implement hosted SDK handoff and backend-only payment return verification; run focused tests and local Docker verification.
+**Parallel handoff:** Gemini may pick up [7.2.4.1 preprod runtime configuration and secret wiring](tasks/task-017-cashfree-preprod-runtime-wiring.md). Before pickup, read `work/GEMINI_WORKFLOW_PROMPT.md` and this exact contract. Its return-verification section will be updated with the security review finding before handoff.
+
+## Current return — 2026-10-30
+**Current Owner:** Gemini for 7.2.4.1; Codex owns pending 7.12
+**Status:** Gemini handoff Ready for pickup; Codex 7.2.2 and 7.2.4.2 Returned/Completed
+**Active Task:** [7.2.4.1 preprod runtime and secret wiring](tasks/task-017-cashfree-preprod-runtime-wiring.md)
+**Next Action:** Gemini reads `work/GEMINI_WORKFLOW_PROMPT.md` and picks up task-017. Codex starts 7.12 after the backend handoff is underway; 7.2.4.3 remains gated on runtime wiring and preprod acceptance.
+**New scope:** Owner requested layered product recommendations on the order confirmation screen; exact contract is [7.12](tasks/task-021-order-confirmation-recommendations.md). It reuses existing discovery and does not change the Cashfree release gate.
+
+## Active pickup — 2026-10-31
+**Current Owner:** Codex for 7.2.4.3 dev deployment & browser checkout; Gemini returned completed backend checks for 7.2.4.1, 7.2.4.3, 7.2.4.4, and 7.2; Codex completed 7.12.
+**Status:** 7.2.4.1, 7.2.4.2, Gemini's 7.2.4.3 backend checks, 7.2.4.4 backend parity, and 7.12 are complete. Codex's 7.2.4.3 browser scenarios remain active.
+**Completed Tasks:** [7.2.4.1 preprod runtime and secret wiring](tasks/task-017-cashfree-preprod-runtime-wiring.md), [7.12 layered order-confirmation recommendations](tasks/task-021-order-confirmation-recommendations.md).
+**Next Action:** Push the locally verified revision to `dev`, confirm its deployment, then run browser Cashfree Sandbox checkout (`7.2.4.3-TC01` & `TC02`) in [7.2.4.3 Dev Cashfree Sandbox E2E](tasks/task-019-cashfree-dev-sandbox-e2e.md).
+**Evidence (7.2.4.1, 7.2.4.3, 7.2.4.4, 7.2 backend):** Explicit `payment_provider` + `cashfree_environment` in `deploy/vps-config.example.yaml`, `.deploy/vps-config.yaml`, and `scripts/deploy_vps.py` (blocking `mock`/`sandbox`/`secrets/encrypted` in `prod` and enforcing `sandbox` in `preprod`); API-only secret mounts (`cashfree_app_id`, `cashfree_secret_key`) in `backend/docker-compose.yml` and `docker/compose.preprod.yaml`; required-secret check in `backend/scripts/bootstrap_secrets.sh`; local `docker/compose.yaml` retained on `mock`; server-derived `PaymentOut.orderNumber` and guest verification isolation in `backend/app/api/v1/payments.py`. `41/41` deploy/secret parity unit tests (`7.2.4.1-TC01`..`TC05`, `7.2.4.4-TC01`..`TC03`) + `28/28` isolated PostgreSQL payment/regression tests (`7.2.4.1-TC06`..`TC07`, `7.2.4.3-TC03`..`TC04`, and `7.2` multi-provider) + redacted live Cashfree Sandbox API smoke test (`SANDBOX_SMOKE_OK` using SOPS `secrets/encrypted/backend.enc.env`) + SAST pass + local Docker API verified.
+**Evidence (7.12):** Confirmation reuses the existing discovery feed on the full checkout width; post-order Quick Add only calls the basket callback; purchased products are excluded even after the basket clears. Focused frontend tests 24/24, typecheck, final production build/budgets, SAST 0 findings, local API/storefront healthy, Playwright COD confirmation checked at desktop and 390×844.

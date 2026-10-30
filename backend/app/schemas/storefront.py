@@ -24,6 +24,7 @@ class BrandSettingsOut(BaseModel):
 
     name: str = "Sulocraft"
     owner_name: str = Field(default="Anupama Sharma", serialization_alias="ownerName", alias="ownerName")
+    support_email: str | None = Field(default=None, serialization_alias="supportEmail", alias="supportEmail")
     instagram_url: str | None = Field(default=None, serialization_alias="instagramUrl", alias="instagramUrl")
     whatsapp_url: str | None = Field(default=None, serialization_alias="whatsappUrl", alias="whatsappUrl")
 

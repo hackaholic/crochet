@@ -49,6 +49,7 @@ export default function App() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [authError, setAuthError] = useState('');
+  const [authChecked, setAuthChecked] = useState(false);
   const [couponCode, setCouponCode] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const openAuth = useCallback(() => setAuthOpen(true), []);
@@ -66,7 +67,8 @@ export default function App() {
     let active = true;
     authApi.me()
       .then(currentUser => { if (active) setUser(currentUser); })
-      .catch(() => { if (active) setUser(null); });
+      .catch(() => { if (active) setUser(null); })
+      .finally(() => { if (active) setAuthChecked(true); });
     return () => { active = false; };
   }, []);
 
@@ -95,7 +97,13 @@ export default function App() {
     void removeCartItem(id);
   }, [removeCartItem]);
 
-  const toggleWishlist = useCallback((product: Product) => { toggleServerWishlist(product); }, [toggleServerWishlist]);
+  const toggleWishlist = useCallback((product: Product) => {
+    if (user) {
+      toggleServerWishlist(product);
+    } else if (authChecked) {
+      openAuth();
+    }
+  }, [authChecked, openAuth, toggleServerWishlist, user]);
 
   const handleProductClick = useCallback((product: Product) => {
     navigateTo(productPath(product));
@@ -170,6 +178,7 @@ export default function App() {
             onAddToCart={addCartItem}
             onProductClick={handleProductClick}
             items={cart}
+            wishlist={wishlist}
             onUpdateQty={updateCartQty}
             onRemove={removeFromCart}
             onWishlist={toggleWishlist}
@@ -190,6 +199,8 @@ export default function App() {
         {page === 'checkout' && (
           <CheckoutPage
             customer={user}
+            wishlist={wishlist}
+            onToggleWishlist={toggleWishlist}
             onAddToCart={addCartItem}
             onProductClick={handleProductClick}
             items={cart}

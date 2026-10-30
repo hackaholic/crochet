@@ -125,6 +125,8 @@ export POSTGRES_DB_FILE="${runtime_secrets_dir}/postgres/postgres_db"
 export POSTGRES_USER_FILE="${runtime_secrets_dir}/postgres/postgres_user"
 export POSTGRES_PASSWORD_FILE="${runtime_secrets_dir}/postgres/postgres_password"
 export DATABASE_URL_FILE="${runtime_secrets_dir}/backend/database_url"
+export CASHFREE_APP_ID_FILE="${runtime_secrets_dir}/backend/cashfree_app_id"
+export CASHFREE_SECRET_KEY_FILE="${runtime_secrets_dir}/backend/cashfree_secret_key"
 SOPS_AGE_KEY_FILE="/etc/sulocraft/age/keys.txt" \
   bash "${release_dir}/backend/scripts/bootstrap_secrets.sh" --env "${TARGET_ENV}" --secrets-dir "${release_dir}/secrets/encrypted" --runtime-dir "${runtime_secrets_dir}"
 

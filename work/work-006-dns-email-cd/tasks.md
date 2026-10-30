@@ -3,7 +3,6 @@
 ## In Progress
 
 
-
 ## Pending
 
 - [ ] 6.9 Codex: [Automatic runtime secret recovery on reboot](tasks/task-009-reboot-secret-rehydration.md).
@@ -11,6 +10,8 @@
 - [ ] 6.4 Owner + Codex: Cloudflare Workers dev access-policy verification (storefront setup already completed) per [task-004-dev-storefront-access.md](tasks/task-004-dev-storefront-access.md).
 
 ## Completed
+
+- [x] 6.11 Codex: [Public Contact Us support email](tasks/task-010-public-support-email.md) — configurable API-driven `mailto:` address; local backend/UI tests and browser check passed.
 
 - [x] 6.10 Codex: All coordinated changes committed and pushed to dev as `1e46918`; local checks passed. CI deployment is separate and not yet accepted.
 

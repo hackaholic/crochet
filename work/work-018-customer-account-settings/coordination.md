@@ -9,6 +9,8 @@
 | [18.4](tasks/task-004-order-progress-api.md) | Gemini | Returned; Completed | Existing Work017 tracking |
 | [18.5](tasks/task-005-account-experience-ui.md) | Codex | Returned; Completed | Backend contracts returned |
 | [18.6](tasks/task-006-local-account-acceptance.md) | Codex | Blocked — account checks pass; remaining browser/guest-flow acceptance | Firefox availability and Work01717.5 |
+| [18.12](tasks/task-010-clickable-account-summary-cards.md) | Codex | Blocked — authenticated visual review | Existing account navigation and wishlist route; local demo account magic-link cooldown |
+| [18.13](tasks/task-011-auth-provider-signout.md) | Codex | Blocked — reported runtime not identified | Existing email/Google server session contract; authenticated browser reproduction needed |
 
 Gemini must read work/GEMINI_WORKFLOW_PROMPT.md then this folder and the one selected contract. Pick one task at a time unless explicitly parallelized; preserve already implemented APIs. Update exact task, notes and coordination on return. No email secrets or raw login links in docs.
 
@@ -24,3 +26,7 @@ Codex18.7 Active: shared shipment palette and accessible progress cards;18.8 fol
 18.7 implementation complete, verification queued together with18.8 (shared frontend rebuild/test batch). Codex18.8 Active.
 
 18.7 and18.8 Returned/Completed by Codex:17 frontend tests/typecheck pass, rebuilt local frontend and real demo customer desktop/mobile reviewed. No Gemini work required.18.6 browser/guest-flow acceptance remains separate. Nothing pushed.
+
+18.12 Codex Blocked: implementation, focused tests and typecheck pass; local authenticated visual review cannot proceed because Playwright has no customer session and the demo account is inside magic-link cooldown. Contract: `tasks/task-010-clickable-account-summary-cards.md`. No backend work expected.
+
+18.13 Codex Blocked: backend proves email and Google sessions revoke; 3 backend logout cases and 12 customer/admin UI tests pass; live local endpoint HTTP 200. Could not reproduce the reported runtime because page/environment were not identified and local browser has no authenticated session; Google client ID is missing and email mock is withholding a development link. Contract: `tasks/task-011-auth-provider-signout.md`.

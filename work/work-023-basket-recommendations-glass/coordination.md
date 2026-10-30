@@ -1,9 +1,14 @@
 # Work 023 coordination
 
 **Current Owner:** Codex
-**Status:** Completed
-**Active Task:** None
-**Next Action:** None; owner accepted23.4 browser verification. Changes await separate push instruction.
+**Status:** Active — 23.11 Wishlist heart controls on discovery cards
+**Active Task:** [23.11 Wishlist controls on discovery cards](tasks/task-011-wishlist-controls-on-discovery-cards.md)
+**Completed Task:** [23.10 Compact empty Wishlist spacing](tasks/task-010-wishlist-empty-state-spacing.md)
+**Next Action:** Wire global wishlist state and toggle handlers into shared recommendations; verify on Wishlist, Basket, and Checkout.
+
+## 23.10 return — completed by parent Codex
+
+The initial subagent spacing adjustment was insufficient. Parent changed the Wishlist-only empty state to a compact inline row and reduced compounded top spacing. Focused tests 2/2, typecheck, Docker rebuild, and desktop/mobile Playwright checks passed. No push or deployment.
 
 ## Completed return
 23.1 glass shell and23.2 API newest-product discovery verified locally; tests/typecheck/SAST pass, Docker rebuilt, mobile/desktop in-app checked. Full native engine matrix remains explicitly unverified in23.4.
@@ -21,4 +26,10 @@ Read `../GEMINI_WORKFLOW_PROMPT.md`, then this work context and exact [23.3 cont
 
 23.7 Returned/Completed — exact task-007 return.31unique tests/typecheck, safe typed cart API, preserved ranked sections/pagination/dedup, actual local responsive checks/add-remove acceptance.23.4 remains the sole blocked item; native engines unavailable. No Gemini dependency or push.
 
-2026-10-24 — Owner verified remaining browsers and explicitly closed23.4. Work023 complete; exact task records owner-provided acceptance, not agent-executed native coverage. No active blocker/handoff.
+2026-10-24 — Owner verified remaining browsers and explicitly closed23.4. Basket work completed; exact task records owner-provided acceptance, not agent-executed native coverage.
+
+2026-10-31 — Work023 reopened for Wishlist discovery. 23.9 Gemini backend context contract is ready, handoff Waiting for owner/Gemini pickup. 23.8 Codex UI waits on 23.9 return. Gemini must read `work/GEMINI_WORKFLOW_PROMPT.md` and the exact contract; no global active handoff entry until pickup starts.
+
+2026-10-31 — 23.9 Returned/Completed by Gemini ([task-009-wishlist-discovery-context-api.md](tasks/task-009-wishlist-discovery-context-api.md)): `GET /api/v1/storefront/discovery` now accepts `context=wishlist` (`^(checkout|basket|wishlist)$`) with context-bound opaque cursors (`ALLOWED_DISCOVERY_CONTEXTS` enforced in `encode_cursor`/`decode_cursor`), no schema changes, and zero private wishlist lookups. `14/14` isolated PostgreSQL discovery tests (`23.9-TC01`..`TC05` + `9` existing) and SAST passed; local Docker API rebuilt and verified on port 8000. Codex is unblocked for [23.8 Wishlist layered discovery UI](tasks/task-008-wishlist-recommendation-ui.md). No push or deployment performed.
+
+2026-10-31 — 23.8 returned/completed by Codex: Wishlist mounts shared paginated discovery with `context=wishlist` under both saved and empty states and filters saved IDs. Focused frontend tests 7/7, TypeScript check passed, Docker frontend rebuilt/restarted, storefront and wishlist-context API returned HTTP 200. CUA browser inventory was empty, so visual/mobile review remains unverified. No push/deployment.

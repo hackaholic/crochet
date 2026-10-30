@@ -14,6 +14,8 @@ environments:
     public_api_url: https://api-dev.sulocraft.com
     gateway_network_name: sulocraft-gateway
     api_gateway_alias: api
+    payment_provider: cashfree
+    cashfree_environment: sandbox
   prod:
     host: root@YOUR_VPS_HOST
     deploy_root: /opt/sulocraft
@@ -23,3 +25,5 @@ environments:
     public_api_url: https://api.sulocraft.com
     gateway_network_name: sulocraft-gateway
     api_gateway_alias: api-prod
+    payment_provider: cashfree
+    cashfree_environment: production

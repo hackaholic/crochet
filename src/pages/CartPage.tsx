@@ -10,6 +10,7 @@ import { EmptyState } from '../components/StorefrontState';
 
 interface CartPageProps {
   items: CartItem[];
+  wishlist?: number[];
   onUpdateQty: (id: number, qty: number) => void;
   onRemove: (id: number) => void;
   onWishlist: (product: Product) => void;
@@ -20,7 +21,7 @@ interface CartPageProps {
   onCouponChange: (code: string | null) => void;
 }
 
-export default function CartPage({ items, onUpdateQty, onRemove, onWishlist, onCheckout, onNavigate, onCouponChange, onAddToCart, onProductClick }: CartPageProps) {
+export default function CartPage({ items, wishlist = [], onUpdateQty, onRemove, onWishlist, onCheckout, onNavigate, onCouponChange, onAddToCart, onProductClick }: CartPageProps) {
   const [addingItem, setAddingItem] = useState(false);
   const addRecommendation = async (product: Product) => {
     setAddingItem(true);
@@ -161,6 +162,7 @@ export default function CartPage({ items, onUpdateQty, onRemove, onWishlist, onC
         )}
         <ProductRecommendations extended open layout="checkout" context="basket" openProductInNewTab
           excludedIds={items.map(item => item.product.id)}
+          wishlistIds={wishlist} onToggleWishlist={onWishlist}
           onAddToCart={addRecommendation} onProductClick={onProductClick} />
       </div>
     </div>

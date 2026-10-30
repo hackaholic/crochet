@@ -10,9 +10,12 @@ import { accountProfileApi, type AccountOverviewOut } from '../lib/api/account';
 import { accountApi, type AddressOut, type OrderOut } from '../lib/api/orders';
 import { LoadingState } from '../components/StorefrontState';
 
+const ACTIVE_ORDER_STATUSES = new Set(['CONFIRMED', 'PROCESSING', 'READY_TO_SHIP', 'SHIPPED', 'OUT_FOR_DELIVERY']);
+
 export default function AccountPage({ onSignIn, onLogout, isAdmin = false }: { onSignIn: () => void; onLogout: () => Promise<void>; isAdmin?: boolean }) {
   const [attempt,setAttempt] = useState(0);
   const [section, setSection] = useState<AccountSection>('profile');
+  const [orderView, setOrderView] = useState<'all' | 'active'>('all');
   const [overview, setOverview] = useState<AccountOverviewOut | null>(null);
   const [addresses, setAddresses] = useState<AddressOut[]>([]);
   const [trackingOrder, setTrackingOrder] = useState<string>();
@@ -63,13 +66,16 @@ export default function AccountPage({ onSignIn, onLogout, isAdmin = false }: { o
       </div>
     </div>
     {!isAdmin && <section className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Account overview">
-      <Metric tone="rose" icon="orders" label="Orders" value={overview?.totalOrders ?? 0} /><Metric tone="sage" icon="active" label="Active orders" value={overview?.activeOrders ?? 0} /><Metric tone="sand" icon="address" label="Saved addresses" value={overview?.savedAddresses ?? 0} /><Metric tone="lavender" icon="wishlist" label="Wishlist items" value={overview?.wishlistItemsCount ?? 0} />
+      <Metric tone="rose" icon="orders" label="Orders" value={overview?.totalOrders ?? 0} onClick={() => { setSection('orders'); setOrderView('all'); setTrackingOrder(undefined); }} />
+      <Metric tone="sage" icon="active" label="Active orders" value={overview?.activeOrders ?? 0} onClick={() => { setSection('orders'); setOrderView('active'); setTrackingOrder(undefined); }} />
+      <Metric tone="sand" icon="address" label="Saved addresses" value={overview?.savedAddresses ?? 0} onClick={() => { setSection('addresses'); setOrderView('all'); setTrackingOrder(undefined); }} />
+      <Metric tone="lavender" icon="wishlist" label="Wishlist items" value={overview?.wishlistItemsCount ?? 0} to="/wishlist" />
     </section>}
     {isAdmin && <Link to="/admin" className="mt-6 inline-flex rounded-full bg-[#C4622D] px-5 py-2.5 text-sm font-semibold text-white">Admin Dashboard</Link>}
-    <div className="mt-8"><AccountNavigation hideOrders={isAdmin} selected={section} onSelect={next => { setSection(next); setTrackingOrder(undefined); }} /></div>
+    <div className="mt-8"><AccountNavigation hideOrders={isAdmin} selected={section} onSelect={next => { setSection(next); setOrderView('all'); setTrackingOrder(undefined); }} /></div>
     <div className="mt-6 grid gap-6">
       {section === 'profile' && overview && <ProfileEditor profile={overview.profile} onSaved={saved => setOverview(current => current ? {...current,profile:saved} : current)} />}
-      {section === 'orders' && <OrderHistory orders={orders} selected={trackingOrder} onSelect={setTrackingOrder} />}
+      {section === 'orders' && <OrderHistory orders={orderView === 'active' ? orders.filter(order => ACTIVE_ORDER_STATUSES.has(order.status.toUpperCase())) : orders} title={orderView === 'active' ? 'Active orders' : undefined} selected={trackingOrder} onSelect={setTrackingOrder} />}
       {section === 'orders' && trackingOrder && <div className="min-w-0 space-y-3"><button type="button" className="underline text-sm" onClick={() => setTrackingOrder(undefined)}>Close shipment details</button><OrderItems key={`items-${trackingOrder}`} orderNumber={trackingOrder} /><OrderTrackingPanel key={trackingOrder} orderNumber={trackingOrder} /></div>}
       {section === 'addresses' && <AddressManager addresses={addresses} onChanged={fresh => {setAddresses(fresh);setOverview(current => current ? {...current,savedAddresses:fresh.length} : current);}} />}
     </div>
@@ -88,10 +94,14 @@ const METRIC_ICONS = {
   address: 'M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0z M15 10a3 3 0 1 1-6 0 3 3 0 0 1 6 0',
   wishlist: 'M20 5c-3-3-6-1-8 1-2-2-5-4-8-1-4 4 0 9 8 15 8-6 12-11 8-15z',
 };
-function Metric({ label, value, tone, icon }: { label: string; value: number; tone: keyof typeof METRIC_TONES; icon: keyof typeof METRIC_ICONS }) {
+function Metric({ label, value, tone, icon, onClick, to }: { label: string; value: number; tone: keyof typeof METRIC_TONES; icon: keyof typeof METRIC_ICONS; onClick?: () => void; to?: string }) {
   const palette = METRIC_TONES[tone];
-  return <div className="min-w-0 rounded-2xl border p-4 shadow-[0_3px_12px_rgba(44,24,16,0.025)] sm:p-5" style={{ background: palette.surface, borderColor: palette.border }}>
-    <div className="mb-4 flex items-center justify-between gap-2"><span aria-hidden="true" className="flex h-10 w-10 items-center justify-center rounded-xl border bg-white/75" style={{ color: palette.ink, borderColor: palette.border }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d={METRIC_ICONS[icon]} /></svg></span><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full" style={{ background: palette.ink }} /></div>
+  const className = 'group block min-w-0 w-full rounded-2xl border p-4 text-left shadow-[0_3px_12px_rgba(44,24,16,0.025)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C4622D] sm:p-5';
+  const content = <>
+    <div className="mb-4 flex items-center justify-between gap-2"><span aria-hidden="true" className="flex h-10 w-10 items-center justify-center rounded-xl border bg-white/75 transition-transform duration-200 group-hover:scale-110" style={{ color: palette.ink, borderColor: palette.border }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d={METRIC_ICONS[icon]} /></svg></span><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full" style={{ background: palette.ink }} /></div>
     <p className="text-3xl font-semibold tabular-nums text-[#2C1810]">{value}</p><p className="mt-1.5 text-sm font-medium" style={{ color: palette.ink }}>{label}</p>
-  </div>;
+  </>;
+  const style = { background: palette.surface, borderColor: palette.border };
+  if (to) return <Link to={to} className={className} style={style} aria-label={`${label}: ${value}. View wishlist`}>{content}</Link>;
+  return <button type="button" onClick={onClick} className={className} style={style} aria-label={`${label}: ${value}. View ${label.toLowerCase()}`}>{content}</button>;
 }

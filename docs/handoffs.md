@@ -7,10 +7,11 @@ This is a **global link registry only**. Contracts, owners, live status, blocker
 | 003 — SOPS/age secret vault | 3.13 isolated backend test database returned; 3.14 environment-configurable deployment returned; 3.9 local Docker verified | All Gemini vault tasks completed; full test suite passing in isolated container (173/173 tests); preprod database protected | [coordination](../work/work-003-vault/coordination.md) |
 
 | 016 — Product taxonomy audit | [16.1 inventory/classification](../work/work-016-product-taxonomy-audit/tasks/task-001-taxonomy-inventory-audit.md) | Gemini; ready for pickup | [coordination](../work/work-016-product-taxonomy-audit/coordination.md) |
+| 007 — Cashfree sandbox E2E | [7.2.4.1 preprod runtime wiring](../work/work-007-e2e-qa/tasks/task-017-cashfree-preprod-runtime-wiring.md) returned; [7.2.4.3 dev Sandbox E2E](../work/work-007-e2e-qa/tasks/task-019-cashfree-dev-sandbox-e2e.md) ready | Gemini completed 7.2.4.1; Codex + Gemini ready for 7.2.4.3 | [coordination](../work/work-007-e2e-qa/coordination.md) |
 
-| 001 — Admin dashboard | [1.9.4 customer saved-address API](../work/work-001-admin-dashboard/tasks/task-037-admin-customer-addresses-api.md) | See work-local coordination | [coordination](../work/work-001-admin-dashboard/coordination.md) |
 
 Only list a handoff here when the work folder has a specific cross-agent task ready or active. Update this registry when its linked work-local coordination changes. Completed handoff history is preserved in [the archived handoff log](archive/handoffs-history.md).
+
 
 - Work001 Customers: [coordination](../work/work-001-admin-dashboard/coordination.md), [Gemini1.9.1 contract](../work/work-001-admin-dashboard/tasks/task-010-customers-api.md).
 
@@ -52,9 +53,9 @@ Work005 responsive media: [5.11.2 backend contract](../work/work-005-seo-optimiz
 
 Work005: [work-local coordination and launch acceptance](../work/work-005-seo-optimization/coordination.md). Completed backend contracts and current owner gates are recorded there.
 
-Work007: [7.2.1 payment provider hardening](../work/work-007-e2e-qa/tasks/task-005-payment-provider-hardening.md) — Gemini Completed / Returned; Codex unblocked for [7.2.2 hosted checkout integration](../work/work-007-e2e-qa/tasks/task-006-hosted-checkout-integration.md); coordinated in [work-local state](../work/work-007-e2e-qa/coordination.md).
+Work007: [work-local Cashfree coordination and active contracts](../work/work-007-e2e-qa/coordination.md).
 
-- Work023: [coordination](../work/work-023-basket-recommendations-glass/coordination.md); [23.3 basket recommendation API](../work/work-023-basket-recommendations-glass/tasks/task-003-recommendation-api.md).
+- Work023: [coordination](../work/work-023-basket-recommendations-glass/coordination.md); [23.3 basket recommendation API](../work/work-023-basket-recommendations-glass/tasks/task-003-recommendation-api.md) and [23.9 wishlist discovery context API](../work/work-023-basket-recommendations-glass/tasks/task-009-wishlist-discovery-context-api.md) Completed / Returned by Gemini; Codex unblocked for [23.8 wishlist discovery UI](../work/work-023-basket-recommendations-glass/tasks/task-008-wishlist-recommendation-ui.md).
 
 Work007 discovery: [7.6 backend discovery ranking API](../work/work-007-e2e-qa/tasks/task-008-discovery-ranking-api.md) — Gemini Completed / Returned; Codex unblocked for [7.10 ranked discovery acceptance](../work/work-007-e2e-qa/tasks/task-012-ranked-discovery-local-acceptance.md); coordinated in [work-local state](../work/work-007-e2e-qa/coordination.md).
 

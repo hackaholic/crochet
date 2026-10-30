@@ -61,6 +61,7 @@ interface StorefrontResponse {
   brand: {
     name: string;             // "Sulocraft"
     ownerName: string;        // "Anupama"
+    supportEmail?: string | null; // Mailbox extracted from EMAIL_FROM_SUPPORT; display name is not exposed
     instagramUrl?: string | null;
     whatsappUrl?: string | null;
   };
@@ -173,12 +174,12 @@ Local seed/development records may use the frontend origin for these assets. Pro
 
 ## Storefront Discovery & Ranked Sections API (Task 7.6)
 
-`GET /api/v1/storefront/discovery?context=checkout|basket&limit=16&cursor=<opaque>`
+`GET /api/v1/storefront/discovery?context=checkout|basket|wishlist&limit=16&cursor=<opaque>`
 
-Returns ranked catalogue sections for discovery feeds in checkout and basket drawers, with active cart exclusion, cross-section/cross-page deduplication, and opaque cursor pagination.
+Returns ranked catalogue sections for discovery feeds in checkout, basket drawers, and wishlist pages, with active cart exclusion, cross-section/cross-page deduplication, and opaque cursor pagination.
 
 ### Query Parameters
-- `context`: `checkout` | `basket` (default: `checkout`). Enforces `^(checkout|basket)$`; other values return `422`.
+- `context`: `checkout` | `basket` | `wishlist` (default: `checkout`). Enforces `^(checkout|basket|wishlist)$`; other values return `422`.
 - `limit`: Integer between `1` and `16` (default: `16`). Values `> 16` or `< 1` return `422`.
 - `cursor`: Opaque pagination string bounded to `<= 512` characters. Encodes previously seen product IDs. Invalid, oversized, or mismatched-context cursors return `422`.
 

@@ -40,7 +40,7 @@ class MockPaymentProvider(BasePaymentProvider):
             return False
         return True
 
-    def verify_webhook(self, payload: bytes, signature: str) -> bool:
+    def verify_webhook(self, payload: bytes, signature: str, timestamp: str | None = None) -> bool:
         """Verify mock webhook signature."""
         return signature == "valid_mock_signature" or signature.startswith("mock_")
 

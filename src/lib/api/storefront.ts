@@ -23,7 +23,7 @@ export interface HomepageCampaign extends ImageDimensions {
 }
 
 export interface StorefrontContent {
-  brand: { logoUrl?: string | null; name: string; ownerName: string; instagramUrl?: string | null; whatsappUrl?: string | null };
+  brand: { logoUrl?: string | null; name: string; ownerName: string; supportEmail?: string | null; instagramUrl?: string | null; whatsappUrl?: string | null };
   heroCampaigns: HomepageCampaign[];
 }
 

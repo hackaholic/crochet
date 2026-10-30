@@ -133,21 +133,45 @@ def test_google_sign_in():
     assert me_res.json()["email"] == "riya.sen@example.com"
 
 
-def test_logout_revokes_session():
-    """Verify logout clears the session cookie and revokes access."""
+@pytest.mark.parametrize("provider", ["email", "google"])
+def test_logout_revokes_session_for_each_auth_provider(provider):
+    """Email and Google sessions use the same revocation and cookie-clearing path."""
     auth_client = TestClient(app)
-    auth_client.post(
-        "/api/v1/auth/google",
-        json={"credential": "mock_token", "email": "logout.test@example.com", "name": "Logout Test"},
-    )
+    if provider == "google":
+        auth_res = auth_client.post(
+            "/api/v1/auth/google",
+            json={"credential": "mock_token", "email": "logout.google@example.com", "name": "Logout Test"},
+        )
+    else:
+        start_res = auth_client.post(
+            "/api/v1/auth/email/start",
+            json={"email": "logout.email@example.com"},
+        )
+        assert start_res.status_code == 202
+        dev_link = start_res.json()["devMagicLink"]
+        token = dev_link.split("token=")[1]
+        auth_res = auth_client.get(
+            f"/api/v1/auth/email/verify?token={token}",
+            follow_redirects=False,
+        )
 
-    # Logout
+    assert auth_res.status_code in (200, 303)
+    assert auth_client.get("/api/v1/auth/me").status_code == 200
+
     logout_res = auth_client.post("/api/v1/auth/logout")
     assert logout_res.status_code == 200
+    assert logout_res.json()["status"] == "ok"
+    assert auth_client.cookies.get("session_token") is None
+    assert auth_client.get("/api/v1/auth/me").status_code == 401
 
-    # /auth/me should now return 401
-    me_res = auth_client.get("/api/v1/auth/me")
-    assert me_res.status_code == 401
+
+def test_logout_without_session_is_idempotent():
+    """A stale or anonymous browser can always clear its local auth cookie safely."""
+    auth_client = TestClient(app)
+    response = auth_client.post("/api/v1/auth/logout")
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"
+    assert auth_client.get("/api/v1/auth/me").status_code == 401
 
 
 def test_google_sign_in_account_unification():

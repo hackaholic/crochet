@@ -22,6 +22,23 @@ def test_config_value_falls_back_to_environment_and_default(monkeypatch):
     assert config_value("SULO_UNSET_SECRET", "") == ""
 
 
+def test_config_value_environment_and_file_sources_resolve_identically(tmp_path, monkeypatch):
+    """Local env config and SOPS-rendered file config share one setting contract."""
+    setting_name = "SULO_PARITY_TEST_VALUE"
+    expected_value = "public-client-id-for-test"
+    value_file = tmp_path / "sops-rendered-value"
+    value_file.write_text(f"{expected_value}\n", encoding="utf-8")
+
+    monkeypatch.delenv(f"{setting_name}_FILE", raising=False)
+    monkeypatch.setenv(setting_name, expected_value)
+    local_value = config_value(setting_name)
+
+    monkeypatch.setenv(f"{setting_name}_FILE", str(value_file))
+    file_backed_value = config_value(setting_name)
+
+    assert local_value == file_backed_value == expected_value
+
+
 def test_config_value_fails_closed_without_disclosing_secret(tmp_path, monkeypatch):
     monkeypatch.setenv("SULO_TEST_SECRET", "must-not-be-used")
     monkeypatch.setenv("SULO_TEST_SECRET_FILE", str(tmp_path / "missing-secret"))
@@ -63,8 +80,12 @@ def test_compose_secret_isolation_and_no_fallback_passwords():
     api_secrets = api.get("secrets", [])
     postgres_secrets = postgres.get("secrets", [])
 
-    # API receives only database_url, not postgres user/password
+    # API receives backend credentials, not PostgreSQL service credentials.
     assert "database_url" in api_secrets
+    assert "google_client_id" in api_secrets
+    assert "google_client_secret" in api_secrets
+    assert "cashfree_app_id" in api_secrets
+    assert "cashfree_secret_key" in api_secrets
     assert "postgres_password" not in api_secrets
     assert "postgres_user" not in api_secrets
     assert "postgres_db" not in api_secrets
@@ -74,10 +95,18 @@ def test_compose_secret_isolation_and_no_fallback_passwords():
     assert "postgres_user" in postgres_secrets
     assert "postgres_db" in postgres_secrets
     assert "database_url" not in postgres_secrets
+    assert "cashfree_app_id" not in postgres_secrets
+    assert "cashfree_secret_key" not in postgres_secrets
+    assert "google_client_id" not in postgres_secrets
+    assert "google_client_secret" not in postgres_secrets
 
     # Top-level secrets are defined and map to service-scoped groups
     top_secrets = compose_data.get("secrets", {})
     assert "database_url" in top_secrets
+    assert "google_client_id" in top_secrets
+    assert "google_client_secret" in top_secrets
+    assert "cashfree_app_id" in top_secrets
+    assert "cashfree_secret_key" in top_secrets
     assert "postgres_password" in top_secrets
     assert "postgres_user" in top_secrets
     assert "postgres_db" in top_secrets
@@ -88,6 +117,18 @@ def test_compose_secret_isolation_and_no_fallback_passwords():
     )
     assert top_secrets["database_url"]["file"] == (
         "${DATABASE_URL_FILE:?Set DATABASE_URL_FILE to this target's API database URL secret path}"
+    )
+    assert top_secrets["google_client_id"]["file"] == (
+        "${GOOGLE_CLIENT_ID_FILE:?Set GOOGLE_CLIENT_ID_FILE to this target's Google client ID secret path}"
+    )
+    assert top_secrets["google_client_secret"]["file"] == (
+        "${GOOGLE_CLIENT_SECRET_FILE:?Set GOOGLE_CLIENT_SECRET_FILE to this target's Google client secret path}"
+    )
+    assert top_secrets["cashfree_app_id"]["file"] == (
+        "${CASHFREE_APP_ID_FILE:?Set CASHFREE_APP_ID_FILE to this target's Cashfree App ID secret path}"
+    )
+    assert top_secrets["cashfree_secret_key"]["file"] == (
+        "${CASHFREE_SECRET_KEY_FILE:?Set CASHFREE_SECRET_KEY_FILE to this target's Cashfree Secret Key secret path}"
     )
 
 
@@ -107,17 +148,29 @@ def test_compose_config_validation_with_dummy_secrets(tmp_path):
     user_file = pg_dir / "postgres_user"
     pw_file = pg_dir / "postgres_password"
     db_url_file = backend_dir / "database_url"
+    cf_app_file = backend_dir / "cashfree_app_id"
+    cf_sec_file = backend_dir / "cashfree_secret_key"
+    google_id_file = backend_dir / "google_client_id"
+    google_secret_file = backend_dir / "google_client_secret"
 
     db_file.write_text("dummy_db\n")
     user_file.write_text("dummy_user\n")
     pw_file.write_text("dummy_pw\n")
     db_url_file.write_text("postgresql://dummy_user:dummy_pw@postgres:5432/dummy_db\n")
+    cf_app_file.write_text("dummy_cf_app_id\n")
+    cf_sec_file.write_text("dummy_cf_secret_key\n")
+    google_id_file.write_text("dummy_google_client_id\n")
+    google_secret_file.write_text("dummy_google_client_secret\n")
 
     env = os.environ.copy()
     env["POSTGRES_DB_FILE"] = str(db_file)
     env["POSTGRES_USER_FILE"] = str(user_file)
     env["POSTGRES_PASSWORD_FILE"] = str(pw_file)
     env["DATABASE_URL_FILE"] = str(db_url_file)
+    env["CASHFREE_APP_ID_FILE"] = str(cf_app_file)
+    env["CASHFREE_SECRET_KEY_FILE"] = str(cf_sec_file)
+    env["GOOGLE_CLIENT_ID_FILE"] = str(google_id_file)
+    env["GOOGLE_CLIENT_SECRET_FILE"] = str(google_secret_file)
 
     res = subprocess.run(
         [docker_compose_bin, "-f", str(compose_path), "config"],
@@ -130,10 +183,25 @@ def test_compose_config_validation_with_dummy_secrets(tmp_path):
     assert "sulocraft_secure_pw" not in res.stdout
     # Verify secrets in parsed output
     resolved = yaml.safe_load(res.stdout)
-    api_secrets = [s["source"] for s in resolved["services"]["api"]["secrets"]]
-    pg_secrets = [s["source"] for s in resolved["services"]["postgres"]["secrets"]]
-    assert api_secrets == ["database_url"]
-    assert sorted(pg_secrets) == ["postgres_db", "postgres_password", "postgres_user"]
+    api_secrets = sorted(s["source"] for s in resolved["services"]["api"]["secrets"])
+    pg_secrets = sorted(s["source"] for s in resolved["services"]["postgres"]["secrets"])
+    assert api_secrets == ["cashfree_app_id", "cashfree_secret_key", "database_url", "google_client_id", "google_client_secret"]
+    assert pg_secrets == ["postgres_db", "postgres_password", "postgres_user"]
+
+
+def test_7_2_4_1_tc02_local_compose_stays_on_mock_and_excludes_secrets():
+    """7.2.4.1-TC02 & TC04: Local docker/compose.yaml stays on mock provider and never exposes Cashfree secrets to frontend."""
+    local_compose_path = Path(__file__).resolve().parents[2] / "docker" / "compose.yaml"
+    assert local_compose_path.is_file()
+    local_data = yaml.safe_load(local_compose_path.read_text(encoding="utf-8"))
+    api_env = local_data["services"]["api"]["environment"]
+    frontend_env = local_data["services"]["frontend"]["environment"]
+
+    assert api_env["PAYMENT_PROVIDER"] == "mock"
+    assert "CASHFREE_APP_ID" not in frontend_env
+    assert "CASHFREE_SECRET_KEY" not in frontend_env
+    assert "CASHFREE_APP_ID_FILE" not in frontend_env
+    assert "CASHFREE_SECRET_KEY_FILE" not in frontend_env
 
 
 def test_backup_script_fails_closed_when_password_missing(tmp_path):

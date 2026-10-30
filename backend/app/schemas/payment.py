@@ -14,7 +14,7 @@ class PaymentIntentCreate(BaseModel):
 
     order_id: int | None = Field(default=None, ge=1, le=2_147_483_647, alias="orderId", description="Database ID of the order")
     order_number: str | None = Field(default=None, alias="orderNumber", description="Readable order number (e.g. CB-20260930-XXXX)")
-    provider: str | None = Field(default=None, description="Payment provider: 'razorpay' or 'mock'")
+    provider: str | None = Field(default=None, description="Payment provider: 'cashfree', 'razorpay', or 'mock'")
 
 
 class PaymentIntentOut(BaseModel):
@@ -27,6 +27,9 @@ class PaymentIntentOut(BaseModel):
     order_number: str = Field(..., serialization_alias="orderNumber")
     provider: str
     provider_order_id: str | None = Field(default=None, serialization_alias="providerOrderId")
+    payment_session_id: str | None = Field(default=None, serialization_alias="paymentSessionId")
+    environment: str | None = Field(default=None, description="Gateway environment mode ('sandbox' or 'production')")
+    return_url: str | None = Field(default=None, serialization_alias="returnUrl")
     amount: int
     amount_paise: int = Field(..., serialization_alias="amountPaise")
     currency: str = "INR"
@@ -35,12 +38,12 @@ class PaymentIntentOut(BaseModel):
 
 
 class PaymentVerifyRequest(BaseModel):
-    """Client verification callback payload after gateway popup completion."""
+    """Client verification callback payload after gateway popup or redirect completion."""
 
     model_config = ConfigDict(populate_by_name=True)
 
     payment_id: int = Field(..., ge=1, le=2_147_483_647, alias="paymentId")
-    provider_payment_id: str = Field(..., alias="providerPaymentId", description="Gateway payment ID (e.g. pay_XXXX)")
+    provider_payment_id: str | None = Field(default=None, alias="providerPaymentId", description="Gateway payment ID (optional for Cashfree server-verified orders)")
     provider_order_id: str | None = Field(default=None, alias="providerOrderId", description="Gateway order ID")
     provider_signature: str | None = Field(default=None, alias="providerSignature", description="HMAC verification signature")
     payment_method_detail: str | None = Field(default=None, alias="paymentMethodDetail", description="e.g. UPI / Google Pay")
@@ -53,6 +56,7 @@ class PaymentOut(BaseModel):
 
     id: int
     order_id: int = Field(..., serialization_alias="orderId")
+    order_number: str | None = Field(default=None, serialization_alias="orderNumber")
     provider: str
     provider_payment_id: str | None = Field(default=None, serialization_alias="providerPaymentId")
     provider_order_id: str | None = Field(default=None, serialization_alias="providerOrderId")

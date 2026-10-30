@@ -37,6 +37,23 @@ it('requests the next page near the scroll sentinel, without duplicate concurren
  expect(await screen.findByText('Product 3')).toBeVisible();expect(getProductDiscovery).toHaveBeenCalledTimes(2);expect(observe).toHaveBeenCalled();
 });
 
+it('shows product-specific wishlist hearts and toggles only the selected recommendation', async () => {
+ vi.mocked(getProductDiscovery).mockResolvedValue({sections:[row('best-sellers',[2,3])],nextCursor:null});
+ const toggle=vi.fn();
+ const pageProps=props();
+ render(<ProductRecommendations {...pageProps} wishlistIds={[2]} onToggleWishlist={toggle}/>);
+
+ const saved=await screen.findByRole('button',{name:'Remove Product 2 from wishlist'});
+ const unsaved=screen.getByRole('button',{name:'Save Product 3 to wishlist'});
+ expect(saved).toHaveAttribute('aria-pressed','true');
+ expect(unsaved).toHaveAttribute('aria-pressed','false');
+ fireEvent.click(unsaved);
+ expect(toggle).toHaveBeenCalledOnce();
+ expect(toggle).toHaveBeenCalledWith(product(3));
+ expect(pageProps.onProductClick).not.toHaveBeenCalled();
+ expect(pageProps.onAddToCart).not.toHaveBeenCalled();
+});
+
 it('fills the first compatibility row after cart exclusions instead of leaving a nearly empty row',async()=>{
  vi.mocked(getProductDiscovery).mockResolvedValue({compatibility:true,sections:[row('suggestions',[1,2,3,4]),row('new-arrivals',[5,6,7,8])],nextCursor:null});
  render(<ProductRecommendations {...props()} excludedIds={[1,2,3]}/>);

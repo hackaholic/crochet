@@ -8,9 +8,27 @@ interface EmptyStateProps {
   title: string;
   description: string;
   action?: Action;
+  compact?: boolean;
 }
 
-export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
+export function EmptyState({ icon, title, description, action, compact = false }: EmptyStateProps) {
+  if (compact) {
+    return (
+      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 py-2 text-center">
+        <div className="text-2xl" aria-hidden="true">{icon}</div>
+        <div className="min-w-0">
+          <h2 className="text-lg font-medium text-[#2C1810]" style={{ fontFamily: 'var(--font-serif)' }}>{title}</h2>
+          <p className="text-sm text-[#8B6B4A]">{description}</p>
+        </div>
+        {action && (
+          <button onClick={action.onClick} className="rounded-full bg-[#C4622D] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#D4795A]">
+            {action.label}
+          </button>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="py-24 text-center">
       <div className="mb-6 text-7xl" aria-hidden="true">{icon}</div>

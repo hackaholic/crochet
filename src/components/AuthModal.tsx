@@ -60,37 +60,41 @@ export default function AuthModal({ open, onClose, onSignedIn, initialError = ''
   const [devMagicLink, setDevMagicLink] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [authConfigLoading, setAuthConfigLoading] = useState(open);
   const [runtimeGoogleClientId, setRuntimeGoogleClientId] = useState<string>('');
   const [runtimeFacebookAppId, setRuntimeFacebookAppId] = useState<string>('');
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || runtimeGoogleClientId;
-  const facebookAppId = import.meta.env.VITE_FACEBOOK_APP_ID || runtimeFacebookAppId;
+  const googleClientId = runtimeGoogleClientId;
+  const facebookAppId = runtimeFacebookAppId;
 
   useEffect(() => {
-    if (open) {
-      setEmail('');
-      setSentEmail('');
-      setDevMagicLink('');
-      setError(initialError);
-      if (googleClientId) {
-        ensureGoogleScript();
-      } else {
-        authApi
-          .config()
-          .then((cfg) => {
-            if (cfg.googleClientId) {
-              setRuntimeGoogleClientId(cfg.googleClientId);
-              ensureGoogleScript();
-            }
-            if (cfg.facebookAppId) {
-              setRuntimeFacebookAppId(cfg.facebookAppId);
-            }
-          })
-          .catch(() => {
-            // Keep default unconfigured fallback if runtime config endpoint is unreachable.
-          });
-      }
-    }
-  }, [googleClientId, initialError, open]);
+    if (!open) return;
+
+    let active = true;
+    setEmail('');
+    setSentEmail('');
+    setDevMagicLink('');
+    setError(initialError);
+    setRuntimeGoogleClientId('');
+    setRuntimeFacebookAppId('');
+    setAuthConfigLoading(true);
+    authApi
+      .config()
+      .then((cfg) => {
+        if (!active) return;
+        setRuntimeGoogleClientId(cfg.googleClientId || '');
+        setRuntimeFacebookAppId(cfg.facebookAppId || '');
+      })
+      .catch(() => {
+        // Social sign-in remains unavailable when the runtime config endpoint cannot be reached.
+      })
+      .finally(() => {
+        if (active) setAuthConfigLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [initialError, open]);
 
   if (!open) return null;
 
@@ -110,7 +114,7 @@ export default function AuthModal({ open, onClose, onSignedIn, initialError = ''
 
   const signInWithGoogle = () => {
     if (!googleClientId) {
-      setError('Google sign-in is not configured for this environment yet. Add VITE_GOOGLE_CLIENT_ID and register this site origin in Google Cloud.');
+      setError('Google sign-in is currently unavailable. Please try again later or use email.');
       return;
     }
     setError('');
@@ -171,7 +175,7 @@ export default function AuthModal({ open, onClose, onSignedIn, initialError = ''
 
   const signInWithFacebook = () => {
     if (!facebookAppId) {
-      setError('Facebook sign-in is not configured for this environment yet. Add VITE_FACEBOOK_APP_ID and register this site domain in Meta for Developers.');
+      setError('Facebook sign-in is currently unavailable. Please try again later or use email.');
       return;
     }
     const openLogin = () => {
@@ -222,8 +226,8 @@ export default function AuthModal({ open, onClose, onSignedIn, initialError = ''
           {!sentEmail ? (
             <>
               <div className="flex flex-col gap-2.5">
-                <button type="button" disabled={busy} onClick={signInWithGoogle} className="flex w-full items-center justify-center gap-3 rounded-full border border-[#D9C9B8] bg-white py-3 text-sm font-semibold text-[#2C1810] shadow-sm transition-all hover:border-[#8B6B4A] hover:bg-[#FAF7F2] disabled:opacity-50"><GoogleIcon size={18} /><span>Continue with Google</span></button>
-                <button type="button" disabled={busy} onClick={signInWithFacebook} className="flex w-full items-center justify-center gap-3 rounded-full border border-[#1877F2]/30 bg-[#1877F2]/5 py-3 text-sm font-semibold text-[#1877F2] transition-all hover:border-[#1877F2]/50 hover:bg-[#1877F2]/10 disabled:opacity-50"><FacebookIcon size={18} /><span>Continue with Facebook</span></button>
+                <button type="button" disabled={busy || authConfigLoading} onClick={signInWithGoogle} className="flex w-full items-center justify-center gap-3 rounded-full border border-[#D9C9B8] bg-white py-3 text-sm font-semibold text-[#2C1810] shadow-sm transition-all hover:border-[#8B6B4A] hover:bg-[#FAF7F2] disabled:opacity-50"><GoogleIcon size={18} /><span>Continue with Google</span></button>
+                <button type="button" disabled={busy || authConfigLoading} onClick={signInWithFacebook} className="flex w-full items-center justify-center gap-3 rounded-full border border-[#1877F2]/30 bg-[#1877F2]/5 py-3 text-sm font-semibold text-[#1877F2] transition-all hover:border-[#1877F2]/50 hover:bg-[#1877F2]/10 disabled:opacity-50"><FacebookIcon size={18} /><span>Continue with Facebook</span></button>
               </div>
               <div className="my-5 flex items-center gap-3 text-xs text-[#8B6B4A]"><span className="h-px flex-1 bg-[#EDE4D0]" />or<span className="h-px flex-1 bg-[#EDE4D0]" /></div>
               <label htmlFor="email" className="mb-2 block text-sm font-semibold text-[#3F2A20]">Email address</label>

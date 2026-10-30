@@ -5,6 +5,8 @@
 
 ## Pending
 - [ ] 1.7.6 Codex: [Catalogue final local acceptance](tasks/task-018-catalogue-local-acceptance.md) — unblocked by 1.7.12 for real browser upload/save/reopen verification.
+- [ ] 1.7.13 Gemini: [Product production profile API](tasks/task-046-product-production-profile-api.md) — deferred for V1; owner review says full recipe/profile may be overkill. Do not start until scope is narrowed and reactivated.
+- [ ] 1.7.14 Codex: [Product editor production details](tasks/task-047-product-production-profile-ui.md) — deferred with 1.7.13; no implementation until a smaller scope is approved.
 - [ ] 1.17 Codex: Audit API support and define scoped integration for private internal notes and real shipment creation; UI controls explicitly disabled until implemented.
 - [ ] 1.6.1 Codex: Firefox rendering verification — Pending; Firefox is not available through current enabled browser tools.
 - [ ] 1.12 Codex (delivery owner; user provides final acceptance): Prepare the local review and obtain user acceptance. The user reviews the locally verified admin experience and decides whether any additional sections or visual changes are required; only then consider a dev push/deploy.

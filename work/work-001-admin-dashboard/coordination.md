@@ -3,8 +3,8 @@
 This file is the work-local coordination entry point. The work folder is the source of truth: read this file with README.md, tasks.md, decisions.md, and only the assigned task contract.
 
 **Current owner:** Codex — Task 1.7.6 unblocked for catalogue local acceptance.
-**Active cross-agent handoffs:** None (Task 1.7.12 returned, Completed).
-**Handoff state:** Returned — Gemini [1.7.12](tasks/task-044-upload-persistence.md) Completed. Task 1.7.6 unblocked.
+**Active cross-agent handoffs:** None.
+**Handoff state:** 1.7.13/1.7.14 are documented but deferred for V1; no Gemini implementation has started. Do not pick them up until the owner approves a narrower scope.
 
 Dependencies: existing APIs available; no frontend dependency for completed1.11/1.6audit.
 Blockers: Firefox not available for1.6.1.

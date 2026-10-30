@@ -1,11 +1,14 @@
 """Public storefront API conforming to docs/api-storefront.md."""
 
 from datetime import datetime, timezone
+from email.utils import parseaddr
+import re
 from fastapi import APIRouter, Cookie, Depends, Header, Query
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.api.v1.auth import get_optional_current_user
+from app.core.config import settings
 from app.api.v1.catalogue import _to_product_list_item, _to_product_list_items
 from app.db.session import get_db
 from app.models.catalogue import Category, Collection, Occasion, Product, Review, Tag
@@ -30,6 +33,14 @@ from app.schemas.storefront import (
 )
 
 router = APIRouter(prefix="/storefront", tags=["storefront"])
+
+
+def _configured_support_email() -> str | None:
+    """Expose only a valid mailbox, never the configured sender display name."""
+    _, address = parseaddr(settings.email_from_support or "")
+    if not address or not re.fullmatch(r"[^@\s<>]+@[^@\s<>]+\.[^@\s<>]+", address):
+        return None
+    return address
 
 
 def _resolve_homepage_section(db: Session, section: HomepageSection):
@@ -255,11 +266,12 @@ def get_storefront_home(db: Session = Depends(get_db)) -> StorefrontHomeResponse
         brand_out = BrandSettingsOut(
             name="Sulocraft",
             owner_name="Anupama Sharma",
+            support_email=_configured_support_email(),
             instagram_url="https://instagram.com/sulocraft",
             whatsapp_url="https://wa.me/919876543210",
         )
     else:
-        brand_out = BrandSettingsOut.model_validate(brand)
+        brand_out = BrandSettingsOut.model_validate(brand).model_copy(update={"support_email": _configured_support_email()})
 
     # 2. Fetch active scheduled campaigns (hero)
     now = datetime.now(timezone.utc)
@@ -311,11 +323,12 @@ def get_storefront_content(db: Session = Depends(get_db)) -> StorefrontResponse:
         brand_out = BrandSettingsOut(
             name="Sulocraft",
             owner_name="Anupama Sharma",
+            support_email=_configured_support_email(),
             instagram_url="https://instagram.com/sulocraft",
             whatsapp_url="https://wa.me/919876543210",
         )
     else:
-        brand_out = BrandSettingsOut.model_validate(brand)
+        brand_out = BrandSettingsOut.model_validate(brand).model_copy(update={"support_email": _configured_support_email()})
 
     # 2. Fetch active campaigns within schedule, ordered by priority (max 5)
     now = datetime.now(timezone.utc)
@@ -343,8 +356,8 @@ def get_storefront_content(db: Session = Depends(get_db)) -> StorefrontResponse:
 def get_storefront_discovery(
     context: str = Query(
         default="checkout",
-        pattern="^(checkout|basket)$",
-        description="Discovery context (checkout or basket)",
+        pattern="^(checkout|basket|wishlist)$",
+        description="Discovery context (checkout, basket, or wishlist)",
     ),
     limit: int = Query(
         default=16,

@@ -39,7 +39,7 @@ class BasePaymentProvider(ABC):
         pass
 
     @abstractmethod
-    def verify_webhook(self, payload: bytes, signature: str) -> bool:
+    def verify_webhook(self, payload: bytes, signature: str, timestamp: str | None = None) -> bool:
         """Verify gateway webhook payload authenticity."""
         pass
 

@@ -5,15 +5,17 @@ import { useDiscoveryFeed } from '../hooks/useDiscoveryFeed';
 import type { Product } from '../data/products';
 import { getBasketDiscovery } from '../lib/api/basketRecommendations';
 
-export default function ProductRecommendations({ open, excludedIds, onProductClick, onAddToCart, layout = 'basket', openProductInNewTab = false, extended = false, context }: {
+export default function ProductRecommendations({ open, excludedIds, onProductClick, onAddToCart, onToggleWishlist, wishlistIds = [], layout = 'basket', openProductInNewTab = false, extended = false, context }: {
   layout?: 'basket' | 'checkout';
   extended?: boolean;
-  context?: 'checkout' | 'basket';
+  context?: 'checkout' | 'basket' | 'wishlist';
   openProductInNewTab?: boolean;
   open: boolean;
   excludedIds: number[];
   onProductClick: (product: Product) => void;
   onAddToCart: (product: Product) => Promise<void>;
+  onToggleWishlist?: (product: Product) => void;
+  wishlistIds?: number[];
 }) {
   const titleId = useId();
   const feed = useDiscoveryFeed(open && extended, context ?? (layout === 'checkout' ? 'checkout' : 'basket'));
@@ -70,6 +72,7 @@ export default function ProductRecommendations({ open, excludedIds, onProductCli
           {row.products.map(product => (
             <ProductCard key={product.id} product={product}
               onProductClick={onProductClick} openProductInNewTab={openProductInNewTab}
+              onToggleWishlist={onToggleWishlist} isWishlisted={wishlistIds.includes(product.id)}
               onAddToCart={product => { void addProduct(product); }}
               addPending={addingId === product.id} addDisabled={addingId !== null}
               addLabel={`Add ${product.name} to basket`} />

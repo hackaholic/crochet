@@ -21,6 +21,7 @@ MAX_CURSOR_LENGTH = 512
 MAX_SECTIONS = 5
 MAX_PRODUCTS_PER_SECTION = 8
 MAX_TOTAL_PAGE_PRODUCTS = 16
+ALLOWED_DISCOVERY_CONTEXTS = {"checkout", "basket", "wishlist"}
 
 
 def get_cart_product_ids(
@@ -51,6 +52,11 @@ def get_cart_product_ids(
 
 def encode_cursor(seen_ids: list[int], context: str) -> str:
     """Encode pagination state into an opaque, URL-safe base64 string <= 512 chars."""
+    if context not in ALLOWED_DISCOVERY_CONTEXTS:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Unsupported discovery context: '{context}'",
+        )
     payload = {
         "s": sorted(list(set(seen_ids))),
         "c": context,
@@ -66,6 +72,11 @@ def encode_cursor(seen_ids: list[int], context: str) -> str:
 
 def decode_cursor(cursor: str | None, expected_context: str, db: Session | None = None) -> list[int]:
     """Decode and validate an opaque discovery cursor, raising HTTP 422 if invalid."""
+    if expected_context not in ALLOWED_DISCOVERY_CONTEXTS:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Unsupported discovery context: '{expected_context}'",
+        )
     if not cursor:
         return []
 

@@ -18,12 +18,16 @@ describe('ProductCard', () => {
       category: 'Bouquets',
     };
 
-    const open = vi.fn(); const add = vi.fn();
-    render(<ProductCard product={product} isWishlisted={false} onAddToCart={add} onToggleWishlist={vi.fn()} onProductClick={open} />);
+    const open = vi.fn(); const add = vi.fn(); const toggle = vi.fn();
+    render(<ProductCard product={product} isWishlisted={false} onAddToCart={add} onToggleWishlist={toggle} onProductClick={open} />);
 
     expect(screen.getByRole('link', { name: product.name })).toHaveAttribute('href', '/products/crochet-rose-bouquet');
     fireEvent.click(screen.getByRole('button', { name: 'Quick Add' }));
     expect(add).toHaveBeenCalledOnce(); expect(open).not.toHaveBeenCalled();
+    const wishlistButton = screen.getByRole('button', { name: 'Save Crochet Rose Bouquet to wishlist' });
+    expect(wishlistButton).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(wishlistButton);
+    expect(toggle).toHaveBeenCalledWith(product);
     fireEvent.click(screen.getByRole('link', { name: product.name })); expect(open).toHaveBeenCalledWith(product);
     expect(screen.queryByText('(128)')).not.toBeInTheDocument();
     const image = screen.getByRole('img', { name: product.name });

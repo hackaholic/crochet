@@ -22,3 +22,14 @@
 2026-10-24 —23.7 completed locally: typed cart API integrated into shared feed without losing sections/paging,31unique tests/typecheck and Docker/mobile/actualadd-remove checks passed. Original basket restored. Only23.4 native-engine coverage blocked; inventory has in-app browser only. No backend work or push.
 
 2026-10-24 — Owner: “mark23.4 done I verified on browsers.” Recorded owner acceptance;23.4 and Work023 completed. No repeated tests, no code change or push for this documentation update.
+
+2026-10-31 — 23.9 completed by Gemini ([task-009-wishlist-discovery-context-api.md](tasks/task-009-wishlist-discovery-context-api.md)): Extended `GET /api/v1/storefront/discovery` in `backend/app/api/v1/storefront.py` and `backend/app/services/discovery.py` (`ALLOWED_DISCOVERY_CONTEXTS = {"checkout", "basket", "wishlist"}`) to accept `context=wishlist` while preserving `checkout`/`basket` behavior and strict context-bound opaque cursor validation. Updated `docs/api-storefront.md` and `docs/openapi.yaml`. No schema migration or wishlist database reads/mutations added; response remains public catalogue-only. Added `23.9-TC01`..`TC05` in `backend/tests/test_storefront_discovery.py` (`14/14` passing in isolated PostgreSQL test container), SAST `0` blocking findings, and rebuilt/verified local Docker API (`GET http://localhost:8000/api/v1/storefront/discovery?context=wishlist&limit=4`). Codex is unblocked for [23.8](tasks/task-008-wishlist-recommendation-ui.md). No push or deployment performed.
+
+2026-10-31 — 23.8 Codex implementation returned: shared layered discovery is shown under saved/empty Wishlist with context=wishlist and saved ID filtering. Focused frontend tests 7/7, typecheck passed, local frontend Docker rebuild/restart and storefront/discovery HTTP 200. No CUA browser available; visual/mobile check unverified.
+## Task 23.10 pickup — 2026-10-31
+
+- Owner requested less top whitespace before the Wishlist empty message. Added the focused 23.10 contract; 23.8 recommendation layers and API are verified inputs, so no repeat implementation is needed.
+- Assigned to `/root/work023_8_wishlist_ui`; contract is the sole implementation scope. No push/deployment.
+
+
+2026-10-31 — 23.10 returned/completed: added a Wishlist-only compact EmptyState mode (`py-12` instead of `py-24`); populated Wishlist remains on its existing path. Focused Wishlist tests 2/2 and typecheck passed; frontend Docker rebuilt/restarted and storefront HTTP 200. Browser inventory unavailable, so visual/mobile inspection remains unverified. No push/deployment.

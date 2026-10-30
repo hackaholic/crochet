@@ -22,3 +22,9 @@
 2026-10-19 /6.10 release verification: Owner requested push of all changes. Current dev matched origin/dev before commit. Coordinated auth/cart/payment backend regression49passed (63existing cookie-deprecation warnings); latest frontend typecheck+13tests passed, local frontend/API rebuilt and browser checked. Local API health200. Gitleaks staged scan passed; full Semgrep scan passed release gate with zero blocking High/Critical findings (existing lower-severity warnings retained). Work007 hosted gateway frontend remains pending; no claim that real Razorpay checkout is complete. Commit includes source, tests, work records, screenshots and security reports; encrypted/private material unchanged.
 
 6.10 return: `1e46918` successfully pushed to origin/dev. Local source/tests/docs/reports included; preprod deployment completion must be checked independently.
+# 2026-10-29 — Task 6.11
+
+- Exposed only the validated mailbox portion of `EMAIL_FROM_SUPPORT` as public `brand.supportEmail`; the configured sender display name is not returned.
+- Contact Us loads the public storefront brand payload and renders an accessible `mailto:` link only when a valid mailbox is configured.
+- Verification: backend storefront tests passed (18); focused frontend tests passed (2); rebuilt local API/frontend containers; API health and configured response verified; Playwright page snapshot showed `support@sulocraft.com` linking to `mailto:support@sulocraft.com`.
+- No push or deployment performed. Existing browser console 401s for unauthenticated auth/wishlist calls and favicon 404 were unrelated to this change.

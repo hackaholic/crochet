@@ -211,7 +211,14 @@ def test_bootstrap_secrets_materialization_and_permissions(tmp_path):
 
     enc_dir = tmp_path / "secrets" / "encrypted"
     pg_plain = "POSTGRES_DB=test_db\nPOSTGRES_USER=test_user\nPOSTGRES_PASSWORD=super_secret_pw_999\n"
-    backend_plain = "DATABASE_URL=postgresql://test_user:super_secret_pw_999@postgres:5432/test_db\nRESEND_API_KEY=re_dummy_secret_abc\n"
+    backend_plain = (
+        "DATABASE_URL=postgresql://test_user:super_secret_pw_999@postgres:5432/test_db\n"
+        "RESEND_API_KEY=re_dummy_secret_abc\n"
+        "GOOGLE_CLIENT_ID=google_dummy_client_id\n"
+        "GOOGLE_CLIENT_SECRET=google_dummy_client_secret\n"
+        "CASHFREE_APP_ID=cf_test_app_id_001\n"
+        "CASHFREE_SECRET_KEY=cf_test_secret_key_002\n"
+    )
 
     _encrypt_dotenv_sops(pg_plain, pub_key, enc_dir / "postgres.enc.env")
     _encrypt_dotenv_sops(backend_plain, pub_key, enc_dir / "backend.enc.env")
@@ -219,6 +226,7 @@ def test_bootstrap_secrets_materialization_and_permissions(tmp_path):
     run_dir = tmp_path / "run" / "sulocraft"
     env = os.environ.copy()
     env["TARGET_ENV"] = "preprod"
+    env["PAYMENT_PROVIDER"] = "cashfree"
     env["SOPS_AGE_KEY_FILE"] = str(key_file)
     env["SECRETS_DIR"] = str(enc_dir)
     env["RUNTIME_SECRETS_DIR"] = str(run_dir)
@@ -236,6 +244,11 @@ def test_bootstrap_secrets_materialization_and_permissions(tmp_path):
     assert "super_secret_pw_999" not in res.stderr
     assert "re_dummy_secret_abc" not in res.stdout
     assert "re_dummy_secret_abc" not in res.stderr
+    assert "cf_test_app_id_001" not in res.stdout
+    assert "cf_test_secret_key_002" not in res.stdout
+    assert "cf_test_secret_key_002" not in res.stderr
+    assert "google_dummy_client_secret" not in res.stdout
+    assert "google_dummy_client_secret" not in res.stderr
 
     # Verify restrictive permissions
     root_mode = stat.S_IMODE(run_dir.stat().st_mode)
@@ -262,6 +275,25 @@ def test_bootstrap_secrets_materialization_and_permissions(tmp_path):
     assert resend_file.is_file()
     assert stat.S_IMODE(resend_file.stat().st_mode) == 0o600
     assert resend_file.read_text(encoding="utf-8") == "re_dummy_secret_abc"
+
+    google_id_file = backend_dir / "google_client_id"
+    assert google_id_file.is_file()
+    assert stat.S_IMODE(google_id_file.stat().st_mode) == 0o600
+    assert google_id_file.read_text(encoding="utf-8") == "google_dummy_client_id"
+
+    google_secret_file = backend_dir / "google_client_secret"
+    assert google_secret_file.is_file()
+    assert stat.S_IMODE(google_secret_file.stat().st_mode) == 0o600
+    assert google_secret_file.read_text(encoding="utf-8") == "google_dummy_client_secret"
+
+    for cf_name, cf_val in (
+        ("cashfree_app_id", "cf_test_app_id_001"),
+        ("cashfree_secret_key", "cf_test_secret_key_002"),
+    ):
+        cf_file = backend_dir / cf_name
+        assert cf_file.is_file()
+        assert stat.S_IMODE(cf_file.stat().st_mode) == 0o600
+        assert cf_file.read_text(encoding="utf-8") == cf_val
 
 
 @pytest.mark.skipif(not _has_docker(), reason="Docker required for ephemeral SOPS/age testing")

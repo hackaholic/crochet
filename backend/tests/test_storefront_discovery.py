@@ -510,3 +510,143 @@ def test_discovery_security_tenant_isolation_and_no_mutation():
         assert db.query(Order).count() == order_count_before
         assert db.query(UserSession).count() == user_sess_count_before
 
+
+def test_23_9_tc01_wishlist_context_returns_existing_feed():
+    """23.9-TC01: Request /storefront/discovery?context=wishlist&limit=16 returns valid bounded public sections."""
+    res = client.get("/api/v1/storefront/discovery?context=wishlist&limit=16")
+    assert res.status_code == 200
+    data = res.json()
+
+    assert "sections" in data
+    assert "nextCursor" in data
+    sections = data["sections"]
+    assert isinstance(sections, list)
+    assert len(sections) <= 5
+
+    valid_strategies = {"related", "newest", "featured", "trending", "popular"}
+    total_products = 0
+    seen_ids = set()
+
+    for sec in sections:
+        assert isinstance(sec["id"], str)
+        assert isinstance(sec["title"], str)
+        assert sec["strategy"] in valid_strategies
+        assert isinstance(sec["products"], list)
+        assert 0 < len(sec["products"]) <= 8
+
+        for prod in sec["products"]:
+            total_products += 1
+            assert prod["id"] not in seen_ids
+            seen_ids.add(prod["id"])
+            assert "name" in prod
+            assert "slug" in prod
+            assert "price" in prod
+            assert prod.get("inStock") is True
+
+    assert total_products <= 16
+
+
+def test_23_9_tc02_wishlist_pagination_advances_safely():
+    """23.9-TC02: Follow returned cursor using context=wishlist without repeating products or exceeding bounds."""
+    res1 = client.get("/api/v1/storefront/discovery?context=wishlist&limit=4")
+    assert res1.status_code == 200
+    data1 = res1.json()
+    p1_ids = {p["id"] for s in data1["sections"] for p in s["products"]}
+    assert 0 < len(p1_ids) <= 4
+
+    next_cursor = data1["nextCursor"]
+    if next_cursor:
+        assert len(next_cursor) <= 512
+        decoded = json.loads(base64.urlsafe_b64decode(next_cursor.encode("ascii")).decode("utf-8"))
+        assert decoded["c"] == "wishlist"
+
+        res2 = client.get(f"/api/v1/storefront/discovery?context=wishlist&limit=4&cursor={next_cursor}")
+        assert res2.status_code == 200
+        data2 = res2.json()
+        p2_ids = {p["id"] for s in data2["sections"] for p in s["products"]}
+        assert len(p2_ids) <= 4
+        assert p1_ids.isdisjoint(p2_ids), f"Repeated products across wishlist pages: {p1_ids & p2_ids}"
+
+
+def test_23_9_tc03_cursor_cannot_cross_contexts():
+    """23.9-TC03: Reusing a wishlist cursor under basket or checkout (or vice versa) is rejected (422)."""
+    wishlist_cursor = base64.urlsafe_b64encode(
+        json.dumps({"s": [1, 2], "c": "wishlist", "v": 1}).encode("utf-8")
+    ).decode("ascii")
+    basket_cursor = base64.urlsafe_b64encode(
+        json.dumps({"s": [1, 2], "c": "basket", "v": 1}).encode("utf-8")
+    ).decode("ascii")
+    checkout_cursor = base64.urlsafe_b64encode(
+        json.dumps({"s": [1, 2], "c": "checkout", "v": 1}).encode("utf-8")
+    ).decode("ascii")
+
+    # Wishlist cursor replayed under basket or checkout
+    r_wb = client.get(f"/api/v1/storefront/discovery?context=basket&cursor={wishlist_cursor}")
+    assert r_wb.status_code == 422
+    r_wc = client.get(f"/api/v1/storefront/discovery?context=checkout&cursor={wishlist_cursor}")
+    assert r_wc.status_code == 422
+
+    # Basket or checkout cursor replayed under wishlist
+    r_bw = client.get(f"/api/v1/storefront/discovery?context=wishlist&cursor={basket_cursor}")
+    assert r_bw.status_code == 422
+    r_cw = client.get(f"/api/v1/storefront/discovery?context=wishlist&cursor={checkout_cursor}")
+    assert r_cw.status_code == 422
+
+
+def test_23_9_tc04_invalid_contexts_remain_rejected():
+    """23.9-TC04: Unsupported context values fail validation (422) with no side effects."""
+    for bad_context in ["invalid", "wishlists", "WISHLIST", "account", "admin", "wishlist;drop"]:
+        res = client.get(f"/api/v1/storefront/discovery?context={bad_context}")
+        assert res.status_code == 422
+
+
+def test_23_9_tc05_wishlist_remains_private():
+    """23.9-TC05: Unauthenticated/authenticated wishlist discovery contains only public catalogue data and never leaks or mutates Wishlist records."""
+    from app.models.account import Wishlist, WishlistItem
+
+    suffix = secrets.token_hex(4)
+    with SessionLocal() as db:
+        user_w = User(email=f"wishpriv_{suffix}@example.com", name="Private Wishlist User", status="ACTIVE")
+        db.add(user_w)
+        db.flush()
+
+        prod_w = Product(
+            name=f"Saved Private Prod {suffix}",
+            slug=f"saved-priv-{suffix}",
+            status="ACTIVE",
+            badge="Bestseller",
+            primary_image="priv.jpg",
+        )
+        db.add(prod_w)
+        db.flush()
+        db.add(ProductVariant(product_id=prod_w.id, sku=f"SKU-PRIV-{suffix}", price=999, stock_quantity=5))
+
+        wl = Wishlist(user_id=user_w.id)
+        db.add(wl)
+        db.flush()
+        wl_item = WishlistItem(wishlist_id=wl.id, product_id=prod_w.id)
+        db.add(wl_item)
+        db.commit()
+
+        wl_count_before = db.query(Wishlist).count()
+        wl_item_count_before = db.query(WishlistItem).count()
+        wl_id = wl.id
+        user_email = user_w.email
+
+    anon_res = client.get("/api/v1/storefront/discovery?context=wishlist&limit=16")
+    assert anon_res.status_code == 200
+    raw_text = anon_res.text
+    assert user_email not in raw_text
+    assert "wishlistId" not in raw_text
+    assert "wishlist_id" not in raw_text
+    assert "wishlistItems" not in raw_text
+
+    body = anon_res.json()
+    assert set(body.keys()) == {"sections", "nextCursor"}
+    for sec in body["sections"]:
+        assert set(sec.keys()) == {"id", "title", "strategy", "products"}
+
+    with SessionLocal() as db:
+        assert db.query(Wishlist).count() == wl_count_before
+        assert db.query(WishlistItem).count() == wl_item_count_before
+        assert db.query(Wishlist).filter(Wishlist.id == wl_id).first() is not None

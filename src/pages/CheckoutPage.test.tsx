@@ -4,15 +4,127 @@ import CheckoutPage from './CheckoutPage';
 import { getProductDiscovery } from '../lib/api/productDiscovery';
 import { createOrder } from '../lib/api/orders';
 import { accountProfileApi } from '../lib/api/account';
-import { createPaymentIntent } from '../lib/api/payments';
+import { createPaymentIntent, verifyCashfreePayment, verifyMockPayment } from '../lib/api/payments';
+import { openCashfreeCheckout } from '../lib/payment/cashfreeCheckout';
 vi.mock('../lib/api/productDiscovery', () => ({ getProductDiscovery: vi.fn() }));
 vi.mock('../lib/api/orders', () => ({ createOrder: vi.fn() }));
 vi.mock('../lib/api/account', () => ({ accountProfileApi: { overview: vi.fn() } }));
-vi.mock('../lib/api/payments', () => ({ createPaymentIntent: vi.fn(), verifyMockPayment: vi.fn() }));
+vi.mock('../lib/api/payments', () => ({ createPaymentIntent: vi.fn(), verifyMockPayment: vi.fn(), verifyCashfreePayment: vi.fn() }));
+vi.mock('../lib/payment/cashfreeCheckout', () => ({ openCashfreeCheckout: vi.fn() }));
 const rose = {id:1, name:'Crochet Rose Bouquet', slug:'rose', image:'/rose.webp', price:1299, category:'Flowers', rating:0, reviews:0};
 const bunny = {...rose,id:2,name:'<Bunny>',slug:'bunny',price:799};
-const props = () => ({ items:[{product:rose,quantity:1}], couponCode:null, onComplete:vi.fn(), onNavigate:vi.fn(), onProductClick:vi.fn(), onAddToCart:vi.fn().mockResolvedValue(undefined) });
-afterEach(() => { cleanup(); vi.resetAllMocks(); });
+const props = () => ({ items:[{product:rose,quantity:1}], wishlist:[2], onToggleWishlist:vi.fn(), couponCode:null, onComplete:vi.fn(), onNavigate:vi.fn(), onProductClick:vi.fn(), onAddToCart:vi.fn().mockResolvedValue(undefined) });
+afterEach(() => { cleanup(); vi.resetAllMocks(); window.history.replaceState(null, '', '/checkout'); });
+
+const completeCheckoutForm = (cashOnDelivery = false) => {
+  for (const [label, value] of [['First Name *','QA'],['Email *','demo.customer@example.com'],['Phone Number *','9876543210']] as const) fireEvent.change(screen.getByLabelText(label), {target:{value}});
+  fireEvent.click(screen.getByRole('button',{name:'Continue to Delivery'}));
+  for (const [label, value] of [['Address Line 1','12 Craft Lane'],['City','Mumbai'],['State','Maharashtra'],['PIN Code','400001']] as const) fireEvent.change(screen.getByLabelText(label), {target:{value}});
+  fireEvent.click(screen.getByRole('button',{name:'Continue to Payment'}));
+  if (cashOnDelivery) fireEvent.click(screen.getByText('Cash on Delivery'));
+  fireEvent.click(screen.getByRole('button',{name:'Continue to Review'}));
+  fireEvent.click(screen.getByRole('button',{name:/Place Order/}));
+};
+
+it('hands a Cashfree intent to hosted checkout and never uses mock verification', async () => {
+  vi.mocked(createOrder).mockResolvedValue({id:7,orderNumber:'SLC-TEST-7',status:'PENDING_PAYMENT',paymentStatus:'PENDING',paymentMethod:'UPI',totalAmount:1378,totalAmountPaise:137800});
+  const intent = {paymentId:9,orderId:7,orderNumber:'SLC-TEST-7',provider:'cashfree',providerOrderId:'cf-7',paymentSessionId:'opaque-session',environment:'sandbox' as const,amount:1378,amountPaise:137800,currency:'INR'};
+  vi.mocked(createPaymentIntent).mockResolvedValue(intent);
+  render(<CheckoutPage {...props()}/>);
+  completeCheckoutForm();
+  await waitFor(() => expect(openCashfreeCheckout).toHaveBeenCalledWith(intent));
+  expect(verifyMockPayment).not.toHaveBeenCalled();
+});
+
+it('does not trust redirect query text as payment proof and offers server verification retry', async () => {
+  window.history.replaceState(null, '', '/checkout?paymentId=9&cfOrderId=cf-7&orderNumber=FAKE&payment_status=PAID');
+  vi.mocked(verifyCashfreePayment).mockResolvedValue({id:9,orderId:7,orderNumber:'SLC-TEST-7',provider:'cashfree',providerOrderId:'cf-7',amount:1378,amountPaise:137800,currency:'INR',status:'PENDING'});
+  render(<CheckoutPage {...props()}/>);
+  expect(await screen.findByRole('alert')).toHaveTextContent('Cashfree has not confirmed this payment yet');
+  expect(screen.queryByText('Payment Confirmed!')).not.toBeInTheDocument();
+  expect(verifyCashfreePayment).toHaveBeenCalledWith(9,'cf-7');
+  expect(window.location.search).toContain('payment_status=PAID');
+});
+
+it('rejects non-decimal payment IDs from the return URL before calling verification', async () => {
+  window.history.replaceState(null, '', '/checkout?paymentId=1e3&cfOrderId=cf-7');
+  render(<CheckoutPage {...props()}/>);
+  expect(await screen.findByRole('alert')).toHaveTextContent('could not verify this payment return');
+  expect(verifyCashfreePayment).not.toHaveBeenCalled();
+});
+
+it('shows confirmation only for a matching server-verified Cashfree payment', async () => {
+  window.history.replaceState(null, '', '/checkout?paymentId=9&cfOrderId=cf-7&orderNumber=FAKE');
+  vi.mocked(getProductDiscovery).mockResolvedValue({sections:[{id:'new-arrivals',title:'New arrivals',strategy:'newest',products:[bunny]},{id:'featured',title:'Featured',strategy:'featured',products:[{...rose,id:3,name:'Crochet Daisy',slug:'daisy'}]}],nextCursor:null});
+  vi.mocked(verifyCashfreePayment).mockResolvedValue({id:9,orderId:7,orderNumber:'SLC-TEST-7',provider:'cashfree',providerOrderId:'cf-7',amount:1378,amountPaise:137800,currency:'INR',status:'SUCCESS'});
+  const p=props();
+  render(<CheckoutPage {...p}/>);
+  expect(await screen.findByRole('heading',{name:'Payment Confirmed!'})).toBeVisible();
+  expect(await screen.findByRole('heading',{name:'New arrivals'})).toBeVisible();
+  expect(screen.getByRole('heading',{name:'Featured'})).toBeVisible();
+  expect(screen.getByText('Order SLC-TEST-7')).toBeVisible();
+  expect(p.onComplete).toHaveBeenCalledOnce();
+  expect(window.location.search).toBe('');
+});
+
+it('shows multiple API-driven recommendation layers after placing a local order', async () => {
+  vi.mocked(createOrder).mockResolvedValue({id:8,orderNumber:'SLC-TEST-8',status:'PENDING',paymentStatus:'PENDING',paymentMethod:'COD',totalAmount:1378,totalAmountPaise:137800});
+  vi.mocked(getProductDiscovery).mockResolvedValue({sections:[{id:'popular',title:'Popular',strategy:'popular',products:[bunny]},{id:'new-arrivals',title:'New arrivals',strategy:'newest',products:[{...rose,id:3,name:'Crochet Daisy',slug:'daisy'}]}],nextCursor:null});
+  const p=props();
+  render(<CheckoutPage {...p}/>);
+  completeCheckoutForm(true);
+  const confirmation = await screen.findByRole('heading',{name:'Order Placed!'});
+  expect(confirmation).toBeVisible();
+  expect(confirmation.closest('section')).toHaveClass('w-full');
+  expect(await screen.findByRole('heading',{name:'Popular'})).toBeVisible();
+  expect(screen.getByRole('heading',{name:'New arrivals'})).toBeVisible();
+  const heart=screen.getByRole('button',{name:'Remove <Bunny> from wishlist'});
+  expect(heart).toHaveAttribute('aria-pressed','true');
+  fireEvent.click(heart);
+  expect(p.onToggleWishlist).toHaveBeenCalledWith(bunny);
+  expect(screen.getByText('Order SLC-TEST-8')).toBeVisible();
+  expect(screen.queryByText(/working days|3–5 days|Expected delivery/i)).not.toBeInTheDocument();
+  expect(getProductDiscovery).toHaveBeenCalledWith('checkout',null,expect.any(AbortSignal));
+});
+
+it('keeps confirmed order visible when recommendations fail to load', async () => {
+  vi.mocked(createOrder).mockResolvedValue({id:10,orderNumber:'SLC-TEST-10',status:'PENDING',paymentStatus:'PENDING',paymentMethod:'COD',totalAmount:1378,totalAmountPaise:137800});
+  vi.mocked(getProductDiscovery).mockRejectedValue(new Error('private discovery detail'));
+  render(<CheckoutPage {...props()}/>);
+  completeCheckoutForm(true);
+  expect(await screen.findByRole('heading',{name:'Order Placed!'})).toBeVisible();
+  expect(await screen.findByRole('alert')).toHaveTextContent('More creations could not load');
+  expect(screen.getByText('Order SLC-TEST-10')).toBeVisible();
+  expect(screen.queryByText('private discovery detail')).not.toBeInTheDocument();
+});
+
+it('continues excluding purchased products after the basket is cleared on completion', async () => {
+  vi.mocked(createOrder).mockResolvedValue({id:12,orderNumber:'SLC-TEST-12',status:'PENDING',paymentStatus:'PENDING',paymentMethod:'COD',totalAmount:1378,totalAmountPaise:137800});
+  vi.mocked(getProductDiscovery).mockResolvedValue({sections:[{id:'best-sellers',title:'Best Sellers',strategy:'popular',products:[rose,bunny]}],nextCursor:null});
+  const p=props();
+  const view=render(<CheckoutPage {...p}/>);
+  completeCheckoutForm(true);
+  expect(await screen.findByRole('heading',{name:'Best Sellers'})).toBeVisible();
+  view.rerender(<CheckoutPage {...p} items={[]}/>);
+  expect(screen.getByRole('link',{name:'<Bunny>'})).toBeVisible();
+  expect(screen.queryByRole('link',{name:'Crochet Rose Bouquet'})).not.toBeInTheDocument();
+  expect(screen.getByText('Order SLC-TEST-12')).toBeVisible();
+});
+
+it('adds a recommendation to the next basket without creating or changing the placed order', async () => {
+  vi.mocked(createOrder).mockResolvedValue({id:11,orderNumber:'SLC-TEST-11',status:'PENDING',paymentStatus:'PENDING',paymentMethod:'COD',totalAmount:1378,totalAmountPaise:137800});
+  vi.mocked(getProductDiscovery).mockResolvedValue({sections:[{id:'new-arrivals',title:'New arrivals',strategy:'newest',products:[bunny]}],nextCursor:null});
+  const p=props();
+  render(<CheckoutPage {...p}/>);
+  completeCheckoutForm(true);
+  expect(await screen.findByRole('heading',{name:'New arrivals'})).toBeVisible();
+  fireEvent.click(screen.getByRole('button',{name:'Add <Bunny> to basket'}));
+  await waitFor(()=>expect(screen.getByRole('status')).toHaveTextContent('<Bunny> added to your basket'));
+  expect(screen.getByText('Order SLC-TEST-11')).toBeVisible();
+  expect(createOrder).toHaveBeenCalledOnce();
+  expect(p.onAddToCart).toHaveBeenCalledExactlyOnceWith(bunny);
+  expect(createPaymentIntent).not.toHaveBeenCalled();
+});
 
 it('adds without losing contact draft or navigating, updates summary, and excludes basket products', async () => {
   vi.mocked(getProductDiscovery).mockResolvedValue({sections:[{id:'suggestions',title:'You may also like',strategy:'newest',products:[rose,bunny]}],nextCursor:null});

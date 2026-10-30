@@ -11,3 +11,4 @@ Work 003 owns secrets; Work 012 owns isolation; Work 006 owns CI integration/pro
 - **6.8 — Codex; Returned/Completed:** [preprod incident recovery](tasks/task-008-preprod-reboot-recovery.md). Restore existing containers; no local tree deployment.
 
 - **6.9 — Codex; Pending:** [automatic boot-time secret rehydration](tasks/task-009-reboot-secret-rehydration.md). Immediate incident recovered; durable reboot protection not yet implemented.
+- **6.11 — Codex; Returned/Completed:** [Contact Us support email](tasks/task-010-public-support-email.md). Configured mailbox is exposed as a validated public brand field and rendered as a `mailto:` link; focused API/UI tests and local browser verification passed.

@@ -30,9 +30,9 @@ Refer to `docs/api-payment.md`. Razorpay signatures are HMAC-SHA256 authenticate
 
 ## Acceptance checks
 
-- [ ] `pytest backend/tests/test_payments.py` passes all payment provider tests.
-- [ ] Successful payment updates order payment status to `PAID` and triggers notification queue.
+- [x] `pytest backend/tests/test_payments.py` passes all payment provider tests (`22/22` in `test_payments.py` + `6/6` in `test_purchase_regression.py` across Mock, Cashfree, and retained Razorpay in isolated PostgreSQL container).
+- [x] Successful payment updates order payment status to `PAID` and triggers notification queue.
 
 ## Handoff back
 
-- Update `work/work-007-e2e-qa/tasks.md` and `notes.md`.
+- Gemini backend portion completed (`28/28` isolated DB payment/regression tests passing; SAST `0` blocking findings). Final task closure awaits `7.2.4.3` dev Sandbox browser E2E acceptance.
