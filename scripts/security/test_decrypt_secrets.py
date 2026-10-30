@@ -31,7 +31,8 @@ class DecryptSecretsDynamicTests(unittest.TestCase):
             "mount=next(x for x in args if x.endswith(':/input:ro'))\n"
             "name=pathlib.Path(mount.split(':', 1)[0]).name\n"
             "data={'postgres.enc.env':'POSTGRES_DB=localdb\\nPOSTGRES_USER=localuser\\nPOSTGRES_PASSWORD=test-pass\\n',"
-            "'backend.enc.env':'DATABASE_URL=postgresql://remote:secret@remote.example/db\\nR2_ACCESS_KEY_ID=key\\nR2_SECRET_ACCESS_KEY=secret\\nRESEND_API_KEY=\\n'}\n"
+            "'backend.enc.env':'DATABASE_URL=postgresql://remote:secret@remote.example/db\\nR2_ACCESS_KEY_ID=key\\nR2_SECRET_ACCESS_KEY=secret\\nRESEND_API_KEY=\\nCASHFREE_APP_ID=test-app-id\\nCASHFREE_SECRET_KEY=test-cashfree-secret\\nGOOGLE_CLIENT_ID=test-google-client-id\\nGOOGLE_CLIENT_SECRET=test-google-secret\\n'}\n"
+            "if os.environ.get('MOCK_UNSUPPORTED_KEY'): data['backend.enc.env'] += 'UNAPPROVED_SECRET=do-not-leak\\n'\n"
             "sys.stdout.write(data[name])\n",
             encoding="utf-8",
         )
@@ -59,6 +60,32 @@ class DecryptSecretsDynamicTests(unittest.TestCase):
         compose_env = (dev_output / "compose.env").read_text()
         self.assertIn(f"SULOCRAFT_DEV_BACKEND_DIR={dev_output / 'backend'}", compose_env)
         self.assertIn(f"SULOCRAFT_BACKEND_DIR={dev_output / 'backend'}", compose_env)
+
+    def test_cashfree_sandbox_values_are_materialized_as_private_files(self):
+        output = self.root / "backend" / ".secrets" / "preprod"
+        result = self.run_helper("--env", "preprod", "--output-dir", str(output))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        backend = output / "backend"
+        expected = {
+            "cashfree_app_id": "test-app-id",
+            "cashfree_secret_key": "test-cashfree-secret",
+            "google_client_id": "test-google-client-id",
+            "google_client_secret": "test-google-secret",
+        }
+        for name, value in expected.items():
+            path = backend / name
+            self.assertEqual(path.read_text(), value)
+            self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+
+    def test_unapproved_secret_name_fails_without_echoing_value(self):
+        output = self.root / "backend" / ".secrets" / "preprod"
+        result = self.run_helper(
+            "--env", "preprod", "--output-dir", str(output),
+            env_vars={"MOCK_UNSUPPORTED_KEY": "1"},
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("unsupported setting name", result.stderr)
+        self.assertNotIn("do-not-leak", result.stderr)
 
     def test_dynamic_env_from_config_env_var(self):
         preprod_output = self.root / "backend" / ".secrets" / "preprod"

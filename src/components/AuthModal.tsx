@@ -3,8 +3,50 @@ import { useEffect, useState } from 'react';
 import { FacebookIcon, GoogleIcon } from './Icons';
 import { authApi, type User } from '../lib/api/auth';
 
+type GooglePromptNotification = {
+  isNotDisplayed?: () => boolean;
+  isSkippedMoment?: () => boolean;
+};
+
+type GoogleTokenResponse = {
+  access_token?: string;
+  error?: string;
+};
+
 type GoogleIdentityApi = {
-  accounts: { id: { initialize: (options: { client_id: string; callback: (response: { credential: string }) => void }) => void; prompt: () => void } };
+  accounts: {
+    id?: {
+      initialize: (options: { client_id: string; callback: (response: { credential: string }) => void }) => void;
+      prompt: (momentListener?: (notification: GooglePromptNotification) => void) => void;
+    };
+    oauth2?: {
+      initTokenClient: (options: {
+        client_id: string;
+        scope: string;
+        callback: (response: GoogleTokenResponse) => void;
+        error_callback?: (error: { type?: string; message?: string }) => void;
+      }) => { requestAccessToken: (overrideConfig?: { prompt?: string }) => void };
+    };
+  };
+};
+
+const ensureGoogleScript = (onLoad?: () => void, onError?: () => void) => {
+  if ((window as unknown as { google?: GoogleIdentityApi }).google) {
+    onLoad?.();
+    return;
+  }
+  const existing = document.querySelector<HTMLScriptElement>('script[src="https://accounts.google.com/gsi/client"]');
+  if (existing) {
+    if (onLoad) existing.addEventListener('load', onLoad, { once: true });
+    if (onError) existing.addEventListener('error', () => onError(), { once: true });
+    return;
+  }
+  const script = document.createElement('script');
+  script.src = 'https://accounts.google.com/gsi/client';
+  script.async = true;
+  if (onLoad) script.onload = onLoad;
+  if (onError) script.onerror = () => onError();
+  document.head.appendChild(script);
 };
 
 type FacebookSdkApi = {
@@ -18,8 +60,10 @@ export default function AuthModal({ open, onClose, onSignedIn, initialError = ''
   const [devMagicLink, setDevMagicLink] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-  const facebookAppId = import.meta.env.VITE_FACEBOOK_APP_ID;
+  const [runtimeGoogleClientId, setRuntimeGoogleClientId] = useState<string>('');
+  const [runtimeFacebookAppId, setRuntimeFacebookAppId] = useState<string>('');
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || runtimeGoogleClientId;
+  const facebookAppId = import.meta.env.VITE_FACEBOOK_APP_ID || runtimeFacebookAppId;
 
   useEffect(() => {
     if (open) {
@@ -27,8 +71,26 @@ export default function AuthModal({ open, onClose, onSignedIn, initialError = ''
       setSentEmail('');
       setDevMagicLink('');
       setError(initialError);
+      if (googleClientId) {
+        ensureGoogleScript();
+      } else {
+        authApi
+          .config()
+          .then((cfg) => {
+            if (cfg.googleClientId) {
+              setRuntimeGoogleClientId(cfg.googleClientId);
+              ensureGoogleScript();
+            }
+            if (cfg.facebookAppId) {
+              setRuntimeFacebookAppId(cfg.facebookAppId);
+            }
+          })
+          .catch(() => {
+            // Keep default unconfigured fallback if runtime config endpoint is unreachable.
+          });
+      }
     }
-  }, [initialError, open]);
+  }, [googleClientId, initialError, open]);
 
   if (!open) return null;
 
@@ -51,19 +113,46 @@ export default function AuthModal({ open, onClose, onSignedIn, initialError = ''
       setError('Google sign-in is not configured for this environment yet. Add VITE_GOOGLE_CLIENT_ID and register this site origin in Google Cloud.');
       return;
     }
+    setError('');
     const openPrompt = () => {
       const google = (window as unknown as { google?: GoogleIdentityApi }).google;
-      if (!google) return setError('Google sign-in could not load. Check your connection and try again.');
-      google.accounts.id.initialize({ client_id: googleClientId, callback: (response) => completeGoogleSignIn(response.credential) });
-      google.accounts.id.prompt();
+      if (!google?.accounts) return setError('Google sign-in could not load. Check your connection and try again.');
+      if (google.accounts.oauth2?.initTokenClient) {
+        const tokenClient = google.accounts.oauth2.initTokenClient({
+          client_id: googleClientId,
+          scope: 'openid email profile',
+          callback: (response) => {
+            if (response.access_token) {
+              void completeGoogleSignIn(response.access_token);
+            } else if (response.error) {
+              setError('Google sign-in was cancelled or could not be completed.');
+            }
+          },
+          error_callback: () => {
+            setError('Google sign-in was cancelled or could not be completed.');
+          },
+        });
+        tokenClient.requestAccessToken({ prompt: 'select_account' });
+        return;
+      }
+      if (google.accounts.id) {
+        google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: (response) => void completeGoogleSignIn(response.credential),
+        });
+        google.accounts.id.prompt((notification) => {
+          if (notification?.isNotDisplayed?.() || notification?.isSkippedMoment?.()) {
+            setError('Google sign-in prompt was suppressed by the browser. Please allow popups or third-party sign-in and try again.');
+          }
+        });
+        return;
+      }
+      setError('Google sign-in could not load. Check your connection and try again.');
     };
-    if ((window as unknown as { google?: GoogleIdentityApi }).google) return openPrompt();
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.onload = openPrompt;
-    script.onerror = () => setError('Google sign-in could not load. Check your connection and try again.');
-    document.head.appendChild(script);
+    ensureGoogleScript(
+      openPrompt,
+      () => setError('Google sign-in could not load. Check your connection and try again.'),
+    );
   };
 
   const completeFacebookSignIn = async (accessToken: string, userId?: string) => {

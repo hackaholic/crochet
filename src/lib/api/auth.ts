@@ -41,6 +41,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const authApi = {
+  config: () => request<{ googleClientId?: string | null; facebookAppId?: string | null }>('/config'),
   me: () => request<User>('/me'),
   startEmail: (email: string) =>
     request<{ message: string; devMagicLink?: string | null }>('/email/start', {

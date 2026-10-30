@@ -28,6 +28,7 @@ services:
       PUBLIC_API_URL: ${LOCAL_PUBLIC_API_URL:-http://localhost:8000}
       ADDITIONAL_CORS_ORIGINS: ${LOCAL_ADDITIONAL_CORS_ORIGINS:-http://localhost:8080,http://127.0.0.1:8080}
       IMAGE_BASE_URL: ${IMAGE_BASE_URL:-/static/images}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-${VITE_GOOGLE_CLIENT_ID:-}}
       PAYMENT_PROVIDER: mock
       SMS_PROVIDER: mock
       EMAIL_PROVIDER: mock

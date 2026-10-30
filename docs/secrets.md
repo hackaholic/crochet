@@ -28,9 +28,10 @@ For a single VPS, SOPS + age is sufficient; do not add HashiCorp Vault, Kubernet
 | `SESSION_SECRET` | Backend | Only if the actual auth design requires it | Only if required by the actual auth design |
 | `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | Backend image storage | Only for R2 upload tests | When R2 storage is enabled |
 | `RESEND_API_KEY` | Backend email | Optional; mock provider works locally | When Resend is enabled |
-| `GOOGLE_CLIENT_SECRET`, `FACEBOOK_APP_SECRET` | Backend OAuth | Optional if local flow does not need server-side exchange | If required by configured OAuth flow |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `FACEBOOK_APP_SECRET` | Backend OAuth | Optional if local flow does not need real OAuth | When Google/Facebook OAuth is enabled |
 | `FAST2SMS_API_KEY`, `TWILIO_AUTH_TOKEN` | Backend SMS | Optional; mock provider works locally | Only for selected provider |
 | `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` | Backend payments | Optional; mock payments work locally | When Razorpay is enabled |
+| `CASHFREE_APP_ID`, `CASHFREE_SECRET_KEY` | Backend Cashfree payments | Only for Cashfree sandbox | When Cashfree is selected; keep separate sandbox and production values |
 | `POSTGRES_BACKUP_*` / backup R2 credentials | Backup job | No | When remote backups are enabled; use credentials separate from product media |
 
 Public/non-secret configuration such as `APP_ENV`, `FRONTEND_URL`, `IMAGE_BASE_URL`, bucket names, sender labels, OAuth client IDs, and `VITE_API_BASE_URL` belongs in ordinary configuration. Never pass private values to Vite, frontend source, build arguments, or image layers.

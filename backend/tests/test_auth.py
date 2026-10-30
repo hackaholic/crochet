@@ -249,3 +249,93 @@ def test_account_unification_email_and_social():
     assert "google" in identities
     assert "facebook" in identities
     assert "email" in identities
+
+
+def test_auth_config_returns_client_id_without_exposing_secrets(monkeypatch):
+    """Verify GET /api/v1/auth/config returns googleClientId from settings and never leaks secrets."""
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "google_client_id", "sops-client-id.apps.googleusercontent.com")
+    monkeypatch.setattr(settings, "google_client_secret", "top-secret-google-secret")
+
+    res = client.get("/api/v1/auth/config")
+    assert res.status_code == 200
+    body = res.json()
+    assert body["googleClientId"] == "sops-client-id.apps.googleusercontent.com"
+    assert "googleClientSecret" not in body
+    assert "top-secret-google-secret" not in res.text
+
+
+def test_verify_google_credential_oauth_access_token_and_security_guards(monkeypatch):
+    """Verify _verify_google_credential validates OAuth2 access tokens, audience, email_verified, and fails closed."""
+    from fastapi import HTTPException
+    from app.api.v1 import auth as auth_module
+    from app.core.config import settings
+
+    monkeypatch.setenv("TESTING", "false")
+    monkeypatch.setattr(settings, "google_client_id", "expected-client.apps.googleusercontent.com")
+    monkeypatch.setattr(settings, "app_env", "preprod")
+
+    class DummyResponse:
+        def __init__(self, status_code: int, payload: dict):
+            self.status_code = status_code
+            self._payload = payload
+
+        def json(self) -> dict:
+            return self._payload
+
+    # 1. Valid OAuth2 access token
+    class ValidClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def get(self, url: str, **kwargs):
+            if "tokeninfo" in url:
+                return DummyResponse(200, {"aud": "expected-client.apps.googleusercontent.com"})
+            return DummyResponse(
+                200,
+                {
+                    "sub": "google_oauth_sub_42",
+                    "email": "verified.user@gmail.com",
+                    "email_verified": True,
+                    "name": "Verified User",
+                },
+            )
+
+    monkeypatch.setattr(auth_module.httpx, "Client", ValidClient)
+    sub, email, name = auth_module._verify_google_credential("ya29.valid_access_token")
+    assert sub == "google_oauth_sub_42"
+    assert email == "verified.user@gmail.com"
+    assert name == "Verified User"
+
+    # 2. Audience mismatch rejected with 401
+    class WrongAudClient(ValidClient):
+        def get(self, url: str, **kwargs):
+            return DummyResponse(200, {"aud": "wrong-client.apps.googleusercontent.com"})
+
+    monkeypatch.setattr(auth_module.httpx, "Client", WrongAudClient)
+    with pytest.raises(HTTPException) as exc_info:
+        auth_module._verify_google_credential("ya29.wrong_aud_token")
+    assert exc_info.value.status_code == 401
+    assert "audience" in exc_info.value.detail.lower()
+
+    # 3. Unverified email rejected with 400
+    class UnverifiedEmailClient(ValidClient):
+        def get(self, url: str, **kwargs):
+            if "tokeninfo" in url:
+                return DummyResponse(200, {"aud": "expected-client.apps.googleusercontent.com"})
+            return DummyResponse(
+                200,
+                {"sub": "sub_1", "email": "unverified@gmail.com", "email_verified": False},
+            )
+
+    monkeypatch.setattr(auth_module.httpx, "Client", UnverifiedEmailClient)
+    with pytest.raises(HTTPException) as exc_info2:
+        auth_module._verify_google_credential("ya29.unverified_email_token")
+    assert exc_info2.value.status_code == 400

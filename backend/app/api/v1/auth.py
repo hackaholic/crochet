@@ -26,6 +26,15 @@ from app.services.notification.service import dispatch_magic_link_background, di
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+
+@router.get("/config")
+def get_auth_config() -> dict[str, str | None]:
+    """Return non-secret OAuth client identifiers for runtime frontend initialization."""
+    return {
+        "googleClientId": settings.google_client_id or None,
+        "facebookAppId": settings.facebook_app_id or None,
+    }
+
 SESSION_COOKIE_NAME = "session_token"
 SESSION_MAX_AGE = 30 * 24 * 3600  # 30 days
 MAGIC_LINK_EXPIRY_MINUTES = 15
@@ -410,13 +419,21 @@ def _verify_google_credential(
     fallback_email: str | None = None,
     fallback_name: str | None = None,
 ) -> tuple[str, str | None, str | None]:
-    """Verify Google ID token or fallback to provided claims in dev/mock mode."""
+    """Verify Google ID token or OAuth2 access token, or fallback in dev/mock mode."""
     is_test = os.getenv("TESTING", "false").lower() == "true" or credential.startswith("mock_")
-    if not is_test and settings.google_client_id and "." in credential:
+    if not is_test and settings.google_client_id and credential:
         try:
             with httpx.Client(timeout=5.0) as client:
-                r = client.get(f"https://oauth2.googleapis.com/tokeninfo?id_token={credential}")
-                if r.status_code == 200:
+                if credential.count(".") == 2:
+                    r = client.get(
+                        "https://oauth2.googleapis.com/tokeninfo",
+                        params={"id_token": credential},
+                    )
+                    if r.status_code != 200:
+                        raise HTTPException(
+                            status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="Invalid or expired Google ID token.",
+                        )
                     info = r.json()
                     aud = info.get("aud")
                     if aud != settings.google_client_id:
@@ -425,7 +442,9 @@ def _verify_google_credential(
                             detail="Invalid Google token audience.",
                         )
                     email_verified = info.get("email_verified")
-                    if email_verified is not None and not (email_verified is True or str(email_verified).lower() in ("true", "1")):
+                    if email_verified is not None and not (
+                        email_verified is True or str(email_verified).lower() in ("true", "1")
+                    ):
                         raise HTTPException(
                             status_code=status.HTTP_400_BAD_REQUEST,
                             detail="Google account email is not verified.",
@@ -436,16 +455,55 @@ def _verify_google_credential(
                         info.get("name", fallback_name or "Google User"),
                     )
                 else:
-                    raise HTTPException(
-                        status_code=status.HTTP_401_UNAUTHORIZED,
-                        detail="Invalid or expired Google ID token.",
+                    ti = client.get(
+                        "https://oauth2.googleapis.com/tokeninfo",
+                        params={"access_token": credential},
+                    )
+                    if ti.status_code != 200:
+                        raise HTTPException(
+                            status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="Invalid or expired Google access token.",
+                        )
+                    token_info = ti.json()
+                    aud = token_info.get("aud") or token_info.get("azp")
+                    if aud != settings.google_client_id:
+                        raise HTTPException(
+                            status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="Invalid Google token audience.",
+                        )
+                    ui = client.get(
+                        "https://www.googleapis.com/oauth2/v3/userinfo",
+                        headers={"Authorization": f"Bearer {credential}"},
+                    )
+                    if ui.status_code != 200:
+                        raise HTTPException(
+                            status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="Could not fetch Google user profile.",
+                        )
+                    profile = ui.json()
+                    email_verified = profile.get("email_verified", token_info.get("email_verified"))
+                    if email_verified is not None and not (
+                        email_verified is True or str(email_verified).lower() in ("true", "1")
+                    ):
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Google account email is not verified.",
+                        )
+                    return (
+                        profile.get("sub") or token_info.get("sub") or fallback_sub or secrets.token_hex(8),
+                        profile.get("email") or token_info.get("email") or fallback_email,
+                        profile.get("name") or fallback_name or "Google User",
                     )
         except HTTPException:
             raise
-        except Exception:
-            pass
+        except Exception as exc:
+            if not is_test:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Google authentication token could not be verified.",
+                ) from exc
 
-    if settings.app_env == "production":
+    if settings.app_env in ("production", "staging", "preprod"):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Google authentication token could not be verified in production.",

@@ -98,7 +98,7 @@ class Settings:
     media_manifest_path: str | None = os.getenv("MEDIA_MANIFEST_PATH")
 
     # Auth Providers
-    google_client_id: str | None = os.getenv("GOOGLE_CLIENT_ID")
+    google_client_id: str | None = config_value("GOOGLE_CLIENT_ID")
     google_client_secret: str | None = config_value("GOOGLE_CLIENT_SECRET")
     facebook_app_secret: str | None = config_value("FACEBOOK_APP_SECRET")
     facebook_app_id: str | None = os.getenv("FACEBOOK_APP_ID")
@@ -149,6 +149,10 @@ class Settings:
     razorpay_key_id: str | None = os.getenv("RAZORPAY_KEY_ID")
     razorpay_key_secret: str | None = config_value("RAZORPAY_KEY_SECRET")
     razorpay_webhook_secret: str | None = config_value("RAZORPAY_WEBHOOK_SECRET")
+    cashfree_environment: str | None = os.getenv("CASHFREE_ENVIRONMENT")
+    cashfree_app_id: str | None = config_value("CASHFREE_APP_ID")
+    cashfree_secret_key: str | None = config_value("CASHFREE_SECRET_KEY")
+    cashfree_api_version: str = os.getenv("CASHFREE_API_VERSION", "2023-08-01")
 
     @property
     def cors_origins(self) -> list[str]:

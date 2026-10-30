@@ -22,7 +22,9 @@ describe('AuthModal', () => {
     expect(screen.getByRole('button', { name: /continue with email/i })).toBeEnabled();
   });
 
-  it('does not silently replace real social login with mock identities', () => {
+  it('does not silently replace real social login with mock identities when client IDs are blank', () => {
+    vi.stubEnv('VITE_GOOGLE_CLIENT_ID', '');
+    vi.stubEnv('VITE_FACEBOOK_APP_ID', '');
     render(<AuthModal open onClose={vi.fn()} onSignedIn={vi.fn()} />);
 
     fireEvent.click(screen.getByRole('button', { name: /continue with google/i }));
@@ -30,6 +32,83 @@ describe('AuthModal', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /continue with facebook/i }));
     expect(screen.getByText(/facebook sign-in is not configured/i)).toBeInTheDocument();
+  });
+
+  it('opens the Google account chooser popup via oauth2.initTokenClient when VITE_GOOGLE_CLIENT_ID is configured', async () => {
+    vi.stubEnv('VITE_GOOGLE_CLIENT_ID', 'test-google-client-id.apps.googleusercontent.com');
+    const requestAccessToken = vi.fn();
+    const initTokenClient = vi.fn().mockImplementation(({ callback }) => ({
+      requestAccessToken: (opts?: { prompt?: string }) => {
+        requestAccessToken(opts);
+        callback({ access_token: 'google-oauth-access-token' });
+      },
+    }));
+    vi.stubGlobal('google', {
+      accounts: {
+        oauth2: { initTokenClient },
+      },
+    });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        user: { id: 7, email: 'googleuser@example.com', fullName: 'Google User', role: 'CUSTOMER', identities: ['google'] },
+        cartMerged: false,
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const onSignedIn = vi.fn();
+    const onClose = vi.fn();
+
+    render(<AuthModal open onClose={onClose} onSignedIn={onSignedIn} />);
+    fireEvent.click(screen.getByRole('button', { name: /continue with google/i }));
+
+    expect(initTokenClient).toHaveBeenCalledWith(
+      expect.objectContaining({
+        client_id: 'test-google-client-id.apps.googleusercontent.com',
+        scope: 'openid email profile',
+      }),
+    );
+    expect(requestAccessToken).toHaveBeenCalledWith({ prompt: 'select_account' });
+    await waitFor(() => expect(onSignedIn).toHaveBeenCalledWith(expect.objectContaining({ email: 'googleuser@example.com' })));
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('resolves googleClientId at runtime from /api/v1/auth/config when build-time env is empty', async () => {
+    vi.stubEnv('VITE_GOOGLE_CLIENT_ID', '');
+    const requestAccessToken = vi.fn();
+    const initTokenClient = vi.fn().mockImplementation(() => ({
+      requestAccessToken,
+    }));
+    vi.stubGlobal('google', {
+      accounts: {
+        oauth2: { initTokenClient },
+      },
+    });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        googleClientId: 'sops-runtime-client-id.apps.googleusercontent.com',
+        facebookAppId: null,
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<AuthModal open onClose={vi.fn()} onSignedIn={vi.fn()} />);
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringMatching(/\/auth\/config$/),
+        expect.any(Object),
+      ),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /continue with google/i }));
+
+    expect(initTokenClient).toHaveBeenCalledWith(
+      expect.objectContaining({
+        client_id: 'sops-runtime-client-id.apps.googleusercontent.com',
+      }),
+    );
+    expect(requestAccessToken).toHaveBeenCalledWith({ prompt: 'select_account' });
   });
 
   it('starts email magic-link login and shows the generic confirmation state', async () => {
