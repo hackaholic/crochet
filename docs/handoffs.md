@@ -7,7 +7,6 @@ This is a **global link registry only**. Contracts, owners, live status, blocker
 | 003 — SOPS/age secret vault | 3.13 isolated backend test database returned; 3.14 environment-configurable deployment returned; 3.9 local Docker verified | All Gemini vault tasks completed; full test suite passing in isolated container (173/173 tests); preprod database protected | [coordination](../work/work-003-vault/coordination.md) |
 
 | 016 — Product taxonomy audit | [16.1 inventory/classification](../work/work-016-product-taxonomy-audit/tasks/task-001-taxonomy-inventory-audit.md) | Gemini; ready for pickup | [coordination](../work/work-016-product-taxonomy-audit/coordination.md) |
-| 007 — Cashfree sandbox E2E | [7.2.4.1 preprod runtime wiring](../work/work-007-e2e-qa/tasks/task-017-cashfree-preprod-runtime-wiring.md) returned; [7.2.4.3 dev Sandbox E2E](../work/work-007-e2e-qa/tasks/task-019-cashfree-dev-sandbox-e2e.md) ready | Gemini completed 7.2.4.1; Codex + Gemini ready for 7.2.4.3 | [coordination](../work/work-007-e2e-qa/coordination.md) |
 
 
 Only list a handoff here when the work folder has a specific cross-agent task ready or active. Update this registry when its linked work-local coordination changes. Completed handoff history is preserved in [the archived handoff log](archive/handoffs-history.md).

@@ -4,12 +4,12 @@ import CheckoutPage from './CheckoutPage';
 import { getProductDiscovery } from '../lib/api/productDiscovery';
 import { createOrder } from '../lib/api/orders';
 import { accountProfileApi } from '../lib/api/account';
-import { createPaymentIntent, verifyCashfreePayment, verifyMockPayment } from '../lib/api/payments';
+import { createPaymentIntent, getGuestPaymentCapability, rememberGuestPaymentCapability, retryCashfreePayment, verifyCashfreePayment, verifyMockPayment } from '../lib/api/payments';
 import { openCashfreeCheckout } from '../lib/payment/cashfreeCheckout';
 vi.mock('../lib/api/productDiscovery', () => ({ getProductDiscovery: vi.fn() }));
 vi.mock('../lib/api/orders', () => ({ createOrder: vi.fn() }));
 vi.mock('../lib/api/account', () => ({ accountProfileApi: { overview: vi.fn() } }));
-vi.mock('../lib/api/payments', () => ({ createPaymentIntent: vi.fn(), verifyMockPayment: vi.fn(), verifyCashfreePayment: vi.fn() }));
+vi.mock('../lib/api/payments', () => ({ createPaymentIntent: vi.fn(), getGuestPaymentCapability: vi.fn(), rememberGuestPaymentCapability: vi.fn(), retryCashfreePayment: vi.fn(), forgetGuestPaymentCapability: vi.fn(), verifyMockPayment: vi.fn(), verifyCashfreePayment: vi.fn() }));
 vi.mock('../lib/payment/cashfreeCheckout', () => ({ openCashfreeCheckout: vi.fn() }));
 const rose = {id:1, name:'Crochet Rose Bouquet', slug:'rose', image:'/rose.webp', price:1299, category:'Flowers', rating:0, reviews:0};
 const bunny = {...rose,id:2,name:'<Bunny>',slug:'bunny',price:799};
@@ -45,11 +45,43 @@ it('hands a Cashfree intent to hosted checkout and never uses mock verification'
   expect(verifyMockPayment).not.toHaveBeenCalled();
 });
 
+it('retains the guest order capability and sends it only in the payment-intent body', async () => {
+  vi.mocked(createOrder).mockResolvedValue({id:17,orderNumber:'CB-20261031-AB12',guestTrackingToken:'guest-capability',status:'PENDING_PAYMENT',paymentStatus:'PENDING',paymentMethod:'UPI',totalAmount:898,totalAmountPaise:89800});
+  vi.mocked(createPaymentIntent).mockResolvedValue({paymentId:19,orderId:17,orderNumber:'CB-20261031-AB12',provider:'cashfree',providerOrderId:'cf-19',paymentSessionId:'session',environment:'sandbox',amount:898,amountPaise:89800,currency:'INR'});
+  render(<CheckoutPage {...props()} items={[{product:bunny,quantity:1}]}/>);
+  completeCheckoutForm();
+  await waitFor(() => expect(openCashfreeCheckout).toHaveBeenCalled());
+  expect(rememberGuestPaymentCapability).toHaveBeenCalledWith('CB-20261031-AB12','guest-capability');
+  expect(createPaymentIntent).toHaveBeenCalledWith('CB-20261031-AB12','guest-capability');
+});
+
+it('offers secure same-order retry after server-confirmed failure without creating another order', async () => {
+  window.history.replaceState(null, '', '/checkout?paymentId=9&cfOrderId=cf-9');
+  vi.mocked(verifyCashfreePayment).mockResolvedValue({id:9,orderId:7,orderNumber:'CB-20261031-AB12',provider:'cashfree',providerOrderId:'cf-9',amount:898,amountPaise:89800,currency:'INR',status:'FAILED',verificationState:'FAILED',canRetry:true});
+  vi.mocked(getGuestPaymentCapability).mockReturnValue('guest-capability');
+  vi.mocked(retryCashfreePayment).mockResolvedValue({paymentId:10,orderId:7,orderNumber:'CB-20261031-AB12',provider:'cashfree',providerOrderId:'cf-10',paymentSessionId:'new-session',environment:'sandbox',amount:898,amountPaise:89800,currency:'INR'});
+  render(<CheckoutPage {...props()} items={[]}/>);
+  expect(await screen.findByRole('alert')).toHaveTextContent('Your payment was not completed');
+  fireEvent.click(await screen.findByRole('button',{name:'Retry payment'}));
+  await waitFor(() => expect(retryCashfreePayment).toHaveBeenCalledWith(9,'guest-capability'));
+  expect(openCashfreeCheckout).toHaveBeenCalledWith(expect.objectContaining({paymentId:10,orderNumber:'CB-20261031-AB12'}));
+  expect(createOrder).not.toHaveBeenCalled();
+});
+
+it('keeps pending payment state distinct and enables retry only when the server allows it', async () => {
+  window.history.replaceState(null, '', '/checkout?paymentId=9&cfOrderId=cf-9');
+  vi.mocked(verifyCashfreePayment).mockResolvedValue({id:9,orderId:7,orderNumber:'CB-20261031-AB12',provider:'cashfree',providerOrderId:'cf-9',amount:898,amountPaise:89800,currency:'INR',status:'PENDING',verificationState:'PENDING',canRetry:false});
+  render(<CheckoutPage {...props()} items={[]}/>);
+  expect(await screen.findByRole('alert')).toHaveTextContent('still being confirmed');
+  expect(screen.queryByRole('button',{name:'Retry payment'})).not.toBeInTheDocument();
+  expect(createOrder).not.toHaveBeenCalled();
+});
+
 it('does not trust redirect query text as payment proof and offers server verification retry', async () => {
   window.history.replaceState(null, '', '/checkout?paymentId=9&cfOrderId=cf-7&orderNumber=FAKE&payment_status=PAID');
   vi.mocked(verifyCashfreePayment).mockResolvedValue({id:9,orderId:7,orderNumber:'SLC-TEST-7',provider:'cashfree',providerOrderId:'cf-7',amount:1378,amountPaise:137800,currency:'INR',status:'PENDING'});
   render(<CheckoutPage {...props()}/>);
-  expect(await screen.findByRole('alert')).toHaveTextContent('Cashfree has not confirmed this payment yet');
+  expect(await screen.findByRole('alert')).toHaveTextContent('Your payment is still being confirmed');
   expect(screen.queryByText('Payment Confirmed!')).not.toBeInTheDocument();
   expect(verifyCashfreePayment).toHaveBeenCalledWith(9,'cf-7');
   expect(window.location.search).toContain('payment_status=PAID');

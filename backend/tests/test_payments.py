@@ -1504,11 +1504,19 @@ def test_7_2_4_1_tc07_guest_payment_verification_isolation():
          patch("app.services.payment.cashfree.httpx.Client", return_value=mock_ctx):
         intent_1 = anon_client.post(
             "/api/v1/payments/intent",
-            json={"orderNumber": guest_order_1["orderNumber"], "provider": "cashfree"},
+            json={
+                "orderNumber": guest_order_1["orderNumber"],
+                "provider": "cashfree",
+                "guestOrderToken": guest_order_1["guestTrackingToken"],
+            },
         ).json()
         intent_2 = anon_client.post(
             "/api/v1/payments/intent",
-            json={"orderNumber": guest_order_2["orderNumber"], "provider": "cashfree"},
+            json={
+                "orderNumber": guest_order_2["orderNumber"],
+                "provider": "cashfree",
+                "guestOrderToken": guest_order_2["guestTrackingToken"],
+            },
         ).json()
 
         pay_1_id = intent_1["paymentId"]
@@ -1777,3 +1785,589 @@ def test_7_2_4_3_tc04_order_customer_amount_currency_binding():
         # Order A remains unpaid
         order_state = client.get(f"/api/v1/orders/{order_a['id']}", cookies=cookies_a).json()
         assert order_state["paymentStatus"] != "PAID"
+
+
+def _mock_cashfree_client_context(order_amount_inr: float):
+    """Build a reusable mocked httpx.Client context for Cashfree tests."""
+    mock_http_client = MagicMock()
+    mock_ctx = MagicMock()
+    mock_ctx.__enter__.return_value = mock_http_client
+    mock_ctx.__exit__.return_value = None
+
+    def mock_post(url, *, headers=None, json=None):
+        return httpx.Response(
+            200,
+            json={
+                "order_id": json["order_id"],
+                "order_amount": json["order_amount"],
+                "order_currency": json.get("order_currency", "INR"),
+                "order_status": "ACTIVE",
+                "payment_session_id": f"sess_{json['order_id']}",
+            },
+            request=httpx.Request("POST", url),
+        )
+
+    mock_http_client.post.side_effect = mock_post
+    return mock_ctx, mock_http_client
+
+
+def test_7_2_4_5_tc01_retry_same_unpaid_order_after_failed_attempt():
+    """7.2.4.5-TC01: Owner guest or authenticated customer can retry a Cashfree failed attempt on the same order."""
+    from app.db.session import SessionLocal
+    from app.models.order import Order
+
+    cookies = _login_test_user("9999977051")
+    auth_order = _create_test_order(cookies, payment_method="UPI")
+    guest_order = _create_guest_order("retry.guest.tc01@example.com")
+    amount_inr = round(auth_order["totalAmountPaise"] / 100.0, 2)
+
+    mock_ctx, mock_http_client = _mock_cashfree_client_context(amount_inr)
+
+    def get_failed_attempt(url, *, headers=None):
+        if url.endswith("/payments"):
+            cf_id = url.rsplit("/", 2)[-2]
+            return httpx.Response(
+                200,
+                json=[
+                    {
+                        "order_id": cf_id,
+                        "cf_payment_id": f"cf_fail_{cf_id}",
+                        "payment_status": "FAILED",
+                        "payment_amount": amount_inr,
+                        "payment_currency": "INR",
+                        "payment_message": "Transaction declined by simulator",
+                    }
+                ],
+                request=httpx.Request("GET", url),
+            )
+        cf_id = url.rsplit("/", 1)[-1]
+        return httpx.Response(
+            200,
+            json={
+                "order_id": cf_id,
+                "order_status": "ACTIVE",
+                "order_amount": amount_inr,
+                "order_currency": "INR",
+            },
+            request=httpx.Request("GET", url),
+        )
+
+    mock_http_client.get.side_effect = get_failed_attempt
+
+    with patch.object(settings, "cashfree_environment", "sandbox"), \
+         patch.object(settings, "cashfree_app_id", "CF_ID"), \
+         patch.object(settings, "cashfree_secret_key", "CF_SEC"), \
+         patch("app.services.payment.cashfree.httpx.Client", return_value=mock_ctx):
+        # 1. Authenticated customer initial attempt fails -> retry creates new attempt for same order
+        intent_1 = client.post(
+            "/api/v1/payments/intent",
+            json={"orderNumber": auth_order["orderNumber"], "provider": "cashfree"},
+            cookies=cookies,
+        ).json()
+        v1 = client.post(
+            "/api/v1/payments/verify",
+            json={"paymentId": intent_1["paymentId"], "providerOrderId": intent_1["providerOrderId"]},
+            cookies=cookies,
+        )
+        assert v1.status_code == 400
+        assert v1.json()["status"] == "FAILED"
+        assert v1.json()["canRetry"] is True
+
+        retry_res = client.post(
+            f"/api/v1/payments/{intent_1['paymentId']}/retry",
+            json={"provider": "cashfree"},
+            cookies=cookies,
+        )
+        assert retry_res.status_code == 201
+        intent_2 = retry_res.json()
+        assert intent_2["paymentId"] != intent_1["paymentId"]
+        assert intent_2["orderId"] == auth_order["id"]
+        assert intent_2["orderNumber"] == auth_order["orderNumber"]
+        assert intent_2["amount"] == auth_order["totalAmount"]
+        assert intent_2["amountPaise"] == auth_order["totalAmountPaise"]
+        assert intent_2["providerOrderId"] != intent_1["providerOrderId"]
+
+        # Existing order remains unpaid until server confirms success
+        ord_check = client.get(f"/api/v1/orders/{auth_order['id']}", cookies=cookies).json()
+        assert ord_check["paymentStatus"] == "PENDING"
+        assert ord_check["status"] == "PENDING_PAYMENT"
+
+        # 2. Guest owner initial attempt fails -> retry with valid guestOrderToken references same guest order
+        anon_client = TestClient(app)
+        g_intent_1 = anon_client.post(
+            "/api/v1/payments/intent",
+            json={
+                "orderNumber": guest_order["orderNumber"],
+                "provider": "cashfree",
+                "guestOrderToken": guest_order["guestTrackingToken"],
+            },
+        ).json()
+        gv1 = anon_client.post(
+            "/api/v1/payments/verify",
+            json={"paymentId": g_intent_1["paymentId"], "providerOrderId": g_intent_1["providerOrderId"]},
+        )
+        assert gv1.status_code == 400
+        assert gv1.json()["status"] == "FAILED"
+        assert gv1.json()["canRetry"] is True
+
+        g_retry = anon_client.post(
+            "/api/v1/payments/intent",
+            json={
+                "orderNumber": guest_order["orderNumber"],
+                "provider": "cashfree",
+                "guestOrderToken": guest_order["guestTrackingToken"],
+            },
+        )
+        assert g_retry.status_code == 201
+        g_intent_2 = g_retry.json()
+        assert g_intent_2["paymentId"] != g_intent_1["paymentId"]
+        assert g_intent_2["orderId"] == guest_order["id"]
+        assert g_intent_2["orderNumber"] == guest_order["orderNumber"]
+        assert g_intent_2["amountPaise"] == guest_order["totalAmountPaise"]
+
+        # Confirm no duplicate Order rows were created for either customer
+        with SessionLocal() as db:
+            assert db.query(Order).filter(Order.order_number == auth_order["orderNumber"]).count() == 1
+            assert db.query(Order).filter(Order.order_number == guest_order["orderNumber"]).count() == 1
+
+
+def test_7_2_4_5_tc02_pending_attempt_truth_and_safe_retry_policy():
+    """7.2.4.5-TC02: Pending attempt is not reported as final failure/success; retry follows safe policy."""
+    cookies = _login_test_user("9999977052")
+    order = _create_test_order(cookies, payment_method="UPI")
+    amount_inr = round(order["totalAmountPaise"] / 100.0, 2)
+
+    mock_ctx, mock_http_client = _mock_cashfree_client_context(amount_inr)
+
+    def get_pending_attempt(url, *, headers=None):
+        if url.endswith("/payments"):
+            cf_id = url.rsplit("/", 2)[-2]
+            return httpx.Response(
+                200,
+                json=[
+                    {
+                        "order_id": cf_id,
+                        "cf_payment_id": f"cf_pend_{cf_id}",
+                        "payment_status": "PENDING",
+                        "payment_amount": amount_inr,
+                        "payment_currency": "INR",
+                    }
+                ],
+                request=httpx.Request("GET", url),
+            )
+        cf_id = url.rsplit("/", 1)[-1]
+        return httpx.Response(
+            200,
+            json={
+                "order_id": cf_id,
+                "order_status": "ACTIVE",
+                "order_amount": amount_inr,
+                "order_currency": "INR",
+            },
+            request=httpx.Request("GET", url),
+        )
+
+    mock_http_client.get.side_effect = get_pending_attempt
+
+    with patch.object(settings, "cashfree_environment", "sandbox"), \
+         patch.object(settings, "cashfree_app_id", "CF_ID"), \
+         patch.object(settings, "cashfree_secret_key", "CF_SEC"), \
+         patch("app.services.payment.cashfree.httpx.Client", return_value=mock_ctx):
+        intent_1 = client.post(
+            "/api/v1/payments/intent",
+            json={"orderNumber": order["orderNumber"], "provider": "cashfree"},
+            cookies=cookies,
+        ).json()
+
+        # 1. Verify while Cashfree attempt is PENDING -> preserves PENDING truth, neither FAILED nor SUCCESS
+        v_pend = client.post(
+            "/api/v1/payments/verify",
+            json={"paymentId": intent_1["paymentId"], "providerOrderId": intent_1["providerOrderId"]},
+            cookies=cookies,
+        )
+        assert v_pend.status_code == 400
+        v_body = v_pend.json()
+        assert v_body["status"] == "PENDING"
+        assert v_body["verificationState"] == "PENDING"
+        assert v_body["canRetry"] is True
+        assert v_body["orderPaymentStatus"] == "PENDING"
+
+        # 2. Retry while prior attempt is still unpaid at gateway -> creates new attempt and supersedes prior PENDING row
+        retry_res = client.post(
+            f"/api/v1/payments/{intent_1['paymentId']}/retry",
+            cookies=cookies,
+        )
+        assert retry_res.status_code == 201
+        intent_2 = retry_res.json()
+        assert intent_2["paymentId"] != intent_1["paymentId"]
+        assert intent_2["orderId"] == order["id"]
+
+        old_payment = client.get(f"/api/v1/payments/{intent_1['paymentId']}", cookies=cookies).json()
+        assert old_payment["status"] == "FAILED"
+        assert "Superseded" in (old_payment.get("errorMessage") or "")
+
+        # 3. Safe policy when prior PENDING attempt actually succeeded on gateway before retry is requested:
+        #    reconciles order as PAID and blocks creating a duplicate Cashfree order
+        def get_paid_attempt(url, *, headers=None):
+            if url.endswith("/payments"):
+                cf_id = url.rsplit("/", 2)[-2]
+                return httpx.Response(
+                    200,
+                    json=[
+                        {
+                            "order_id": cf_id,
+                            "cf_payment_id": "cf_paid_late_01",
+                            "payment_status": "SUCCESS",
+                            "payment_amount": amount_inr,
+                            "payment_currency": "INR",
+                            "payment_group": "upi",
+                        }
+                    ],
+                    request=httpx.Request("GET", url),
+                )
+            cf_id = url.rsplit("/", 1)[-1]
+            return httpx.Response(
+                200,
+                json={
+                    "order_id": cf_id,
+                    "order_status": "PAID",
+                    "order_amount": amount_inr,
+                    "order_currency": "INR",
+                },
+                request=httpx.Request("GET", url),
+            )
+
+        mock_http_client.get.side_effect = get_paid_attempt
+        mock_http_client.post.reset_mock()
+
+        blocked_retry = client.post(
+            f"/api/v1/payments/{intent_2['paymentId']}/retry",
+            cookies=cookies,
+        )
+        assert blocked_retry.status_code == 400
+        assert "already been paid" in blocked_retry.json()["detail"].lower()
+        assert mock_http_client.post.call_count == 0
+
+        ord_final = client.get(f"/api/v1/orders/{order['id']}", cookies=cookies).json()
+        assert ord_final["paymentStatus"] == "PAID"
+        assert ord_final["status"] == "CONFIRMED"
+
+
+def test_7_2_4_5_tc03_guest_retry_requires_correct_order_capability():
+    """7.2.4.5-TC03: Omit, tamper, query-param, or foreign guest token is denied with 404 and zero side effects."""
+    from app.db.session import SessionLocal
+
+    guest_order_1 = _create_guest_order("guest.tc03.one@example.com")
+    guest_order_2 = _create_guest_order("guest.tc03.two@example.com")
+    amount_inr = round(guest_order_1["totalAmountPaise"] / 100.0, 2)
+
+    mock_ctx, mock_http_client = _mock_cashfree_client_context(amount_inr)
+    anon_client = TestClient(app)
+
+    with patch.object(settings, "cashfree_environment", "sandbox"), \
+         patch.object(settings, "cashfree_app_id", "CF_ID"), \
+         patch.object(settings, "cashfree_secret_key", "CF_SEC"), \
+         patch("app.services.payment.cashfree.httpx.Client", return_value=mock_ctx):
+        # Create initial attempt with valid owner token
+        initial = anon_client.post(
+            "/api/v1/payments/intent",
+            json={
+                "orderNumber": guest_order_1["orderNumber"],
+                "provider": "cashfree",
+                "guestOrderToken": guest_order_1["guestTrackingToken"],
+            },
+        )
+        assert initial.status_code == 201
+        pay_1_id = initial.json()["paymentId"]
+
+        mock_http_client.post.reset_mock()
+        with SessionLocal() as db:
+            before_count = db.query(Payment).filter(Payment.order_id == guest_order_1["id"]).count()
+
+        # 1. Omit token on /payments/intent and /payments/{id}/retry -> 404
+        r_omit_1 = anon_client.post(
+            "/api/v1/payments/intent",
+            json={"orderNumber": guest_order_1["orderNumber"], "provider": "cashfree"},
+        )
+        assert r_omit_1.status_code == 404
+        r_omit_2 = anon_client.post(f"/api/v1/payments/{pay_1_id}/retry", json={"provider": "cashfree"})
+        assert r_omit_2.status_code == 404
+
+        # 2. Tamper token -> 404
+        r_tamper = anon_client.post(
+            "/api/v1/payments/intent",
+            json={
+                "orderNumber": guest_order_1["orderNumber"],
+                "provider": "cashfree",
+                "guestOrderToken": guest_order_1["guestTrackingToken"][:-4] + "XXXX",
+            },
+        )
+        assert r_tamper.status_code == 404
+
+        # 3. Foreign token from guest_order_2 -> 404
+        r_foreign_1 = anon_client.post(
+            "/api/v1/payments/intent",
+            json={
+                "orderNumber": guest_order_1["orderNumber"],
+                "provider": "cashfree",
+                "guestOrderToken": guest_order_2["guestTrackingToken"],
+            },
+        )
+        assert r_foreign_1.status_code == 404
+        r_foreign_2 = anon_client.post(
+            f"/api/v1/payments/{pay_1_id}/retry",
+            headers={"X-Guest-Order-Token": guest_order_2["guestTrackingToken"]},
+        )
+        assert r_foreign_2.status_code == 404
+
+        # 4. Token in URL query parameter (even if valid) -> 404
+        r_query_tok = anon_client.post(
+            f"/api/v1/payments/intent?guestOrderToken={guest_order_1['guestTrackingToken']}",
+            json={"orderNumber": guest_order_1["orderNumber"], "provider": "cashfree"},
+        )
+        assert r_query_tok.status_code == 404
+
+        # Verify zero provider calls and zero payment/order mutations across all invalid attempts
+        assert mock_http_client.post.call_count == 0
+        with SessionLocal() as db:
+            after_count = db.query(Payment).filter(Payment.order_id == guest_order_1["id"]).count()
+            assert after_count == before_count
+            pay_row = db.query(Payment).filter(Payment.id == pay_1_id).first()
+            assert pay_row.status == "PENDING"
+
+        # 5. Valid owner capability via X-Guest-Order-Token header permits retry
+        r_valid_retry = anon_client.post(
+            f"/api/v1/payments/{pay_1_id}/retry",
+            headers={"X-Guest-Order-Token": guest_order_1["guestTrackingToken"]},
+        )
+        assert r_valid_retry.status_code == 201
+        assert r_valid_retry.json()["orderId"] == guest_order_1["id"]
+        assert r_valid_retry.json()["paymentId"] != pay_1_id
+        assert mock_http_client.post.call_count == 1
+
+
+def test_7_2_4_5_tc04_authenticated_retry_is_owner_only():
+    """7.2.4.5-TC04: Another authenticated user or anonymous caller cannot retry an authenticated order."""
+    from app.db.session import SessionLocal
+
+    owner_cookies = _login_test_user("9999977054")
+    other_cookies = _login_test_user("9999977055")
+    order = _create_test_order(owner_cookies, payment_method="UPI")
+    amount_inr = round(order["totalAmountPaise"] / 100.0, 2)
+
+    mock_ctx, mock_http_client = _mock_cashfree_client_context(amount_inr)
+
+    with patch.object(settings, "cashfree_environment", "sandbox"), \
+         patch.object(settings, "cashfree_app_id", "CF_ID"), \
+         patch.object(settings, "cashfree_secret_key", "CF_SEC"), \
+         patch("app.services.payment.cashfree.httpx.Client", return_value=mock_ctx):
+        intent_1 = client.post(
+            "/api/v1/payments/intent",
+            json={"orderNumber": order["orderNumber"], "provider": "cashfree"},
+            cookies=owner_cookies,
+        ).json()
+        pay_1_id = intent_1["paymentId"]
+        mock_http_client.post.reset_mock()
+
+        # Other authenticated user attempts /payments/intent and /payments/{id}/retry -> 404
+        r_other_intent = client.post(
+            "/api/v1/payments/intent",
+            json={"orderNumber": order["orderNumber"], "provider": "cashfree"},
+            cookies=other_cookies,
+        )
+        assert r_other_intent.status_code == 404
+
+        r_other_retry = client.post(
+            f"/api/v1/payments/{pay_1_id}/retry",
+            cookies=other_cookies,
+        )
+        assert r_other_retry.status_code == 404
+
+        # Anonymous caller attempts retry -> 404
+        anon_client = TestClient(app)
+        r_anon_retry = anon_client.post(f"/api/v1/payments/{pay_1_id}/retry")
+        assert r_anon_retry.status_code == 404
+
+        assert mock_http_client.post.call_count == 0
+        with SessionLocal() as db:
+            assert db.query(Payment).filter(Payment.order_id == order["id"]).count() == 1
+
+
+def test_7_2_4_5_tc05_paid_and_cancelled_orders_cannot_be_retried():
+    """7.2.4.5-TC05: Retry after server-confirmed success or order cancellation is rejected with zero side effects."""
+    from app.db.session import SessionLocal
+
+    cookies = _login_test_user("9999977056")
+    paid_order = _create_test_order(cookies, payment_method="UPI")
+    cancel_order = _create_test_order(cookies, payment_method="UPI")
+    amount_inr = round(paid_order["totalAmountPaise"] / 100.0, 2)
+
+    mock_ctx, mock_http_client = _mock_cashfree_client_context(amount_inr)
+
+    def get_paid_attempt(url, *, headers=None):
+        if url.endswith("/payments"):
+            cf_id = url.rsplit("/", 2)[-2]
+            return httpx.Response(
+                200,
+                json=[
+                    {
+                        "order_id": cf_id,
+                        "cf_payment_id": "cf_paid_tc05",
+                        "payment_status": "SUCCESS",
+                        "payment_amount": amount_inr,
+                        "payment_currency": "INR",
+                        "payment_group": "upi",
+                    }
+                ],
+                request=httpx.Request("GET", url),
+            )
+        cf_id = url.rsplit("/", 1)[-1]
+        return httpx.Response(
+            200,
+            json={
+                "order_id": cf_id,
+                "order_status": "PAID",
+                "order_amount": amount_inr,
+                "order_currency": "INR",
+            },
+            request=httpx.Request("GET", url),
+        )
+
+    mock_http_client.get.side_effect = get_paid_attempt
+
+    with patch.object(settings, "cashfree_environment", "sandbox"), \
+         patch.object(settings, "cashfree_app_id", "CF_ID"), \
+         patch.object(settings, "cashfree_secret_key", "CF_SEC"), \
+         patch("app.services.payment.cashfree.httpx.Client", return_value=mock_ctx):
+        # 1. Pay first order and verify
+        paid_intent = client.post(
+            "/api/v1/payments/intent",
+            json={"orderNumber": paid_order["orderNumber"], "provider": "cashfree"},
+            cookies=cookies,
+        ).json()
+        v_ok = client.post(
+            "/api/v1/payments/verify",
+            json={"paymentId": paid_intent["paymentId"], "providerOrderId": paid_intent["providerOrderId"]},
+            cookies=cookies,
+        )
+        assert v_ok.status_code == 200
+        assert v_ok.json()["canRetry"] is False
+
+        # Create initial attempt on second order, then cancel the order
+        cancel_intent = client.post(
+            "/api/v1/payments/intent",
+            json={"orderNumber": cancel_order["orderNumber"], "provider": "cashfree"},
+            cookies=cookies,
+        ).json()
+        cancel_res = client.post(
+            f"/api/v1/orders/{cancel_order['orderNumber']}/cancel",
+            json={"reason": "Customer changed mind"},
+            cookies=cookies,
+        )
+        assert cancel_res.status_code == 200
+
+        mock_http_client.post.reset_mock()
+
+        # 2. Attempt retry on PAID order -> 400, zero provider calls, zero new payment rows
+        r_paid_1 = client.post(
+            "/api/v1/payments/intent",
+            json={"orderNumber": paid_order["orderNumber"], "provider": "cashfree"},
+            cookies=cookies,
+        )
+        assert r_paid_1.status_code == 400
+        r_paid_2 = client.post(f"/api/v1/payments/{paid_intent['paymentId']}/retry", cookies=cookies)
+        assert r_paid_2.status_code == 400
+
+        # 3. Attempt retry on CANCELLED order -> 400, zero provider calls, zero new payment rows
+        r_cancel_1 = client.post(
+            "/api/v1/payments/intent",
+            json={"orderNumber": cancel_order["orderNumber"], "provider": "cashfree"},
+            cookies=cookies,
+        )
+        assert r_cancel_1.status_code == 400
+        r_cancel_2 = client.post(f"/api/v1/payments/{cancel_intent['paymentId']}/retry", cookies=cookies)
+        assert r_cancel_2.status_code == 400
+
+        assert mock_http_client.post.call_count == 0
+        with SessionLocal() as db:
+            assert db.query(Payment).filter(Payment.order_id == paid_order["id"]).count() == 1
+            assert db.query(Payment).filter(Payment.order_id == cancel_order["id"]).count() == 1
+
+
+def test_7_2_4_5_tc06_backend_contract_distinguishes_failed_vs_pending_and_retry_eligibility():
+    """7.2.4.5-TC06: API distinguishes authoritative FAILED vs PENDING and reports retry eligibility accurately."""
+    cookies = _login_test_user("9999977057")
+    order = _create_test_order(cookies, payment_method="UPI")
+    amount_inr = round(order["totalAmountPaise"] / 100.0, 2)
+
+    mock_ctx, mock_http_client = _mock_cashfree_client_context(amount_inr)
+
+    with patch.object(settings, "cashfree_environment", "sandbox"), \
+         patch.object(settings, "cashfree_app_id", "CF_ID"), \
+         patch.object(settings, "cashfree_secret_key", "CF_SEC"), \
+         patch("app.services.payment.cashfree.httpx.Client", return_value=mock_ctx):
+        intent = client.post(
+            "/api/v1/payments/intent",
+            json={"orderNumber": order["orderNumber"], "provider": "cashfree"},
+            cookies=cookies,
+        ).json()
+        pay_id = intent["paymentId"]
+        cf_order_id = intent["providerOrderId"]
+
+        # 1. Cashfree order ACTIVE with PENDING payment attempt -> status=PENDING, verificationState=PENDING, canRetry=True
+        mock_http_client.get.side_effect = lambda url, *, headers=None: httpx.Response(
+            200,
+            json=(
+                [{"order_id": cf_order_id, "cf_payment_id": "p_pend", "payment_status": "PENDING"}]
+                if url.endswith("/payments")
+                else {"order_id": cf_order_id, "order_status": "ACTIVE", "order_amount": amount_inr, "order_currency": "INR"}
+            ),
+            request=httpx.Request("GET", url),
+        )
+        r_pend = client.post(
+            "/api/v1/payments/verify",
+            json={"paymentId": pay_id, "providerOrderId": cf_order_id},
+            cookies=cookies,
+        )
+        assert r_pend.status_code == 400
+        pend_json = r_pend.json()
+        assert pend_json["status"] == "PENDING"
+        assert pend_json["verificationState"] == "PENDING"
+        assert pend_json["canRetry"] is True
+        assert pend_json["orderNumber"] == order["orderNumber"]
+        assert pend_json["orderStatus"] == "PENDING_PAYMENT"
+        assert pend_json["orderPaymentStatus"] == "PENDING"
+
+        # 2. Cashfree order ACTIVE with FAILED simulator attempt -> status=FAILED, verificationState=FAILED, canRetry=True
+        mock_http_client.get.side_effect = lambda url, *, headers=None: httpx.Response(
+            200,
+            json=(
+                [
+                    {
+                        "order_id": cf_order_id,
+                        "cf_payment_id": "p_fail",
+                        "payment_status": "FAILED",
+                        "payment_message": "Simulated bank failure",
+                    }
+                ]
+                if url.endswith("/payments")
+                else {"order_id": cf_order_id, "order_status": "ACTIVE", "order_amount": amount_inr, "order_currency": "INR"}
+            ),
+            request=httpx.Request("GET", url),
+        )
+        r_fail = client.post(
+            "/api/v1/payments/verify",
+            json={"paymentId": pay_id, "providerOrderId": cf_order_id},
+            cookies=cookies,
+        )
+        assert r_fail.status_code == 400
+        fail_json = r_fail.json()
+        assert fail_json["status"] == "FAILED"
+        assert fail_json["verificationState"] == "FAILED"
+        assert fail_json["canRetry"] is True
+        assert fail_json["orderNumber"] == order["orderNumber"]
+        assert "Simulated bank failure" in (fail_json.get("errorMessage") or "")
+
+        get_fail = client.get(f"/api/v1/payments/{pay_id}", cookies=cookies).json()
+        assert get_fail["status"] == "FAILED"
+        assert get_fail["canRetry"] is True

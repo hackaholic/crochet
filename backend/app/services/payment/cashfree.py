@@ -265,7 +265,41 @@ class CashfreePaymentProvider(BasePaymentProvider):
                 order_status = str(order_data.get("order_status") or "").strip().upper()
                 if order_status != "PAID":
                     if order_status == "ACTIVE":
-                        setattr(payment, "_verification_state", "PENDING")
+                        verification_state = "PENDING"
+                        try:
+                            payments_resp = client.get(
+                                f"{base_url}/orders/{stored_order_id}/payments",
+                                headers=self._headers(),
+                            )
+                            if payments_resp.status_code == 200:
+                                payments_data = payments_resp.json()
+                                if isinstance(payments_data, list) and payments_data:
+                                    attempt_dicts = [p for p in payments_data if isinstance(p, dict)]
+                                    attempt_statuses = [
+                                        str(p.get("payment_status") or "").strip().upper()
+                                        for p in attempt_dicts
+                                    ]
+                                    terminal_fail_statuses = {"FAILED", "USER_DROPPED", "CANCELLED", "VOID"}
+                                    pending_statuses = {"PENDING", "FLAGGED", "NOT_ATTEMPTED", "INITIALIZED"}
+                                    if any(s in pending_statuses for s in attempt_statuses):
+                                        verification_state = "PENDING"
+                                    elif attempt_statuses and all(s in terminal_fail_statuses for s in attempt_statuses):
+                                        verification_state = "FAILED"
+                                        fail_msg = next(
+                                            (
+                                                str(p.get("payment_message") or "").strip()
+                                                for p in reversed(attempt_dicts)
+                                                if p.get("payment_message")
+                                            ),
+                                            "",
+                                        )
+                                        if fail_msg:
+                                            setattr(payment, "_verification_message", fail_msg)
+                        except (httpx.RequestError, ValueError):
+                            pass
+                        setattr(payment, "_verification_state", verification_state)
+                    else:
+                        setattr(payment, "_verification_state", "FAILED")
                     return False
 
                 # 5. Fetch payment attempts for transaction reference & secondary verification

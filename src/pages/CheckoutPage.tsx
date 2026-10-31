@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from 'react';
 import { CheckIcon, ArrowRightIcon } from '../components/Icons';
 import type { CartItem } from '../components/CartDrawer';
 import { createOrder, type OrderOut } from '../lib/api/orders';
-import { createPaymentIntent, verifyCashfreePayment, verifyMockPayment, type PaymentVerification } from '../lib/api/payments';
+import { createPaymentIntent, forgetGuestPaymentCapability, getGuestPaymentCapability, rememberGuestPaymentCapability, retryCashfreePayment, verifyCashfreePayment, verifyMockPayment, type PaymentVerification } from '../lib/api/payments';
 import { openCashfreeCheckout } from '../lib/payment/cashfreeCheckout';
 import { calculateShippingFee } from '../lib/commerce/shipping';
 
@@ -26,7 +26,7 @@ interface CheckoutPageProps {
 }
 
 type Step = 'contact' | 'delivery' | 'payment' | 'review';
-type PaymentReturnState = { status: 'verifying' } | { status: 'failed'; message: string } | { status: 'success'; payment: PaymentVerification };
+type PaymentReturnState = { status: 'verifying' } | { status: 'failed' | 'pending'; message: string; payment?: PaymentVerification } | { status: 'success'; payment: PaymentVerification };
 const steps: { id: Step; label: string }[] = [
   { id: 'contact', label: 'Contact' },
   { id: 'delivery', label: 'Delivery' },
@@ -78,21 +78,34 @@ export default function CheckoutPage({ customer, items, wishlist = [], onToggleW
     let active = true;
     setPaymentReturn({ status: 'verifying' });
     verifyCashfreePayment(paymentId, providerOrderId).then(payment => {
-      const verified = payment.status.toUpperCase() === 'SUCCESS'
-        && payment.provider === 'cashfree'
+      const matchesReturn = payment.provider === 'cashfree'
         && payment.id === paymentId
         && payment.providerOrderId === providerOrderId;
       if (!active) return;
-      if (!verified) {
-        setPaymentReturn({ status: 'failed', message: 'Cashfree has not confirmed this payment yet. You can safely try verification again.' });
+      if (!matchesReturn) {
+        setPaymentReturn({ status: 'failed', message: 'We could not verify this payment return. Please check your orders or contact support.' });
         return;
       }
+      const verified = payment.status.toUpperCase() === 'SUCCESS'
+        && matchesReturn;
+      if (!verified) {
+        const isPending = (payment.verificationState ?? payment.status).toUpperCase() === 'PENDING';
+        setPaymentReturn({
+          status: isPending ? 'pending' : 'failed',
+          payment,
+          message: isPending
+            ? 'Your payment is still being confirmed. Check its status again before trying another payment.'
+            : 'Your payment was not completed. You can retry securely for this order.',
+        });
+        return;
+      }
+      forgetGuestPaymentCapability(payment.orderNumber);
       setPaymentReturn({ status: 'success', payment });
       setCompletedProductIds(items.map(item => item.product.id));
       onCompleteRef.current();
       window.history.replaceState(null, '', `${window.location.pathname}${window.location.hash}`);
     }).catch(() => {
-      if (active) setPaymentReturn({ status: 'failed', message: 'We could not confirm this payment yet. Please retry verification.' });
+      if (active) setPaymentReturn({ status: 'failed', message: 'We could not check this payment yet. Please try checking its status again.' });
     });
     return () => { active = false; };
   }, [paymentReturnAttempt]);
@@ -100,6 +113,32 @@ export default function CheckoutPage({ customer, items, wishlist = [], onToggleW
   const subtotal = items.reduce((s, i) => s + i.product.price * i.quantity, 0);
   const shipping = calculateShippingFee(subtotal);
   const total = subtotal + shipping;
+
+  const retryPayment = async () => {
+    const payment = paymentReturn?.status !== 'success' && paymentReturn?.status !== 'verifying' ? paymentReturn?.payment : undefined;
+    if (!payment?.canRetry || submitting) return;
+    setSubmitting(true);
+    try {
+      const intent = await retryCashfreePayment(payment.id, getGuestPaymentCapability(payment.orderNumber));
+      if (intent.provider !== 'cashfree') throw new Error('Unexpected payment provider.');
+      await openCashfreeCheckout(intent);
+    } catch {
+      setPaymentReturn(current => current && current.status !== 'success' && current.status !== 'verifying'
+        ? { ...current, message: 'We could not start a new payment attempt. Check the payment status or contact support.' }
+        : current);
+    } finally { setSubmitting(false); }
+  };
+
+  const paymentReturnNotice = paymentReturn && paymentReturn.status !== 'success' && paymentReturn.status !== 'verifying'
+    ? <section className="checkout-panel mb-4 text-sm text-[#9D3B28]" role="alert">
+      <p>{paymentReturn.message}</p>
+      {paymentReturn.payment?.orderNumber && <p className="mt-2 font-medium text-[#2C1810]">Order {paymentReturn.payment.orderNumber}</p>}
+      <div className="mt-3 flex flex-wrap justify-center gap-3">
+        <button className="checkout-browse" disabled={submitting} onClick={() => setPaymentReturnAttempt(value => value + 1)}>Check payment status</button>
+        {paymentReturn.payment?.canRetry && <button className="checkout-browse" disabled={submitting} onClick={() => void retryPayment()}>{submitting ? 'Starting secure checkout…' : 'Retry payment'}</button>}
+      </div>
+    </section>
+    : null;
 
   const stepIndex = steps.findIndex(s => s.id === step);
 
@@ -117,7 +156,8 @@ export default function CheckoutPage({ customer, items, wishlist = [], onToggleW
         const paymentMethod = selectedPayment === 'cod' ? 'COD' : selectedPayment === 'card' ? 'CARD' : selectedPayment === 'netbanking' ? 'NETBANKING' : 'UPI';
         const order = await createOrder({ paymentMethod, customerEmail: form.email, couponCode: couponCode ?? undefined, shippingAddress: { name: `${form.firstName} ${form.lastName}`.trim(), phone: form.phone, line1: form.line1, line2: form.line2 || undefined, landmark: form.landmark || undefined, city: form.city, state: form.state, postalCode: form.postalCode } });
         if (paymentMethod !== 'COD') {
-          const intent = await createPaymentIntent(order.orderNumber);
+          rememberGuestPaymentCapability(order.orderNumber, order.guestTrackingToken);
+          const intent = await createPaymentIntent(order.orderNumber, order.guestTrackingToken ?? undefined);
           if (intent.provider === 'cashfree') {
             await openCashfreeCheckout(intent);
             return;
@@ -183,7 +223,7 @@ export default function CheckoutPage({ customer, items, wishlist = [], onToggleW
   if (!items.length) return (
     <div className="checkout-page"><div className="checkout-container">
       <section className="checkout-panel text-center">
-        {paymentReturn?.status === 'failed' && <div className="mb-5 text-sm text-[#9D3B28]" role="alert"><p>{paymentReturn.message}</p><button className="checkout-browse mt-3" onClick={() => setPaymentReturnAttempt(value => value + 1)}>Retry payment verification</button></div>}
+        {paymentReturnNotice}
         <h1 className="text-2xl font-medium" style={{fontFamily: 'var(--font-serif)'}}>Your basket is empty</h1>
         <button className="checkout-browse" onClick={() => onNavigate('shop')}>Browse the collection</button>
       </section>
@@ -193,7 +233,7 @@ export default function CheckoutPage({ customer, items, wishlist = [], onToggleW
   return (
     <div className="checkout-page">
       <div className="checkout-container">
-        {paymentReturn?.status === 'failed' && <section className="checkout-panel mb-4 text-sm text-[#9D3B28]" role="alert"><p>{paymentReturn.message}</p><button className="checkout-browse mt-3" onClick={() => setPaymentReturnAttempt(value => value + 1)}>Retry payment verification</button></section>}
+        {paymentReturnNotice}
         <header className="checkout-heading">
           <h1 style={{ fontFamily: 'var(--font-serif)' }}>Checkout</h1>
           <button onClick={() => onNavigate('cart')} className="checkout-back">← Back to basket</button>

@@ -5,6 +5,7 @@ Conforms to Section 25 (Payment Architecture) and Milestone 7 of the Specificati
 
 from datetime import datetime, timezone
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query, Request, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session, joinedload
 
 from app.api.v1.auth import get_optional_current_user
@@ -12,6 +13,7 @@ from app.db.session import get_db
 from app.models.order import Order, OrderStatus, OrderStatusHistory, PaymentStatus
 from app.models.payment import Payment, PaymentRecordStatus
 from app.models.user import User
+from app.services.guest_tracking import validate_guest_order_token
 from app.services.notification import (
     dispatch_order_placed_background,
     dispatch_payment_confirmed_background,
@@ -20,6 +22,7 @@ from app.schemas.payment import (
     PaymentIntentCreate,
     PaymentIntentOut,
     PaymentOut,
+    PaymentRetryRequest,
     PaymentVerifyRequest,
     PaymentWebhookResult,
 )
@@ -31,13 +34,50 @@ from app.services.payment import (
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 
+_FORBIDDEN_QUERY_TOKEN_KEYS = {
+    "token",
+    "guestordertoken",
+    "guest_order_token",
+    "guesttrackingtoken",
+    "guest_tracking_token",
+}
 
-def _to_payment_out(payment: Payment) -> PaymentOut:
+
+def _is_order_retry_eligible(order: Order | None, payment: Payment | None = None) -> bool:
+    """Return True only when authoritative server state allows a new payment attempt for the order."""
+    if not order:
+        return False
+    if order.payment_status in (
+        PaymentStatus.PAID.value,
+        PaymentStatus.REFUNDED.value,
+        "PARTIALLY_REFUNDED",
+    ):
+        return False
+    if order.status != OrderStatus.PENDING_PAYMENT.value:
+        return False
+    if (order.payment_method or "").strip().upper() == "COD":
+        return False
+    if payment is not None and payment.status == PaymentRecordStatus.SUCCESS.value:
+        return False
+    if any(p.status == PaymentRecordStatus.SUCCESS.value for p in (order.payments or [])):
+        return False
+    return True
+
+
+def _to_payment_out(payment: Payment, verification_state: str | None = None) -> PaymentOut:
     """Convert Payment ORM to PaymentOut schema."""
+    order = payment.order
+    resolved_verification_state = (
+        verification_state
+        or getattr(payment, "_verification_state", None)
+        or payment.status
+    )
     return PaymentOut(
         id=payment.id,
         order_id=payment.order_id,
-        order_number=payment.order.order_number if payment.order else None,
+        order_number=order.order_number if order else None,
+        order_status=order.status if order else None,
+        order_payment_status=order.payment_status if order else None,
         provider=payment.provider,
         provider_payment_id=payment.provider_payment_id,
         provider_order_id=payment.provider_order_id,
@@ -45,46 +85,117 @@ def _to_payment_out(payment: Payment) -> PaymentOut:
         amount_paise=payment.amount_paise,
         currency=payment.currency or "INR",
         status=payment.status,
+        verification_state=resolved_verification_state,
+        can_retry=_is_order_retry_eligible(order, payment),
+        error_message=payment.error_message,
         payment_method_detail=payment.payment_method_detail,
         created_at=payment.created_at.isoformat() if payment.created_at else "",
         updated_at=payment.updated_at.isoformat() if payment.updated_at else "",
     )
 
 
-@router.post("/intent", response_model=PaymentIntentOut, status_code=status.HTTP_201_CREATED)
-def create_payment_intent(
-    payload: PaymentIntentCreate,
-    user: User | None = Depends(get_optional_current_user),
-    db: Session = Depends(get_db),
-) -> PaymentIntentOut:
-    """Create a gateway payment intent/order for an order."""
-    query = db.query(Order).options(joinedload(Order.payments))
+def _extract_guest_capability(
+    body_guest_token: str | None = None,
+    body_tracking_token: str | None = None,
+    header_guest_token: str | None = None,
+    authorization: str | None = None,
+    user: User | None = None,
+) -> str | None:
+    """Extract guest order capability token from request body or headers (never query params)."""
+    for candidate in (body_guest_token, body_tracking_token, header_guest_token):
+        if candidate and candidate.strip():
+            return candidate.strip()
+    if user is None and authorization and authorization.startswith("Bearer "):
+        bearer_val = authorization.removeprefix("Bearer ").strip()
+        if bearer_val:
+            return bearer_val
+    return None
 
-    if payload.order_id:
-        order = query.filter(Order.id == payload.order_id).first()
-    elif payload.order_number:
-        order = query.filter(Order.order_number == payload.order_number).first()
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Either 'orderId' or 'orderNumber' is required.",
-        )
 
-    if not order:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Order not found.",
-        )
+def _authorize_order_payment_access(
+    db: Session,
+    order: Order,
+    user: User | None,
+    guest_token: str | None,
+    request: Request | None = None,
+    not_found_detail: str = "Order not found.",
+) -> None:
+    """Enforce owner or guest-capability authorization with non-enumerating 404 on failure."""
+    if request is not None:
+        query_keys = {k.strip().lower() for k in request.query_params.keys()}
+        if query_keys & _FORBIDDEN_QUERY_TOKEN_KEYS:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=not_found_detail,
+            )
 
-    # Authorization verification
     if order.user_id is not None:
         if not user or user.id != order.user_id:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Order not found.",
+                detail=not_found_detail,
+            )
+    else:
+        if not guest_token or not validate_guest_order_token(db, order.id, guest_token):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=not_found_detail,
             )
 
-    if order.payment_status == PaymentStatus.PAID.value:
+
+def _reconcile_confirmed_payment(
+    db: Session,
+    order: Order,
+    payment: Payment,
+    now: datetime,
+    background_tasks: BackgroundTasks | None = None,
+) -> None:
+    """Transition payment and order to confirmed/paid state idempotently."""
+    resolved_payment_id = payment.provider_payment_id or payment.provider_order_id
+    payment.status = PaymentRecordStatus.SUCCESS.value
+    payment.provider_payment_id = resolved_payment_id
+    payment.error_message = None
+    payment.updated_at = now
+
+    already_paid = order.payment_status == PaymentStatus.PAID.value
+    order.payment_status = PaymentStatus.PAID.value
+    if order.status == OrderStatus.PENDING_PAYMENT.value:
+        order.status = OrderStatus.CONFIRMED.value
+    if not order.tracking_number:
+        import secrets
+        order.tracking_number = f"SLC-LOCAL-{secrets.token_hex(3).upper()}"
+        order.courier_name = "Sulocraft Local Express"
+    if not order.estimated_delivery:
+        from datetime import timedelta
+        order.estimated_delivery = now + timedelta(days=5)
+    order.updated_at = now
+
+    if not already_paid:
+        history = OrderStatusHistory(
+            order_id=order.id,
+            status=OrderStatus.CONFIRMED.value,
+            note=f"Payment of ₹{payment.amount} verified via {payment.provider.upper()} ({resolved_payment_id}).",
+            timestamp=now,
+        )
+        db.add(history)
+
+    db.commit()
+    db.refresh(payment)
+    if not already_paid and background_tasks is not None:
+        background_tasks.add_task(dispatch_order_placed_background, order.id)
+        background_tasks.add_task(dispatch_payment_confirmed_background, order.id, payment.id)
+
+
+def _issue_order_payment_intent(
+    db: Session,
+    order: Order,
+    provider_name: str | None,
+    background_tasks: BackgroundTasks | None = None,
+) -> PaymentIntentOut:
+    """Validate order retry eligibility and create a new server-derived payment attempt."""
+    if order.payment_status == PaymentStatus.PAID.value or any(
+        p.status == PaymentRecordStatus.SUCCESS.value for p in (order.payments or [])
+    ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="This order has already been paid.",
@@ -96,9 +207,14 @@ def create_payment_intent(
             detail="Cannot pay for a cancelled order.",
         )
 
-    # Resolve payment provider
+    if order.status != OrderStatus.PENDING_PAYMENT.value or (order.payment_method or "").strip().upper() == "COD":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This order is not eligible for online payment retry.",
+        )
+
     try:
-        provider = get_payment_provider(payload.provider)
+        provider = get_payment_provider(provider_name)
     except (PaymentGatewayConfigurationError, PaymentGatewayError, RuntimeError) as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
@@ -106,6 +222,26 @@ def create_payment_intent(
         )
 
     now = datetime.now(timezone.utc)
+
+    # Safe pending-attempt policy: if a prior Cashfree attempt is still PENDING, check whether
+    # the gateway has already confirmed it as PAID before issuing a new session.
+    if provider.provider_name == "cashfree":
+        for prev_payment in order.payments or []:
+            if (
+                prev_payment.status == PaymentRecordStatus.PENDING.value
+                and prev_payment.provider == "cashfree"
+                and prev_payment.provider_order_id
+            ):
+                if provider.verify_payment(
+                    prev_payment,
+                    {"provider_order_id": prev_payment.provider_order_id},
+                ):
+                    _reconcile_confirmed_payment(db, order, prev_payment, now, background_tasks)
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="This order has already been paid.",
+                    )
+
     payment = Payment(
         order_id=order.id,
         provider=provider.provider_name,
@@ -127,6 +263,14 @@ def create_payment_intent(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=f"Payment gateway error: {str(exc)}",
         )
+
+    # Supersede any prior unresolved PENDING attempts for this order now that a fresh attempt exists
+    for prev_payment in order.payments or []:
+        if prev_payment.id != payment.id and prev_payment.status == PaymentRecordStatus.PENDING.value:
+            prev_payment.status = PaymentRecordStatus.FAILED.value
+            prev_payment.error_message = "Superseded by a new payment retry attempt."
+            prev_payment.updated_at = now
+
     db.commit()
     db.refresh(payment)
 
@@ -147,13 +291,116 @@ def create_payment_intent(
     )
 
 
+@router.post("/intent", response_model=PaymentIntentOut, status_code=status.HTTP_201_CREATED)
+def create_payment_intent(
+    payload: PaymentIntentCreate,
+    request: Request,
+    background_tasks: BackgroundTasks,
+    x_guest_order_token: str | None = Header(default=None, alias="X-Guest-Order-Token"),
+    authorization: str | None = Header(default=None),
+    user: User | None = Depends(get_optional_current_user),
+    db: Session = Depends(get_db),
+) -> PaymentIntentOut:
+    """Create or retry a gateway payment intent/order for an eligible unpaid order."""
+    query = db.query(Order).options(joinedload(Order.payments))
+
+    if payload.order_id:
+        order = query.filter(Order.id == payload.order_id).first()
+    elif payload.order_number:
+        order = query.filter(Order.order_number == payload.order_number).first()
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Either 'orderId' or 'orderNumber' is required.",
+        )
+
+    if not order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Order not found.",
+        )
+
+    guest_token = _extract_guest_capability(
+        body_guest_token=payload.guest_order_token,
+        body_tracking_token=payload.guest_tracking_token,
+        header_guest_token=x_guest_order_token,
+        authorization=authorization,
+        user=user,
+    )
+    _authorize_order_payment_access(
+        db=db,
+        order=order,
+        user=user,
+        guest_token=guest_token,
+        request=request,
+        not_found_detail="Order not found.",
+    )
+
+    return _issue_order_payment_intent(
+        db=db,
+        order=order,
+        provider_name=payload.provider,
+        background_tasks=background_tasks,
+    )
+
+
+@router.post("/{payment_id}/retry", response_model=PaymentIntentOut, status_code=status.HTTP_201_CREATED)
+def retry_payment_intent(
+    payment_id: int,
+    request: Request,
+    background_tasks: BackgroundTasks,
+    payload: PaymentRetryRequest | None = None,
+    x_guest_order_token: str | None = Header(default=None, alias="X-Guest-Order-Token"),
+    authorization: str | None = Header(default=None),
+    user: User | None = Depends(get_optional_current_user),
+    db: Session = Depends(get_db),
+) -> PaymentIntentOut:
+    """Create a new payment attempt for the same unpaid order after a failed or pending attempt."""
+    payment = (
+        db.query(Payment)
+        .options(joinedload(Payment.order).joinedload(Order.payments))
+        .filter(Payment.id == payment_id)
+        .first()
+    )
+    if not payment or not payment.order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Payment record not found.",
+        )
+
+    order = payment.order
+    guest_token = _extract_guest_capability(
+        body_guest_token=payload.guest_order_token if payload else None,
+        body_tracking_token=payload.guest_tracking_token if payload else None,
+        header_guest_token=x_guest_order_token,
+        authorization=authorization,
+        user=user,
+    )
+    _authorize_order_payment_access(
+        db=db,
+        order=order,
+        user=user,
+        guest_token=guest_token,
+        request=request,
+        not_found_detail="Payment record not found.",
+    )
+
+    provider_name = (payload.provider if payload and payload.provider else None) or payment.provider
+    return _issue_order_payment_intent(
+        db=db,
+        order=order,
+        provider_name=provider_name,
+        background_tasks=background_tasks,
+    )
+
+
 @router.post("/verify", response_model=PaymentOut)
 def verify_payment(
     payload: PaymentVerifyRequest,
     background_tasks: BackgroundTasks,
     user: User | None = Depends(get_optional_current_user),
     db: Session = Depends(get_db),
-) -> PaymentOut:
+) -> PaymentOut | JSONResponse:
     """Verify payment completion callback or redirect from client gateway.
 
     On success, transitions Payment status to SUCCESS, Order payment_status to PAID,
@@ -161,7 +408,7 @@ def verify_payment(
     """
     payment = (
         db.query(Payment)
-        .options(joinedload(Payment.order))
+        .options(joinedload(Payment.order).joinedload(Order.payments))
         .filter(Payment.id == payload.payment_id)
         .first()
     )
@@ -199,7 +446,7 @@ def verify_payment(
 
     # Idempotent: already marked success
     if payment.status == PaymentRecordStatus.SUCCESS.value:
-        return _to_payment_out(payment)
+        return _to_payment_out(payment, verification_state="SUCCESS")
 
     try:
         provider = get_payment_provider(payment.provider)
@@ -219,58 +466,40 @@ def verify_payment(
             payment.error_message = "Payment is still pending confirmation with gateway."
             payment.updated_at = now
             db.commit()
-            raise HTTPException(
+            db.refresh(payment)
+            detail_msg = "Payment verification failed. Transaction is still pending with the payment gateway."
+            return JSONResponse(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Payment verification failed. Transaction is still pending with the payment gateway.",
+                content={
+                    **_to_payment_out(payment, verification_state="PENDING").model_dump(by_alias=True),
+                    "detail": detail_msg,
+                },
             )
 
         payment.status = PaymentRecordStatus.FAILED.value
-        payment.error_message = "Gateway signature or transaction verification failed."
+        custom_fail_msg = getattr(payment, "_verification_message", None)
+        payment.error_message = custom_fail_msg or "Gateway signature or transaction verification failed."
         payment.updated_at = now
         db.commit()
-        raise HTTPException(
+        db.refresh(payment)
+        detail_msg = "Payment verification failed. Invalid signature or unconfirmed transaction."
+        return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Payment verification failed. Invalid signature or unconfirmed transaction.",
+            content={
+                **_to_payment_out(payment, verification_state="FAILED").model_dump(by_alias=True),
+                "detail": detail_msg,
+            },
         )
 
     resolved_payment_id = payload.provider_payment_id or payment.provider_payment_id
-    payment.status = PaymentRecordStatus.SUCCESS.value
     payment.provider_payment_id = resolved_payment_id
-    payment.error_message = None
     if not payment.provider_order_id and payload.provider_order_id:
         payment.provider_order_id = payload.provider_order_id
     if payload.payment_method_detail:
         payment.payment_method_detail = payload.payment_method_detail
-    payment.updated_at = now
 
-    already_paid = order.payment_status == PaymentStatus.PAID.value
-    order.payment_status = PaymentStatus.PAID.value
-    if order.status == OrderStatus.PENDING_PAYMENT.value:
-        order.status = OrderStatus.CONFIRMED.value
-    if not order.tracking_number:
-        import secrets
-        order.tracking_number = f"SLC-LOCAL-{secrets.token_hex(3).upper()}"
-        order.courier_name = "Sulocraft Local Express"
-    if not order.estimated_delivery:
-        from datetime import timedelta
-        order.estimated_delivery = now + timedelta(days=5)
-    order.updated_at = now
-
-    if not already_paid:
-        history = OrderStatusHistory(
-            order_id=order.id,
-            status=OrderStatus.CONFIRMED.value,
-            note=f"Payment of ₹{payment.amount} verified via {payment.provider.upper()} ({resolved_payment_id}).",
-            timestamp=now,
-        )
-        db.add(history)
-
-    db.commit()
-    db.refresh(payment)
-    if not already_paid:
-        background_tasks.add_task(dispatch_order_placed_background, order.id)
-        background_tasks.add_task(dispatch_payment_confirmed_background, order.id, payment.id)
-    return _to_payment_out(payment)
+    _reconcile_confirmed_payment(db, order, payment, now, background_tasks)
+    return _to_payment_out(payment, verification_state="SUCCESS")
 
 
 @router.post("/webhook/{provider}", response_model=PaymentWebhookResult)
@@ -468,18 +697,28 @@ async def payment_webhook(
 @router.get("/{payment_id}", response_model=PaymentOut)
 def get_payment(
     payment_id: int,
+    request: Request,
     provider_order_id: str | None = Query(default=None, alias="providerOrderId"),
+    x_guest_order_token: str | None = Header(default=None, alias="X-Guest-Order-Token"),
+    authorization: str | None = Header(default=None),
     user: User | None = Depends(get_optional_current_user),
     db: Session = Depends(get_db),
 ) -> PaymentOut:
     """Retrieve payment details."""
+    query_keys = {k.strip().lower() for k in request.query_params.keys()}
+    if query_keys & _FORBIDDEN_QUERY_TOKEN_KEYS:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Payment record not found.",
+        )
+
     payment = (
         db.query(Payment)
-        .options(joinedload(Payment.order))
+        .options(joinedload(Payment.order).joinedload(Order.payments))
         .filter(Payment.id == payment_id)
         .first()
     )
-    if not payment:
+    if not payment or not payment.order:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Payment record not found.",
@@ -493,9 +732,16 @@ def get_payment(
                 detail="Payment record not found.",
             )
     else:
+        guest_token = _extract_guest_capability(
+            header_guest_token=x_guest_order_token,
+            authorization=authorization,
+            user=user,
+        )
+        valid_token = bool(guest_token and validate_guest_order_token(db, order.id, guest_token))
         expected_order_id = (payment.provider_order_id or "").strip()
         supplied_order_id = (provider_order_id or "").strip()
-        if not expected_order_id or not supplied_order_id or supplied_order_id != expected_order_id:
+        valid_binding = bool(expected_order_id and supplied_order_id and supplied_order_id == expected_order_id)
+        if not (valid_token or valid_binding):
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Payment record not found.",

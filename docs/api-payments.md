@@ -30,10 +30,11 @@ Conforming to **Section 25 (Payment Architecture)**, **Milestone 7**, and **DEC-
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `POST` | `/api/v1/payments/intent` | Create a gateway order/intent for an order in `PENDING_PAYMENT` status. |
-| `POST` | `/api/v1/payments/verify` | Verify payment server-side (Cashfree) or client callback signature (Razorpay/Mock). Transitions order to `PAID` / `CONFIRMED`. |
+| `POST` | `/api/v1/payments/intent` | Create or retry a gateway order/intent for an eligible order in `PENDING_PAYMENT` status (requires owner session or guest order capability token). |
+| `POST` | `/api/v1/payments/{payment_id}/retry` | Create a new payment attempt for the same unpaid order after a failed or pending attempt (requires owner session or guest order capability token). |
+| `POST` | `/api/v1/payments/verify` | Verify payment server-side (Cashfree) or client callback signature (Razorpay/Mock). Transitions order to `PAID` / `CONFIRMED` on verified success, or returns HTTP `400` with authoritative `PaymentOut` (`status: "FAILED" \| "PENDING"`, `canRetry`). |
 | `POST` | `/api/v1/payments/webhook/{provider}` | Asynchronous webhook receiver for payment capture/failure events (`cashfree`, `razorpay`, `mock`). |
-| `GET` | `/api/v1/payments/{payment_id}` | Retrieve payment status and details. |
+| `GET` | `/api/v1/payments/{payment_id}` | Retrieve payment status, order status, and retry eligibility (`canRetry`). |
 
 ---
 
@@ -47,6 +48,19 @@ export interface PaymentIntentCreate {
   orderNumber?: string | null;
   /** Optional provider override ('cashfree', 'mock', or 'razorpay') */
   provider?: string | null;
+  /** Order-scoped guest capability token from OrderOut.guestTrackingToken (required for guest orders if not sent via X-Guest-Order-Token header; never place in URL query params) */
+  guestOrderToken?: string | null;
+  /** Alias for guestOrderToken */
+  guestTrackingToken?: string | null;
+}
+
+export interface PaymentRetryRequest {
+  /** Optional provider override ('cashfree', 'mock', or 'razorpay') */
+  provider?: string | null;
+  /** Order-scoped guest capability token from OrderOut.guestTrackingToken (required for guest orders if not sent via X-Guest-Order-Token header; never place in URL query params) */
+  guestOrderToken?: string | null;
+  /** Alias for guestOrderToken */
+  guestTrackingToken?: string | null;
 }
 
 export interface PaymentIntentOut {
@@ -84,6 +98,9 @@ export interface PaymentVerifyRequest {
 export interface PaymentOut {
   id: number;
   orderId: number;
+  orderNumber?: string | null;
+  orderStatus?: 'PENDING_PAYMENT' | 'CONFIRMED' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | string | null;
+  orderPaymentStatus?: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED' | 'PARTIALLY_REFUNDED' | string | null;
   provider: string;
   providerPaymentId?: string | null;
   providerOrderId?: string | null;
@@ -91,6 +108,10 @@ export interface PaymentOut {
   amountPaise: number;
   currency: string;
   status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED';
+  verificationState?: 'PENDING' | 'SUCCESS' | 'FAILED' | string | null;
+  /** True only when authoritative server state allows creating a new payment attempt for the same unpaid order */
+  canRetry: boolean;
+  errorMessage?: string | null;
   paymentMethodDetail?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -202,4 +223,14 @@ Call `POST /api/v1/payments/intent` with credentials included:
   "updatedAt": "2026-09-30T12:30:05Z"
 }
 ```
-The order is now updated to `paymentStatus: "PAID"` and `status: "CONFIRMED"`, redirecting the customer to the Order Success / Tracking screen (`/orders/CB-20260930-84AF`). If Cashfree reports the order is still `ACTIVE` (pending), `POST /api/v1/payments/verify` returns `HTTP 400` and keeps `payment.status = "PENDING"` and `order.status = "PENDING_PAYMENT"`.
+The order is now updated to `paymentStatus: "PAID"` and `status: "CONFIRMED"`, redirecting the customer to the Order Success / Tracking screen (`/orders/CB-20260930-84AF`).
+
+### Step 5: Handling `FAILED` vs `PENDING` and Safe Same-Order Retry
+* When `POST /api/v1/payments/verify` cannot confirm payment as `PAID`, it returns `HTTP 400` with `detail` plus the authoritative `PaymentOut` fields:
+  * **`PENDING`**: Cashfree order is `ACTIVE` with no terminal attempt failure (`status: "PENDING"`, `verificationState: "PENDING"`, `canRetry: true`, `orderStatus: "PENDING_PAYMENT"`, `orderPaymentStatus: "PENDING"`).
+  * **`FAILED`**: Cashfree attempt is in a terminal failure state (`FAILED`, `USER_DROPPED`, `CANCELLED`, `VOID`) or the Cashfree order is `EXPIRED`/`TERMINATED` (`status: "FAILED"`, `verificationState: "FAILED"`, `canRetry: true`, `orderStatus: "PENDING_PAYMENT"`, `orderPaymentStatus: "PENDING"`).
+* To start a new payment attempt for the **same unpaid order** without creating a duplicate order:
+  * Call `POST /api/v1/payments/{payment_id}/retry` (or `POST /api/v1/payments/intent` with `{ "orderNumber": "..." }`).
+  * **Authenticated orders**: requires the owner's session cookie (`404` for any other user or anonymous caller).
+  * **Guest orders**: requires the order-scoped capability token (`guestOrderToken` / `guestTrackingToken` in JSON body or `X-Guest-Order-Token` / `Authorization: Bearer <token>` header; tokens in URL query parameters are rejected with `404`).
+  * **Paid or cancelled orders**: rejected with `HTTP 400` and zero side effects. If a prior `PENDING` Cashfree attempt actually succeeded at the gateway before retry was requested, the backend reconciles the order as `PAID` and rejects creating a duplicate session (`HTTP 400`).
