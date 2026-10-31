@@ -4,7 +4,7 @@ Conforms to Sections 18, 20, 21, and 26 of the E-commerce Multi-Agent Specificat
 """
 
 import re
-from typing import Any
+from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
@@ -237,7 +237,10 @@ class OrderCreate(BaseModel):
 
     address_id: int | None = Field(default=None, alias="addressId", description="ID of saved address to use")
     shipping_address: AddressCreate | None = Field(default=None, alias="shippingAddress", description="Inline address if not using saved address")
-    payment_method: str = Field(default="COD", alias="paymentMethod", description="Payment method: COD, UPI, CARD, NETBANKING")
+    payment_method: Literal["UPI", "CARD", "NETBANKING"] = Field(
+        alias="paymentMethod",
+        description="Online payment method: UPI, CARD, NETBANKING",
+    )
     customer_name: str | None = Field(default=None, alias="customerName", description="Customer full name")
     customer_phone: str | None = Field(default=None, alias="customerPhone", description="Customer mobile number")
     customer_email: str | None = Field(default=None, alias="customerEmail", description="Customer email address")

@@ -68,7 +68,7 @@ def test_authoritative_price_calculation_and_tampering_rejection():
             "state": "Karnataka",
             "postalCode": "560001",
         },
-        "paymentMethod": "COD",
+        "paymentMethod": "UPI",
         "unitPrice": 1,
         "subtotal": 1,
         "shippingFee": 999,
@@ -133,7 +133,7 @@ def test_coupon_tampering_and_authoritative_discount():
                 "state": "Karnataka",
                 "postalCode": "560001",
             },
-            "paymentMethod": "COD",
+            "paymentMethod": "UPI",
             "couponCode": "NONEXISTENT_99",
         },
     )
@@ -151,7 +151,7 @@ def test_coupon_tampering_and_authoritative_discount():
                 "state": "Karnataka",
                 "postalCode": "560001",
             },
-            "paymentMethod": "COD",
+            "paymentMethod": "UPI",
             "couponCode": "SEC10",
             "discountAmount": 9999,  # Customer attempts to claim 9999 discount
         },
@@ -229,7 +229,7 @@ def test_customer_cannot_mark_order_paid_or_shipped():
                 "state": "Karnataka",
                 "postalCode": "560001",
             },
-            "paymentMethod": "COD",
+            "paymentMethod": "UPI",
         },
     )
     assert order_res.status_code == 201

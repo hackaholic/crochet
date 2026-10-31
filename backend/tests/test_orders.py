@@ -186,7 +186,7 @@ def test_address_snapshot_immutability():
 
     # 2. Add item to cart and checkout
     client.post("/api/v1/cart/items", json={"product_id": 1, "quantity": 1}, cookies=cookies)
-    order_res = client.post("/api/v1/orders", json={"paymentMethod": "COD"}, cookies=cookies)
+    order_res = client.post("/api/v1/orders", json={"paymentMethod": "UPI"}, cookies=cookies)
     assert order_res.status_code == 201
     order_id = order_res.json()["id"]
 
@@ -256,7 +256,7 @@ def test_checkout_and_order_snapshots():
         "/api/v1/orders",
         json={
             "addressId": address_id,
-            "paymentMethod": "COD",
+            "paymentMethod": "UPI",
             "notes": "Please leave at reception",
         },
         cookies=cookies,
@@ -266,9 +266,9 @@ def test_checkout_and_order_snapshots():
 
     # 5. Verify order properties
     assert order["orderNumber"].startswith("CB-")
-    assert order["status"] == "CONFIRMED"
+    assert order["status"] == "PENDING_PAYMENT"
     assert order["paymentStatus"] == "PENDING"
-    assert order["paymentMethod"] == "COD"
+    assert order["paymentMethod"] == "UPI"
     assert order["customerName"] == "Sarah Connor"
     assert order["shippingAddress"]["city"] == "Mumbai"
     assert order["subtotal"] == unit_price * 2
@@ -323,7 +323,7 @@ def test_order_security_and_authorization():
                 "state": "Delhi",
                 "postalCode": "110001",
             },
-            "paymentMethod": "COD",
+            "paymentMethod": "UPI",
         },
         cookies=user1_cookies,
     )
@@ -365,7 +365,7 @@ def test_order_tracking_and_cancellation():
                 "state": "Maharashtra",
                 "postalCode": "411001",
             },
-            "paymentMethod": "COD",
+            "paymentMethod": "UPI",
         },
         cookies=cookies,
     )
@@ -378,12 +378,11 @@ def test_order_tracking_and_cancellation():
     track_data = track_res.json()
     assert track_data["orderNumber"] == order_number
     assert len(track_data["timeline"]) >= 1
-    assert track_data["timeline"][0]["status"] == "CONFIRMED"
+    assert track_data["timeline"][0]["status"] == "PENDING_PAYMENT"
     # Check 18.4 milestones on placed order
     assert len(track_data["milestones"]) == 7
     m_map = {m["code"]: m for m in track_data["milestones"]}
-    assert m_map["PLACED"]["state"] == "COMPLETED"
-    assert m_map["CONFIRMED"]["state"] == "CURRENT"
+    assert m_map["PLACED"]["state"] == "CURRENT"
     assert track_data["terminalState"] is None
 
     # Cancel order

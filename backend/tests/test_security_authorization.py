@@ -93,7 +93,7 @@ def test_idor_order_detail_and_tracking_prevented():
                 "state": "Karnataka",
                 "postalCode": "560001",
             },
-            "paymentMethod": "COD",
+            "paymentMethod": "UPI",
         },
     )
     assert order_res.status_code == 201
@@ -141,7 +141,7 @@ def test_idor_order_cancellation_prevented():
                 "state": "Karnataka",
                 "postalCode": "560001",
             },
-            "paymentMethod": "COD",
+            "paymentMethod": "UPI",
         },
     )
     assert order_res.status_code == 201
@@ -227,7 +227,7 @@ def test_idor_checkout_with_foreign_address_prevented():
         "/api/v1/orders",
         json={
             "addressId": user_a_addr_id,
-            "paymentMethod": "COD",
+            "paymentMethod": "UPI",
         },
     )
     assert order_res.status_code == 404, "IDOR Vulnerability: User B checked out with User A's addressId!"

@@ -498,15 +498,10 @@ def checkout(
     order_number = f"CB-{date_str}-{rand_suffix}"
 
     # 5. Order and Payment Status
-    payment_method_str = order_in.payment_method.upper()
-    if payment_method_str == "COD":
-        order_status = OrderStatus.CONFIRMED.value
-        payment_status = PaymentStatus.PENDING.value
-        history_note = "Order confirmed with Cash on Delivery."
-    else:
-        order_status = OrderStatus.PENDING_PAYMENT.value
-        payment_status = PaymentStatus.PENDING.value
-        history_note = f"Order placed with {payment_method_str}. Awaiting payment confirmation."
+    payment_method_str = order_in.payment_method
+    order_status = OrderStatus.PENDING_PAYMENT.value
+    payment_status = PaymentStatus.PENDING.value
+    history_note = f"Order placed with {payment_method_str}. Awaiting payment confirmation."
 
     # 6. Create Order entity
     order = Order(

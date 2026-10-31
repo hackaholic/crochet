@@ -171,7 +171,7 @@ def test_order_checkout_with_coupon():
 
     # Place order with coupon
     order_payload = {
-        "paymentMethod": "COD",
+        "paymentMethod": "UPI",
         "couponCode": "WELCOME100",
         "shippingAddress": {
             "name": "Ananya Sharma",

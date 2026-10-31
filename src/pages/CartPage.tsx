@@ -152,7 +152,7 @@ export default function CartPage({ items, wishlist = [], onUpdateQty, onRemove, 
                 <div className="mt-5 pt-5 border-t border-[#EDE4D0]">
                   <p className="text-xs text-[#8B6B4A] text-center">We accept</p>
                   <div className="flex justify-center gap-2 mt-2">
-                    {['UPI', 'Card', 'Net Banking', 'COD'].map(m => (
+                    {['UPI', 'Card', 'Net Banking'].map(m => (
                       <span key={m} className="text-xs bg-[#F5EDE0] text-[#8B6B4A] px-2 py-1 rounded">{m}</span>
                     ))}
                   </div>

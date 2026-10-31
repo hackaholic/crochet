@@ -2,7 +2,8 @@
 
 ## In Progress
 
-- [ ] 7.2.4.3 Codex: [Dev Cashfree Sandbox end-to-end](tasks/task-019-cashfree-dev-sandbox-e2e.md) — Preprod Sandbox success and total parity pass; Gemini returned backend retry contract `7.2.4.5`; Codex integrates frontend retry UI and completes cancellation, pending, retry and customer history browser checks.
+- [ ] 7.2.4.3 Codex: [Dev Cashfree Sandbox end-to-end](tasks/task-019-cashfree-dev-sandbox-e2e.md) — Preprod Sandbox success and total parity pass; Gemini returned backend retry contract `7.2.4.5`; Codex integrates frontend retry UI and completes cancellation, pending, retry and customer history browser checks after this verified COD-removal revision reaches dev.
+- [ ] 7.13 Codex: [Remove Cash on Delivery from new purchases](tasks/task-023-remove-cash-on-delivery.md) — local implementation, tests, security checks, Docker rebuild, and browser verification complete; dev push/deployment confirmation remains.
 
 ## Pending
 

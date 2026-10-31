@@ -39,7 +39,6 @@ const paymentMethods = [
   { id: 'card', label: 'Credit / Debit Card', icon: '💳', desc: 'Visa, Mastercard, RuPay' },
   { id: 'netbanking', label: 'Net Banking', icon: '🏦', desc: 'All major Indian banks' },
   { id: 'wallet', label: 'Wallet', icon: '👛', desc: 'Paytm, Mobikwik, Freecharge' },
-  { id: 'cod', label: 'Cash on Delivery', icon: '💵', desc: 'Pay when delivered' },
 ];
 
 export default function CheckoutPage({ customer, items, wishlist = [], onToggleWishlist, onComplete, onNavigate, couponCode, onAddToCart, onProductClick }: CheckoutPageProps) {
@@ -153,18 +152,16 @@ export default function CheckoutPage({ customer, items, wishlist = [], onToggleW
       }
       setSubmitting(true); setError('');
       try {
-        const paymentMethod = selectedPayment === 'cod' ? 'COD' : selectedPayment === 'card' ? 'CARD' : selectedPayment === 'netbanking' ? 'NETBANKING' : 'UPI';
+        const paymentMethod = selectedPayment === 'card' ? 'CARD' : selectedPayment === 'netbanking' ? 'NETBANKING' : 'UPI';
         const order = await createOrder({ paymentMethod, customerEmail: form.email, couponCode: couponCode ?? undefined, shippingAddress: { name: `${form.firstName} ${form.lastName}`.trim(), phone: form.phone, line1: form.line1, line2: form.line2 || undefined, landmark: form.landmark || undefined, city: form.city, state: form.state, postalCode: form.postalCode } });
-        if (paymentMethod !== 'COD') {
-          rememberGuestPaymentCapability(order.orderNumber, order.guestTrackingToken);
-          const intent = await createPaymentIntent(order.orderNumber, order.guestTrackingToken ?? undefined);
-          if (intent.provider === 'cashfree') {
-            await openCashfreeCheckout(intent);
-            return;
-          }
-          if (intent.provider !== 'mock') throw new Error('This payment provider is not available in this checkout.');
-          await verifyMockPayment(intent, paymentMethod === 'UPI' ? 'UPI / Mock gateway' : `${paymentMethod} / Mock gateway`);
+        rememberGuestPaymentCapability(order.orderNumber, order.guestTrackingToken);
+        const intent = await createPaymentIntent(order.orderNumber, order.guestTrackingToken ?? undefined);
+        if (intent.provider === 'cashfree') {
+          await openCashfreeCheckout(intent);
+          return;
         }
+        if (intent.provider !== 'mock') throw new Error('This payment provider is not available in this checkout.');
+        await verifyMockPayment(intent, paymentMethod === 'UPI' ? 'UPI / Mock gateway' : `${paymentMethod} / Mock gateway`);
         setCompletedOrder(order); setCompletedProductIds(items.map(item => item.product.id)); setOrderPlaced(true); onComplete();
       } catch (requestError) { setError(requestError instanceof Error ? requestError.message : 'We could not place your order. Please try again.'); }
       finally { setSubmitting(false); }

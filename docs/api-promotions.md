@@ -169,7 +169,7 @@ export interface AdminReviewOut {
 - **Request Body**: Include optional `couponCode`:
   ```json
   {
-    "paymentMethod": "COD",
+    "paymentMethod": "UPI",
     "couponCode": "SAVE10",
     "shippingAddress": {
       "name": "Ananya Sharma",
@@ -193,7 +193,7 @@ export interface AdminReviewOut {
     "totalAmount": 2399,
     "totalAmountPaise": 239900,
     "currency": "INR",
-    "paymentMethod": "COD"
+    "paymentMethod": "UPI"
   }
   ```
 

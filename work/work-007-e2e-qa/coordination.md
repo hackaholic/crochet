@@ -1,5 +1,12 @@
 # Work 007 coordination
 
+## Active pickup — 2026-10-31
+**Owner:** Codex
+**Status:** Active — 7.13 in progress
+**Contract:** [7.13 Remove Cash on Delivery from new purchases](tasks/task-023-remove-cash-on-delivery.md)
+
+The owner confirmed Sulocraft does not offer COD. Remove it from new checkout and reject COD at the order API boundary. Keep persisted historical COD rows and admin/reporting compatibility. Local Docker/browser verification is required before dev push; production is out of scope.
+
 ## Active pickup — 2026-10-30
 **Owner:** Codex
 **Status:** Returned — 7.2.5 Completed

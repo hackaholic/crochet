@@ -178,8 +178,8 @@ def test_full_v1_purchase_flow_magic_link():
     assert "SHIPPED" in statuses
 
 
-def test_guest_checkout_cod_no_auth():
-    """Guest can complete COD checkout without authentication (inline shipping address)."""
+def test_cod_checkout_rejected_without_side_effects():
+    """COD is rejected at the request boundary without consuming guest basket or stock."""
     session = TestClient(app)
     assert session.get("/api/v1/auth/me").status_code == 401
 
@@ -201,11 +201,43 @@ def test_guest_checkout_cod_no_auth():
             "country": "IN",
         },
     })
-    assert order_res.status_code == 201
-    order = order_res.json()
-    assert order["orderNumber"].startswith("CB-")
-    assert order["paymentMethod"] == "COD"
-    assert order["status"] in ("CONFIRMED", "PENDING_PAYMENT")
+    assert order_res.status_code == 422
+    no_method_res = session.post("/api/v1/orders", json={
+        "customerName": "Priya Guest",
+        "customerEmail": "priya.guest@example.com",
+        "customerPhone": "9123456789",
+        "shippingAddress": {
+            "name": "Priya Guest",
+            "phone": "9123456789",
+            "line1": "22 Gandhi Nagar",
+            "city": "Jaipur",
+            "state": "Rajasthan",
+            "postalCode": "302001",
+            "country": "IN",
+        },
+    })
+    unsupported_method_res = session.post("/api/v1/orders", json={
+        "customerName": "Priya Guest",
+        "customerEmail": "priya.guest@example.com",
+        "customerPhone": "9123456789",
+        "paymentMethod": "CHEQUE",
+        "shippingAddress": {
+            "name": "Priya Guest",
+            "phone": "9123456789",
+            "line1": "22 Gandhi Nagar",
+            "city": "Jaipur",
+            "state": "Rajasthan",
+            "postalCode": "302001",
+            "country": "IN",
+        },
+    })
+    assert no_method_res.status_code == 422
+    assert unsupported_method_res.status_code == 422
+    assert session.get("/api/v1/cart").json()["itemCount"] == 1
+    assert session.get(f"/api/v1/products/{slug}").json()["variants"][0]["stockQuantity"] == variant["stockQuantity"]
+    with SessionLocal() as db:
+        from app.models.order import Order
+        assert db.query(Order).filter(Order.customer_email == "priya.guest@example.com").count() == 0
 
 
 def test_google_login_cart_merge_checkout():
@@ -227,7 +259,7 @@ def test_google_login_cart_merge_checkout():
     assert session.get("/api/v1/cart").json()["itemCount"] >= 1
 
     order_res = session.post("/api/v1/orders", json={
-        "paymentMethod": "COD",
+        "paymentMethod": "UPI",
         "shippingAddress": {
             "name": "Google Regression Buyer",
             "phone": "9000000001",

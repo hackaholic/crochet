@@ -15,7 +15,7 @@ Conforming to **Sections 18, 20, 21, 22, and 26** of the [Multi-Agent Implementa
 * **Price & Data Snapshots (Section 21)**: Order line items snapshot product name, slug, variant SKU, variant name, image, and unit price in integer rupees and paise. Even if products or prices change in the catalogue later, the historical order retains exact purchase-time prices.
 * **Controlled Order State Model (Section 20)**:
   - `PENDING_PAYMENT`: Awaiting online payment confirmation.
-  - `CONFIRMED`: Order confirmed (default for Cash on Delivery / COD).
+  - `CONFIRMED`: Order confirmed after payment is verified.
   - `PROCESSING`: Handcrafted item being crocheted / prepared.
   - `READY_TO_SHIP`: Packaged and awaiting courier pickup.
   - `SHIPPED`: In transit with courier tracking number.
@@ -101,7 +101,7 @@ export interface AddressOut {
 export interface OrderCreate {
   addressId?: number | null;
   shippingAddress?: AddressCreate | null;
-  paymentMethod?: 'COD' | 'UPI' | 'CARD' | 'NETBANKING';
+  paymentMethod?: 'UPI' | 'CARD' | 'NETBANKING';
   customerName?: string | null;
   customerPhone?: string | null;
   customerEmail?: string | null;
@@ -187,7 +187,7 @@ export interface OrderTrackingOut {
 ```json
 {
   "addressId": 1,
-  "paymentMethod": "COD",
+  "paymentMethod": "UPI",
   "notes": "Handle with care - fragile handmade gift"
 }
 ```
@@ -203,7 +203,7 @@ export interface OrderTrackingOut {
     "state": "Karnataka",
     "postalCode": "560038"
   },
-  "paymentMethod": "COD"
+  "paymentMethod": "UPI"
 }
 ```
 
@@ -238,9 +238,9 @@ export interface OrderTrackingOut {
     "postalCode": "560038",
     "country": "IN"
   },
-  "status": "CONFIRMED",
+  "status": "PENDING_PAYMENT",
   "paymentStatus": "PENDING",
-  "paymentMethod": "COD",
+  "paymentMethod": "UPI",
   "currency": "INR",
   "subtotal": 2599,
   "subtotalPaise": 259900,
@@ -277,8 +277,8 @@ export interface OrderTrackingOut {
   "statusHistory": [
     {
       "id": 1,
-      "status": "CONFIRMED",
-      "note": "Order confirmed with Cash on Delivery.",
+      "status": "PENDING_PAYMENT",
+      "note": "Order placed with UPI. Awaiting payment confirmation.",
       "timestamp": "2026-09-30T12:00:00Z"
     }
   ],
@@ -296,7 +296,7 @@ export interface OrderTrackingOut {
 ```json
 {
   "orderNumber": "CB-20260930-84AF",
-  "status": "CONFIRMED",
+  "status": "PENDING_PAYMENT",
   "paymentStatus": "PENDING",
   "trackingNumber": null,
   "courierName": null,
@@ -304,8 +304,8 @@ export interface OrderTrackingOut {
   "timeline": [
     {
       "id": 1,
-      "status": "CONFIRMED",
-      "note": "Order confirmed with Cash on Delivery.",
+      "status": "PENDING_PAYMENT",
+      "note": "Order placed with UPI. Awaiting payment confirmation.",
       "timestamp": "2026-09-30T12:00:00Z"
     }
   ]
@@ -323,8 +323,8 @@ Cancels the order, returns inventory to stock, and adds cancellation to status h
   "statusHistory": [
     {
       "id": 1,
-      "status": "CONFIRMED",
-      "note": "Order confirmed with Cash on Delivery.",
+      "status": "PENDING_PAYMENT",
+      "note": "Order placed with UPI. Awaiting payment confirmation.",
       "timestamp": "2026-09-30T12:00:00Z"
     },
     {

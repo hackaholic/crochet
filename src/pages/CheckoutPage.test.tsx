@@ -25,15 +25,29 @@ it('shows the backend-authoritative shipping amount before creating a payment in
   expect(createPaymentIntent).not.toHaveBeenCalled();
 });
 
-const completeCheckoutForm = (cashOnDelivery = false) => {
+const completeCheckoutForm = () => {
   for (const [label, value] of [['First Name *','QA'],['Email *','demo.customer@example.com'],['Phone Number *','9876543210']] as const) fireEvent.change(screen.getByLabelText(label), {target:{value}});
   fireEvent.click(screen.getByRole('button',{name:'Continue to Delivery'}));
   for (const [label, value] of [['Address Line 1','12 Craft Lane'],['City','Mumbai'],['State','Maharashtra'],['PIN Code','400001']] as const) fireEvent.change(screen.getByLabelText(label), {target:{value}});
   fireEvent.click(screen.getByRole('button',{name:'Continue to Payment'}));
-  if (cashOnDelivery) fireEvent.click(screen.getByText('Cash on Delivery'));
   fireEvent.click(screen.getByRole('button',{name:'Continue to Review'}));
   fireEvent.click(screen.getByRole('button',{name:/Place Order/}));
 };
+
+const useLocalMockPayment = (id: number, orderNumber: string) => {
+  vi.mocked(createPaymentIntent).mockResolvedValue({paymentId:id,orderId:id,orderNumber,provider:'mock',providerOrderId:`mock-${id}`,amount:1378,amountPaise:137800,currency:'INR'});
+  vi.mocked(verifyMockPayment).mockResolvedValue(undefined);
+};
+
+it('does not offer Cash on Delivery and keeps online payment methods available', () => {
+  render(<CheckoutPage {...props()}/>);
+  fireEvent.click(screen.getByRole('button',{name:'Continue to Delivery'}));
+  fireEvent.click(screen.getByRole('button',{name:'Continue to Payment'}));
+  expect(screen.queryByText('Cash on Delivery')).not.toBeInTheDocument();
+  expect(screen.getByText('UPI')).toBeInTheDocument();
+  expect(screen.getByText('Credit / Debit Card')).toBeInTheDocument();
+  expect(screen.getByText('Net Banking')).toBeInTheDocument();
+});
 
 it('hands a Cashfree intent to hosted checkout and never uses mock verification', async () => {
   vi.mocked(createOrder).mockResolvedValue({id:7,orderNumber:'SLC-TEST-7',status:'PENDING_PAYMENT',paymentStatus:'PENDING',paymentMethod:'UPI',totalAmount:1378,totalAmountPaise:137800});
@@ -109,11 +123,12 @@ it('shows confirmation only for a matching server-verified Cashfree payment', as
 });
 
 it('shows multiple API-driven recommendation layers after placing a local order', async () => {
-  vi.mocked(createOrder).mockResolvedValue({id:8,orderNumber:'SLC-TEST-8',status:'PENDING',paymentStatus:'PENDING',paymentMethod:'COD',totalAmount:1378,totalAmountPaise:137800});
+  vi.mocked(createOrder).mockResolvedValue({id:8,orderNumber:'SLC-TEST-8',status:'PENDING_PAYMENT',paymentStatus:'PENDING',paymentMethod:'UPI',totalAmount:1378,totalAmountPaise:137800});
+  useLocalMockPayment(8,'SLC-TEST-8');
   vi.mocked(getProductDiscovery).mockResolvedValue({sections:[{id:'popular',title:'Popular',strategy:'popular',products:[bunny]},{id:'new-arrivals',title:'New arrivals',strategy:'newest',products:[{...rose,id:3,name:'Crochet Daisy',slug:'daisy'}]}],nextCursor:null});
   const p=props();
   render(<CheckoutPage {...p}/>);
-  completeCheckoutForm(true);
+  completeCheckoutForm();
   const confirmation = await screen.findByRole('heading',{name:'Order Placed!'});
   expect(confirmation).toBeVisible();
   expect(confirmation.closest('section')).toHaveClass('w-full');
@@ -129,10 +144,11 @@ it('shows multiple API-driven recommendation layers after placing a local order'
 });
 
 it('keeps confirmed order visible when recommendations fail to load', async () => {
-  vi.mocked(createOrder).mockResolvedValue({id:10,orderNumber:'SLC-TEST-10',status:'PENDING',paymentStatus:'PENDING',paymentMethod:'COD',totalAmount:1378,totalAmountPaise:137800});
+  vi.mocked(createOrder).mockResolvedValue({id:10,orderNumber:'SLC-TEST-10',status:'PENDING_PAYMENT',paymentStatus:'PENDING',paymentMethod:'UPI',totalAmount:1378,totalAmountPaise:137800});
+  useLocalMockPayment(10,'SLC-TEST-10');
   vi.mocked(getProductDiscovery).mockRejectedValue(new Error('private discovery detail'));
   render(<CheckoutPage {...props()}/>);
-  completeCheckoutForm(true);
+  completeCheckoutForm();
   expect(await screen.findByRole('heading',{name:'Order Placed!'})).toBeVisible();
   expect(await screen.findByRole('alert')).toHaveTextContent('More creations could not load');
   expect(screen.getByText('Order SLC-TEST-10')).toBeVisible();
@@ -140,11 +156,12 @@ it('keeps confirmed order visible when recommendations fail to load', async () =
 });
 
 it('continues excluding purchased products after the basket is cleared on completion', async () => {
-  vi.mocked(createOrder).mockResolvedValue({id:12,orderNumber:'SLC-TEST-12',status:'PENDING',paymentStatus:'PENDING',paymentMethod:'COD',totalAmount:1378,totalAmountPaise:137800});
+  vi.mocked(createOrder).mockResolvedValue({id:12,orderNumber:'SLC-TEST-12',status:'PENDING_PAYMENT',paymentStatus:'PENDING',paymentMethod:'UPI',totalAmount:1378,totalAmountPaise:137800});
+  useLocalMockPayment(12,'SLC-TEST-12');
   vi.mocked(getProductDiscovery).mockResolvedValue({sections:[{id:'best-sellers',title:'Best Sellers',strategy:'popular',products:[rose,bunny]}],nextCursor:null});
   const p=props();
   const view=render(<CheckoutPage {...p}/>);
-  completeCheckoutForm(true);
+  completeCheckoutForm();
   expect(await screen.findByRole('heading',{name:'Best Sellers'})).toBeVisible();
   view.rerender(<CheckoutPage {...p} items={[]}/>);
   expect(screen.getByRole('link',{name:'<Bunny>'})).toBeVisible();
@@ -153,18 +170,19 @@ it('continues excluding purchased products after the basket is cleared on comple
 });
 
 it('adds a recommendation to the next basket without creating or changing the placed order', async () => {
-  vi.mocked(createOrder).mockResolvedValue({id:11,orderNumber:'SLC-TEST-11',status:'PENDING',paymentStatus:'PENDING',paymentMethod:'COD',totalAmount:1378,totalAmountPaise:137800});
+  vi.mocked(createOrder).mockResolvedValue({id:11,orderNumber:'SLC-TEST-11',status:'PENDING_PAYMENT',paymentStatus:'PENDING',paymentMethod:'UPI',totalAmount:1378,totalAmountPaise:137800});
+  useLocalMockPayment(11,'SLC-TEST-11');
   vi.mocked(getProductDiscovery).mockResolvedValue({sections:[{id:'new-arrivals',title:'New arrivals',strategy:'newest',products:[bunny]}],nextCursor:null});
   const p=props();
   render(<CheckoutPage {...p}/>);
-  completeCheckoutForm(true);
+  completeCheckoutForm();
   expect(await screen.findByRole('heading',{name:'New arrivals'})).toBeVisible();
   fireEvent.click(screen.getByRole('button',{name:'Add <Bunny> to basket'}));
   await waitFor(()=>expect(screen.getByRole('status')).toHaveTextContent('<Bunny> added to your basket'));
   expect(screen.getByText('Order SLC-TEST-11')).toBeVisible();
   expect(createOrder).toHaveBeenCalledOnce();
+  expect(createPaymentIntent).toHaveBeenCalledOnce();
   expect(p.onAddToCart).toHaveBeenCalledExactlyOnceWith(bunny);
-  expect(createPaymentIntent).not.toHaveBeenCalled();
 });
 
 it('adds without losing contact draft or navigating, updates summary, and excludes basket products', async () => {

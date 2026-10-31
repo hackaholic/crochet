@@ -13060,9 +13060,12 @@ components:
           description: Inline address if not using saved address
         paymentMethod:
           type: string
+          enum:
+          - UPI
+          - CARD
+          - NETBANKING
           title: Paymentmethod
-          description: 'Payment method: COD, UPI, CARD, NETBANKING'
-          default: COD
+          description: 'Online payment method: UPI, CARD, NETBANKING'
         customerName:
           anyOf:
           - type: string
@@ -13095,6 +13098,8 @@ components:
           title: Notes
           description: Optional delivery or gift notes
       type: object
+      required:
+      - paymentMethod
       title: OrderCreate
       description: Order checkout request.
     OrderItemOut:

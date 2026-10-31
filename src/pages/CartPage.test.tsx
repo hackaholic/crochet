@@ -39,6 +39,7 @@ describe('CartPage item details', () => {
 
     expect(screen.queryByText(/Color: Blush Pink/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Gift wrapped/)).not.toBeInTheDocument();
+    expect(screen.queryByText('COD')).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: item.product.name })).toBeInTheDocument();
   });
 });

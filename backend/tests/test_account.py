@@ -211,7 +211,7 @@ def test_account_overview_metrics():
     )
     client.post(
         "/api/v1/orders",
-        json={"paymentMethod": "COD"},
+        json={"paymentMethod": "UPI"},
         cookies=cookies,
     )
 
@@ -222,7 +222,7 @@ def test_account_overview_metrics():
     assert data["savedAddresses"] == 1
     assert data["wishlistItemsCount"] == 1
     assert data["totalOrders"] == 1
-    assert data["activeOrders"] == 1
+    assert data["activeOrders"] == 0  # awaiting payment is not yet an active fulfilment order
 
 
 def test_wishlist_lifecycle():

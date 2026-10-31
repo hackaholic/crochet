@@ -260,7 +260,7 @@ def test_admin_order_status_transitions():
         json={
             "customerName": "Rohan Verma",
             "customerPhone": "9999911003",
-            "paymentMethod": "COD",
+            "paymentMethod": "UPI",
             "shippingAddress": {
                 "name": "Rohan Verma",
                 "phone": "9999911003",
@@ -335,7 +335,7 @@ def test_admin_order_cancellation_restores_inventory():
         json={
             "customerName": "Test Stock Restore",
             "customerPhone": "9999911004",
-            "paymentMethod": "COD",
+            "paymentMethod": "UPI",
             "shippingAddress": {
                 "name": "Test Customer",
                 "phone": "9999911004",
@@ -444,7 +444,7 @@ def test_admin_order_and_return_customer_identity_linkage():
             "customerName": "Registered Customer",
             "customerPhone": "9999911005",
             "customerEmail": "reg@example.com",
-            "paymentMethod": "COD",
+            "paymentMethod": "UPI",
             "shippingAddress": {
                 "name": "Registered Customer",
                 "phone": "9999911005",
@@ -472,7 +472,7 @@ def test_admin_order_and_return_customer_identity_linkage():
             "customerName": "Guest Customer",
             "customerPhone": "9999911006",
             "customerEmail": "guest@example.com",
-            "paymentMethod": "COD",
+            "paymentMethod": "UPI",
             "shippingAddress": {
                 "name": "Guest Customer",
                 "phone": "9999911006",
