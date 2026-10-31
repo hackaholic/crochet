@@ -1,7 +1,7 @@
 # Task 7.13 — Remove Cash on Delivery from new purchases
 
 **Owner:** Codex
-**Status:** In Progress
+**Status:** Completed
 **Work item:** Work 007
 
 ## Objective
@@ -41,8 +41,8 @@ The owner confirmed Sulocraft does not offer Cash on Delivery. Retain legacy COD
 - Changed assets/trust boundaries and plausible abuse: public order-creation endpoint; a caller could bypass the removed UI and request COD directly.
 - Applicable controls and linked negative test IDs: Pydantic request validation with a strict allowlist (`7.13-TC03`, `7.13-TC05`); assert no order, payment, inventory, coupon, or cart side effects. Preserve legacy COD only in persisted order/reporting models.
 - API/database work: validate payment method at request boundary before service side effects; no SQL interpolation or new authorization scope.
-- Commands/target/results (redacted): `./scripts/test.sh all` exited 0; its frontend suite reports `420/420` passing and backend suite reaches 100%. `corepack pnpm run typecheck` passed. `bash scripts/security/scan-sast.sh` reported zero blocking High/Critical findings (34 total findings including 33 warnings and one active exception); the full test gate's fallback SAST and secret checks both passed with zero findings. Live local OpenAPI reports `paymentMethod` enum `UPI`, `CARD`, `NETBANKING` and marks the field required. No secrets or customer data were printed.
-- Disposition: Pass for the local change; dev deployment remains pending.
+- Commands/target/results (redacted): `./scripts/test.sh all` exited 0; frontend suite `420/420` passed and backend suite reached 100%. `corepack pnpm run typecheck` passed. `bash scripts/security/scan-sast.sh` reported zero blocking High/Critical findings (34 total findings including 33 warnings and one active exception); the full test gate's fallback SAST and secret checks both passed with zero findings. Live local and dev OpenAPI report `paymentMethod` enum `UPI`, `CARD`, `NETBANKING` and mark the field required. Dev GitHub Actions run [41179865223](https://github.com/hackaholic/crochet/actions/runs/41179865223) passed backend tests and preprod VPS deployment; automated security gate [41179865212](https://github.com/hackaholic/crochet/actions/runs/41179865212) passed. Dev storefront and API health returned HTTP 200. Playwright on `https://dev.sulocraft.com/checkout` showed no COD and retained UPI/card/net banking. No order was placed and no payment submitted.
+- Disposition: Pass.
 - Findings, severity, remediation owner, and blockers: None known; Codex owns remediation.
 
 ## Acceptance checks
@@ -52,7 +52,7 @@ The owner confirmed Sulocraft does not offer Cash on Delivery. Retain legacy COD
 - [x] Historical COD orders remain readable and existing admin reporting still passes.
 - [x] Relevant tests and security checks pass.
 - [x] Rebuild local Docker services and verify checkout at `http://localhost:8080` plus API behavior at `http://localhost:8000`.
-- [ ] Record self-review and evidence; push only after local verification; do not deploy production.
+- [x] Record self-review and evidence; push only after local verification; do not deploy production.
 
 ## Handoff back
 

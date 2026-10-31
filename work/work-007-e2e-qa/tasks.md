@@ -2,8 +2,7 @@
 
 ## In Progress
 
-- [ ] 7.2.4.3 Codex: [Dev Cashfree Sandbox end-to-end](tasks/task-019-cashfree-dev-sandbox-e2e.md) — Preprod Sandbox success and total parity pass; Gemini returned backend retry contract `7.2.4.5`; Codex integrates frontend retry UI and completes cancellation, pending, retry and customer history browser checks after this verified COD-removal revision reaches dev.
-- [ ] 7.13 Codex: [Remove Cash on Delivery from new purchases](tasks/task-023-remove-cash-on-delivery.md) — local implementation, tests, security checks, Docker rebuild, and browser verification complete; dev push/deployment confirmation remains.
+- [ ] 7.2.4.3 Codex: [Dev Cashfree Sandbox end-to-end](tasks/task-019-cashfree-dev-sandbox-e2e.md) — Dev deployment passed; resume Sandbox cancellation/USER_DROPPED, pending, same-order retry, and customer-history browser checks.
 
 ## Pending
 
@@ -16,6 +15,7 @@
 
 ## Completed
 
+- [x] 7.13 Codex: [Remove Cash on Delivery from new purchases](tasks/task-023-remove-cash-on-delivery.md) — COD removed from checkout/basket; API requires UPI/CARD/NETBANKING and rejects COD/missing/unsupported methods before order mutation; history preserved. Full tests/security/typecheck/local Docker/browser passed; commit `20bbd24` deployed to dev and Playwright verified no COD in dev checkout.
 - [x] 7.2.4.5 Gemini: [Secure retry after failed/pending Cashfree payment](tasks/task-022-cashfree-safe-retry.md) — Completed & returned to Codex; guest capability enforcement (`validate_guest_order_token` via `guestOrderToken`/`X-Guest-Order-Token`/`Authorization: Bearer`; query-param tokens rejected) and authenticated owner check (`404` non-enumerating with zero side effects), `POST /api/v1/payments/{payment_id}/retry`, accurate `FAILED` vs `PENDING` attempt classification on Cashfree `ACTIVE` orders, safe pending-attempt reconciliation before retry, and enriched `PaymentOut` (`orderStatus`, `orderPaymentStatus`, `verificationState`, `canRetry`, `errorMessage`). `41/41` isolated PostgreSQL payment/regression/security tests + SAST pass + local Docker API verified.
 - [x] 7.2.4.1 Gemini: [Preprod runtime configuration and secret wiring](tasks/task-017-cashfree-preprod-runtime-wiring.md) — Completed; explicit `payment_provider` + `cashfree_environment` in `deploy/vps-config.example.yaml`, `.deploy/vps-config.yaml`, and `scripts/deploy_vps.py` (with fail-closed prod/preprod boundary guards), API-only secret file mounts (`cashfree_app_id`, `cashfree_secret_key`), `bootstrap_secrets.sh` required-secret enforcement, server-derived `PaymentOut.orderNumber`, and guest verification isolation (`providerOrderId` binding required before idempotent return or gateway check). `37/37` deploy/secret tests + `26/26` isolated DB payment tests + SAST pass.
 

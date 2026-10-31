@@ -1,11 +1,12 @@
 # Work 007 coordination
 
-## Active pickup — 2026-10-31
+## Latest return — 2026-10-31
 **Owner:** Codex
-**Status:** Active — 7.13 in progress
-**Contract:** [7.13 Remove Cash on Delivery from new purchases](tasks/task-023-remove-cash-on-delivery.md)
+**Status:** Returned — 7.13 completed; 7.2.4.3 active
+**Completed contract:** [7.13 Remove Cash on Delivery from new purchases](tasks/task-023-remove-cash-on-delivery.md)
+**Current contract:** [7.2.4.3 Dev Cashfree Sandbox end-to-end](tasks/task-019-cashfree-dev-sandbox-e2e.md)
 
-The owner confirmed Sulocraft does not offer COD. Remove it from new checkout and reject COD at the order API boundary. Keep persisted historical COD rows and admin/reporting compatibility. Local Docker/browser verification is required before dev push; production is out of scope.
+COD removal passed local Docker tests, SAST/security validation, local browser verification, and dev deployment/browser verification at commit `20bbd24`. Historical COD rows remain supported. Resume Cashfree Sandbox cancellation/USER_DROPPED, pending, retry, and customer-history checks; no real charge. No production deployment.
 
 ## Active pickup — 2026-10-30
 **Owner:** Codex

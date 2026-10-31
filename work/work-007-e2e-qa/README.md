@@ -8,7 +8,7 @@
 
 **Status:** In Progress
 
-**Current state:** Cashfree hosted checkout and retry are implemented; Sandbox success and failed-attempt behavior are recorded, with cancellation, pending, retry and customer-history browser scenarios still tracked in 7.2.4.3. 7.13 removes COD from new purchases while preserving historical records; local implementation and validation pass, and dev rollout is next. 7.12 recommendations, 7.11 contact prefill, and 7.1 cart/login/purchase regressions are recorded in their task contracts.
+**Current state:** Cashfree hosted checkout and retry are implemented; Sandbox success and initial failure behavior are recorded, with cancellation, pending, same-order retry and customer-history browser scenarios still tracked in 7.2.4.3. 7.13 removed COD from new purchases while preserving historical records; full local gates passed and dev deployment plus browser verification succeeded. 7.12 recommendations, 7.11 contact prefill, and 7.1 cart/login/purchase regressions are recorded in their task contracts.
 
 **Dependencies:** `docs/testing-plan.md`; live local Docker stack.
 
